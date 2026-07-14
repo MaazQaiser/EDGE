@@ -1,0 +1,44 @@
+.assignShiftHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 12px;
+
+  .assignShift {
+    color: #262527;
+  }
+
+  :global {
+    & .MuiFormGroup-root {
+      justify-content: space-between;
+      gap: 12px;
+      flex-direction: row;
+      width: 260px;
+      flex-wrap: nowrap;
+    }
+
+    & .MuiFormControlLabel-root {
+      margin-left: 0;
+      margin-right: 0;
+
+      & .MuiButtonBase-root {
+        padding: 0;
+        padding-right: 8px;
+
+        & .MuiSvgIcon-root {
+          width: 16px;
+          height: 16px;
+        }
+      }
+
+      & .MuiTypography-root {
+        color: #262527;
+        font-size: 14px;
+        font-style: normal;
+        font-weight: 400;
+        line-height: 20px;
+      }
+    }
+  }
+}

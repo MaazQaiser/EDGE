@@ -1,0 +1,331 @@
+{
+  "header": "Ho",
+  "ho_franchise": {
+    "detail": {
+      "franchise_information": {
+        "1099": "Auftragnehmer (stündlich)",
+        "title": "Franchise -Informationen",
+        "info": "Infos hinzufügen",
+        "name": "Franchise -Name",
+        "workCellNumber": "Arbeitszellnummer",
+        "owner": "Name des Besitzers",
+        "email": "E-Mail",
+        "number": "Telefon",
+        "address": "Adresse",
+        "country": "Land",
+        "city": "Stadt",
+        "region": "Region/Staat",
+        "generalInformation": "Statistiken",
+        "Id": "Franchise -ID",
+        "joined": "Funktionsdatum",
+        "monthlyRevenue": "Monatliche Einnahmen",
+        "noOfCustomers": "Anzahl der Kunden",
+        "serviceZips": "Dienst-Postleitzahl/Post",
+        "noOfEmployees": "Anzahl der Mitarbeiter",
+        "labourEfficiency": "Arbeiteffizienz",
+        "customerRelation": "Kundenbindung",
+        "hubSpotFranchiseId": "Hubspot -Franchise Nr.",
+        "companyCode": "Firmencode",
+        "personNumber": "Person {{count}}",
+        "w2": "Mitarbeiter (stündlich)",
+        "legalEntityName": "Name der juristischen Person",
+        "securityLicenseNo": "Sicherheitslizenznummer",
+        "tCsVersion": "Version der AGB",
+        "legalInformation": "Rechtliche Informationen"
+      },
+      "settings": {
+        "ownerEmailIsNotPresentForInvite": "Bitte fügen Sie den Besitzer -E -Mail zuerst hinzu, um den Eigentümer einzuladen!",
+        "changeOwnerEmailIsSame": "E -Mail darf nicht der alten E -Mail entsprechen"
+      }
+    },
+    "tables": {
+      "franchiseListing": {
+        "columns": {
+          "id": "AUSWEIS",
+          "name": "Franchise",
+          "owner": "Eigentümer",
+          "monthlyRevenue": "Monatliche Einnahmen",
+          "noOfCustomer": "Anzahl der Kunden",
+          "status": "Status",
+          "noOfServiceZips": "Dienst-Postleitzahl/Post",
+          "laborEfficiencyPercent": "Arbeiteffizienz",
+          "customerRetentionPercent": "Kundenbindung",
+          "state": "Staat Staat/Provinz",
+          "city": "Stadt",
+          "noOfUser": "Benutzer"
+        },
+        "filters": {
+          "statesDropdown": {
+            "label": "Alle Staaten"
+          },
+          "citiesDropdown": {
+            "label": "Alle Städte"
+          },
+          "statusDropdown": {
+            "label": "All Status"
+          }
+        },
+        "syncDataButton": {
+          "tooltip": "Synchronisierungsdaten aus HubSpot synchronisieren"
+        }
+      }
+    },
+    "sidebarListing": {
+      "noFranchiseFound": "Kein Franchise gefunden!",
+      "searchedTermNotFound": "Ihre Suche '{{searchedTerm}}'Übereinstimmte kein Franchise. "
+    },
+    "tabs": {
+      "generalInformation": "Allgemeine Informationen",
+      "sites": "Standorte",
+      "employees": "Mitarbeiter",
+      "devices": "Geräte",
+      "settings": "Einstellungen"
+    },
+    "makeItFunctional": "Details sind erforderlich, um es funktional zu machen!"
+  },
+  "vehicle": {
+    "detail": {
+      "vehicle_information": {
+        "title": "Fahrzeuginformationen",
+        "reg": "Registrierte Nummer",
+        "makeModeYear": "Machen/Modell/Jahr",
+        "createdAt": "Erstellt at",
+        "lastMaintained": "Zuletzt gepflegt",
+        "assignedTo": "Zugewiesen an",
+        "removeButton": "Fahrzeug entfernen"
+      },
+      "noImage": "Kein Bild gefunden"
+    }
+  },
+  "zones": {
+    "detail": {
+      "zones_information": {
+        "title": "Zoneninformationen",
+        "name": "Zonenname",
+        "supervisor": "Aufsicht",
+        "email": "E-Mail",
+        "number": "Telefon",
+        "zoneSites": "Standorte der Zone",
+        "zoneSupervisors": "{{supervisors}} der Zone",
+        "officer": "Offizier",
+        "officers": "Offiziere"
+      }
+    }
+  },
+  "sites": {
+    "table": {
+      "listing": {
+        "columns": {
+          "site": "Website",
+          "client": "Kunde",
+          "company": "Unternehmen",
+          "dutyType": "Typ",
+          "zone": "Zone",
+          "supervisor": "Aufsicht",
+          "officers": "Offiziere",
+          "status": "Status",
+          "monthlyRevenue": "Monatliche Einnahmen",
+          "termsAndConditionsVersion": "Version der AGB",
+          "clientsName": "Kundenname",
+          "contact": "Kontakt"
+        }
+      }
+    }
+  },
+  "devices": {
+    "tables": {
+      "listing": {
+        "columns": {
+          "id": "AUSWEIS",
+          "name": "Name",
+          "type": "Typ",
+          "installationDate": "Installationsdatum",
+          "batteryRenewal": "Batterieverlängerung",
+          "lastScannedOn": "Zuletzt gescannt",
+          "lastScannedBy": "Zuletzt gescannt von",
+          "zone": "Zone",
+          "site": "Webseite"
+        }
+      }
+    }
+  },
+  "employees": {
+    "tables": {
+      "listing": {
+        "columns": {
+          "name": "Name",
+          "userType": "Benutzerart",
+          "overtime": "Im Laufe der Zeit",
+          "email": "E-Mail",
+          "number": "Telefon",
+          "joinedOn": "Beigetreten",
+          "joinedDate": "Date beigetreten",
+          "title": "Titel",
+          "dutyType": "Jobtyp",
+          "zone": "Zone",
+          "ratePerHour": "Rate/h",
+          "lastPayment": "Letzte Zahlung",
+          "currentDutyProgress": "Aktueller Job",
+          "sitesAllocated": "Standorte"
+        }
+      }
+    }
+  },
+  "templates": {
+    "staticFields": {
+      "visitor": {
+        "visitorLabel": "Besucher -Checkin/Checkout",
+        "placeholder": "Wählen Sie Formyptyp",
+        "firstLabel": "Besucher -Checkin",
+        "secondInputLabel": "Besucherkahn",
+        "checkIn": "Check-in-Formular",
+        "secondDropdownLabel": "Wählen Sie einen Check -in -Typ",
+        "checkOut": "Check-out-Formular",
+        "changeableValueCriteria": "Besucherscheckout"
+      },
+      "loads": {
+        "loadsLabel": "Ladet Checkin/Checkout",
+        "firstLabel": "Ladet Checkin",
+        "placeholder": "Wählen Sie Formyptyp",
+        "secondInputLabel": "Laden Sie die Kasse",
+        "checkIn": "Lastformular hinzufügen",
+        "secondDropdownLabel": "Wählen Sie einen Check -in -Typ",
+        "checkOut": "Ausgebaute Form",
+        "changeableValueCriteria": "LoadScheckout"
+      }
+    },
+    "searchKeys": {
+      "all": "Alle",
+      "homeOffice": "Innenministerium",
+      "franchise": "Franchise"
+    },
+    "listing": {
+      "columns": {
+        "title": "Bericht",
+        "createdBy": "Erstellt von",
+        "createdOn": "Erstellt auf",
+        "templateType": "Vorlagentyp",
+        "actions": "Aktionen"
+      },
+      "actions": {
+        "clone": "Klon",
+        "edit": "Bearbeiten",
+        "delete": "Löschen"
+      }
+    },
+    "create": {
+      "addReportTemplate": "Berichtsvorlage hinzufügen",
+      "includeDailySummary": "In den täglichen Site-Zusammenfassungsbericht aufnehmen",
+      "report": {
+        "title": "Berichtstitel",
+        "type": "Berichtstyp",
+        "titlePlaceholder": "Title Template Title (z. B. Ausrüstungsprüfungsbericht)",
+        "description": "Berichtsbeschreibung",
+        "descriptionPlaceholder": "Zusätzliche Beschreibung (optional)",
+        "dropdown": {
+          "equipmentInspection": "Ausrüstungsprüfung",
+          "vehicleInspection": "Fahrzeuginspektion",
+          "tourReports": "{{tour}} berichte",
+          "shiftDayEndReport": "Schichttagsende Bericht",
+          "incidentReport": "Vorfallbericht",
+          "dispatch": "Versenden",
+          "activityReport": "Aktivitätsbericht"
+        },
+        "types": {
+          "equipmentInspection": "Ausrüstungsinspektion",
+          "vehicleInspection": "Fahrzeuginspektion",
+          "tourReports": "{{tour}} berichte",
+          "shiftDayEndReport": "Schichtende-Bericht",
+          "incidentReport": "Vorfallbericht",
+          "visitorsCheckOut": "Besucher-Checkout",
+          "activityReport": "Aktivitätsbericht"
+        }
+      },
+      "section": {
+        "title": "Abschnittstitel",
+        "titlePlaceholder": "Abschnittstitel (z. B. Sicherheitsprotokolle und Merkmale)",
+        "description": "Abschnitt Beschreibung",
+        "descriptionPlaceholder": "Zusätzliche Beschreibung (optional)",
+        "field": {
+          "title": "Fragenerklärung",
+          "titlePlaceholder": "Fragensteuerung (z. B. Funktioniert der Notfallabschaltmechanismus korrekt?)",
+          "description": "Frage Beschreibung",
+          "descriptionPlaceholder": "Anweisungen (optional)",
+          "answerType": "Antworttyp",
+          "responseType": {
+            "text": "Text",
+            "number": "Nummer",
+            "dateTime": "Datum und Uhrzeit",
+            "radio": "Optionsschaltflächen (Einzelauswahl)",
+            "multiselect": "Mehrfachauswahl",
+            "imageVideo": "Bild/Video",
+            "date": "Datum",
+            "time": "Zeit",
+            "dropdown": "Runterfallen",
+            "webCam": "Web -Cam -Bild",
+            "phoneNumber": "Telefonnummer",
+            "description": "Beschreibung Box",
+            "attachment": "Anhang"
+          },
+          "option": {
+            "placeholder": "Optionslabel"
+          }
+        }
+      },
+      "btn": {
+        "back": "Zurück",
+        "save": "Speichern",
+        "cancel": "Stornieren",
+        "addQuestion": "Frage hinzufügen",
+        "addSection": "Abschnitt hinzufügen",
+        "delete": "Löschen",
+        "newOption": "Option hinzufügen"
+      },
+      "checkbox": {
+        "required": "Erforderlich"
+      }
+    },
+    "delete": {
+      "title": "Berichtsvorlage löschen!",
+      "visitorTitle": "Besuchervorlage löschen!",
+      "visitorDescription": "Sind Sie sicher, dass Sie diese Besuchervorlage löschen möchten?",
+      "loadsTitle": "Ladet die Ladetemplate löschen!",
+      "loadsDescription": "Sind Sie sicher, dass Sie diese ladener Vorlage löschen möchten?",
+      "officerTitle": "Offizier löschen!",
+      "officerDescription": "Sind Sie sicher, dass Sie diesen Offizier löschen möchten?",
+      "description": "Sind Sie sicher, dass Sie diese Berichtsvorlage löschen möchten?",
+      "subDescription": "Diese Aktion kann nicht zurückverkehrt werden.",
+      "deleteOfficerText": "Offizier löschen",
+      "deleteButtonText": "Vorlage löschen",
+      "cancelButtonText": "Stornieren",
+      "templateDescription": "Sind Sie sicher, dass Sie diese Vorlage löschen möchten?"
+    },
+    "clone": {
+      "title": "Namensbericht Klon",
+      "description": "Um die Klonberichtsvorlage fortzusetzen, fügen Sie bitte unten einen neuen Namen hinzu.",
+      "titleFiledLabel": "Geben Sie den Berichtsnamen ein",
+      "titlePlaceHolder": "z.B. ",
+      "cloneButtonText": "Klon",
+      "cancelButtonText": "Stornieren"
+    }
+  },
+  "settings": {
+    "tabs": {
+      "preferences": "Vorlieben",
+      "portalAccesss": "Portalzugriff",
+      "overtimeRules": "Überstundenregeln",
+      "activityLog": "Aktivitätsprotokoll",
+      "reportTemplates": "Berichtsvorlagen"
+    }
+  },
+  "graph": {
+    "users": "Benutzer",
+    "usersByPost": "Benutzer per Post",
+    "usersOverTheYear": "Benutzer im Laufe des Jahres",
+    "year": "Jahr",
+    "officers": "Offiziere",
+    "clients": "Kunden",
+    "years": "Jahre",
+    "noOfClients": "Anzahl der Kunden"
+  }
+}

@@ -1,0 +1,153 @@
+@import '../../../../../../../global.scss';
+
+.templateConfirmAlertContainer {
+  .templateConfirmAlertPopup {
+    width: 400px;
+    padding: 24px;
+    border-radius: 12px;
+    background: #ffffff;
+    box-shadow:
+      0px 8px 8px -4px rgba(16, 24, 40, 0.04),
+      0px 20px 24px -4px rgba(16, 24, 40, 0.1);
+  }
+
+  .templateConfirmAlertIcon {
+    border: 0;
+    display: block !important;
+    width: 100%;
+    margin: 0;
+    height: auto;
+
+    svg {
+      width: 48px;
+      height: 48px;
+    }
+  }
+}
+
+.templateConfirmAlertTitle {
+  color: #000000;
+  font-family: inherit;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 28px;
+  text-align: left;
+  margin-top: 20px;
+  padding: 0;
+}
+
+.templateConfirmAlertHtmlContainer {
+  padding: 0 !important;
+  margin: 0 !important;
+  margin-top: 8px !important;
+
+  & .templateConfirmAlertDescription {
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 20px;
+    color: $grey-400;
+    text-align: left;
+  }
+
+  & .templateConfirmAlertDescription:last-child {
+    margin-top: 16px;
+  }
+}
+
+.templateConfirmAlertActions {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  column-gap: 12px;
+  margin-top: 32px;
+
+  & .templateConfirmAlertCancelButton {
+    flex: 1 1 33.333%;
+    padding: 9.2px 18px;
+    border-radius: 8px;
+    margin: 0;
+    border: 1px solid #aeaeb2 !important;
+    background-color: #ffffff !important;
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 24px;
+    color: #4d4d51 !important;
+    box-shadow: none;
+    text-transform: capitalize;
+    cursor: pointer;
+
+    &:hover {
+      border: 1px solid #aeaeb2 !important;
+      background-color: #f9fbfb !important;
+      background-image: none !important;
+    }
+
+    &:active {
+      box-shadow:
+        0px 0px 0px 4px #f2f4f7,
+        0px 1px 2px 0px rgba(16, 24, 40, 0.05);
+      background-image: none !important;
+    }
+
+    &:focus {
+      box-shadow: none !important;
+    }
+
+    &:disabled {
+      border: 1px solid #d0cfd2;
+      color: #aeaeb2;
+    }
+
+    &:focus-visible {
+      outline: none;
+    }
+  }
+
+  & .templateConfirmAlertConfirmButton {
+    flex: 1 1 33.333%;
+    padding: 9.2px 18px;
+    border-radius: 8px;
+    margin: 0;
+    border: 1px solid #d92d20 !important;
+    background-color: #d92d20 !important;
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 24px;
+    color: $white;
+    box-shadow: none;
+    text-transform: capitalize;
+    cursor: pointer;
+
+    &:hover {
+      background-color: #b42318 !important;
+      border: 1px solid #b42318 !important;
+      box-shadow: 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
+      background-image: none !important;
+    }
+
+    &:active {
+      box-shadow:
+        0px 0px 0px 4px #fee4e2,
+        0px 1px 2px 0px rgba(16, 24, 40, 0.05);
+      background-image: none !important;
+    }
+
+    &:focus {
+      box-shadow: none !important;
+    }
+
+    &:disabled {
+      border: 1px solid #fecdca !important;
+      background-color: #fecdca !important;
+      box-shadow: 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
+    }
+
+    &:focus-visible {
+      outline: none;
+    }
+  }
+}

@@ -1,0 +1,313 @@
+{
+  "header": "HO",
+  "ho_franchise": {
+    "detail": {
+      "franchise_information": {
+        "title": "Información de Franquicia",
+        "info": "Agregar Información",
+        "name": "Nombre de la Franquicia",
+        "workCellNumber": "Número de Teléfono de Trabajo",
+        "owner": "Nombre del Propietario",
+        "email": "Correo Electrónico",
+        "number": "Teléfono",
+        "address": "Dirección",
+        "country": "País",
+        "city": "Ciudad",
+        "region": "Región/estado/provincia",
+        "generalInformation": "Estadísticas",
+        "Id": "ID de Franquicia",
+        "joined": "Fecha de Funcionamiento",
+        "monthlyRevenue": "Ingresos Mensuales",
+        "noOfCustomers": "No. de Clientes",
+        "serviceZips": "servicio zip/postal",
+        "noOfEmployees": "No. de Empleados",
+        "labourEfficiency": "Eficiencia Laboral",
+        "customerRelation": "Retención de Clientes",
+        "hubSpotFranchiseId": "ID de Franquicia de Hubspot",
+        "companyCode": "Código de la Empresa",
+        "personNumber": "Persona {{count}}",
+        "legalEntityName": "Nombre de la entidad legal",
+        "securityLicenseNo": "N.º de licencia de seguridad",
+        "tCsVersion": "Versión de Términos y Condiciones",
+        "legalInformation": "Información legal"
+      },
+      "settings": {
+        "ownerEmailIsNotPresentForInvite": "¡Por favor agregue el correo electrónico del propietario primero para invitar al propietario!",
+        "changeOwnerEmailIsSame": "El correo electrónico no debe ser igual al antiguo correo electrónico"
+      }
+    },
+    "tables": {
+      "franchiseListing": {
+        "columns": {
+          "id": "ID",
+          "name": "Franquicia",
+          "owner": "Propietario",
+          "monthlyRevenue": "Ingresos Mensuales",
+          "noOfCustomer": "No. de Clientes",
+          "status": "estado/provincia",
+          "noOfServiceZips": "servicio zip/postal",
+          "laborEfficiencyPercent": "Eficiencia Laboral",
+          "customerRetentionPercent": "Retención de Clientes",
+          "state": "estado/provincia",
+          "city": "Ciudad",
+          "noOfUser": "Usuarios"
+        },
+        "filters": {
+          "statesDropdown": {
+            "label": "Todos los estado/provincias"
+          },
+          "citiesDropdown": {
+            "label": "Todas las Ciudades"
+          },
+          "statusDropdown": {
+            "label": "Todos los estado/provincias"
+          }
+        },
+        "syncDataButton": {
+          "tooltip": "Sincronizar datos desde Hubspot"
+        }
+      }
+    },
+    "sidebarListing": {
+      "noFranchiseFound": "¡No se encontró ninguna franquicia!",
+      "searchedTermNotFound": "Su búsqueda '{{searchedTerm}}' no coincidió con ninguna franquicia. Por favor, inténtelo de nuevo."
+    },
+    "tabs": {
+      "generalInformation": "Información General",
+      "sites": "Sitios",
+      "employees": "Empleados",
+      "devices": "Dispositivos",
+      "settings": "Ajustes"
+    },
+    "makeItFunctional": "¡Se requieren detalles para que funcione!"
+  },
+  "vehicle": {
+    "detail": {
+      "vehicle_information": {
+        "title": "Información del Vehículo",
+        "reg": "Número de Registro",
+        "makeModeYear": "Marca/Modelo/Año",
+        "createdAt": "Creado en",
+        "lastMaintained": "Último Mantenimiento",
+        "assignedTo": "Asignado a",
+        "removeButton": "Eliminar Vehículo"
+      },
+      "noImage": "No se encontró ninguna imagen"
+    }
+  },
+  "zones": {
+    "detail": {
+      "zones_information": {
+        "title": "Información de la Zona",
+        "name": "Nombre de la Zona",
+        "supervisor": "Supervisor",
+        "email": "Correo Electrónico",
+        "number": "Teléfono",
+        "zoneSites": "Sitios de la Zona",
+        "officer": "Oficial",
+        "officers": "Oficiales"
+      }
+    }
+  },
+  "sites": {
+    "table": {
+      "listing": {
+        "columns": {
+          "site": "Sitio",
+          "client": "Cliente",
+          "company": "Empresa",
+          "dutyType": "Tipo",
+          "zone": "Zona",
+          "supervisor": "Supervisor",
+          "officers": "Oficiales",
+          "status": "estado/provincia",
+          "monthlyRevenue": "Ingresos Mensuales",
+          "termsAndConditionsVersion": "Versión de Términos y Condiciones",
+          "clientsName": "Nombre del Cliente",
+          "contact": "Contacto"
+        }
+      }
+    }
+  },
+  "devices": {
+    "tables": {
+      "listing": {
+        "columns": {
+          "id": "ID",
+          "name": "Nombre",
+          "type": "Tipo",
+          "installationDate": "Fecha de Instalación",
+          "batteryRenewal": "Renovación de Batería",
+          "lastScannedOn": "Última Escaneado En",
+          "lastScannedBy": "Última Escaneado Por",
+          "zone": "Zona",
+          "site": "Sitio"
+        }
+      }
+    }
+  },
+  "employees": {
+    "tables": {
+      "listing": {
+        "columns": {
+          "name": "Nombre",
+          "userType": "Tipo de Usuario",
+          "overtime": "Horas Extra",
+          "email": "Correo Electrónico",
+          "number": "Teléfono",
+          "joinedOn": "Se unió en",
+          "joinedDate": "Fecha de Ingreso",
+
+          "title": "Título",
+          "dutyType": "Tipo de Trabajo",
+          "zone": "Zona",
+          "ratePerHour": "Tarifa/Hr",
+          "lastPayment": "Último Pago",
+          "currentDutyProgress": "Trabajo Actual",
+          "sitesAllocated": "Sitios"
+        }
+      }
+    }
+  },
+  "templates": {
+    "staticFields": {
+      "visitor": {
+        "visitorLabel": "Visitor CheckIn/CheckOut",
+        "firstLabel": "Visitor CheckIn",
+        "secondInputLabel": "Visitor CheckOut",
+        "checkIn": "Visitor Check In",
+        "checkOut": "Visitor Check Out",
+        "changeableValueCriteria": "visitorsCheckOut"
+      },
+      "loads": {
+        "loadsLabel": "Loads CheckIn/CheckOut",
+        "firstLabel": "Loads CheckIn",
+        "secondInputLabel": "Loads CheckOut",
+        "checkIn": "Loads Check In",
+        "checkOut": "Loads Check Out",
+        "changeableValueCriteria": "loadsCheckOut"
+      }
+    },
+    "searchKeys": {
+      "all": "Todos",
+      "homeOffice": "Oficina Central",
+      "franchise": "Franquicia"
+    },
+    "listing": {
+      "columns": {
+        "title": "Informe",
+        "createdBy": "Creado por",
+        "createdOn": "Creado el",
+        "templateType": "Tipo de Plantilla",
+        "actions": "Acciones"
+      },
+      "actions": {
+        "clone": "Clonar",
+        "edit": "Editar",
+        "delete": "Eliminar"
+      }
+    },
+    "create": {
+      "addReportTemplate": "Agregar Plantilla de Informe",
+      "includeDailySummary": "Incluir en el informe de resumen diario del sitio",
+      "report": {
+        "title": "Título del Informe",
+        "type": "Tipo de Informe",
+        "titlePlaceholder": "Título de la Plantilla de Informe (por ejemplo, Informe de Inspección de Equipos)",
+        "description": "Descripción del Informe",
+        "descriptionPlaceholder": "Descripción Adicional (opcional)",
+        "dropdown": {
+          "equipmentInspection": "Inspección de Equipos",
+          "vehicleInspection": "Inspección de Vehículos",
+          "tourReports": "Informes de {{tour}}",
+          "shiftDayEndReport": "Informe de Fin de Jornada",
+          "incidentReport": "Informe de Incidentes",
+          "activityReport": "Informe de actividad"
+        },
+        "types": {
+          "equipmentInspection": "Inspección de equipo",
+          "vehicleInspection": "Inspección de vehículo",
+          "tourReports": "Informes de {{tour}}",
+          "shiftDayEndReport": "Informe de fin de turno",
+          "incidentReport": "Informe de incidente",
+          "visitorsCheckOut": "Salida de visitantes",
+          "activityReport": "Informe de actividad"
+        }
+      },
+      "section": {
+        "title": "Título de la Sección",
+        "titlePlaceholder": "Título de la Sección (por ejemplo, Protocolos y Características de Seguridad)",
+        "description": "Descripción de la Sección",
+        "descriptionPlaceholder": "Descripción Adicional (opcional)",
+        "field": {
+          "title": "Declaración de la Pregunta",
+          "titlePlaceholder": "Declaración de la Pregunta (por ejemplo, ¿Funciona correctamente el mecanismo de apagado de emergencia?)",
+          "description": "Descripción de la Pregunta",
+          "descriptionPlaceholder": "Instrucciones (opcional)",
+          "answerType": "Tipo de Respuesta",
+          "responseType": {
+            "text": "Texto/Descripción",
+            "number": "Número",
+            "webCam": "Web Cam Image",
+            "dateTime": "Fecha y Hora",
+            "radio": "Botones de Radio (Selección Única)",
+            "multiselect": "Selección Múltiple",
+            "imageVideo": "Imagen/Video",
+            "date": "Fecha",
+            "time": "Hora",
+            "dropdown": "Desplegable"
+          },
+          "option": {
+            "placeholder": "Etiqueta de Opción"
+          }
+        }
+      },
+      "btn": {
+        "back": "Atrás",
+        "save": "Guardar",
+        "cancel": "Cancelar",
+        "addQuestion": "Agregar Pregunta",
+        "addSection": "Agregar Sección",
+        "delete": "Eliminar",
+        "newOption": "Agregar opción"
+      },
+      "checkbox": {
+        "required": "Requerido"
+      }
+    },
+    "delete": {
+      "title": "¡Eliminar Plantilla de Informe!",
+      "description": "¿Estás seguro de que quieres eliminar esta plantilla de informe?",
+      "subDescription": "Esta acción no se puede revertir.",
+      "deleteButtonText": "Eliminar Plantilla",
+      "cancelButtonText": "Cancelar"
+    },
+    "clone": {
+      "title": "Nombre de Informe Clonado",
+      "description": "Para continuar clonando la plantilla de informe, por favor agregue un nuevo nombre para ella a continuación.",
+      "titleFiledLabel": "Ingrese el nombre del informe",
+      "titlePlaceHolder": "por ejemplo, Informe de Inspección de Equipos",
+      "cloneButtonText": "Clonar",
+      "cancelButtonText": "Cancelar"
+    }
+  },
+  "settings": {
+    "tabs": {
+      "preferences": "Preferencias",
+      "portalAccesss": "Acceso al Portal",
+      "overtimeRules": "Reglas de Horas Extra",
+      "activityLog": "Registro de Actividad",
+      "reportTemplates": "Plantillas de Informes"
+    }
+  },
+  "graph": {
+    "users": "Usuarios",
+    "usersByPost": "Usuarios Por Publicación",
+    "usersOverTheYear": "Usuarios durante el año",
+    "year": "Año",
+    "officers": "Oficiales",
+    "clients": "Clientes",
+    "years": "Años",
+    "noOfClients": "No. de Clientes"
+  }
+}

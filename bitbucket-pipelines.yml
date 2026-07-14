@@ -1,0 +1,251 @@
+definitions:
+  services:
+    docker:
+      memory: 8192
+  caches:
+    my-node-cache:
+      key:
+        files: # the files you want pipelines to check for changes when deciding whether to use the cache, or download fresh dependencies.
+          - package.json
+          - package-lock.json # glob patterns are supported for cache key files
+      path: node_modules # the directory you want to be cached.
+
+image: node:20.2.0
+
+options:
+  size: '2x'
+
+pipelines:
+  pull-requests:
+    '**':
+      - step:
+          name: Trivy Analysis
+          image: aquasec/trivy:0.68.2
+          script:
+            - trivy fs "$(pwd)" --scanners vuln,misconfig,license,secret --exit-code ${TRIVY_FAIL_PIPELINE} --severity UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL --no-progress --format template --template "@trivy-sonar.tpl" --output trivy-sonar.json
+            - trivy fs "$(pwd)" --scanners vuln --format cyclonedx --output SBOM.json
+          artifacts:
+            - SBOM.json
+            - trivy-sonar.json
+      - step:
+          name: Test Coverage and SonarQube Analysis
+          caches:
+            - my-node-cache
+          script:
+            - npm i
+            - npm run test:coverage || true
+            - apt-get update -qq && apt-get install -y -qq openjdk-17-jre wget unzip
+            - wget -q https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-7.0.1.4817-linux-x64.zip && unzip -q sonar-scanner-cli-*.zip
+            - ./sonar-scanner-*/bin/sonar-scanner -Dsonar.projectKey="${BITBUCKET_REPO_SLUG}:${BITBUCKET_PR_DESTINATION_BRANCH}" -Dsonar.projectName="${BITBUCKET_REPO_SLUG} [${BITBUCKET_PR_DESTINATION_BRANCH}]" -Dsonar.host.url=${SONAR_HOST_URL} -Dsonar.token=${SONAR_TOKEN} -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info -Dsonar.externalIssuesReportPaths=trivy-sonar.json -Dsonar.cyclonedx.bom.reportPath=SBOM.json -Dsonar.qualitygate.wait=false
+
+  branches:
+    development:
+      - stage:
+          name: Deploy to development
+          deployment: env_build_dev_aen_signal # defined in repo settings.
+          steps:
+            - step:
+                name: Build and Publish to Static web app on Development
+                caches:
+                  - my-node-cache
+                script:
+                  - VERSION_NUMBER="0.$BITBUCKET_BUILD_NUMBER.$BITBUCKET_STEP_RUN_NUMBER-$BITBUCKET_BRANCH" # formulate build version
+                  - echo "$VERSION_NUMBER" > .version # embed version in codebase
+                  - echo "$BITBUCKET_COMMIT" > .commit  # embed commit SHA in codebase
+                  - curl -sL https://aka.ms/InstallAzureCLIDeb | bash # install azure CLI
+                  - az login --service-principal --username $AZURE_CLIENT_ID --password $AZURE_CLIENT_SECRET --tenant $AZURE_TENANT_ID # login using service principal
+                  - az staticwebapp appsettings list --name $AZURE_STATIC_WEB_APP_NAME --resource-group $AZURE_RESOURCE_GROUP_NAME --output json > env.json # download variables from azure
+                  - apt update && apt install -y jq && jq -r '.properties | to_entries[] | "\(.key)=\(.value)"' env.json > .env # convert json to key value pair
+                  - npm i
+                  - export NODE_OPTIONS="--max-old-space-size=8192"
+                  - npm run build
+                  - npm install -g @azure/static-web-apps-cli@1.1.10
+                  - NODE_NO_WARNINGS=1 swa deploy --deployment-token=$AZURE_STATIC_WEB_APP_DEPLOYMENT_TOKEN --env=production --verbose # deploy code
+            - step:
+                name: Send Email Notification
+                image: python:3.13.5 # override the default image to use Python for sending email
+                script:
+                  - apt-get update && apt-get install -y gettext # for envsubst
+                  - export FROM_ADDRESS=$SMTP_FROM_ADDRESS
+                  - export TO_ADDRESS=$SMTP_TO_ADDRESS
+                  - export EMAIL_SUBJECT="Deployment - Edge Frontend - Development - Signal" # change as per your requirement
+                  - envsubst < deploy-message.html > deploy-message-processed.html
+                  - python send-email.py --from_addr "$FROM_ADDRESS" --to_addr "$TO_ADDRESS" --email_subject "$EMAIL_SUBJECT" --email_body "deploy-message-processed.html"
+            - step:
+                name: Log Deployment
+                image: python:3.13.5 # override the default image to use Python for logging deployment
+                script:
+                  - pip install --no-cache-dir --upgrade pip # upgrade pip to avoid issues with older versions
+                  - pip install pandas azure-kusto-data azure-kusto-ingest
+                  - export SERVICE_NAME="Edge Frontend"
+                  - export VERSION_NUMBER="0.$BITBUCKET_BUILD_NUMBER.$BITBUCKET_STEP_RUN_NUMBER-$BITBUCKET_BRANCH" # formulate build version
+                  - export COMMIT_SHA=$BITBUCKET_COMMIT
+                  - python log-deployment.py --service-name "$SERVICE_NAME" --version-number "$VERSION_NUMBER" --commit-sha "$COMMIT_SHA" --env-name "dev"
+    staging:
+      - stage:
+          name: Deploy to Staging
+          deployment: env_build_qa_aen_signal # defined in repo settings
+          steps:
+            - step:
+                name: Build and Publish to Static web app on STAGING
+                caches:
+                  - my-node-cache
+                script:
+                  - VERSION_NUMBER="0.$BITBUCKET_BUILD_NUMBER.$BITBUCKET_STEP_RUN_NUMBER-$BITBUCKET_BRANCH" # formulate build version
+                  - echo "$VERSION_NUMBER" > .version # embed version in codebase
+                  - echo "$BITBUCKET_COMMIT" > .commit  # embed commit SHA in codebase
+                  - curl -sL https://aka.ms/InstallAzureCLIDeb | bash # install azure CLI
+                  - az login --service-principal --username $AZURE_CLIENT_ID --password $AZURE_CLIENT_SECRET --tenant $AZURE_TENANT_ID # login using service principal
+                  - az staticwebapp appsettings list --name $AZURE_STATIC_WEB_APP_NAME --resource-group $AZURE_RESOURCE_GROUP_NAME --output json > env.json # download variables from azure
+                  - apt update && apt install -y jq && jq -r '.properties | to_entries[] | "\(.key)=\(.value)"' env.json > .env # convert json to key value pair
+                  - npm i
+                  - export NODE_OPTIONS="--max-old-space-size=8192"
+                  - npm run build
+                  - npm install -g @azure/static-web-apps-cli@1.1.10
+                  - NODE_NO_WARNINGS=1 swa deploy --deployment-token=$AZURE_STATIC_WEB_APP_DEPLOYMENT_TOKEN --env=production --verbose # deploy code
+            - step:
+                name: Send Email Notification
+                image: python:3.13.5 # override the default image to use Python for sending email
+                script:
+                  - apt-get update && apt-get install -y gettext # for envsubst
+                  - export FROM_ADDRESS=$SMTP_FROM_ADDRESS
+                  - export TO_ADDRESS=$SMTP_TO_ADDRESS
+                  - export EMAIL_SUBJECT="Deployment - Edge Frontend - Staging - Signal" # change as per your requirement
+                  - envsubst < deploy-message.html > deploy-message-processed.html
+                  - python send-email.py --from_addr "$FROM_ADDRESS" --to_addr "$TO_ADDRESS" --email_subject "$EMAIL_SUBJECT" --email_body "deploy-message-processed.html"
+            - step:
+                name: Log Deployment
+                image: python:3.13.5 # override the default image to use Python for logging deployment
+                script:
+                  - pip install --no-cache-dir --upgrade pip # upgrade pip to avoid issues with older versions
+                  - pip install pandas azure-kusto-data azure-kusto-ingest
+                  - export SERVICE_NAME="Edge Frontend"
+                  - export VERSION_NUMBER="0.$BITBUCKET_BUILD_NUMBER.$BITBUCKET_STEP_RUN_NUMBER-$BITBUCKET_BRANCH" # formulate build version
+                  - export COMMIT_SHA=$BITBUCKET_COMMIT
+                  - python log-deployment.py --service-name "$SERVICE_NAME" --version-number "$VERSION_NUMBER" --commit-sha "$COMMIT_SHA" --env-name "staging"
+    new-uat:
+      - stage:
+          name: Deploy to UAT
+          deployment: env_build_uat_usc_signal # defined in repo settings
+          steps:
+            - step:
+                name: Build and Publish to Static web app on UAT
+                caches:
+                  - my-node-cache
+                script:
+                  - VERSION_NUMBER="0.$BITBUCKET_BUILD_NUMBER.$BITBUCKET_STEP_RUN_NUMBER-$BITBUCKET_BRANCH" # formulate build version
+                  - echo "$VERSION_NUMBER" > .version # embed version in codebase
+                  - echo "$BITBUCKET_COMMIT" > .commit  # embed commit SHA in codebase
+                  - curl -sL https://aka.ms/InstallAzureCLIDeb | bash # install azure CLI
+                  - az login --service-principal --username $AZURE_CLIENT_ID --password $AZURE_CLIENT_SECRET --tenant $AZURE_TENANT_ID # login using service principal
+                  - az staticwebapp appsettings list --name $AZURE_STATIC_WEB_APP_NAME --resource-group $AZURE_RESOURCE_GROUP_NAME --output json > env.json # download variables from azure
+                  - apt update && apt install -y jq && jq -r '.properties | to_entries[] | "\(.key)=\(.value)"' env.json > .env # convert json to key value pair
+                  - npm i
+                  - export NODE_OPTIONS="--max-old-space-size=8192"
+                  - npm run build
+                  - npm install -g @azure/static-web-apps-cli@1.1.10
+                  - NODE_NO_WARNINGS=1 swa deploy --deployment-token=$AZURE_STATIC_WEB_APP_DEPLOYMENT_TOKEN --env=production --verbose # deploy code
+            - step:
+                name: Send Email Notification
+                image: python:3.13.5 # override the default image to use Python for sending email
+                script:
+                  - apt-get update && apt-get install -y gettext # for envsubst
+                  - export FROM_ADDRESS=$SMTP_FROM_ADDRESS
+                  - export TO_ADDRESS=$SMTP_TO_ADDRESS
+                  - export EMAIL_SUBJECT="Deployment - Edge Frontend - UAT - Signal" # change as per your requirement
+                  - envsubst < deploy-message.html > deploy-message-processed.html
+                  - python send-email.py --from_addr "$FROM_ADDRESS" --to_addr "$TO_ADDRESS" --email_subject "$EMAIL_SUBJECT" --email_body "deploy-message-processed.html"
+            - step:
+                name: Log Deployment
+                image: python:3.13.5 # override the default image to use Python for logging deployment
+                script:
+                  - pip install --no-cache-dir --upgrade pip # upgrade pip to avoid issues with older versions
+                  - pip install pandas azure-kusto-data azure-kusto-ingest
+                  - export SERVICE_NAME="Edge Frontend"
+                  - export VERSION_NUMBER="0.$BITBUCKET_BUILD_NUMBER.$BITBUCKET_STEP_RUN_NUMBER-$BITBUCKET_BRANCH" # formulate build version
+                  - export COMMIT_SHA=$BITBUCKET_COMMIT
+                  - python log-deployment.py --service-name "$SERVICE_NAME" --version-number "$VERSION_NUMBER" --commit-sha "$COMMIT_SHA" --env-name "uat"
+    master:
+      - stage:
+          name: Deploy to Production US
+          deployment: env_build_prd_usc_signal # defined in repo settings
+          steps:
+            - step:
+                name: Build and Publish to Static web app on Production US
+                caches:
+                  - my-node-cache
+                script:
+                  - VERSION_NUMBER="0.$BITBUCKET_BUILD_NUMBER.$BITBUCKET_STEP_RUN_NUMBER-$BITBUCKET_BRANCH" # formulate build version
+                  - echo "$VERSION_NUMBER" > .version # embed version in codebase
+                  - echo "$BITBUCKET_COMMIT" > .commit  # embed commit SHA in codebase
+                  - curl -sL https://aka.ms/InstallAzureCLIDeb | bash # install azure CLI
+                  - az login --service-principal --username $AZURE_CLIENT_ID --password $AZURE_CLIENT_SECRET --tenant $AZURE_TENANT_ID # login using service principal
+                  - az staticwebapp appsettings list --name $AZURE_STATIC_WEB_APP_NAME --resource-group $AZURE_RESOURCE_GROUP_NAME --output json > env.json # download variables from azure
+                  - apt update && apt install -y jq && jq -r '.properties | to_entries[] | "\(.key)=\(.value)"' env.json > .env # convert json to key value pair
+                  - npm i
+                  - export NODE_OPTIONS="--max-old-space-size=8192"
+                  - npm run build
+                  - npm install -g @azure/static-web-apps-cli@1.1.10
+                  - NODE_NO_WARNINGS=1 swa deploy --deployment-token=$AZURE_STATIC_WEB_APP_DEPLOYMENT_TOKEN --env=production --verbose # deploy code
+            - step:
+                name: Send Email Notification
+                image: python:3.13.5 # override the default image to use Python for sending email
+                script:
+                  - apt-get update && apt-get install -y gettext # for envsubst
+                  - export FROM_ADDRESS=$SMTP_FROM_ADDRESS
+                  - export TO_ADDRESS=$SMTP_TO_ADDRESS
+                  - export EMAIL_SUBJECT="Deployment - Edge Frontend - Production - US - Signal" # change as per your requirement
+                  - envsubst < deploy-message.html > deploy-message-processed.html
+                  - python send-email.py --from_addr "$FROM_ADDRESS" --to_addr "$TO_ADDRESS" --email_subject "$EMAIL_SUBJECT" --email_body "deploy-message-processed.html"
+            - step:
+                name: Log Deployment
+                image: python:3.13.5 # override the default image to use Python for logging deployment
+                script:
+                  - pip install --no-cache-dir --upgrade pip # upgrade pip to avoid issues with older versions
+                  - pip install pandas azure-kusto-data azure-kusto-ingest
+                  - export SERVICE_NAME="Edge Frontend"
+                  - export VERSION_NUMBER="0.$BITBUCKET_BUILD_NUMBER.$BITBUCKET_STEP_RUN_NUMBER-$BITBUCKET_BRANCH" # formulate build version
+                  - export COMMIT_SHA=$BITBUCKET_COMMIT
+                  - python log-deployment.py --service-name "$SERVICE_NAME" --version-number "$VERSION_NUMBER" --commit-sha "$COMMIT_SHA" --env-name "prd-usc"
+    master-eu:
+      - stage:
+          name: Deploy to Production EU
+          deployment: env_build_prd_euw_signal # defined in repo settings
+          steps:
+            - step:
+                name: Build and Publish to Static web app on Production EU
+                caches:
+                  - my-node-cache
+                script:
+                  - VERSION_NUMBER="0.$BITBUCKET_BUILD_NUMBER.$BITBUCKET_STEP_RUN_NUMBER-$BITBUCKET_BRANCH" # formulate build version
+                  - echo "$VERSION_NUMBER" > .version # embed version in codebase
+                  - echo "$BITBUCKET_COMMIT" > .commit  # embed commit SHA in codebase
+                  - curl -sL https://aka.ms/InstallAzureCLIDeb | bash # install azure CLI
+                  - az login --service-principal --username $AZURE_CLIENT_ID --password $AZURE_CLIENT_SECRET --tenant $AZURE_TENANT_ID # login using service principal
+                  - az staticwebapp appsettings list --name $AZURE_STATIC_WEB_APP_NAME --resource-group $AZURE_RESOURCE_GROUP_NAME --output json > env.json # download variables from azure
+                  - apt update && apt install -y jq && jq -r '.properties | to_entries[] | "\(.key)=\(.value)"' env.json > .env # convert json to key value pair
+                  - npm i
+                  - export NODE_OPTIONS="--max-old-space-size=8192"
+                  - npm run build
+                  - npm install -g @azure/static-web-apps-cli@1.1.10
+                  - NODE_NO_WARNINGS=1 swa deploy --deployment-token=$AZURE_STATIC_WEB_APP_DEPLOYMENT_TOKEN --env=production --verbose # deploy code
+            - step:
+                name: Send Email Notification
+                image: python:3.13.5 # override the default image to use Python for sending email
+                script:
+                  - apt-get update && apt-get install -y gettext # for envsubst
+                  - export FROM_ADDRESS=$SMTP_FROM_ADDRESS
+                  - export TO_ADDRESS=$SMTP_TO_ADDRESS
+                  - export EMAIL_SUBJECT="Deployment - Edge Frontend - Production - EU - Signal" # change as per your requirement
+                  - envsubst < deploy-message.html > deploy-message-processed.html
+                  - python send-email.py --from_addr "$FROM_ADDRESS" --to_addr "$TO_ADDRESS" --email_subject "$EMAIL_SUBJECT" --email_body "deploy-message-processed.html"
+            - step:
+                name: Log Deployment
+                image: python:3.13.5 # override the default image to use Python for logging deployment
+                script:
+                  - pip install --no-cache-dir --upgrade pip # upgrade pip to avoid issues with older versions
+                  - pip install pandas azure-kusto-data azure-kusto-ingest
+                  - export SERVICE_NAME="Edge Frontend"
+                  - export VERSION_NUMBER="0.$BITBUCKET_BUILD_NUMBER.$BITBUCKET_STEP_RUN_NUMBER-$BITBUCKET_BRANCH" # formulate build version
+                  - export COMMIT_SHA=$BITBUCKET_COMMIT
+                  - python log-deployment.py --service-name "$SERVICE_NAME" --version-number "$VERSION_NUMBER" --commit-sha "$COMMIT_SHA" --env-name "prd-euw"  

@@ -1,0 +1,4280 @@
+{
+  "sideNavBar": {
+    "linkText": { "dashboard": "Dashboard", "Setting": "Setting" }
+  },
+  "obxZones": {
+    "labels": {
+      "updateZone": "Update Zone",
+      "createZone": "Create Zone",
+      "basicInfo": "Basic Information",
+      "displayedOnProfile": "This is the basic information for the zone",
+      "location": "Location",
+      "profileLocation": "Add the fencing of this zone, you can draw zones's fencing within franchise",
+      "filterSites": "Select sites which will be in this zone",
+      "sites": "Sites",
+      "assignedZones": "Assigned Sites ({{count}})",
+      "unAssignedZones": "Unassigned Sites ({{count}})"
+    },
+    "popUps": {
+      "removeSite": "Remove Site!",
+      "removeSiteDes": "Are you sure you want to remove this site from zone? This action can not be undone.",
+      "changeZone": "Change Zone!",
+      "changeZoneDes": "Select a zone you want to change."
+    },
+
+    "searchFilter": "Search by Zone"
+  },
+  "schedules": {
+    "checkpoints": "Checkpoints",
+    "autoClockoutShift": "Auto-Clockout Shift",
+    "selectExisting": "Select an existing site",
+    "chooseSite": "Choose site",
+    "tourOne": "{{tour}} 1",
+    "dutyDuplicate": "This duty is same as duty no. {{copyIndex}}",
+    "visitStartEndDateSame": "Start and end date of visit cannot be same",
+    "selectDate": "Select Date",
+    "dutyDuration": "Job Duration",
+    "endTimeGreater": "End time must be after than start time",
+    "startTimeBeforeEnd": "Start time must be before end time",
+    "timeDiffOf30minutes": "Minimum duration of an {{extra}} job is 30 minutes",
+    "startTimeIsPast": "Selected time is passed already",
+    "valueRange": "The value must be between {{min}} & {{max}}",
+    "maxSevenDays": "Duty must be 7 days maximum",
+    "hourlyRateForExtraDuty": "Hourly Rate/{{officer}}",
+    "selectDays": "Select Days",
+    "splitShift": {
+      "cancelShift": "Cancel Shift",
+      "restoreShift": "Restore Shift",
+      "splitShift": "Split shift",
+      "title": "Split Shift",
+      "description": "Choose how you want to split the shift",
+      "splitPointTimeTooltip": "Cannot split before current executed time of the ongoing shift.",
+      "shiftName": "Shift",
+      "time": "Time",
+      "duration": "Duration",
+      "date": "Date",
+      "shift1": "Shift 1:",
+      "shift2": "Shift 2:",
+      "startTime": "Start Time",
+      "endTime": "End Time",
+      "totalShiftDuration": "Total Shift Duration:",
+      "allocatedHours": "Allocated Hours:",
+      "unallocated": "unallocated",
+      "success": "Shift split successfully",
+      "cancel": "Cancel",
+      "save": "Save",
+      "saving": "Saving...",
+      "errors": {
+        "startTimeRequired": "Start time is required",
+        "pastStartTime": "You cannot select a past date or time",
+        "endTimeRequired": "End time is required",
+        "notContinuous": "Shift splits must be continuous. No time gaps allowed.",
+        "overlapping": "Split intervals overlap. Please adjust times.",
+        "durationMismatch": "Allocated hours must match total shift duration.",
+        "shift1StartMustMatch": "Shift 1 start time must match original shift start time",
+        "shift2EndMustMatch": "Shift 2 end time must match original shift end time",
+        "shift1EndTimeRequired": "Shift 1 end time is required.",
+        "shift2StartTimeRequired": "Shift 2 start time is required.",
+        "shift1EndAfterOriginalStart": "Shift 1 end time must be greater than original shift start time.",
+        "shift2StartBeforeOriginalEnd": "Shift 2 start time must be less than original shift end time.",
+        "shift2EndAtOrBeforeOriginalEnd": "The end time of the second split must be equal to or less than the original shift's end time.",
+        "splitPointAtOrAfterCurrentTime": "Cannot split before current executed time of the ongoing shift.",
+        "saveFailed": "Unable to split shift. Please try again."
+      }
+    },
+    "restoreShiftModal": {
+      "title": "Restore Shift!",
+      "subtitle": "Are you sure you want to restore this shift and return it back to schedule?",
+      "close": "Close",
+      "confirm": "Restore"
+    },
+    "cancelShiftModal": {
+      "startEndDate": "Start & End Date",
+      "title": "Cancel Shift!",
+      "subtitle": "Are you sure you want to cancel this shift?",
+      "thisShift": "This shift",
+      "thisAndFollowingShifts": "This and following shifts",
+      "customRange": "Custom range",
+      "startDate": "Start Date",
+      "endDate": "End Date",
+      "shiftDays": "Shift Days",
+      "reasonLabel": "Reason",
+      "reasonPlaceholder": "Add reason for cancelling the shift",
+      "close": "Close",
+      "confirm": "Cancel Shift"
+    },
+    "assignDedicatedDuty": {
+      "stepper": {
+        "stepperTitle": "Dedicated Job",
+        "stepperSubTitle": {
+          "label": "Additional Services:",
+          "visitorManagement": "Visitor Management",
+          "loadManagement": "Load Management"
+        },
+        "rules": "State Rules",
+        "totalHours": "{{totalHours}} hours",
+        "step1": {
+          "label": "Step 1",
+          "title": "Job Break Down",
+          "description": "Job Break Down",
+          "tooltipMsg": "Shift is already splitted"
+        },
+        "step2": {
+          "label": "Step 2",
+          "title": "Assign Shifts",
+          "description": "Assign Shifts"
+        }
+      },
+      "splitDuties": {
+        "title": "Shift 1",
+        "stateRules": "State Rules",
+        "subTitle": "Split Shift",
+        "subtitleDescription": "Choose how you want to split the shift",
+        "splitOnwards": "Today Onwards",
+        "defaultShiftName": "Shift {{index}}",
+        "splitType": {
+          "default": {
+            "title": "Default",
+            "description": "Split shift according to default shift hours",
+            "defaultTiming": "Default Shift Timing",
+            "shiftDuration": "{{number}} hours"
+          },
+          "custom": {
+            "title": "Custom",
+            "description": "Customize your splits",
+            "startTime": "Start Time",
+            "endTime": "End Time",
+            "specifyDays": "Specify Days",
+            "days": {
+              "sun": "Sun",
+              "mon": "Mon",
+              "tue": "Tue",
+              "wed": "Wed",
+              "thu": "Thu",
+              "fri": "Fri",
+              "sat": "Sat"
+            },
+            "splitBtn": "Split Shift",
+            "shiftDuration": "Total Shift Duration",
+            "allocatedHours": "Allocated Hours",
+            "unallocatedHours": "{{time}} unallocated",
+            "error": {
+              "invalidAllocatedHoursError": "Allocated hours for {{time1}} - {{time2}} are {{allocatedHours}} instead of {{total}}",
+              "totalAllocatedHoursError": "Total allocated hours are {{allocatedHours}} instead of {{total}}",
+              "invalidDaySelection": "Day selection for {{day}} does not fall on contract",
+              "invalidTimeSelection": "Time selection for {{day}} does not fall on contract",
+              "invalidStartTime": "Start Time is Invalid for {{day}}",
+              "invalidEndTime": "End Time is Invalid for {{day}}",
+              "requiredStartTime": "Start time is required",
+              "requiredEndTime": "End time is required",
+              "requiredDay": "Day must be selected",
+              "timeOverlapped": "Same time overlapped on {{name}} for {{day}}",
+              "infoMsg": "Resolve all errors first"
+            }
+          }
+        },
+
+        "assignDuty": {
+          "title": "Changes will affect this job from today onwards."
+        },
+        "splitDuty": {
+          "title": "Split Job",
+          "description": "Choose how you want to split the shift",
+          "option1": {
+            "label": "Default",
+            "description": "Split jobs according to default shift hours",
+            "defaultTiming": "Default Shift Timing",
+            "defaultHours": "{{hour}} Hours"
+          },
+          "option2": {
+            "label": "Equally",
+            "description": "Equally split jobs within default shift hours"
+          },
+          "option3": {
+            "label": "Custom",
+            "description": "Customize your splits",
+            "select": {
+              "title": "Shifts",
+              "option1": "Select"
+            }
+          },
+          "hrs": "hrs"
+        },
+        "error": {
+          "fieldMissing": "Shifts are required",
+          "shiftTimeValidations": {
+            "hoursMissmatch": "Total hours do not match job time or shifts overlap",
+            "invalidShiftTimes": "Please enter valid shift times for all shifts"
+          }
+        }
+      },
+      "toursAndReports": {
+        "defaultTourName": "Tour {{id}}",
+        "title": "Tours",
+        "subTitle": "Add Tours for the job and assign checkpoints and reports to it",
+        "addTour": "Add Tour",
+        "deleteTour": "Delete Tour",
+        "checkpoints": {
+          "addCheckpoints": "Add Devices/Checkpoints",
+          "dropdownTitle": "Devices/Checkpoints",
+          "all": "All",
+          "searchPlaceholder": "Search for a device",
+          "addInstructions": "Add Description"
+        },
+        "reports": {
+          "addReports": "Add Reports",
+          "dropdownTitle": "Reports",
+          "searchPlaceholder": "Search for a report",
+          "noOfReports": "No. of Reports",
+          "listing": {
+            "columns": {
+              "name": "Reports",
+              "site": "Site",
+              "dueDate": "Due Time",
+              "submittedBy": "Submitted By",
+              "submittedDate": "Submitted At",
+              "submittedTime": "Submitted Time",
+              "reason": "Rejection Reason",
+              "shiftTiming": "Shift Timing",
+              "shiftName": "Shift Name",
+              "templateableType": "Type"
+            },
+            "shiftTiming": "Shift Timing"
+          },
+          "details": {
+            "level": "Level",
+            "status": "Status",
+            "submittedDate": "Submitted Date",
+            "submittedTime": "Submitted Time"
+          }
+        },
+        "startEndTime": {
+          "title": "Add Start & End Time"
+        },
+        "error": {
+          "fieldMissing": "All fields in Tours and Reports are mandatory"
+        }
+      },
+      "assignOfficers": {
+        "title": "Assign {{officer}}",
+        "error": {
+          "fieldMissing": "All fields in Assign Offiers are mandatory"
+        }
+      },
+      "assignShift": {
+        "title": {
+          "shift": "Assign Shift",
+          "tourTemplate": "Create {{tour}} Template",
+          "tourAssignment": "Add {{tour}}",
+          "reassignment": "Shift Reassignment",
+          "editReassignment": "Edit Reassignment",
+          "location": "Location",
+          "officer": "{{officer}}"
+        },
+        "chipText": "{{officer}} assignment is changed for current shift",
+        "cancel": "Cancel",
+        "save": "Save",
+        "shiftScheduleCancelled": "Shift schedule is cancelled.",
+        "shiftScheduleFullyCancelledTooltip": "Shift schedule is fully cancelled.",
+        "defaultShiftName": "Shift {{index}}",
+        "selectDate": "Select Date",
+        "selectDays": "Select Days:",
+        "atLeastOneDayRequired": "Please select at least one day to apply changes.",
+        "startAndEndDateRequired": "Start date and end date are required",
+        "startDateRequired": "Start date is required",
+        "endDateRequired": "End date is required",
+        "locationPlaceholder": "Select Location",
+        "officerPlaceholder": "Select {{officer}}",
+        "officerAssignMe": "Assign Me",
+        "officerUnavailable": "Offline",
+        "available": "Available",
+        "unassignOfficer": "Unassign {{officer}}",
+        "unassignVehicle": "Unassign Vehicle",
+        "officerAllocated": "Allocated",
+        "notInZone": "Out of zone",
+        "unavailable": "Unavailable",
+        "onLeave": "On leave",
+        "changeHourlyRate": "Change Hourly Rate ($)",
+        "thisShiftOnly": "This Shift Only",
+        "upcomminShiftOnwards": "Upcoming shift onwards",
+        "changeHourlyRatePlaceholder": "Change Hourly Pay Rate",
+        "shiftReassignment": "Shift reassignment",
+        "addTours": "Add {{tours}}",
+        "optional": "(optional)",
+        "toursTitle": "{{tours}}",
+        "toursSubtitle": "Add {{tours}} for the shifts",
+        "toursInfo": "These tours will apply to all future shifts, regardless of selected shift type",
+        "locationInfo": "Applies within the selected date range only",
+        "defaultTourName": "{{tour}} {{index}}",
+        "selectTourPlaceholder": "Select {{tour}}",
+        "tourCreateBtn": "Create {{tour}} Template",
+        "addOccurances": "Add Occurrences",
+        "occurances": "Occurrences",
+        "repeatTourLabel": "Repeat {{tour}}",
+        "repeatTourPlaceholder": "Repeat {{tour}}",
+        "repeatInfinite": "Till shift end",
+        "repeatAfterTimeLabel": "Repeat after time (mins)",
+        "repeatAfterTimePlaceholder": "Repeat after time",
+        "tourtemplate": {
+          "nameLabel": "{{tour}} Template Name",
+          "namePlaceholder": "Type Name",
+          "checkpointsLabel": "Assign Checkpoints",
+          "checkpointsPlaceholder": "Choose Checkpoint",
+          "descriptionBtn": "Add Description",
+          "descriptionPlaceholder": "Type Here",
+          "reportLabel": "Assign Report",
+          "reportPlaceholder": "Choose Report Template",
+          "startTimeLabel": "Start Time",
+          "serviceTimeLabel": "Service Time (mins)",
+          "serviceTimeLabelInfo": "Service time is the duration within which the {{officer}} must complete their tasks/reports",
+          "serviceTimePlaceholder": "Choose Service Time",
+          "between": "Between 1-{{max}}",
+          "serviceTimeBoundError": "Service time must be between 1 and {{max}}",
+          "startTimePlaceholder": "Start Time",
+          "duration": "Duration (mins)",
+          "required": "{{name}} is required",
+          "dateRequiredError": "Date is required",
+          "endDateRequiredError": "End date is required",
+          "officerDaysRequiredError": "Days selection is required"
+        },
+        "deleteTourTemplateConfirmation": {
+          "title": "Delete {{tour}} Template!",
+          "description": "Are you sure you want to delete this {{tour}} template?",
+          "cancelBtn": "Cancel",
+          "deleteBtn": "Delete {{tour}}"
+        },
+        "reassignment": {
+          "startTimeLabel": "Start Time",
+          "startTimePlaceholder": "Start Time",
+          "endTimeLabel": "End Time",
+          "endTimePlaceholder": "End Time",
+          "officerDropdown": "Choose Available {{officer}}",
+          "officerPlaceholder": "Select {{officer}}",
+          "chipText": "Changes are being implemented for current shift only.",
+          "startTimeBelowError": "Start time must be greater than current time",
+          "reassignSelectedHit": "Reassign Selected {{hit}}(s)"
+        },
+        "patrolTour": {
+          "tourAssignment": "Add {{tour}}",
+          "editTourAssignment": "Edit {{tour}}",
+          "tourTemplateTitle": "{{tour}} Template"
+        },
+
+        "assignShiftsFor": {
+          "locationLabel": "Assign Location for",
+          "officerLabel": "Assign Officer for",
+          "toursLabel": "Assign Tours for",
+          "options": {
+            "option1": "Today Only",
+            "option2": "Today Onwards"
+          }
+        },
+        "visitorManagement": "Visitor Management",
+        "loadManagement": "Load Management",
+        "selectLocation": {
+          "label": "Allocate Location",
+          "options": {
+            "option1": "Front Gate",
+            "option2": "4th Floor",
+            "option3": "Green Room"
+          }
+        },
+        "officerAlreadyAssigned": "{{name}} is already assigned another job on ‘overlap time’",
+        "error": {
+          "invalidStartTime": "Start Time is Invalid",
+          "invalidEndTime": "{{tour}} is ending at invalid time",
+          "timeOverlapped": "Same time is overlapped with {{name}}",
+          "infoMsg": "Resolve all errors first",
+          "requiredHourlyRate": "Hourly rate is required"
+        },
+        "editedDedicetedShift": "Edited shifts become independent and are not affected by bulk action.",
+        "thisShift": {
+          "title": "This Shift",
+          "startDateTime": "Start Date & Time",
+          "startDateTimePlaceholder": "Select Start Date & Time",
+          "endDateTime": "End Date & Time",
+          "endDateTimePlaceholder": "Select End Date & Time"
+        },
+        "customShift": {
+          "title": "Custom Range",
+          "startDate": "Start Date",
+          "startDatePlaceholder": "Select Start Date",
+          "endDate": "End Date",
+          "endDatePlaceholder": "Select End Date",
+          "shiftDays": "Shift Days",
+          "subtitle": "Select Date"
+        },
+        "thisAndFollowingShift": {
+          "title": "This and Following Shift",
+          "startDateTime": "Start Date & Time",
+          "startDateTimePlaceholder": "Select Start Date & Time",
+          "endDateTime": "End Date & Time",
+          "endDateTimePlaceholder": "Select End Date & Time"
+        },
+        "autoClockout": {
+          "title": "Auto-Clockout Shift",
+          "description": "Automatically ends the shift at the scheduled time for accurate reporting"
+        },
+        "shiftPayRate": {
+          "title": "Shift Pay Rate Override",
+          "description": "This is the shift-specific rate that will override the base rate for the job when applicable"
+        },
+        "shiftReassignmentSection": {
+          "title": "Shift Reassignment",
+          "description": "Changes are being implemented for current shift only",
+          "startTimeLabel": "Start Time",
+          "startTimePlaceholder": "Start Time",
+          "endTimeLabel": "End Time",
+          "endTimePlaceholder": "End Time",
+          "officerDropdown": "Choose Available Officer",
+          "officerPlaceholder": "Select Officer"
+        },
+        "changesToApply": {
+          "title": "Changes to apply",
+          "location": "Location",
+          "officer": "Officer",
+          "shiftDays": "Shift Days",
+          "shiftTime": "Shift Time",
+          "shiftPayRate": "Shift Pay Rate",
+          "shiftReassignment": "Shift Reassignment",
+          "reassignedOfficer": "Reassigned Officer",
+          "reassignedStartTime": "Reassigned Start Time"
+        }
+      },
+      "errors": {
+        "pastShiftAssignment": "Past job assignment is not allowed",
+        "timePassedError": "Cannot split or assign past job",
+        "tourTimeOutOfRange": "Tour time range do not match with respective Shift time range",
+        "shiftDurationError": "Default shift duration not found in preferences"
+      },
+      "assignOrEditShiftCard": {
+        "time": "Time",
+        "duration": "Duration",
+        "date": "Date",
+        "day": "Day"
+      }
+    },
+    "filters": {
+      "locations": {
+        "label": "All Sites",
+        "all": "All Locations",
+        "searchPlaceholder": "Search for a Location"
+      },
+      "sites": {
+        "label": "All Sites",
+        "all": "All Sites",
+        "searchPlaceholder": "Search for a Site"
+      },
+      "duties": {
+        "label": "All Jobs",
+        "all": "All Jobs",
+        "patrol": "{{patrol}} Job",
+        "dedicated": "{{dedicated}} Job",
+        "extra": "{{extra}} Job",
+        "dispatch": "{{dispatch}}"
+      },
+      "status": {
+        "label": "All Statuses",
+        "all": "All Statuses",
+        "functional": "Functional",
+        "requiresAttention": "Requires Attention",
+        "unassigned": "Unassigned",
+        "upcoming": "Upcoming",
+        "notStarted": "Not started",
+        "inProgress": "In Progress",
+        "cancelled": "Cancelled",
+        "completed": "Completed",
+        "notStartedKey": "notStarted",
+        "functionalKey": "functional",
+        "requiresAttentionKey": "requiresAttention",
+        "inProgressKey": "inProgress",
+        "completedKey": "completed"
+      },
+      "zones": {
+        "label": "All Zones",
+        "all": "All Zones"
+      },
+      "reportTypes": {
+        "label": "All Reports",
+        "all": "All Reports"
+      },
+      "officers": {
+        "label": "All {{officers}}",
+        "all": "All Officers"
+      }
+    },
+    "calendar": {
+      "view": {
+        "day": "Day",
+        "week": "Week",
+        "month": "Month"
+      },
+      "tooltips": {
+        "dedicatedAttention": "{{dedicated}} Job needs attention",
+        "patrolAttention": "{{patrol}} Visit needs attention",
+        "extraAttention": "{{extra}} Job needs attention"
+      },
+      "jobsRequireAttention": "{{count}} shifts require assignment",
+      "noEvents": {
+        "title": "No Shifts Found!",
+        "description": "There are no shifts for this months."
+      },
+      "notStartedDuty": "Not Started",
+      "unassigned": "Unassigned",
+      "weekViewlocationTitle": "Location",
+      "unassignedLocation": "Unassigned",
+      "hitsMissed": "{{count}} missed",
+      "scheduleStatus": {
+        "completed": "Completed",
+        "inProgress": "In progress",
+        "upComing": "Upcoming",
+        "inComplete": "Incomplete",
+        "missed": "Missed",
+        "cancelled": "Cancelled",
+        "unAssigned": "Unassigned",
+        "notStarted": "Not started",
+        "noteStatusShow": "Notes Exist",
+        "exceeded40Hours": "Officer Overtime",
+        "overTime": "OT",
+        "splittedShift": "Split shift"
+      }
+    },
+    "legends": {
+      "dedicated": "{{dedicated}}",
+      "patrol": "{{patrol}}",
+      "dispatch": "{{dispatch}}",
+      "extra": "{{extra}}",
+      "attention": "Requires Attention"
+    },
+    "extraDuty": {
+      "deleteDutySuccess": "Extra job deleted successfully",
+      "deleteDutyError": "Error while deleting extra job",
+      "deleteBtn": "Delete Extra Job",
+      "deleteModal": {
+        "title": "Delete Extra Job",
+        "description": "Are you sure you want to delete this extra job? This action cannot be undone!"
+      }
+    },
+    "officers": {
+      "available": "Available Officers",
+      "unavailable": "Unavailable Officers",
+      "alreadyAssignedMsg": "This {{officer}} is already assigned to another shift. Are you sure, You wanna assign this {{officer}}!",
+      "yes": "Yes",
+      "no": "no"
+    },
+    "dutyDetail": {
+      "dispatchTour": "{{dispatch}} {{tour}}",
+      "editShiftDetail": "Edit shift details",
+      "detail": {
+        "title": "Details",
+        "generalInfo": "General Information",
+        "shiftTiming": "Shift Timings",
+        "tours": "{{tours}}",
+        "visits": "Visits",
+        "toursRatio": "{{completed}} / {{total}} {{tours}}",
+        "notours": "No {{tours}}",
+        "novisit": "No Visit",
+        "toursCompletionRatio": "{{completedTours}} out of {{totalNoOfTours}}",
+        "dutyTime": "Shift Time",
+        "assignedTo": "Assigned to",
+        "reassignedTo": "Reassigned to",
+        "payRate": "Officer's Pay Rate",
+        "checkpoints": "Checkpoints",
+        "instructions": "Instructions",
+        "tourShiftStatus": {
+          "notStarted": "Not started",
+          "inProgress": "In progress",
+          "completed": "Completed",
+          "upcoming": "Upcoming",
+          "behindSchedule": "Behind schedule",
+          "onSchedule": "On schedule"
+        },
+        "outOfShiftTime": "Out of Shift Time"
+      },
+      "activities": {
+        "title": "Reports",
+        "currentShift": "Current Shift",
+        "viewReport": "View Report",
+        "reportSubmittionTime": "Submitted At: {{submittedAt}}",
+        "shiftProgress": "Shift Progress"
+      },
+      "notes": {
+        "title": "Notes",
+        "addNotesErrorMsg": "Notes are required",
+        "addNotesTextLimitErrorMsg": "Text cannot exceed {{limit}} characters"
+      },
+      "logs": {
+        "title": "Activity Logs",
+        "defaultOfficerName": "{{officer}}",
+        "defaultVehicleName": "Vehicle",
+        "actions": {
+          "breakStarted": "{{name}} started break.",
+          "breakEnded": "{{name}} ended break.",
+          "shiftStarted": "{{name}} started shift.",
+          "shiftEnded": "{{name}} ended shift.",
+          "reportSubmitted": "{{name}} submitted report.",
+          "incidentReportSubmitted": "{{name}} submitted incident report.",
+          "tourCompleted": "{{name}} completed {{tour}}.",
+          "tourStarted": "{{name}} started {{tour}}.",
+          "checkpointChecked": "{{name}} checked checkpoint.",
+          "notStarted": "{{name}} not started shift.",
+          "shiftAutoEnded": "{{name}} auto ended shift.",
+          "clockedIn": "{{name}} clocked in",
+          "clockedOut": "{{name}} clocked out",
+          "navigationStarted": "{{name}} started navigating",
+          "navigationEnded": "{{name}} arrived",
+          "endLocationVisited": "{{name}} arrived parking",
+          "navigationCancelled": "{{name}} cancelled navigation",
+          "initialNavigation": "{{name}} initiated navigation",
+          "visitEnded": "{{name}} completed visit",
+          "visitedSite": "{{name}} visited site",
+          "officerAssigned": "{{name}} is assigned",
+          "officerUnassigned": "{{name}} is unassigned",
+          "vehicleAssigned": "{{name}} is assigned",
+          "vehicleUnassigned": "{{name}} is unassigned",
+          "payrollApproved": "{{name}} approved the payroll.",
+          "adhocPayrollAdded": "Adhoc payroll added against {{name}}.",
+          "hitAdded": "{{name}} added {{hit}}(s)",
+          "hitRemoved": "{{name}} removed {{hit}}(s)",
+          "hitCancelled": "{{site}} - {{hit}} cancelled{{actionBy}}",
+          "hitCancelledActionBy": " by {{name}}",
+          "hitAddedTo": "{{hit}} added to {{name}}",
+          "hitAddedFrom": "{{hit}} added from {{name}}",
+          "clockedInAgain": "{{name}} Clocked back in",
+          "shiftTimeUpdated": "{{name}} changed the shift {{type}} time from {{oldTime}} to {{newTime}}",
+          "date": "shift date",
+          "time": "shift time",
+          "shift": "shift",
+          "checkpointCompleted": "{{name}} completed checkpoint",
+          "reportTypes": {
+            "equipmentInspection": "{{name}} submitted equipment inspection report",
+            "vehicleInspection": "{{name}} submitted vehicle inspection report",
+            "tourReports": "{{name}} submitted {{tour}} reports",
+            "shiftDayEndReport": "{{name}} submitted shift day end report",
+            "incidentReport": "{{name}} submitted incident report",
+            "checkpoints": "{{name}} submitted checkpoints report",
+            "dispatch": "{{name}} submitted dispatch report",
+            "reportSubmitted": "{{name}} submitted activity report",
+            "activityReport": "{{name}} submitted activity report"
+          },
+          "dedicatedShiftCancelled": "{{userName}} cancelled the shift {{shiftName}} {{shiftTime}}, reason {{reason}}.",
+          "dedicatedShiftRestored": "{{userName}} restored {{shiftName}} {{shiftTime}}.",
+          "splittedTheShift": "{{name}} has split {{shiftName}}",
+          "splittedTheShiftContent": "{{name}} split {{shiftName}} ({{oldTime}}) into {{splitDetails}} on {{actionTime}}.",
+          "dispatch": "{{name}} submitted {{dispatch}} report"
+        }
+      },
+      "errors": {
+        "timePassedError": "Cannot edit past job"
+      },
+      "acceptRejectReport": {
+        "approveReport": "Approve Report",
+        "rejectReport": "Reject Report",
+        "reject": "Reject",
+        "approve": "Approve",
+        "approveReportDesc": "Are you sure you want to approve this report? Please note that this action cannot be undone.",
+        "rejectReportDesc": "Are you sure you want to reject this report? You can add comments to let {{officer}} know the reason. Please note that this action cannot be undone.",
+        "addComment": "Add Comments",
+        "applyLeave": "Apply Time Off"
+      },
+      "reassignHit": {
+        "headerTitle": "Reassign {{hit}}",
+        "headerTitleReassignHits": "Reassign {{hit}}(s)",
+        "description": "Select {{runsheet}} to assign this {{hit}}",
+        "selectDatesLabel": "Select Start Date(s)",
+        "searchPlaceholder": "Search by {{runsheet}} name",
+        "officersLabel": "All {{officers}}",
+        "officersSearchPlaceholder": "Search for an {{officer}}",
+        "confirmationModal": {
+          "title": "Reassign {{hit}}!",
+          "description": "Are you sure you want to reassign {{hit}} to the selected {{runsheet}}? This action will update the current assignment."
+        },
+        "selectHit": "Select {{hit}}(s)",
+        "selectHitDes": "Select {{hit}}(s) to reassign into another {{runsheet}}",
+        "runsheetSelectionForHits": "Select {{runsheet}} to reassign selected {{hit}}(s)",
+        "selectedHit": "Selected {{hit}}(s):"
+      },
+      "cancelHit": {
+        "title": "Cancel {{hit}}!",
+        "description": "Are you sure you want to cancel the {{hit}}?",
+        "cancel": "No",
+        "save": "Yes"
+      },
+      "hitDetail": {
+        "editButtons": {
+          "cancelHit": "Cancel {{hit}}",
+          "editTour": "Edit {{tour}}",
+          "reassignHit": "Reassign {{hit}}"
+        }
+      },
+      "runsheetDetail": {
+        "editButtons": {
+          "splitRunsheet": "Split {{runsheet}}",
+          "reassignHits": "Reassign {{hit}}(s)",
+          "clockBackIn": "Clock Back In",
+          "editShift": "Edit Shift",
+          "editRunsheet": "Edit {{runsheet}}"
+        },
+        "clockBackInModal": {
+          "title": "Clock Back In",
+          "description": "Are you sure you want to clock the {{officer}} back in? This action will resume their shift."
+        },
+        "editRunsheetModal": {
+          "title": "Edit {{runsheet}}",
+          "description": "Update the end date and time for this ongoing shift. The start time cannot be changed.",
+          "descriptionFuture": "Update the start and end date and time for this future shift.",
+          "descriptionPast": "Update the start and end date and time for this past shift. Only shift timing can be changed.",
+          "startDate": "Start Date & Time",
+          "endDate": "End Date & Time",
+          "selectOfficer": "Select {{officer}}",
+          "update": "Update",
+          "cancel": "Cancel",
+          "successMessage": "Shift time updated successfully"
+        },
+        "hitsDone": "{{hits}} Done",
+        "officer": "{{officer}}",
+        "assign": "assign",
+        "vehicle": "Vehicle",
+        "spentTime": "Spent / Est Time",
+        "coveredDistance": "Covered / Est. Distance",
+        "milesUnit": "mi",
+        "kilometersUnit": "km",
+        "status": "Status"
+      },
+      "assignOnRunsheet": {
+        "officerRequiredError": "{{officer}} is required",
+        "vehicleRequiredError": "Vehicle is required",
+        "updateAssignment": "Update Assignment",
+        "assignOfficer": "Assign {{officer}}",
+        "assignVehicle": "Assign Vehicle",
+        "startEndDate": "Start & End Date",
+        "selectedDay": "Selected Day",
+        "selectOfficer": "Select {{officer}}",
+        "selectVehicle": "Select Vehicle",
+        "cancelBtn": "Cancel",
+        "update": "Update",
+        "assign": "Assign"
+      }
+    },
+    "editDedicatedShift": "Edit Shift Time!",
+    "editDedicatedShiftDes": "Are you sure you want to edit the shift time?",
+    "editDedicatedShiftAlert": "Edited shifts become independent and are not affected by bulk action.",
+    "editDedicatedShiftDropDown": "Edit Shift Time",
+    "editDedicatedShiftDay": "Shift Day:",
+    "errorMessages": {
+      "isStartAfterEnd": "End time must be after the start time.",
+      "timeDurationMoreThan24": "Shift duration cannot exceed 24 hours.",
+      "endTimeBeforeCurrentTime": "End time cannot be before the current time.",
+      "startTimeCannotBeEditedForOngoingShifts": "Start time cannot be edited for ongoing shifts.",
+      "endTimeBeforeCurrent": "The end time cannot be before the current time.",
+      "startTimeBeforeCurrent": "Start time cannot be set to a time before the current time.",
+      "endTimeBeforeExecution": "The end time cannot be before the execution time of the shift.",
+      "contractBoundaryViolation": "Shift update not allowed. One or more hits fall outside the contract start and end dates.",
+      "officerUnavailable": "Shift timings are outside the officer's availability.",
+      "shiftCannotUpdateBeyondCurrentTime": "Shift cannot be updated beyond the current time."
+    }
+  },
+  "runsheet": {
+    "yes": "Yes",
+    "no": "No",
+    "associateBreakRule": "Associate Break Rule",
+    "payOfficerForBreaks": "Pay officer for breaks:",
+    "runsheetDetails": "{{runsheet}} Details",
+    "breakConfigurations": "Break Configurations",
+    "selectAllSites": "Select All Sites",
+    "exitRunSheet": "Exit Runsheet",
+    "unAssignedHits": "Unassigned {{hits}}",
+    "selectRunsheet": "Select {{runsheet}}",
+    "assignedHits": "Assigned {{hits}}",
+    "hit": "Hit",
+    "runSheet": "Runsheet",
+    "noRunsheets": "No {{runsheets}}!",
+    "noRunsheetsText": "There are currently no runsheets available in the system. Create your customized runsheets here.",
+    "startEndDate": "Start & End Date",
+    "selectOffice": "Select Office",
+    "assign": "Assign",
+    "selectDateRange": "Select Date Range",
+    "missedHits": "Missed {{hits}}",
+    "estimatedTime": "Estimated {{runsheet}} time:",
+    "patrol": "{{patrol}}",
+    "dayTimeRunsheet": "Day Time {{runsheet}}",
+    "applyOnMap": "Apply on Map",
+    "selectMap": "Please select a day from the list on left to load {{runsheets}} on the map",
+    "mapPlaceholder": "Please select a day from the dropdown menu to view {{runsheets}}",
+    "selectRunsheetDateDesc": "Select {{runsheet}} day to start assigning {{hits}}",
+    "selectDay": "Select Day",
+    "selectOfficer": "Select {{officer}}",
+    "selectVehicle": "Select Vehicle",
+    "optional": "(optional)",
+    "assignHeading": "Assign {{officer}} and car to new {{runsheet}}",
+    "reorderHits": "Reorder {{hits}}",
+    "reorderHitsText": "Arrange your {{hits}} in the desired sequence.",
+    "patrolShift1": "Patrol Shift 1",
+    "patrolShift2": "Patrol Shift 2",
+    "shift1EndMustEqualShift2Start": "End time of Shift split 1 must equal start time of Shift split 2.",
+    "selectStartTimeOfNewRunSheet": "New {{runsheet}}",
+    "selectStartTimeOfParentRunSheet": "Parent {{runsheet}}",
+    "addStartingAndEndingPointOfNewRunsheet": "Add starting and ending point of new {{runsheet}}",
+    "starting&EndingLocation": "Starting & Ending Location",
+    "noTourTemplateSelected!": "No {{tour}} Template Selected!",
+    "selectHits": "Select {{hits}}",
+    "selectHitsText": "Select {{hits}} which you want to add to a new {{runsheet}}.",
+    "noTourTemplateSelectedText": "Please add a {{tour}} template to assign this {{hit}} to a {{runsheet}}.",
+    "addTemplate": "Add Template",
+    "updateRunsheet!": "Update {{runsheet}}!",
+    "updateRunsheetText": "Updated information will be reflected on the upcoming shift. If {{runsheet}} time duration is updated, then the assigned {{officer}} and vehicle will be removed from all future {{runsheets}}. Do you want to proceed with this change?",
+    "updateRunsheet": "Update {{runsheet}}",
+    "deleteRunsheet!": "Delete {{runsheet}}!",
+    "deleteText": "You are going to delete the {{runsheet}}. All the associated {{hits}} will become unassigned and if the {{runsheet}} is in progress it will not be deleted nor can be split. This action can't be undone.",
+    "activityLogs": "Activity Logs",
+    "addUnassignedHits": "Add unassigned {{hits}}",
+    "addUnassignedHitsBtnTooltip": "Start end location is required",
+    "hits": "{{hits}}",
+    "site": "Site",
+    "editRunsheet": "Edit {{runsheet}}",
+    "deleteRunsheet": "Delete {{runsheet}}",
+    "viewActivity": "View Activity",
+    "searchBySiteName": "Search by Site Name",
+    "franchise": "Franchise",
+    "existingHit": "Existing {{hit}}",
+    "addedHit": "Added {{hit}}",
+    "deletedHit": "Deleted {{hit}}",
+    "runsheet": "{{runsheet}}",
+    "duplicateRunsheet": "Duplicate {{runsheet}}",
+    "duplicateRunsheetText": "In order to duplicate {{runsheet}} you have to choose a start date & days for the new {{runsheet}}.",
+    "duplicateRunsheetStartDate": "Start Date",
+    "duplicateRunsheetSelectDays": "Select Days",
+    "duplicateRunsheetDescription": "Note that all existing {{hits}}, scheduled on that day as per the contract, which are not included in another {{runsheet}}, will be added to this {{runsheet}}.",
+    "startingEndingPoint": "Starting & ending point",
+    "atLeastOneDayRequired": "This is a required field, select atleast 1 day",
+    "covered": "Covered",
+    "unvisitedHit": "Unvisited {{hit}}",
+    "visitedHit": "Visited {{hit}}",
+    "vehicle": "Vehicle",
+    "mapSuggested": "Map suggested",
+    "save": "Save",
+    "totalHits": "Total {{hits}}",
+    "runsheetTime": "{{runsheet}} Time",
+    "estDistance": "Est. Distance",
+    "search": "Search by Site Name",
+    "selectAll": "Select All",
+    "createRunsheet": "Create {{runsheet}}",
+    "assignHits": " Assign {{hits}}",
+    "unAssignHits": " Unassigned {{hits}}",
+    "noRunSheetYet": "No {{runsheets}} yet!",
+    "noRunsheetDetails": "There are currently no {{runsheets}} available in the system. Create your customized {{runsheets}} here.",
+    "edit": "Edit",
+    "addLocationHeading": "Add starting & ending location",
+    "editLocationHeading": "Update starting & ending location",
+    "mapSubHeading": "Provide exact location of {{runsheet}}’s starting & ending point",
+    "searchLocation": "Search Location",
+    "typeaddress": "Type address",
+    "cancel": "Cancel",
+    "addLocation": "Add Location",
+    "editLocation": "Edit Location",
+    "addStartingEndingLocation": "Add Starting & Ending Location",
+    "startingEndingLocation": "Starting & Ending Location",
+    "runsheetName": "{{runsheet}} Name",
+    "enterRunsheetName": "Enter {{runsheet}} Name",
+    "startDate": "Start Date",
+    "selectStartDate": "Select start date",
+    "startTime": "Start Time",
+    "selectStartTime": "Select start time",
+    "endTime": "End Time",
+    "selectEndTime": "Select end time",
+    "selectedDay": "Selected Day",
+    "back": "Back",
+    "next": "Next",
+    "SeeList": "See More",
+    "confirmAssignment": "Confirm Assignment",
+    "confirmAssignmentText": "Are you sure you want to assign selected {{hits}} to the chosen {{runsheet}}(s). It will update the existing {{runsheet}}(s).",
+    "detailPage": {
+      "systemSuggested": "System Suggested",
+      "sites": "Sites",
+      "revisits": "Revisits",
+      "hits": "Hits",
+      "estimatedCompletionTime": "Estimated Completion Time",
+      "sitesList": {
+        "title": "Runsheet Sites",
+        "editBtn": "Edit",
+        "doneBtn": "Done",
+        "deleteBtn": "Delete",
+        "time": "Time",
+        "generalInformation": "General Information",
+        "target": "Target",
+        "estimatedTime": "Estimated Time",
+        "freeTime": "15 mins free time",
+        "makeThisBreak": "Make this break"
+      }
+    },
+    "keys": {
+      "runsheetName": "runsheetName",
+      "isBreakPayable": "isBreakPayable",
+      "breakRule": "breakRule"
+    },
+    "noTourTemplateAssigned": "No {{tour}} Template Assigned!",
+    "noTourTemplateAssignedDescription": "Please add a {{tour}} template to assign this {{hit}} to a {{runsheet}}.",
+    "addUnassignedHitsToRunsheet": "Add unassigned {{hit}}(s) to a {{runsheet}}",
+    "addHit": "Add {{hit}}",
+    "noTour": "Assign {{tour}} template first to add this to a {{runsheet}}",
+    "assignTourFirst": "Assign {{tour}} template first to add this to a {{runsheet}}.",
+    "hitAdded": "{{hit}} Added",
+    "noInstructions": "No instructions",
+    "patrolSetup": "{{patrol}} Setup",
+    "noReportsText": "There is no report or checkpoint associated with this visit. Please assign visit report to complete setup.",
+    "checkpoints": "Checkpoints",
+    "durationUnit": "min",
+    "visitType": "Visit Type",
+    "status": "Status",
+    "serviceTime": "Service Time",
+    "viewRunSheet": "View {{runSheet}}",
+    "viewShiftDetails": "View Shift Details",
+    "checkpointsSection": "Checkpoints:",
+    "reportsSection": "Report",
+    "noCheckpointsSection": "No Checkpoints Assigned",
+    "instructionsSection": "Instructions:",
+    "instructionsSuffix": "Ensure strict access control to the site.",
+    "actions": {
+      "created": "has created a {{runsheet}}",
+      "hitAdded": "has added a {{hit}}",
+      "hitDeleted": "has deleted a {{hit}}",
+      "sequenceChanged": "has changed the sequence",
+      "startEndLocationUpdated": "has updated Starting & ending point",
+      "startEndTimeUpdated": "has updated start/end time",
+      "createdDuplicateRunsheet": "created duplicate {{runsheet}} for {{days}}",
+      "createdDuplicateRunsheetMonday": "created duplicate {{runsheet}} for monday",
+      "createdDuplicateRunsheetTuesday": "created duplicate {{runsheet}} for tuesday",
+      "createdDuplicateRunsheetWednesday": "created duplicate {{runsheet}} for wednesday",
+      "createdDuplicateRunsheetThursday": "created duplicate {{runsheet}} for thursday",
+      "createdDuplicateRunsheetFriday": "created duplicate {{runsheet}} for friday",
+      "createdDuplicateRunsheetSaturday": "created duplicate {{runsheet}} for saturday",
+      "createdDuplicateRunsheetSunday": "created duplicate {{runsheet}} for sunday"
+    },
+    "startDateBeforeStart": "You can not select time earlier than the start time",
+    "startCantBeSame": "Start of parent and new {{runsheet}} can't be same",
+    "startDateAfterEnd": "You can not select time later than the end time",
+    "noRouteFoundError": "No route retrieved for given {{hits}}.",
+    "invalidRouteError": "Path cannot be drawn as the selected route crosses an unreachable area. Please adjust your selection to avoid obstacles.",
+    "seeMore": "See More",
+    "runsheetNameError": "{{runsheet}} name can not be empty.",
+    "noSiteNameMatchesSearch": "No site name matches your search. Try different keyword.",
+    "minimumSearchLength": "Minimum search length limit is 2",
+    "maximumSearchLength": "Maximum search length limit is 100",
+    "cannotSplitRunsheet": "The {{runsheet}} cannot be split because it has been deleted.",
+    "excludedHitsEditRunsheet": "Some {{hits}} are removed due to change in {{runsheet}} time.",
+    "excludedHits": "Excluded {{hits}}",
+    "excludedHitsDescription": "Below {{hits}} are removed from this {{runsheet}} due to change in time.",
+    "allHitsSelectedException": "You cannot select all {{hits}} for split",
+    "placeholders": {
+      "selectBreakRule": "Select Break Rule"
+    },
+    "runsheetDetailsSubtext": "Add information & select {{hits}}",
+    "selectHitsSubtext": "Choose {{runsheet}} {{hits}}",
+    "reorderHitsSubtext": "Add sequence of {{hits}}",
+    "hitsSubtext": "Select {{hits}} and start time",
+    "assignSubtext": "Add new {{runsheet}}"
+  },
+  "obxExtraDuty": {
+    "labels": {
+      "chooseSite": "Choose Site",
+      "chooseSiteDescription": "Select the site you want to manage",
+      "shiftDateAndTime": "Shift Date and Time",
+      "shiftDateAndTimeDescription": "Choose date and time for this job",
+      "assignOfficers": "Assign {{officers}}",
+      "assignOfficersDescription": "Choose officers for this job",
+      "chooseReport": "Choose Report",
+      "chooseReportDescription": "Choose a report template for the job",
+      "hourlyRateChange": "Change Hourly Pay Rate",
+      "dutyInstructions": "Job Instructions",
+      "dutyInstructionDescription": "Add instructions related to the job",
+      "extraJobDedicated": "Create Extra Job",
+      "extraHitPatrol": "Create Extra Hit",
+      "extraJobDedicatedCreate": "Create Extra Job(s)",
+      "extraHitPatrolCreate": "Create Extra Hit(s)",
+      "extraHitPatrolDescription": "Add information below to create an extra hit",
+      "extraJobDedicatedDescription": "Add information below to create an extra job",
+      "create": "Create",
+      "extraJob": "Extra Job (Dedicated)",
+      "extraHit": "Extra Hit (Patrol)",
+      "extraJobDescription": "Add information below to create an extra job",
+      "extraHitDescription": "Add information below to create an extra hit",
+      "unableToCreateExtraHit": "Unable to create Extra Hit. Please try again.",
+      "includeFuelSurcharge": "Include Fuel Surcharge",
+      "createExtraDuty": "Create {{extra}} Job",
+      "addExtraDutyInfo": "Add information below to create an {{extra}} job"
+    },
+    "placeholders": {
+      "descriptions": "Enter Instructions Here"
+    }
+  },
+  "form": {
+    "input": {
+      "textField": {
+        "locations": {
+          "header": "Locations",
+          "label": "Location",
+          "placeHolder": "Enter Location Name"
+        },
+        "name": {
+          "label": "Name",
+          "placeHolder": "Enter Name"
+        },
+        "postalCode": {
+          "label": "Zip/Postal Code",
+          "placeHolder": "Enter your Zip/Postal Code."
+        },
+        "firstName": {
+          "label": "First Name",
+          "placeHolder": "Enter your First Name"
+        },
+        "lastName": {
+          "label": "Last Name",
+          "placeHolder": "Enter your Last Name"
+        },
+        "phoneNumber": {
+          "label": "Phone",
+          "placeHolder": "e.g +00 856 3369"
+        },
+        "email": {
+          "label": "Email",
+          "placeHolder": "Enter your Email"
+        },
+        "primaryEmail": {
+          "label": "Client Primary Email",
+          "placeHolder": "Enter your Primary Email"
+        },
+        "owner": {
+          "label": "Owner's",
+          "info": "Info & Contact"
+        },
+        "country": {
+          "header": "Country Region",
+          "label": "Country",
+          "placeHolder": "Enter your country"
+        },
+
+        "address": {
+          "header": "Address",
+          "label": "Address",
+          "placeHolder": "Enter your Address"
+        },
+        "address2": {
+          "header": "Address Line 2",
+          "label": "Address Line 2",
+          "placeHolder": "Enter Address Line 2"
+        },
+        "state": {
+          "header": "State/Province",
+          "label": "State/Province",
+          "placeHolder": "Enter your State/Province"
+        },
+        "zipCode": {
+          "label": "Zip/Postal Code",
+          "placeHolder": "Enter your Zip/Postal Code"
+        },
+        "city": {
+          "label": "City",
+          "placeHolder": "Enter your City"
+        },
+        "suburb": {
+          "label": "Suburb",
+          "placeHolder": "Enter your Suburb"
+        },
+        "additionalContacts": {
+          "header": "Additional Contacts"
+        },
+        "markEmergencyContact": {
+          "label": "Mark as emergency contact"
+        },
+        "billableHours": {
+          "header": "Mark as emergency contact",
+          "label": "Billable Breaks"
+        },
+        "contact": {
+          "label": "Phone",
+          "placeHolder": "Enter Phone Number"
+        },
+        "selectOption": {
+          "label": "Select Option",
+          "placeholder": "Select Option"
+        },
+        "selectOptions": {
+          "label": "Select Options",
+          "placeHolder": "Select Options"
+        },
+        "search": {
+          "label": "Search",
+          "placeHolder": "Search..."
+        },
+        "geoFencing": {
+          "header": "Geo-Fencing",
+          "setSame": {
+            "label": "Set same as Franchise boundry"
+          }
+        },
+        "zone": {
+          "label": "Zone Name",
+          "placeHolder": "Enter Zone Name"
+        },
+        "supervisor": {
+          "label": "Select Supervisor",
+          "header": "Geo-Fencing"
+        },
+        "vehicle": {
+          "info": "Vehicle Info"
+        },
+        "vehicleMakeInput": {
+          "label": "Make/Model/Year",
+          "placeHolder": "Enter car make, model and year"
+        },
+        "vehicleRegistrationNumber": {
+          "label": "Registration Number",
+          "placeHolder": "Registration Number"
+        },
+        "vehicleCreatedAt": {
+          "label": "Created at",
+          "placeHolder": "Created at date"
+        },
+        "vehicleLastMaintenance": {
+          "label": "Last Maintenance",
+          "placeHolder": "Last Maintenance date"
+        },
+        "password": {
+          "label": "Password",
+          "placeHolder": "Enter your Password"
+        },
+        "logType": {
+          "placeHolder": "ex. food container"
+        },
+        "officersCount": {
+          "label": "Number of Officers",
+          "placeHolder": "Select number of officers"
+        },
+        "reports": {
+          "label": "Report Template",
+          "placeHolder": "Reports"
+        },
+        "report": {
+          "label": "Report Template",
+          "placeHolder": "Report"
+        },
+        "officerOptional": {
+          "label": "Officer"
+        },
+        "officersHourlyRate": {
+          "placeHolder": "$18-$25"
+        },
+        "dutyTime": {
+          "label": "Job Date",
+          "placeHolder": "Enter Job date"
+        },
+        "startTime": {
+          "label": "Start Time",
+          "placeholder": "Select start time"
+        },
+        "endTime": {
+          "label": "End Time",
+          "placeholder": "Select end time"
+        },
+        "instructions": {
+          "label": "Enter instructions",
+          "placeHolder": "Enter instructions here"
+        },
+        "title": {
+          "label": "Enter post order title",
+          "placeHolder": "Add post order title"
+        },
+        "exceptions": {
+          "label": "Enter post order",
+          "placeHolder": "Click to add post order instructions"
+        },
+        "startDate": {
+          "label": "Start Date",
+          "placeholder": "Select start date"
+        },
+        "endDate": {
+          "label": "End Date",
+          "placeholder": "Select end date"
+        },
+        "cycleReferenceDate": {
+          "label": "Cycle Reference Date",
+          "placeHolder": "Select Cycle Reference Date"
+        },
+        "integrations": {
+          "header": "Integrations",
+          "enabled": "Enabled",
+          "disabled": "Disabled"
+        },
+        "geofencing": {
+          "title": "Geofence",
+          "description": "Enabling the toggle activates geofencing for the site"
+        },
+        "offlineSyncing": {
+          "title": "Offline Syncing",
+          "description": "please note that Auto Clockout will not function during offline mode"
+        }
+      },
+      "dropDown": {
+        "pleaseSelectAnOption": "Select An Option",
+        "selectSite": {
+          "label": "Select Site"
+        },
+        "selectSites": {
+          "label": "All Sites"
+        },
+        "selectOfficer": {
+          "label": "Select Officer"
+        },
+        "selectReport": {
+          "label": "Select Report"
+        },
+        "selectOfficersCount": {
+          "label": "Select Number Of Officers"
+        },
+        "selectSupervisor": {
+          "label": "Select {{supervisor}}"
+        },
+        "selectCountry": {
+          "label": "Select Country"
+        },
+        "selectStateRegion": {
+          "label": "Select State/Province"
+        },
+        "selectCity": {
+          "label": "Select City"
+        },
+        "selectSuburb": {
+          "label": "Select Suburb"
+        },
+        "selectFranchise": {
+          "label": "Select a Franchise"
+        },
+        "selectZones": {
+          "label": "All Zones"
+        },
+        "selectDuties": {
+          "label": "All Jobs"
+        },
+        "selectDevices": {
+          "label": "All Devices"
+        },
+        "selectStates": {
+          "label": "Select States"
+        },
+        "selectCities": {
+          "label": "Select Cities"
+        },
+        "selectStatus": {
+          "label": "Select Status"
+        },
+        "selectShift": {
+          "label": "Select Shift"
+        },
+        "selectVisitors": {
+          "label": "All Statuses"
+        },
+        "selectVehicles": {
+          "label": "All Vehicles"
+        },
+        "selectZone": {
+          "label": "Select Zone"
+        },
+        "checkInNotSelected": {
+          "label": "Check-in type is required"
+        }
+      }
+    }
+  },
+  "shiftReports": {
+    "descriptionAI": {
+      "currentVersion": "Current version",
+      "suggestedVersion": "Suggested version",
+      "reselect": "Reselect",
+      "fixesCount": "{{count}} Fixes",
+      "aiBadge": "AI",
+      "aiModifiedPill": "AI Modified",
+      "aiModifiedPillTooltip": "This answer includes AI-suggested edits."
+    },
+    "aiBadge": {
+      "needsReview": "Needs review",
+      "aiRefined": "AI Refined"
+    },
+    "tabtitle": {
+      "shift": "Shift Reports",
+      "incident": "Incident Reports Summary",
+      "dailyRunsheet": "{{runsheet}} Reports",
+      "siteSummaryReport": "Site Summary Report"
+    },
+    "filters": {
+      "reports": {
+        "label": "Reports",
+        "search": "Search by Name"
+      },
+      "sites": {
+        "label": "Sites",
+        "searchPlaceholder": "Search for a Site"
+      },
+      "runsheetName": {
+        "label": "{{runsheet}} Name",
+        "searchPlaceholder": "Search for Name"
+      },
+      "users": {
+        "label": "Users",
+        "searchPlaceholder": "Search by User Name"
+      }
+    }
+  },
+  "incidentReports": {
+    "table": {
+      "listing": {
+        "columns": {
+          "runsheetName": "{{runsheet}} Name",
+          "site": "Site",
+          "timeRange": "Time Range",
+          "punchIn": "Punch In & Punch Out",
+          "timeSpent": "Time Spent",
+          "submittedAt": "Submitted At",
+          "submittedBy": "Submitted By"
+        }
+      }
+    }
+  },
+  "siteSummaryReports": {
+    "table": {
+      "listing": {
+        "columns": {
+          "runsheetName": "Runsheet Name",
+          "site": "Site",
+          "timeRange": "Time Range",
+          "punchIn": "Punch In & Punch Out",
+          "timeSpent": "Time Spent",
+          "submittedAt": "Submitted At",
+          "submittedBy": "Submitted By",
+          "startDate": "Start Date",
+          "endDate": "End Date"
+        }
+      }
+    }
+  },
+  "buttons": {
+    "addVehicle": "Add Vehicle",
+    "cancel": "Cancel",
+    "submit": "Submit",
+    "edit": "Edit",
+    "save": "Save",
+    "addContacts": "Add Contact",
+    "addLocations": "+ Add Locations",
+    "dnd": "or drag and drop",
+    "clickToUpload": "Click to Upload",
+    "imageSizeEF": "JPEG, JPG or PNG",
+    "fileSelected": "File Selected",
+    "back": "Back",
+    "removeContact": "Remove Contact",
+    "addBannedVisitor": "Add Banned Visitor",
+    "addBannedLoader": "Add Banned Loader",
+    "changeZone": "Change Zone",
+    "removeSites": "Remove Site",
+    "downloadOfficersPayroll": "Download {{officers}} Payroll",
+    "reset": "Reset Availability",
+    "resetTo247": "Set 24/7 Availability",
+    "saveChanges": "Save Changes"
+  },
+  "ho_franchise": {
+    "detail": {
+      "franchise_information": {
+        "officerType": "{{officer}} Type",
+        "title": "Franchise Information",
+        "info": "Add Info",
+        "name": "Franchise Name",
+        "owner": "Owner's Name",
+        "email": "Email",
+        "number": "Phone",
+        "address": "Address",
+        "country": "Country",
+        "city": "City",
+        "region": "Region/State",
+        "generalInformation": "General Information",
+        "Id": "Franchise ID",
+        "joined": "Joined",
+        "monthlyRevenue": "Monthly Revenue",
+        "noOfCustomers": "No. of Customers",
+        "noOfOfficers": "No. of {{officers}}",
+        "serviceZips": "Service Zip/Postal",
+        "noOfEmployees": "No. of Employees",
+        "labourEfficiency": "Labour Efficiency",
+        "hubSpotFranchiseId": "Hubspot Franchise No.",
+        "companyCode": "Company Code",
+        "customerRelation": "Customer Retention",
+        "legalEntityName": "Legal Entity Name",
+        "securityLicenseNo": "Security License No.",
+        "tCsVersion": "T&Cs Version"
+      }
+    },
+    "sidebarListing": {
+      "noFranchiseFound": "No zones found!",
+      "searchedTermNotFound": "Your search '{{searchedTerm}}' did not match any zone. Please try again."
+    }
+  },
+  "commonText": {
+    "selectContract": "Select Contract",
+    "startTime": "Start Time",
+    "endTime": "End Time",
+    "table": {
+      "noRecordFound": "No Record Found"
+    },
+    "squareMeter": "Sq Meters",
+    "newFranchise": "New Franchise",
+    "newZone": "New Zone",
+    "deleteShape": "Delete Shape",
+    "newSite": "New Site",
+    "image": {
+      "alt": "{{name}}'s image"
+    },
+    "standAloneSite": "Site",
+    "standAloneOfficer": "Officer",
+    "standAloneSupervisor": "{{supervisor}}",
+    "attachments": "Attachments",
+    "contacts": "Contacts",
+    "deals": "Deals",
+    "allFilters": "All filters",
+    "clearAll": "Clear All",
+    "cities": "Cities",
+    "states": "States/Province",
+    "lastActivityDate": "Last Activity Date",
+    "createdDate": "Created Date",
+    "applyFilters": "Apply Filters",
+    "siteNotAdded": "Sites are not added yet",
+    "notAdded": {
+      "text": "{{name}}'s not added yet"
+    },
+    "tours": "Tours",
+    "hits": "Hits"
+  },
+  "sales": {
+    "companies": {
+      "noCompanies": "No companies match the current filters.",
+      "companiesDataSync": "Expecting to see new companies? Try again in a few seconds as the system catches up.",
+      "industryVerticals": "Industry Verticals"
+    }
+  },
+  "errors": {
+    "lessThanFour": "Please upload less than 5 files",
+    "maxFilesAllowed": "Max {{max}} files allowed",
+    "fileAlreadyUploaded": "File {{fileName}} has already been uploaded.",
+    "childrenIntersecting": "must not overlap with other siblings.",
+    "markerNotInsideSite": "must contain the marker inside it.",
+    "insideParent": "{{label}} must be around franchise pin location.",
+    "any.required": "{{#label}} is required.",
+    "any.max": "{{#label}} must be at most 20 characters long",
+    "any.min": "{{#label}} must be at least 3 characters long",
+    "any.minWithValue": "{{#label}} must be at least {{#limit}} characters long",
+    "any.empty": "{{#label}} is required",
+    "any.dropdown": "{{#label}} must be selected",
+    "string.required": "{{#label}} is required",
+    "number.base": "{{#label}} must be a number.",
+    "number.required": "{{#label}} is required",
+    "number.empty": "{{#label}} is required",
+    "array.min": "{{#label}} must have at least 1 item.",
+    "array.base": "{{#label}} field must be an array.",
+    "string.pattern.base": "{{#label}} format is invalid.",
+    "any.email": "{{#label} is invalid.",
+    "string.email": "{{#label}} should be valid.",
+    "string.empty": "{{#label}} is required",
+    "dropdown.base": "{{#label}} can't be empty",
+    "somethingWentWrong": "Something went wrong!",
+    "unsupportedImageFormat": "Please upload either a jpeg, jpg or png",
+    "notAString": "{{#label}} should consist of alphabets only.",
+    "oneHitRequire": "At least one {{hit}} must remain in a in-progress {{runsheet}}"
+  },
+  "toastMessages": {
+    "getSiteDetails": {
+      "success": "Data Fetched Successfully!",
+      "failure": "Could not get site details."
+    },
+    "siteUpdated": {
+      "success": "Site Updated Successfully!",
+      "failure": "Could not update site!"
+    },
+    "getZoneDetails": {
+      "success": "Data Fetched Successfully!",
+      "failure": "Could not get zone details."
+    }
+  },
+
+  "zones": {
+    "table": {
+      "listing": {
+        "columns": {
+          "name": "Zone",
+          "supervisor": "Supervisor",
+          "supervisors": "{{supervisor}}(s)",
+          "sites": "Number of Site(s)",
+          "officers": "Number of {{officer}}(s)"
+        }
+      }
+    },
+    "deleteZone": {
+      "title": "Delete Zone",
+      "tooltip": "To delete this zone, please remove all associated sites first.",
+      "description": "Are you sure you want to delete this zone? This action cannot be undone.",
+      "action": "Delete Zone"
+    }
+  },
+
+  "vehicles": {
+    "table": {
+      "listing": {
+        "columns": {
+          "registeredNumber": "Registered Number",
+          "assignedZone": "Assigned to",
+          "image": "Car Image",
+          "makeModelYear": "Make/Model/Year",
+          "lastMaintenance": "Last Maintenance"
+        }
+      },
+      "placeHolder": {
+        "search": "Search by Registered Number"
+      }
+    },
+    "noImageText": "No Image Uploaded"
+  },
+
+  "users": {
+    "homeofficeusers": "Home Office Users",
+    "franchiseusers": "Franchise Users",
+    "level": "Level",
+    "table": {
+      "listing": {
+        "columns": {
+          "companyClient": "Company / Client",
+          "name": "Name",
+          "permission": "Permissions",
+          "designation": "Designation",
+          "department": "Department",
+          "contact": "Contact",
+          "status": "Account Status",
+          "dateOfBirth": "Date of Birth",
+          "joinedDate": "Joined",
+          "franchiseCount": "Associated Franchises",
+          "action": "Action",
+          "title": "Title",
+          "dutyType": "Job Type",
+          "zone": "Zone",
+          "overtime": "Overtime",
+          "lastDeviceScanned": "Last Device Scanned",
+          "currentDutyProgress": "Current Job",
+          "sitesAllocated": "Sites",
+          "email": "Email",
+          "number": "Phone",
+          "amount": "Amount",
+          "invoiceDate": "Invoice Date",
+          "siteName": "Site Name",
+          "duration": "Duration",
+          "dueDate": "Due Date",
+          "joinedOn": "Joined On",
+          "userType": "User Role",
+          "jobType": "Job Type"
+        }
+      }
+    },
+    "userInformation": {
+      "lastWorkingDay": "Last Working Day:",
+      "title": "Basic Information",
+      "jobDetails": "Job Details",
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "email": "Email",
+      "number": "Phone",
+      "designation": "Designation",
+      "site": "Site",
+      "country": "Country",
+      "skill": "Skill",
+      "role": "Role",
+      "zone": "Zone",
+      "generalInformation": "General Information",
+      "gender": "Gender",
+      "contact": "Phone",
+      "type": "Type",
+      "userType": "User Role",
+      "assignedFranchises": "Assigned Franchises",
+      "roles": "Role",
+      "level": "Level",
+      "john": "e.g John",
+      "doe": "e.g Doe",
+      "emailPlaceholder": "e.g trachise@teamsignal.com",
+      "phoneNumberPlaceHolder": "e.g +12025550167",
+      "select": "Select",
+      "enter": "Enter",
+      "file": "File#",
+      "baseRate": "Base Rate",
+      "changePassword": "Change Password",
+      "add": "Add",
+      "roll": "Roll"
+    },
+    "details": {
+      "tabs": {
+        "labels": {
+          "billing": "Billing",
+          "profile": "Profile",
+          "employees": "Employees",
+          "devices": "Devices",
+          "checkpoints": "Checkpoints",
+          "attendance": "Attendance",
+          "availability": "Availability",
+          "permissions": "Permissions",
+          "visitors": "Visitors",
+          "employmentHistory": "Employment History",
+          "loads": "Loads",
+          "generalInformation": "General Information",
+          "instructions": "Instructions",
+          "reportTemplates": "Reports",
+          "contracts": "Contracts",
+          "duty": "Job",
+          "locations": "Locations",
+          "scoreCard": "Scorecard",
+          "schedule": "Schedule",
+          "invoice": "Invoices",
+          "obxData": "OBX Data"
+        }
+      }
+    },
+    "usersAttendance": {
+      "assignedShifts": "Assigned Shifts",
+      "presentShifts": "Present Shifts",
+      "absentShifts": "Absent Shifts",
+      "table": {
+        "listing": {
+          "columns": {
+            "site": "Site/{{runsheet}}",
+            "date": "Date",
+            "checkIn": "Check in",
+            "checkOut": "Check out ",
+            "status": "Status",
+            "shiftType": "Shift Type",
+            "shiftStart": "Shift Start",
+            "shiftEnd": "Shift End"
+          }
+        }
+      },
+      "dropDownOptionsLabels": {
+        "statuses": "Statuses",
+        "supervisor": "{{supervisor}} Job",
+        "allUsers": "All Users",
+        "userType": "User Type",
+        "officers": "{{officers}}",
+        "allStatuses": "All Statuses",
+        "pending": "Pending",
+        "approved": "Approved",
+        "rejected": "Rejected",
+        "present": "Present",
+        "absent": "Absent",
+        "onLeave": "Time Off",
+        "all": "All Jobs",
+        "dedicated": "Dedicated Job",
+        "patrol": "Patrol Job",
+        "shiftType": "Shift Type",
+        "extra": "{{extra}} Job"
+      }
+    },
+    "usersAvailability": {
+      "listing": {
+        "columns": {
+          "days": "Day Start",
+          "startTime": "Start Time",
+          "endTime": "End Time",
+          "dayEnd": "Day End"
+        }
+      },
+      "heading": "{{officer}}'s Availability",
+      "desc": "{{officers}} daily availability schedule for jobs",
+
+      "submit": "save"
+    },
+    "graph": {
+      "users": "Users",
+      "missedJobs": "Missed Jobs",
+      "jobsPerformed": "Jobs Performed",
+      "dedicated": "Dedicated",
+      "patrol": "Patrol"
+    },
+    "filters": {
+      "userType": {
+        "all": "All Users",
+        "dataCleaner": "Data Cleaner",
+        "dataEnricher": "Data Enricher",
+        "dataValidator": "Data Validator",
+        "leadsManager": "Leads Manager",
+        "hoAgent": "Ho Agent",
+        "marketsManager": "Markets Manager",
+        "homeOfficerPayroll": "Home Officer Payroll",
+        "salesPerson": "Sales Person",
+        "homeOfficerFulfillment": "Home Officer Fulfillment",
+        "salesManager": "Sales Manager",
+        "homeOfficer": "Home Officer",
+        "homeOfficerStar": "Home Officer Star",
+        "homeOfficeMember": "Home Office Member"
+      },
+      "franchiseUserType": {
+        "all": "All Users",
+        "supervisor": "Supervisor",
+        "officer": "Officer",
+        "director": "Director",
+        "advancedOfficer": "Advanced Officer",
+        "coordinator": "Coordinator",
+        "franchiseOwner": "Franchise Owner"
+      }
+    },
+    "userRoles": "User Roles",
+    "employmentHistory": {
+      "reason": "Reason",
+      "franchise": "Franchise:",
+      "hired": {
+        "dateTitle": "Hiring Date",
+        "title": "Hired"
+      },
+      "terminated": {
+        "dateTitle": "Last Working Date",
+        "title": "Terminated"
+      },
+      "rehired": {
+        "dateTitle": "Rehiring Date",
+        "title": "Rehired"
+      }
+    },
+    "terminateUser": {
+      "title": "Terminate User",
+      "description": "You are about to termiante this user. Please confirm this action and provide a reason in the field below.",
+      "lastWorkingDay": "Last Working Day",
+      "addReason": "Add Reason",
+      "terminateCta": "Terminate"
+    },
+    "obxData": {
+      "due": "Due",
+      "employee": "Employee",
+      "manager": "Manager",
+      "submittedOn": "Submitted on",
+      "on": "on",
+      "waitingForSubmission": "Still waiting on your submission",
+      "pendingSubmissionDescription": "Looks like you haven't submitted the form just yet. Go ahead and fill it out so we can move forward!",
+      "submitForm": "Submit form",
+      "questions": "Questions",
+      "yourAnswers": "Your Answers",
+      "yourSubmission": "Your Submission",
+      "yes": "Yes",
+      "no": "No",
+      "modal": {
+        "header": "This form must be completed to move forward with user onboarding.",
+        "selectOption": "Select an option",
+        "selectOptionValidation": "Please select an option",
+        "submitForm": "Submit Form",
+        "cancel": "Cancel"
+      },
+      "obxFormTitles": {
+        "day1": "Day 1",
+        "day30": "Day 30",
+        "day90": "Day 90",
+        "day365": "1 Year Completion"
+      }
+    }
+  },
+  "sites": {
+    "cannotCreateExtraJobForNonFunctionalSite": "Cannot create {{extra}} Jobs for a non-functional site",
+    "createSite": {
+      "yes": "Yes",
+      "no": "No",
+      "applyFlatRate": "Apply Flat Rate",
+      "toggleNotApply": "Toggle if you want to apply a flat rate for this contract.",
+      "toggleApply": "Enter the value for flat rate contract",
+      "billableBreaks": "Billable Breaks:",
+      "createSite": "Create Site",
+      "selectInvoiceLineItem": "Select Invoice Line Item",
+      "inUTC": "(in UTC)",
+      "billingRate": "Billing",
+      "peakHours": "Peak Hours",
+      "billingType": "Billing Type",
+      "dispatch": "{{dispatch}}",
+      "dispatchBillingInfoComponent": "{{dispatch}} Billing Information",
+      "createASite": "Create a Site",
+      "siteDetails": "Site Details",
+      "siteName": "Site Name",
+      "companyName": "Company Name",
+      "industryVertical": "Industry Vertical",
+      "siteType": "Site Type",
+      "address": "Address",
+      "addressLine1": "Address Line 1",
+      "addAddress1": "Add Address 1",
+      "addressLine2": "Address Line 2",
+      "addAddress2": "Add Address 2",
+      "typeToAddLocation": "Type to add location",
+      "add": "Add",
+      "select": "Select",
+      "state": "State/Province",
+      "country": "Country",
+      "zipCode": "Zip/Postal Code",
+      "clientDetails": "Client Details",
+      "name": "Name",
+      "phone": "Phone",
+      "email": "Email",
+      "createAContract": "Create a Contract",
+      "contractName": "Contract Name",
+      "addContractName": "Add Contract Name",
+      "timeZone": "Time Zone",
+      "service": "Service",
+      "serviceType": "Service Type",
+      "officersRequired": "{{officers}} Required",
+      "hourlyRate": "Hourly Rate",
+      "lineItem": "Invoice Line Items",
+      "billRate": "Bill Rate($)",
+      "startTime": "Start Time",
+      "endTime": "End Time",
+      "jobDays": "Job Days:",
+      "additionalServices": "Additional Services:",
+      "visitorManagement": "Visitor Management",
+      "loadManagement": "Load Management",
+      "pushNotification": "Push Notification",
+      "billingFrequency": "Billing Frequency",
+      "billingFrequencyType": "Billing Frequency Type",
+      "billingStartDate": "Billing Start Date",
+      "contractStartDate": "Contract Start Date",
+      "contractEndDate": "Contract End Date",
+      "PaymentTerms": "Payment Terms",
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "serviceName": "Add Service Name",
+      "attachmentLink": "Attachment Link",
+      "attachmentLinkPlaceholder": "https://...",
+      "revenue": "Revenue",
+      "cycleReferenceDate": "Cycle Reference Date",
+      "siteLocation": "Site Location",
+      "franchiseId": "Franchise Id",
+      "designation": "Designation",
+      "instructions": "Instructions",
+      "cancel": "Cancel",
+      "save": "Save",
+      "contractDetails": "Contract Details",
+      "addServices": "Add Services",
+      "addServicesText": "Add services for the site’s contract",
+      "city": "City",
+      "suburb": "Suburb",
+      "eg20": "E.g, 20",
+      "eg2": "E.g, 2",
+      "holidayMultiplier": "Holiday Multiplier",
+      "holidayRate": "Holiday Rate",
+      "holidayGroup": "Holiday Group",
+      "holidayMultiplierPlaceholder": "E.g., 1.5x",
+      "holidayMultiplierPlaceholderNoX": "E.g., 1.5",
+      "frequency": {
+        "monthly": "Monthly",
+        "biWeekly": "Bi Weekly",
+        "weekly": "Weekly",
+        "semiMonthly": "Semi Monthly",
+        "event": "Event",
+        "flat": "Flat"
+      },
+      "billingTypeOptions": {
+        "preBill": "Pre Bill",
+        "postBill": "Post Bill"
+      },
+      "dueUponReceipt": "Due Upon Receipt",
+      "serviceTypes": {
+        "dedicated": "Dedicated",
+        "patrol": "Patrol",
+        "dispatch": "Dispatch"
+      },
+      "fuelSurchargePercentage": "Percentage (%)",
+      "fuelSurchargeFixedValue": "Value ($)",
+      "fuelSurchargePercentagePatrol": "Percent per patrol",
+      "fuelSurchargeFixedValuePatrol": "Value per patrol",
+      "fuelSurchargePercentageDedicated": "Percent per hour",
+      "fuelSurchargeFixedValueDedicated": "Value per hour",
+      "fuelSurchargePercentageDispatch": "Percent per dispatch",
+      "fuelSurchargeFixedValueDispatch": "Value per dispatch",
+      "billingOptions": {
+        "flatRate": "Flat Rate",
+        "chargePerAlarm": "Charge Per Alarm",
+        "nonBillable": "Non-Billable"
+      },
+      "industryTypes": {
+        "manufacturing": "Manufacturing",
+        "industrial": "Industrial",
+        "distribution": "Distribution",
+        "residential": "Residential",
+        "commercial": "Commercial"
+      }
+    },
+    "table": {
+      "listing": {
+        "columns": {
+          "site": "Site Name",
+          "client": "Client",
+          "company": "Company",
+          "dutyType": "Type",
+          "zone": "Zone",
+          "supervisor": "Supervisor",
+          "supervisors": "{{supervisor}}(s)",
+          "officers": "{{officers}}",
+          "status": "Status",
+          "monthlyRevenue": "Monthly Revenue",
+          "clientsName": "Client Name",
+          "contact": "Contact",
+          "clientsPhone": "Client Phone",
+          "customerId": "Customer ID"
+        }
+      }
+    },
+    "filters": {
+      "attendance": {
+        "all": "All"
+      },
+      "duties": {
+        "all": "All Shifts"
+      },
+      "locations": {
+        "all": "All"
+      },
+      "zoneType": {
+        "all": "All Zones"
+      },
+      "sitesType": {
+        "site": "Sites",
+        "all": "All Sites",
+        "allSitesValue": "all",
+        "functional": "Functional",
+        "requiresAttention": "Requires Attention",
+        "nonFunctional": "Non-Functional",
+        "allStatus": "All Status"
+      },
+      "serviceType": {
+        "all": "All Services",
+        "dedicated": "Dedicated",
+        "patrol": "Patrol",
+        "hybrid": "Hybrid"
+      }
+    },
+    "searchFilter": "Search by Site Name",
+    "details": {
+      "tabs": {
+        "labels": {
+          "clients": "Clients",
+          "employees": "Employees",
+          "devices": "Devices",
+          "checkpoints": "Checkpoints",
+          "attendance": "Attendance",
+          "visitors": "Visitors",
+          "loads": "Loads",
+          "generalInformation": "General Information",
+          "instructions": "Instructions",
+          "reportTemplates": "Reports",
+          "contracts": "Contracts",
+          "jobs": "Jobs",
+          "duty": "Schedule",
+          "locations": "Locations",
+          "Email": "Email"
+        }
+      },
+      "addendumNotificationBar": "Updates have been made against certain contract(s). Please Review & Acknowledge, and complete any required actions.",
+      "reviewAndAcknowledge": "Review and Acknowledge",
+      "viewContract": "View Contract",
+      "addendum": {
+        "selectContract": "Select Contract",
+        "selectContractDesc": "Select a contract to view its changes."
+      }
+    },
+    "siteInformation": {
+      "secondaryEmail": "Client Secondary Email",
+      "title": "Site Information",
+      "info": "Add Info",
+      "name": "Site Name",
+      "termsAndConditionsVersion": "T&Cs Version",
+      "owner": "Owner's Name",
+      "client": "Client Name",
+      "email": "Client Email",
+      "primaryEmail": "Client Primary Email",
+      "number": "Client Phone",
+      "address": "Address",
+      "country": "Country",
+      "city": "City",
+      "region": "Region/State",
+      "generalInformation": "General Information",
+      "instructions": "Site Instructions",
+      "dispatchInstructions": "{{dispatch}} Post Order",
+      "instructionsDesc": "In order to override original or add new details you can select a site & push new instructions",
+      "Id": "Site ID",
+      "joined": "Joined",
+      "lastName": "Last Name",
+      "monthlyRevenue": "Monthly Revenue",
+      "noOfCustomers": "No. of Customers",
+      "serviceZips": "Zip/Postal Code",
+      "noOfEmployees": "No. of Employees",
+      "labourEfficiency": "Labour Efficiency",
+      "customerRelation": "Customer Retention",
+      "person": "Person",
+      "location": "Location",
+      "type": "Type",
+      "supervisor": "Supervisor",
+      "supervisors": "Supervisors",
+      "contact": "Supervisor Phone",
+      "status": "Status",
+      "generalInstructions": "General Instructions",
+      "generalInstructionsDescription": "These are generic instructions and will be shown on all jobs",
+      "dispatchInstructionsDescription": "These are post orders for call center agent",
+      "exceptionEditor": "Post Order Instruction Editor",
+      "exceptionEditorDes": "You can edit or add post order for site instructions from this editor.",
+      "instructionEditor": "Instruction Editor",
+      "instructionEditorDes": "You can edit or add Instructions from this editor.",
+      "specifyDate": "Specify Day (optional)",
+      "addException": "Add Post Order",
+      "addExceptionInstructions": "Post Order Instructions",
+      "addExceptionDetails": "These are post order instructions which will be followed on specific days.",
+      "contractDuration": "Contract Duration",
+      "noInstructionAdded": "No Instructions Added!",
+      "noInstructionDesc": "There are no instructions added for this site currently. Go ahead add instructions for the {{officers}} to follow.",
+      "noDispatchInstructionTitle": "No {{dispatch}} Post Order Instructions Added!",
+      "noDispatchInstructionDesc": "There are no {{dispatch}} post order instructions added for this site currently. Go ahead add instructions for the {{officers}} to follow.",
+      "createDispatchInstruction": "Create {{dispatch}} Post Order Instruction",
+      "zoneRequire": "Site must be a part of zone, ",
+      "supervisorRequire": "Site must have a {{supervisor}}",
+      "zone": "zone",
+      "emergencyContact": "Emergency Contact",
+      "siteRate": "Site Rate",
+      "contractDeleteTitle": "Delete Contract!",
+      "contractDeleteDesc": "Are you sure you want to delete this contract? This action cannot be undone.",
+      "contractDeleteButtonConfirm": "Delete Contract",
+      "postOrders": "Post Orders",
+      "dailySiteSummaryReceivers": "Daily Site Summary Receivers",
+      "incidentReportReceivers": "Incident Report Receivers",
+      "inviteCbxUsers": "Invite users to Customer Portal",
+      "billableBreaks": "Billable Breaks",
+      "yes": "Yes",
+      "no": "No",
+      "attachments": "Attachment(s)",
+      "customerId": "Customer ID",
+      "geofenceRadius": "Geofence Radius (meters)",
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "geofencing": {
+        "title": "Geofence",
+        "description": "Enabling the toggle activates geofencing for the site"
+      }
+    },
+    "graph": {
+      "sites": "Sites",
+      "clients": "Clients",
+      "contracts": "Contracts",
+      "active": "Active",
+      "upcoming": "Upcoming",
+      "inActive": "Inactive",
+      "education": "Education",
+      "healthCare": "Healthcare",
+      "residential": "Residential",
+      "others": "Others",
+      "hyperstores": "Hyperstores",
+      "industryVerticals": "Industry Verticals",
+      "functional": "Functional",
+      "nonFunctional": "Non-Functional"
+    },
+    "sidebarListing": {
+      "noFranchiseFound": "No sites found!",
+      "notFound": "No {{sidebarModule}} found!",
+      "noSiteFound": "No sites found!",
+      "filteredDataFound": "No Data found for the selected filters. Please try again.",
+      "searchedTermNotFound": "Your search '{{searchedTerm}}' did not match any site. Please try again."
+    },
+    "jobs": {
+      "contractsFilterTitle": "All Contracts",
+      "accordionHeader": {
+        "serviceName": "Service Name",
+        "designation": "Designation",
+        "shiftDays": "Shift Days",
+        "additionalServices": "Additional Services",
+        "visitor": "Visitor",
+        "load": "Load",
+        "contract": "Contract",
+        "createExtraJob": "Create {{extra}} Job",
+        "deleteExtraJob": "Delete {{extra}} Job",
+        "createNewNote": "Create New Note",
+        "created": "Created By: ",
+        "updated": "Updated By: ",
+        "At": "at ",
+        "name": {
+          "dedicated": "{{dedicated}} Job",
+          "extra": "{{extra}} Job",
+          "patrol": "{{patrol}} Job",
+          "extraHit": "Extra Hit",
+          "extraTag": "Extra"
+        }
+      },
+      "splitBtn": "Split Shift",
+      "editJobBtn": "Edit Job",
+      "breakConfigurations": "Break Configurations",
+      "editHit": "Edit {{hit}}",
+      "assignToRunsheet": "Assign to {{runsheet}}",
+      "cancelBadge": "Cancelled",
+      "addTourInfoMsg": "Assign {{tour}} template first to add this {{hit}} to a {{runsheet}}.",
+      "cancelHit": "Cancel {{hit}}",
+      "cancelHitModal": {
+        "title": "Cancel {{hit}}!",
+        "description": "Are you sure you want to cancel this {{hit}} from selected dates? This will remove it from schedule as well. Note that all the {{hits}} of an in progress {{runsheet}}, where user has not started navigation will also be cancelled (if any).",
+        "deleteBtn": "Yes, Cancel {{hit}}",
+        "cancelBtn": "No"
+      },
+      "noTourAssignedModal": {
+        "title": "No Tour Template Assigned!",
+        "description": "Please add a tour template to assign this hit to a runsheet.",
+        "addBtn": "Add Template",
+        "cancelBtn": "Cancel"
+      },
+      "assignToRunsheetModal": {
+        "title": "Assign to {{runsheet}}",
+        "description": "Expand the day of the {{hit}} that you want to assign to a {{runsheet}}. Expanding the {{hit}} day will display all the {{runsheets}} where this {{hit}} can be added.",
+        "cancelBtn": "Cancel",
+        "saveBtn": "Assign",
+        "selectLabel": "Select",
+        "pathCreationFailed": "{{days}} {{runsheet}} failed to create path",
+        "noRunsheetSelected": "No {{runsheet}} selected",
+        "noRunsheetAvailable": "No {{runsheet}} Available!",
+        "noRunsheetText": "There are currently no {{runsheets}} present at the time of this {{hit}}."
+      },
+      "deleteShiftModal": {
+        "title": "Delete Shift!",
+        "description": "Please select the dates on which you want to delete this shift.",
+        "dateRangeSelectText": "Select Date Range",
+        "deleteBtn": "Delete Shift",
+        "cancelBtn": "Cancel",
+        "errorMessages": {
+          "startDateRequired": "Start date is required",
+          "endDateRequired": "End date is required"
+        }
+      },
+      "deleteExtraJobModal": {
+        "title": "Delete {{extra}} Job!",
+        "description": "Are you sure you want to delete this {{extra}} job? All the {{extra}} jobs associated with this will be deleted.",
+        "deleteBtn": "Delete Job"
+      },
+      "shiftList": {
+        "shifts": "Shifts",
+        "startTime": "Start Time",
+        "endTime": "End Time",
+        "days": "Days",
+        "serviceTime": "Service Time",
+        "visitType": "Type"
+      },
+      "error": {
+        "jobEnded": "Job duration has ended",
+        "contractTerminated": "Contract has expired",
+        "contractExpired": "Contract has expired"
+      },
+      "editJob": {
+        "title": "Edit Job Time!",
+        "description": "Are you sure you want to edit the job time? Please note that the total job duration must remain the same. If the job is split, the split will be removed, and all existing assignments will be cleared. New job timing will be effective from upcoming shift.",
+        "updateJobTime": "Update Job Time",
+        "startTime": "Start Time",
+        "endTime": "End Time",
+        "cancel": "Cancel"
+      },
+      "editDedicatedJobTime": {
+        "title": "Edit Job Time!",
+        "description": "Are you sure you want to edit the job time? Please note that the total job duration must remain the same. If the job is split, the split will be removed, and all existing assignments will be cleared. New job timing will be effective from upcoming shift.",
+        "updateJobTime": "Update Job Time",
+        "startTime": "Start Time",
+        "endTime": "End Time",
+        "cancel": "Cancel",
+        "updateShiftTime": "Update Shift Time"
+      },
+      "breakRuleConfiguration": {
+        "details": "Details",
+        "description": "Below is the information about break configurations",
+        "saveChanges": "Save Changes",
+        "payable": "Pay officer for breaks:",
+        "cancel": "Cancel",
+        "breakRule": "Break Rule"
+      }
+    },
+    "tooltips": {
+      "secondaryContactEmailTooltip": "Daily reports will be sent on this email.",
+      "primaryContactEmailTooltip": "Daily reports will be sent on this email.",
+      "siteRateTooltip": "This will be hourly rate of all {{officers}} performing jobs on this site.",
+      "clientPhoneNoTooltip": "Phone Number should be in +15523344332 format.",
+      "applyFlatRateTooltip": "Applies only when a flat rate is not selected."
+    }
+  },
+  "sitesAttendance": {
+    "table": {
+      "listing": {
+        "columns": {
+          "user": "User",
+          "date": "Date",
+          "checkInTime": "Check In Time",
+          "checkOutTime": "Check Out Time",
+          "status": "Status",
+          "jobType": "Job Type"
+        }
+      }
+    },
+    "graph": {
+      "userTypes": "User Types",
+      "attendanceTypes": "Attendance Types",
+      "absents": "Absents",
+      "leaves": "Time Off",
+      "contracts": "Contracts",
+      "noOfRequest": "No of Requests",
+      "petrolMissed": "{{patrol}} Missed",
+      "dedicatedMissed": "{{dedicated}} Missed",
+      "dedicated": "{{dedicated}}",
+      "petrol": "{{patrol}}",
+      "missRate": "Missed Rate",
+      "dutiesPerformed": "Jobs Performed"
+    }
+  },
+  "devices": {
+    "tables": {
+      "listing": {
+        "columns": {
+          "id": "ID",
+          "name": "Device Name",
+          "type": "Type",
+          "installationDate": "Installation Date",
+          "batteryRenewal": "Battery Renewal",
+          "lastScannedOn": "Last Scanned On",
+          "lastScannedBy": "Last Scanned By",
+          "site": "Site Location"
+        }
+      }
+    }
+  },
+  "checkpoints": {
+    "tables": {
+      "listing": {
+        "columns": {
+          "name": "Checkpoint Name",
+          "type": "Checkpoint Type",
+          "deviceName": "Device",
+          "location": "Location"
+        }
+      }
+    },
+    "update": {
+      "button": {
+        "updateCheckpoint": "Update Checkpoint"
+      }
+    },
+    "create": {
+      "button": {
+        "createCheckpoint": "Create Checkpoint"
+      }
+    },
+    "form": {
+      "checkPointName": {
+        "label": "Checkpoint Name",
+        "placeHolder": "Select Checkpoint Name"
+      },
+      "checkPointType": {
+        "label": "Checkpoint Type",
+        "placeHolder": "Select Checkpoint Type"
+      },
+      "device": {
+        "label": "Select a Device",
+        "placeHolder": "Select Device"
+      },
+      "location": {
+        "label": "Select a Location",
+        "placeHolder": "Select Location"
+      },
+      "emptyDevicesList": "No devices are configured for this site."
+    },
+    "model": {
+      "texts": {
+        "createACheckpoint": "Create a Checkpoint",
+        "updateACheckpoint": "Update Checkpoint",
+        "createACheckpointDes": "Select a device and associate a location to create a checkpoint",
+        "updateACheckpointDes": "Select a device and associate a location to update a checkpoint"
+      }
+    },
+    "createCheckpoint": "Create a Checkpoint"
+  },
+  "locations": {
+    "tables": {
+      "listing": {
+        "columns": {
+          "id": "ID",
+          "name": "Location Name",
+          "coordinates": "Coordinates"
+        }
+      }
+    },
+    "update": {
+      "button": {
+        "updateLocation": "Update Location"
+      }
+    },
+    "create": {
+      "button": {
+        "createLocation": "Create Location"
+      }
+    },
+    "form": {
+      "locationName": {
+        "label": "Location Name",
+        "placeHolder": "e.g Parking lot"
+      }
+    },
+    "model": {
+      "texts": {
+        "createLocation": "Create Location",
+        "createLocationDes": "Create a new location within a site where you want to add your Devices or add Geo-Location."
+      }
+    },
+    "createLocation": "Create  Location"
+  },
+  "reportTemplates": {
+    "tables": {
+      "listing": {
+        "columns": {
+          "shift": "Shift",
+          "assignedBy": "Assigned By",
+          "assignedTo": "Assigned To",
+          "templateType": "Template Type"
+        },
+        "columnsHeader": {
+          "event": "Event",
+          "description": "Description",
+          "time": "Time (in mins)"
+        }
+      }
+    }
+  },
+  "thresholdValues": {
+    "headings": {
+      "main": "Threshold Values",
+      "desc": "These values will impact on {{officer}}’s Non-Compliances generation"
+    },
+    "tables": {
+      "listing": {
+        "columnsHeader": {
+          "event": "Event",
+          "description": "Event Description",
+          "time": "Time Bracket (in mins)"
+        }
+      }
+    }
+  },
+  "runSheetSettings": {
+    "headings": {
+      "listing": "These are {{runsheet}} templates. Assign {{runsheet}} from schedule.",
+      "duration": "Duration",
+      "hits": "Hits",
+      "main": "{{runsheet}} Settings",
+      "desc": "Set minimum and values for optimized runsheet generation"
+    },
+    "tables": {
+      "listing": {
+        "columnsHeader": {
+          "event": "Event",
+          "description": "Description",
+          "time": "Time (in mins)",
+          "count": "Count"
+        }
+      }
+    }
+  },
+  "breakRules": {
+    "headings": {
+      "main": "Break Rules",
+      "desc": "Define break intervals which act as generic rules for all {{runsheets}}"
+    },
+    "tables": {
+      "listing": {
+        "columnsHeader": {
+          "breakType": "Break Type",
+          "description": "Event Description",
+          "time": "Time Bracket (in mins)"
+        }
+      }
+    },
+    "searchPlaceholder": "Search break rule"
+  },
+  "serviceRatesSettings": {
+    "headings": {
+      "operationalServices": "Operational Services",
+      "additionalClientServices": "Additional Client Services",
+      "main": "Services Rates",
+      "desc": "Services charges can be set overall but can be changed for customers"
+    },
+    "tables": {
+      "listing": {
+        "columnsHeader": {
+          "serviceType": "Service Type",
+          "unitRate": "Unit Rate",
+          "rate": "Rate"
+        }
+      }
+    }
+  },
+  "systemDefaults": {
+    "headings": {
+      "jobShift": "Job Shift",
+      "devices": "Device",
+      "autoClocOut": "Auto Clock out",
+      "officersAvailability": "{{officer}} Availability",
+      "supervisorAvailability": "{{supervisor}} Availability",
+      "extraServices": "Extra Services",
+      "main": "System Default",
+      "desc": "These are default system settings, you can change them according to your preferences",
+      "emailAutomation": "Email Automation",
+      "overtimeHoursLimit": "Overtime Hours Limit",
+      "invoiceGeneration": "Invoice Generation",
+      "payrollProcessor": "Payroll Processor",
+      "geofence": "Geofence",
+      "boundaryRadius": "Boundary radius",
+      "timeFormat": "Time Format",
+      "onDemandTracking": "On-Demand Tracking"
+    },
+    "tables": {
+      "listing": {
+        "columnsHeader": {
+          "serviceType": "Service Type",
+          "unitRate": "Unit Rate",
+          "rate": "Rate",
+          "value": "Values",
+          "eventName": "Event Name",
+          "deviceName": "Device Name",
+          "description": "Description",
+          "eventDescription": "Event Description",
+          "event": "Event",
+          "userType": "User Type",
+          "timeBracketsInMins": "Time Bracket(in mins)",
+          "time": "Time",
+          "timeAutomation": "Time",
+          "timeInvoiceGeneration": "Time (Franchise Local Time)",
+          "configurationType": "Configuration Type",
+          "currentSetting": "Current Setting"
+        }
+      }
+    }
+  },
+  "notificatons": {
+    "headings": {
+      "officerAttandace": "Operational Services",
+      "dedicatedOfficerGeofenceAlerts": "{{dedicated}} {{officer}} Geofence Alerts"
+    },
+    "tables": {
+      "listing": {
+        "columnsHeader": {
+          "event": "Event",
+          "description": "Event Description",
+          "time": "Time (in mins)"
+        }
+      }
+    }
+  },
+  "templates": {
+    "staticFields": {
+      "visitor": {
+        "visitorLabel": "Visitor CheckIn/CheckOut",
+        "firstLabel": "Visitor CheckIn",
+        "secondInputLabel": "Visitor CheckOut",
+        "checkIn": "Visitor Check In",
+        "checkOut": "Visitor Check Out",
+        "changeableValueCriteria": "visitorsCheckOut"
+      },
+      "loads": {
+        "loadsLabel": "Loads CheckIn/CheckOut",
+        "firstLabel": "Loads CheckIn",
+        "secondInputLabel": "Loads CheckOut",
+        "checkIn": "Loads Check In",
+        "checkOut": "Loads Check Out",
+        "changeableValueCriteria": "loadsCheckOut"
+      }
+    },
+    "listing": {
+      "columns": {
+        "title": "Report",
+        "createdOn": "Created On",
+        "templateType": "Template Type",
+        "actions": "Actions"
+      },
+      "actions": {
+        "edit": "Edit",
+        "replace": "Replace Report Template",
+        "delete": "Delete"
+      }
+    },
+    "create": {
+      "addReportTemplate": "Add Report Template",
+      "report": {
+        "title": "Report Title",
+        "type": "Report Type",
+        "titlePlaceholder": "Report Template Title (e.g. Equipment Inspection Report)",
+        "description": "Report Description",
+        "descriptionPlaceholder": "Additional Description (optional)",
+        "dropdown": {
+          "equipmentInspection": "Equipment Inspection",
+          "vehicleInspection": "Vehicle Inspection",
+          "tourReports": "{{tour}} Reports",
+          "shiftDayEndReport": "Shift Day End Report",
+          "incidentReport": "Incident Report"
+        }
+      },
+      "section": {
+        "title": "Section Title",
+        "titlePlaceholder": "Section Title (e.g. Safety Protocols and Features)",
+        "description": "Section Description",
+        "descriptionPlaceholder": "Additional Description (optional)",
+        "field": {
+          "title": "Question Statement",
+          "titlePlaceholder": "Question Statment (e.g. Is the emergency shut-off mechanism working correctly?)",
+          "description": "Question Description",
+          "descriptionPlaceholder": "Instructions (optional)",
+          "answerType": "Answer Type",
+          "responseType": {
+            "text": "Text",
+            "number": "Number",
+            "dateTime": "Date & Time",
+            "radio": "Radio Buttons (Single Selection)",
+            "multiselect": "Multiple Selection",
+            "imageVideo": "Image/Video",
+            "date": "Date",
+            "time": "Time",
+            "dropdown": "DropDown",
+            "webCam": "Web Cam Image",
+            "phoneNumber": "PhoneNumber",
+            "description": "Description Box",
+            "signature": "Signature"
+          },
+          "option": {
+            "placeholder": "Option Label"
+          }
+        }
+      },
+      "btn": {
+        "back": "Back",
+        "save": "Save",
+        "cancel": "Cancel",
+        "addQuestion": "Add Question",
+        "addSection": "Add Section",
+        "delete": "Delete",
+        "newOption": "Add option"
+      },
+      "checkbox": {
+        "required": "Required"
+      }
+    },
+    "edit": {
+      "error": {
+        "fileLength": "More than 4 files cannot be uploaded"
+      }
+    },
+    "delete": {
+      "title": "Delete Report!",
+      "description": "Are you sure you want to delete this report?",
+      "deleteButtonText": "Delete Report",
+      "cancelButtonText": "Cancel"
+    },
+    "replace": {
+      "title": "Replace Report Template",
+      "bothDescription": "Select a site and report template to replace for",
+      "description": "Select a site to replace the template for",
+      "siteDropdownLabel": "Select Site",
+      "reportDropdownLabel": "Select a Report Template",
+      "replaceButtonText": "Replace Report Template",
+      "cancelButtonText": "Cancel"
+    }
+  },
+  "contracts": {
+    "tables": {
+      "listing": {
+        "columns": {
+          "name": "Name",
+          "serviceName": "Service Name",
+          "jobType": "Job Type",
+          "duty": "Job",
+          "jobDays": "Job Days",
+          "noOfOfficers": "No. of {{officers}}",
+          "startDate": "Start Date",
+          "endDate": "End Date",
+          "startTime": "Start Time",
+          "endTime": "End Time",
+          "designation": "Designation",
+          "dutyDays": "Job Days",
+          "shifts": "Shifts",
+          "additionalServices": "Additional Services",
+          "officersCount": "Officers Count",
+          "noOfHits": "No. of {{hits}}",
+          "hourlyRate": "Hourly Rate",
+          "fuelSurcharge": "Fuel Surcharge",
+          "nonBillable": "Non-Billable",
+          "yes": "Yes",
+          "no": "No"
+        }
+      }
+    },
+    "status": {
+      "active": "Active",
+      "expired": "Expired",
+      "terminated": "Terminated",
+      "terminatingAt": "Terminating at: {{date}}"
+    },
+    "billingInformation": "Billing Information",
+    "billingFrequency": "Billing Frequency",
+    "billingFrequencyType": "Billing Type",
+    "contractTenureType": "Contract Tenure Type",
+    "contractTenureTypes": {
+      "temporary": "Temporary",
+      "ongoing": "Ongoing",
+      "eventBased": "Event based"
+    },
+    "billingStartDate": "Billing Start Date",
+    "billingEndDate": "Billing End Date",
+    "nextInvoiceDate": "Next Invoice Date",
+    "paymentsTerms": "Payments Terms",
+    "viewDetails": "View Details",
+    "holidayGroup": "Holiday Group",
+    "fuelSurcharge": "Fuel Surcharge",
+    "flatRateApplied": "Flat Rate Applied",
+    "holidayMultiplier": "Holiday Multiplier",
+    "holidayflatRate": "Holiday Flat Rate",
+    "dollarSign": "$",
+    "cycleReferenceDate": "Cycle Reference Date"
+  },
+  "visitorsLoadsOfficer": {
+    "dropdownPlaceholder": "Select {{officer}}",
+    "dropdownErrorMessage": "Please select an {{officer}}",
+    "dropdownLabel": "Select {{officer}}",
+    "officerModalTitle": "Assign {{officer}}",
+    "officerCheckboxLabel": "Also allow this {{officer}}ß to access",
+    "loadsManagement": "Loads Management",
+    "visitorsManagement": "Visitors Management",
+    "visitorsOfficerAlert": "Certain {{officers}} listed below have been granted access to the Visitor Managment Platform.",
+    "loadsOfficerAlert": "Certain {{officers}} listed below have been granted access to the Load Managment Platform.",
+    "cancel": "Cancel",
+    "save": "Save",
+    "deleteTitle": "Remove Access!",
+    "deleteText": "Are you sure you want to remove access?",
+    "deleteConfirm": "Remove Access",
+    "searchOfficer": "Search by Name",
+    "searchTemplateType": "Search by Type"
+  },
+  "settings": {
+    "userGroups": {
+      "removeUser": "Remove User",
+      "removeUserText": "Are you sure you want to delete this user? This action can not be undone?",
+      "permissionsSelected": "Permissions selected: ",
+      "title": "User Groups",
+      "homeOfficeUsers": "Home Office Users",
+      "franchiseUsers": "Franchise Users",
+      "search": "Search Groups",
+      "viewActivity": "View Activity",
+      "addNewGroup": "Add a User Group",
+      "groupName": "Group Name",
+      "users": "Users",
+      "addUsers": "Add Users",
+      "createdOn": "Created On",
+      "createdBy": "Created By",
+      "selectroleText": "Select roles to grant access for this group",
+      "franchiesOwner": "Franchies Owner",
+      "director": "Director",
+      "coordinator": "Coordinator",
+      "supervisor": "Supervisor",
+      "managerGroup": "Management Group",
+      "cencel": "Cancel",
+      "cancel": "Cancel",
+      "saveChanges": "Save Changes",
+      "createGroup": "Create Group",
+      "selectOrganizationLevel": "Select Orginaztion Level",
+      "selectGroupName": "Select Group Name",
+      "selectUsers": "Select Users",
+      "permissions": "Permissions",
+      "organizationLevel": "Organization Level",
+      "pickADate": "Pick a Date",
+      "user": "User",
+      "activityLogs": "Activity Logs",
+      "timeStamp": "Time Stamp",
+      "group": "Group",
+      "action": "Action",
+      "actionDetail": "Action Detail",
+      "groupsPermissions": "Groups Permissions",
+      "editPermissions": "Edit Permissions",
+      "addUser": "Add User",
+      "addedOn": "Added On",
+      "role": "Role",
+      "searchbyUser": "Search by user name",
+      "name": "Name",
+      "addNewUsers": "Add User(s)",
+      "addUserSubText": "Add User in this group for specific permissions",
+      "selectUser": "Select User"
+    },
+    "rolesPermissions": {
+      "section": {
+        "HO": "Home Office Level Permissions",
+        "FO": "Franchise Level Permissions",
+        "SET": "Sales Executive Team Level Permissions"
+      },
+      "hoDashboard": "HO Dashboard",
+      "obxDashboard": "OBX Dashboard",
+      "masterControl": "Has full access to all modules",
+      "analytics": "Analytics",
+      "visitorLoadLogs": "Load Management",
+      "attendance": "Attendance",
+      "availability": "Availability",
+      "companies": "Companies",
+      "contacts": "Contacts",
+      "contractRate": "Contract Rate",
+      "deals": "Deals",
+      "vehicles": "Vehicles",
+      "devices": "Devices",
+      "dispatch": "{{dispatch}}",
+      "userInformation": "User Information",
+      "franchiseMap": "Location Tracker",
+      "preferences": "Preferences",
+      "reportTemplates": "Report Templates",
+      "mappingPreference": "Mapping Preferences",
+      "userGroups": "User Groups",
+      "rolesAndPermissions": "Roles And Permissions",
+      "emploeeRates": "Employee Rates",
+      "siteRates": "Site Rates",
+      "contracts": "Contracts",
+      "jobs": "Jobs",
+      "extraJobs": "{{extra}} Jobs",
+      "privileges": "Privileges",
+      "billings": "Billings",
+      "visitorLogs": "Visitor Management",
+      "checkpoints": "Checkpoints",
+      "visitorLoadTemplates": "Visitor Load Templates",
+      "officerVisitorLoadManagementAccess": "Officer Visitor Load Management",
+      "siteInstructions": "Site Instructions",
+      "franchises": "Franchises",
+      "industryVerticals": "Industry Verticals",
+      "invoices": "Invoices",
+      "leaderBoard": "Leader Board",
+      "leadsMap": "Leads Map",
+      "leaveRequest": "Leave Request",
+      "locations": "Locations",
+      "mobileExperiences": "Mobile Experiences",
+      "others": "Others",
+      "payrolls": "Payrolls",
+      "runsheets": "{{runsheets}}",
+      "salesDashboard": "Sales Dashboard",
+      "schedules": "Schedule",
+      "schedule": "Schedule",
+      "scoutingRoutes": "Scouting Routes",
+      "settings": "Settings",
+      "employeeRates": "Employee Rates",
+      "shiftReports": "Shift Reports",
+      "sites": "Sites",
+      "timeOffRequests": "Time Off Requests",
+      "scheduling": "Scheduling",
+      "users": "Users",
+      "zones": "Zones",
+      "save": "Save",
+      "title": "Roles & Permissions",
+      "subTitle": "Specify permissions to the specific roles",
+      "subTitleNote": "(These changes will be applied to all franchises)",
+      "franchies": "Franchise",
+      "ho": "HO",
+      "resetToDefault": "Reset to Default",
+      "viewActivity": "View Activity",
+      "addNewRole": "Add New Role",
+      "resetChanges": "Reset to Default",
+      "resetToDefaultText": "Are you sure you want to reset to default?",
+      "cancel": "Cancel",
+      "reset": "Reset Changes",
+      "selectRole": "Organization Level",
+      "roleName": "Role Name",
+      "createRole": "Create Role",
+      "addNewRoleText": "This role is being added in franchise.",
+      "hasFullAccess": "Has full access to all modules",
+      "modules": "Modules",
+      "create": "Create",
+      "view": "View",
+      "update": "Update",
+      "delete": "Delete",
+      "siteRate": "Site Rate",
+      "employeeRate": "Employee Rate",
+      "mobileApp": "Mobile Experience",
+      "jobExecution": "Job Execution",
+      "supervision": "Supervision",
+      "obxForm": "OBX Forms"
+    },
+    "preferences": {
+      "title": "Preferences",
+      "holidayGroups": {
+        "editGroup": "Edit Group",
+        "deleteGroup": "Delete Group",
+        "title": "Holiday Groups",
+        "subTitle": "Holiday groups for multipliers based on contract terms",
+        "groupName": "Group Name",
+        "numberOfHolidays": "Number of Holidays",
+        "createdBy": "Created by",
+        "createdOn": "Created on",
+        "addNewGroup": "Add New Group",
+        "createGroup": "Create Group",
+        "updateGroup": "Update Group",
+        "selectHolidays": "Select Holidays",
+        "cancel": "Cancel",
+        "addGroupName": "Add Group Name",
+        "selectedHolidaysKey": "selectedHolidays",
+        "groupNameKey": "groupName",
+        "federalHolidays": "Federal Holidays",
+        "federalHolidaysSubText": "Holiday groups are group of holidays for rate multipliers",
+        "deactivateGroup": "Deactivate Group",
+        "deactivateGroupSubText": "Are you sure you want to deactivate this holiday group? It will be removed from associated contracts. This action can not be undone.",
+        "deactivateGroupBtn": "Deactivate Group",
+        "searchGroup": "Search Group",
+        "nameKey": "name",
+        "add": "Add",
+        "keys": {
+          "name": "name",
+          "groupName": "groupName",
+          "selectedHolidays": "selectedHolidays"
+        }
+      },
+      "visitorTypes": {
+        "settingTitle": "Visitor Types",
+        "associatedSites": "Associated Sites",
+        "addQuestions": "Add Questions",
+        "fields": "Fields",
+        "addField": "+ Add Field",
+        "addVisitorType": "Add Visitor Type",
+        "updateVisitorType": "Update Visitor Type",
+        "addLoadType": "Add Load Type",
+        "updateLoadType": "Update Load Type",
+        "visitorLog": "Visitor Log Name",
+        "loaderLog": "Load Log Name",
+        "export": "Export",
+        "cancel": "Cancel"
+      },
+      "loadTypes": {
+        "settingTitle": "Load Types"
+      },
+      "language": {
+        "settingTitle": "language"
+      },
+      "thresholdValues": {
+        "settingTitle": "Threshold Values"
+      },
+      "notifications": {
+        "settingTitle": "Notifications"
+      },
+      "breakRules": {
+        "addJobText": "Add jobs/{{runsheets}} to associate shifts for this break rule",
+        "yesRemove": "Yes, Remove",
+        "removeJobText": "Are you sure you want to remove this Job? This action can not be undone.",
+        "removeJob": "Remove Job",
+        "search": "Search by shift name",
+        "searchbyName": "Search",
+        "addJobsRunsheets": "Add Jobs/{{runsheets}}",
+        "jobsRunsheets": "Jobs/{{runsheets}}",
+        "type": "Type",
+        "site": "Site",
+        "shiftCount": "Shift Count",
+        "editRule": "Edit Rule",
+        "deleteRule": "Delete Rule",
+        "deleteBreakRule": "Delete Break Rule",
+        "deleteBreakRuleText": "By deleting this rule, its associated shifts will no longer have any scheduled breaks. We suggest you to create another rule first and re-associate these shifts to the new rule.",
+        "breakTypes": "Break Types",
+        "ruleName": "Rule Name",
+        "dateCreated": "Date Created",
+        "associatedShifts": "Associated Shifts",
+        "settingTitle": "Break Rules",
+        "editType": "Edit Type",
+        "deleteType": "Delete Type",
+        "removeBreakType": "Remove Break Type",
+        "removeBreakTypeText": "Are you sure you want to remove this break type? It will be removed from all associated break rules. This action can not be undone.",
+        "cancel": "Cancel",
+        "removeCondition": "Remove Condition",
+        "removeRuleCondition": "Remove Rule Condition!",
+        "removeRuleConditionText": "Are you sure you want to remove this rule condition? This action can not be undone.",
+        "save": "Save",
+        "addBreakType": "Add Break Type",
+        "updateBreakType": "Update Break Type",
+        "manageBreakTypes": "Manage break types",
+        "breakType": "Break Type",
+        "editbreakType": "Edit Break Type",
+        "breakStartEndOffsetMissing": "Break Start and End Offset is required.",
+        "addCondition": "Add Condition",
+        "breakDuration": "Break Duration",
+        "breakCondition": "Break Condition",
+        "breakStarts": "Break starts",
+        "afterClockingIn": "after clocking-in",
+        "breakStartsFrom": "Break starts from",
+        "to": "to",
+        "notifyUser": "Notify User",
+        "payOfficerForBreak": "Pay {{officer}} for Break",
+        "payOfficer": "Pay {{officer}}",
+        "yes": "Yes",
+        "no": "No",
+        "notifyTheUser": "Notify the user",
+        "beforeStartOfTheBreak": "before start of the break",
+        "selectTime": "Select Time",
+        "fixed": "Fixed",
+        "range": "Range",
+        "runsheets": "{{runsheets}}",
+        "dedicatedJobs": "{{dedicated}} Jobs",
+        "addBreakRule": "Add Break Rule",
+        "noConditionAdded": "No Condition Added!",
+        "noConditionAddedDescription": "No conditions are added for this rule. Add conditions according to state rules.",
+        "breakConditions": "Break Conditions",
+        "conditionAlreadyExists": "Break conditions cannot have the same time.",
+        "breakRuleAlreadyExists": "Break rules cannot be same",
+        "preBreakBeforeStartTimeError": "Pre break alert cannot be before break start time",
+        "breakEndBeforeBreakStartError": "Break end time cannot be before break start time",
+        "breakStartTimeNullError": "Break start time cannot be zero",
+        "breakEndTimeNullError": "Break end time cannot be zero",
+        "preBreakTimeNullError": "Pre break time cannot be zero",
+        "breakTime": "Break Time",
+        "duration": "Duration",
+        "condition": "Condition",
+        "notifyOfficer": "Notify {{officer}}",
+        "editCondition": "Edit Condition",
+        "deleteCondition": "Remove Condition",
+        "placeholders": {
+          "breakType": "Select Break Type",
+          "breakDuration": "Select Break Duration",
+          "selectTime": "Select Time",
+          "ruleName": "Enter Rule Name",
+          "runsheets": "Select {{runsheets}}",
+          "dedicatedJobs": "Select {{dedicated}} Jobs"
+        },
+        "extraJob": "{{extra}} Job",
+        "breakTypeName": "Break Type Name",
+        "addBreakTypeName": "Add Break Type Name"
+      },
+      "runsheetSettings": {
+        "settingTitle": "{{runsheet}} Settings",
+        "supervisors": "{{supervisors}}",
+        "runsheetHeading": "Runsheet Supervisors",
+        "runsheetDesc": "Define who can manage runsheets.",
+        "supervisorName": "Supervisor Name",
+        "addedOn": "Added On",
+        "action": "Action",
+        "supervisor": "Supervisor",
+        "addSupervisor": "Add {{runsheet}} {{supervisors}}",
+        "addSupervisorText": "The added {{supervisor}} will have access starting from today.",
+        "addSupervisorLabel": "Select {{supervisors}}",
+        "save": "Save",
+        "dropdownPlaceholder": "Choose {{supervisor}}",
+        "errorMessage": "Please select a {{supervisor}}",
+        "deleteTitle": "Confirm Remove Access!",
+        "deleteText": "Are you sure you want to remove access? This {{supervisor}} will no longer have access to {{runsheets}}.",
+        "deleteConfirm": "Remove Access",
+        "deleteCancel": "Cancel",
+        "visitHeading": "Visit Configurations",
+        "visitDesc": "Define time spent on each site while {{patrol}} visit.",
+        "visitEvent": "Event",
+        "visitTime": "Time (mins)",
+        "visitServiceTime": "Service Time",
+        "visitServiceTimeTooltip": "Service time is the time to be spent on a patrol site while performing a hit. By default it is set to 10 minutes."
+      },
+      "systemDefault": {
+        "settingTitle": "System Default"
+      },
+      "extraServicesCharges": {
+        "settingTitle": "Service Rates"
+      },
+      "mappingPreferences": {
+        "title": "Mapping Preferences",
+        "locationsData": {
+          "settingTitle": "Locations",
+          "tagLine": "You can choose to map different location stages of Hubspot here",
+          "table": {
+            "columnsHeader": {
+              "stages": "Hubspot Stages",
+              "mapTo": "Map To"
+            }
+          }
+        },
+        "deals": {
+          "settingTitle": "Deals",
+          "tagLine": "You can choose to map different stages of deals within pipelines of Hubspot here",
+          "table": {
+            "columnsHeader": {
+              "pipeline": "Pipeline",
+              "noOfStages": "No. of Stages",
+              "assignedStages": "Assigned Stages",
+              "unassignedStages": "Unassigned Stages"
+            }
+          }
+        }
+      },
+      "invoiceSettings": {
+        "settingTitle": "Invoice Settings",
+        "invoiceSettingTitle": "Invoice Line Items Configurations",
+        "invoiceSettingDesc": "Define line items to be added in invoices.",
+        "lineItemName": "Line Item Name",
+        "lineItemNumber": "Line Item Number",
+        "glGroup": "GL Group",
+        "action": "Action",
+        "lineItemBtnText": "New Line Item",
+        "editLineItem": "Edit Line Item",
+        "createLineItem": "Add Line Item",
+        "editLineItemDesc": "Update Line Item name or GL Group",
+        "createLineItemDesc": "Add a new line item for invoices",
+        "lineItem": "Line Item",
+        "textFieldPlaceholder": "e.g. Equipment Inspection Report",
+        "dropdownPlaceholder": "Choose GL Group",
+        "update": "Update",
+        "create": "Add"
+      }
+    },
+    "reportTemplates": {
+      "title": "Report Templates"
+    },
+    "activityLog": {
+      "title": "Activity Log"
+    },
+    "stateRules": {
+      "title": "State Rules"
+    },
+    "skillsDesignations": {
+      "title": "Skills & Designations"
+    },
+    "country": {
+      "title": "Regional Configurations"
+    }
+  },
+  "visitors": {
+    "title": "Visitors Management",
+    "edit": "Edit",
+    "delete": "Delete",
+    "officerName": "{{officer}} Name",
+    "authorizedOn": "Authorized On",
+    "authorizedBy": "Authorized By",
+    "removeAccess": "Remove Access",
+    "addOfficer": "Add {{officer}}",
+    "dropdownTypeLabel": "Type",
+    "searchPlaceholder": "Search by Name",
+    "tables": {
+      "listing": {
+        "columns": {
+          "name": "Name",
+          "driverName": "Driver Name",
+          "status": "Status",
+          "phoneNumber": "Phone",
+          "visitorType": "Visitor Type",
+          "vehicleNumber": "Vehicle Number",
+          "inBound": "In-bound Date & Time",
+          "outBound": "Out-bound Date & Time",
+          "loadType": "Load Type",
+          "lastCheckIn": "Check in Date & Time",
+          "lastCheckOut": "Check out Date & Time",
+          "action": "Action",
+          "createdOn": "Created On",
+          "createdBy": "Created By",
+          "createdAt": "Created At",
+          "createNewTemplate": "Create New Template",
+          "search": "Search",
+          "officerName": "Officer Name",
+          "authorizedOn": "Authorized On",
+          "authorizedBy": "Authorized By",
+          "addOfficer": "Add Officer",
+          "type": "Type",
+          "checkIn": "Check In",
+          "checkOut": "Check Out",
+          "visitorsCheckIn": "Check In",
+          "visitorsCheckOut": "Check Out",
+          "loadsCheckIn": "Check In",
+          "loadsCheckOut": "Check Out",
+          "shiftDayEndReport": "Shift Day End Report",
+          "equipmentInspection": "Equipment Inspection",
+          "vehicleInspection": "Vehicle Inspection",
+          "tourReports": "Tour Reports",
+          "incidentReport": "Incident Report",
+          "reportTitle": "Report Title"
+        },
+        "filters": {
+          "all": "All Statuses",
+          "banned": "Banned",
+          "allowed": "Allowed"
+        },
+        "reason": "Reason",
+        "banVisitor": "Ban Visitor",
+        "unbanVisitor": "Unban Visitor",
+        "unbanVisitorpopover": "Un-ban Visitor",
+        "visitorBannedOn": "Visitor banned on",
+        "visitorBannedBy": "by"
+      }
+    },
+    "modals": {
+      "banVisitor": {
+        "banVisitor": "Ban Visitor!",
+        "areYouSure": "Are you sure you want to ban this visitor?",
+        "reason": "Reason",
+        "cancel": "Cancel",
+        "button": "Ban Visitor",
+        "addReason": "Add Reason"
+      },
+      "unbanVisitor": {
+        "unbanVisitor": "Unban Visitor!",
+        "areYouSure": "Are you sure you want to remove ban for this visitor?",
+        "reason": "Reason",
+        "cancel": "Cancel",
+        "button": "Unban Visitor",
+        "addReason": "Add Reason"
+      }
+    },
+    "drawer": {
+      "title": "Add Banned Visitor",
+      "phoneNumber": "Phone Number",
+      "phoneNumberPlaceHolder": "Enter phone number",
+      "fullName": "Full Name",
+      "fullNamePlaceholder": "Enter full name",
+      "attachments": "Attachment(s)",
+      "reason": "Reason",
+      "reasonPlaceholder": "Add reason",
+      "addBannedVisitorButton": "Add Banned Visitor",
+      "cancel": "Cancel"
+    },
+    "detail": {
+      "lastVisit": "Last Visit:",
+      "lastCheckIn": "Last Check-in:",
+      "lastCheckout": "Last Checkout:",
+      "totalVisits": "Total Visits:"
+    },
+    "filters": {
+      "search": "Search by Visitor"
+    },
+    "visitorsLog": "Visitors Log",
+    "template": "Template",
+    "officers": "{{officers}}"
+  },
+  "loads": {
+    "title": "Loads Management",
+    "tables": {
+      "listing": {
+        "columns": {
+          "id": "ID#",
+          "amount": "Amount",
+          "dueDate": "Due Date",
+          "invoiceDate": "Invoice Date",
+          "duration": "Duration",
+          "driverName": "Driver's Names",
+          "vehicleNumber": "Vehicle Number",
+          "vehicleType": "Vehicle Type",
+          "lastInboundDateAndTime": "In-bound Date & Time",
+          "lastOutboundDateAndTime": "Out-bound Date & Time",
+          "status": "Status",
+          "action": "Action",
+          "loadType": "Load Type",
+          "shiftDayEndReport": "Shift Day End Report",
+          "equipmentInspection": "Equipment Inspection",
+          "vehicleInspection": "Vehicle Inspection",
+          "tourReports": "Tour Reports",
+          "incidentReport": "Incident Report"
+        },
+        "filters": {
+          "all": "All Statuses",
+          "banned": "Banned",
+          "allowed": "Allowed"
+        },
+        "reason": "Reason",
+        "banLoader": "Ban Loader",
+        "unbanLoader": "Unban Loader",
+        "unbanLoaderPopover": "Un-ban Loader",
+        "loaderBannedOn": "Loader banned on",
+        "loaderBannedBy": "by",
+        "searchFilter": "Search By Driver Name"
+      }
+    },
+    "modals": {
+      "banLoader": {
+        "banLoader": "Ban Loader!",
+        "areYouSure": "Are you sure you want to ban this loader?",
+        "reason": "Reason",
+        "cancel": "Cancel",
+        "button": "Ban Loader",
+        "addReason": "Add Reason"
+      },
+      "unbanLoader": {
+        "unbanLoader": "Unban Loader!",
+        "areYouSure": "Are you sure you want to remove ban for this loader?",
+        "reason": "Reason",
+        "cancel": "Cancel",
+        "button": "Unban Loader",
+        "addReason": "Add Reason"
+      }
+    },
+    "detail": {
+      "lastVisit": "Last Visit:",
+      "lastCheckIn": "Last Check-in:",
+      "carLicensePlate": "Load License Plate:",
+      "totalVisits": "Total Visits:",
+      "timeSpent": "{{hours}} hours {{minutes}} minutes"
+    },
+    "drawer": {
+      "title": "Add Banned Loader",
+      "vehicleIdentificationNumber": "Vehicle Identification Number",
+      "vehicleIdentificationNumberPlaceHolder": "Enter vehicle identification number",
+      "driverName": "Driver Name",
+      "driverNamePlaceholder": "Enter driver name",
+      "attachments": "Attachment(s)",
+      "reason": "Reason",
+      "reasonPlaceholder": "Add reason",
+      "addBannedLoaderButton": "Add Banned Loader",
+      "cancel": "Cancel"
+    },
+    "loadsLog": "Loads Log",
+    "template": "Template",
+    "officers": "{{officers}}"
+  },
+  "visitorDetail": {
+    "tables": {
+      "listing": {
+        "columns": {
+          "image": "Image",
+          "ssn": "SSN",
+          "type": "Visitor Type",
+          "meetingWith": "Meeting With",
+          "reason": "Reason",
+          "date": "Date",
+          "checkInTime": "Check In Time",
+          "checkOutTime": "Check Out Time",
+          "loadWeight": "Load Weight"
+        }
+      }
+    }
+  },
+  "attendance": {
+    "table": {
+      "listing": {
+        "columns": {
+          "name": "Name",
+          "workingDays": "Working Days",
+          "absents": "Absents",
+          "leaves": "Time Off",
+          "pendingLeaveRequests": "Pending Time Off Requests",
+          "extraShifts": "Extra Shifts",
+          "userType": "User Type",
+          "supervisors": "Supervisors",
+          "startDateAndTime": "Start Date & Time",
+          "endDateAndTime": "End Date & Time",
+          "leaveStatus": "Time Off Status",
+          "reason": "Reason",
+          "leaveReason": "Time Off Reason"
+        }
+      },
+      "pendingRequestLog": {
+        "columns": {
+          "date": "Date",
+          "jobType": "Job Type",
+          "reason": "Reason"
+        }
+      },
+      "attendanceLogs": {
+        "columns": {
+          "date": "Date",
+          "jobType": "Job Type",
+          "shiftType": "Shift Type",
+          "site": "Site",
+          "status": "Status",
+          "startTime": "Start Time",
+          "endTime": "End Time"
+        }
+      }
+    },
+    "pendingAttendanceRequestModal": {
+      "approveRequest": "Approve Requests",
+      "rejectRequest": "Reject Requests",
+      "reject": "Reject",
+      "approve": "Approve",
+      "approveRequestDesc": "Are you sure you want to approve all selected requests?",
+      "rejectRequestDesc": "Are you sure you want to reject all selected requests? You can add comment to let {{officer}} know about the reason.",
+      "addComment": "Add Comment",
+      "applyLeave": "Apply Time Off",
+      "deleteRequestTitle": "Delete Time-off Request!",
+      "deleteRequestDesc": "Are you sure you want to delete this time-off request? Once confirmed, it will be permanently removed from the system.",
+      "deleteRequestButton": "Delete Request"
+    },
+    "dropDownOptionsLabels": {
+      "statuses": "Statuses",
+      "supervisor": "{{supervisor}}",
+      "allUsers": "All Users",
+      "userType": "User Type",
+      "officers": "{{officers}}",
+      "allStatuses": "All Statuses",
+      "pending": "Pending",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "deleted": "Deleted"
+    },
+    "leaveRequestForm": {
+      "title": "Time Off Request Form",
+      "desc": "You can apply for time off by filling this form",
+      "reason": "Reason",
+      "endDateTime": "End Date & Time",
+      "startDateTime": "Start Date & Time",
+      "applyLeave": "Apply Time Off",
+      "terminateUser": "Terminate",
+      "characters": "Characters"
+    }
+  },
+  "dashboard": {
+    "insights": "Insights",
+    "hi": "Hi",
+    "welcome": "Welcome to {{signal}} Dashboard 👋",
+    "welcomeSubtext": "Below are your Franchise’s Insights",
+    "functionalSites": "Functional Sites",
+    "patrolShifts": "Patrol Shifts",
+    "dedicatedShifts": "Dedicated Shifts",
+    "totalContracts": "Total Contracts",
+    "keyMetrics": "Key Metrics",
+    "additionalServices": "Additional Services",
+    "jobEfficiency": "Job Efficiency",
+    "patrol": "{{patrol}}",
+    "dedicated": "{{dedicated}}",
+    "completion": "Completion",
+    "jobCompletion": "Job Completion",
+    "lastSevenDays": "(Last 7 Days)",
+    "completedHours": "Completed Hours",
+    "missedHours": "Missed Hours",
+    "actualHits": "Completed {{hits}}",
+    "missedHits": "Missed {{hits}}",
+    "topSites": "Top Sites",
+    "contractedRevenue": "Contracted Revenue:",
+    "sitesIndustryVerticals": "Sites Industry Verticals",
+    "liveOperations": "Live Operations",
+    "jobsNotStarted": "Jobs Not Started",
+    "schedule": "Schedule",
+    "franchiseInsights": "Franchise Insights",
+    "active": "Active:",
+    "Active": "Active",
+    "terminated": "Terminated:",
+    "expired": "Expired:",
+    "functionalSite": "Functional Sites:",
+    "activeContracts": "Active Contracts:",
+    "payableHours": "Payable Hours:",
+    "patrolJobs": "{{patrol}} Jobs:",
+    "dedicatedJobs": "{{dedicated}} Jobs:",
+    "terminatedContracts": "Terminated Contracts:",
+    "dedicatedEfficiency": "Dedicated Efficiency:",
+    "patrolEfficiency": "Patrol Efficiency:",
+    "contractStatsInfo": "Contracts that are not expired or terminated",
+    "terminatedInfo": "Number of terminated contracts",
+    "expiredInfo": "Number of contracts that have expired",
+    "functionalSiteInfo": "Sites with at least 1 active contract",
+    "activeContractInfo": "Contracts that are not expired or terminated",
+    "payableHoursInfo": "Officer hours worked approved via reports",
+    "noOfPatrolInfo": "No. of patrol shifts",
+    "dedicatedJobsInfo": "Number of contracts that have expired",
+    "terminatedJobsInfo": "No. of terminated contracts",
+    "extraJobDispatchCount": "Count of {{extra}} job and {{dispatch}} requests",
+    "efficiencyRateDesc": "Efficiency Rate of Jobs assigned.",
+    "dedicatedEfficiencyInfo": "(Actual Hours/Scheduled Hours)*100",
+    "patrolEfficiencyInfo": "(Actual {{hits}}/Target {{hits}})*100",
+    "jobCompletitionSevenDays": "Job completion for the last 7 days:",
+    "completedHoursInfo": "Completed Hours: Duration between clock in and clock out",
+    "missedHoursInfo": "Missed Hours: Scheduled hours minus Competed Hours",
+    "actualHitsInfo": "Actual {{hits}}: Sites where {{officer}} had arrived",
+    "missedHitsInfo": "Missed {{hits}}: Target {{hits}} minus Actual {{hits}}",
+    "contractSumInfo": "Sum of Contract Revenue for active sites",
+    "breakDownFunctioanl": "Breakdown of Functional sites based on industry verticals",
+    "listOfficersInfo": "List of {{officers}} whose shifts have started today, but they have not clocked in",
+    "liveOperationsTooltip": {
+      "tooltip": {
+        "unassignedShifts": {
+          "title": "Unassigned Shifts:",
+          "description": " Count of unassigned shifts for today and tomorrow"
+        },
+        "nonFunctionalSites": {
+          "title": "Non-functional Sites:",
+          "description": " Count of non-functional sites"
+        },
+        "timeOffRequests": {
+          "title": "Time off requests:",
+          "description": " Pending time off requests that need to be reviewed"
+        },
+        "reportApprovals": {
+          "title": "Report Approvals:",
+          "description": "Reports that need to be reviewed"
+        },
+        "officersTimeOff": {
+          "title": "{{officers}} on Time off:",
+          "description": " {{officers}} on time off today"
+        },
+        "officersAbsent": {
+          "title": "{{officers}} Absent:",
+          "description": " {{officers}} on time off today without time off request approved"
+        },
+        "missedHits": {
+          "title": "Missed {{hits}}:",
+          "description": " {{hits}} missed in last 48 hrs."
+        }
+      }
+    }
+  },
+  "payroll": {
+    "addActivity": "Add Activity",
+    "needBreakRule": "To Add activity attach a break rule with this shift.",
+    "loggedTime": "Logged Time",
+    "totalApprovedTime": "Total Approved Time",
+    "saveChanges": "Save Changes",
+    "dedicatedShiftAlert": "Please find detailed breakdown of shift punches and break duration(s). You can edit approved time for each activity.",
+    "payroll": "Payroll",
+    "total": "Total",
+    "supervisor": "Supervisor",
+    "runSheetName": "{{runsheet}} Name",
+    "activity": "Activity",
+    "loggedtime": "Logged time",
+    "approvedTime": "Approved Time",
+    "hit": "{{hit}} #",
+    "modifiedEntities": "Modified Entities",
+    "gapsOverlappingTimeEntries": "Gaps/overlapping time entries",
+    "approveAll": "Approve All",
+    "totalApprovedHours": "Total Approved Hours",
+    "timeOnJobHrs": "Time on Job (hrs)",
+    "timeOnBreakHrs": "Time on break (hrs)",
+    "hitPunchInOut": "{{hit}} Punch in/out",
+    "commuteToNextSite": "Commute to Next Site",
+    "approvedHitTime": "Approved {{hit}} Time",
+    "approvedCommuteTime": "Approved Commute Time",
+    "runSheetPayrollDetails": "Runsheet Payroll Details",
+    "totalHits": "Total {{hits}}",
+    "completedHits": "Completed {{hits}}",
+    "missedHits": "Missed {{hits}}",
+    "punchInOut": "Punch in/out",
+    "hitsDone": "{{hits}} Done",
+    "site": "Site",
+    "select": "Select",
+    "contract": "Contract",
+    "shiftStartDate": "Shift Start Date",
+    "runSheetStartDate": "{{runsheet}} Start Date",
+    "shiftEndTime": "Shift End Time",
+    "runSheetEndTime": "{{runsheet}} End Time",
+    "createPayroll": "Create Payroll",
+    "shiftLocation": "Shift/Location",
+    "runSheetLocation": "{{runsheet}}/Location",
+    "assignOfficer": "Assign {{officer}}",
+    "selectOfficer": "Select {{officer}}",
+    "punchInTime": "Punch in Time",
+    "punchOutTime": "Punch Out Time",
+    "shiftStartTime": "Shift Start Time",
+    "runSheetStartTime": "{{runsheet}} Start Time",
+    "lockPayrunText": "Payruns will be locked for selected duration.",
+    "resyncPayrunText": "Are you sure you want to resync lock payrun?",
+    "from": "From",
+    "to": "To",
+    "disclaimerText": "Approved hours will be published on ADP and won't be changed in future.",
+    "disclaimerTextExport": "Only Approved payroll will be the part of this CSV.",
+    "disclaimer": "Disclaimer:",
+    "lockPayrun": "Lock Payrun",
+    "resyncPayrun": "Resync lock payrun",
+    "resynsPayrunBtnText": "Resync payrun",
+    "exportPayrun": "Export Payroll",
+    "exportPayrunText": "Payroll data will be exported for selected duration.",
+    "exportPayrollDescription": "Select a period that begins on Saturday and ends on Friday to ensure accurate overtime hour calculations",
+    "exportWorkLogs": "Export Work Logs",
+    "exportWorkLogText": "Payroll worklogs data will be exported for selected duration.",
+    "exportWorklogSuccess": "The work log CSV has been downloaded successfully.",
+    "unlockPayroll!": "Unlock Payroll!",
+    "unLockText": "Are you sure you want to unlock this payroll entry?",
+    "unlock": "Unlock",
+    "search": "Search by name or position",
+    "downloadApprovedPayroll": "Download Approved Payroll",
+    "batchNo": "Batch No.",
+    "employeeName": "Employee Name",
+    "sites": "Site",
+    "shiftDate": "Shift Date",
+    "shiftTime": "Shift Time",
+    "punchinOut": "Punch in/out",
+    "timeSpentOnJob": "Job Time",
+    "timeSpentOnBreak": "Break (payable)",
+    "timeSpentOnBreakNotPayable": "Break (non-payable)",
+    "payable": "Payable",
+    "notPayable": "Not Payable",
+    "breakRule": "Break Rule",
+    "billableBreaks": "Billable Breaks",
+    "approvedHours": "Approved Hours",
+    "type": "Type",
+    "invoiceAbleHours": "Invoice Hours",
+    "wageOverride": "Wage Override",
+    "rateLevel": "Rate Level",
+    "rate": "Rate",
+    "stateWorked": "State Worked",
+    "localWorked": "Local Worked",
+    "location": "Location",
+    "employeeType": "Employee Type",
+    "notes": "Notes",
+    "action": "Action",
+    "cancel": "Cancel",
+    "approveLock": "Approve",
+    "approvedLockPayroll": "Bulk Approve",
+    "alignToShiftHours": "Align to Shift Hours",
+    "alignApprovedHoursTitle": "Align Approved Hours to Shift Time",
+    "alignApprovedHoursDescription": "You're about to align the approved hours for <b>{{count}} selected</b> payroll entries to match their scheduled shift hours.",
+    "alignApprovedHoursCta": "Align hours ({{count}})",
+    "alignApprovedHoursSuccess": "Approved Hours Updated!",
+    "approveShiftHours": "Approve Shift Hours",
+    "approveShiftHoursText": "Are you sure you want to approve this shift’s hours?",
+    "approveSelected": "Approve Shift Hours",
+    "approveSelectedText": "Are you sure you want to approve the selected shift's hours?",
+    "notesText": "Note(s) from {{supervisor}} for this shift",
+    "shiftNotesText": "This is a note for the shift.",
+    "updateApprovedHours": "Update Approved Hours",
+    "invoiceAbleHourss": "Invoice Hours(hrs)",
+    "jobWageAble": "Wage Amount",
+    "save": "Save",
+    "updateInvoiceAbleHours": "Update Invoice Hours",
+    "updateJobWage": "Update Wage",
+    "startTime": "Start Time",
+    "endTime": "End Time",
+    "start": "Start",
+    "timeOffHeading": "Time-off Request Form",
+    "timeOfftext": "You can apply for time-off by filling this form",
+    "endDateTime": "End Date & Time",
+    "startDateTime": "Start Date & Time",
+    "reason": "Reason",
+    "applyTimeoff": "Apply Time-off",
+    "badgeNo": "Batch No.",
+    "startDateError": "Start date should be before end date",
+    "endDateError": "End date should be after start date",
+    "csvDownload": {
+      "title": "Download completed!",
+      "description": "Payrun for period {{startDate}} to {{endDate}} has been downloaded successfully."
+    },
+    "adhoc": "Adhoc",
+    "noOfficerTooltip": "This shift has not assigned to any {{officer}}",
+    "logged": "Logged",
+    "allRunsheets": "All {{runsheets}}",
+    "users": "Users",
+    "allStatuses": "All Statuses",
+    "allSites": "All Sites",
+    "all": "all",
+    "allShiftStatuses": "All Shift Statuses",
+    "shiftStatusKey": "shiftStatus",
+    "payrollStatuses": "Payroll Statuses",
+    "approvedEndsAtTooltip": "Select the start time first.",
+    "supervisorTooltip": "{{supervisor}} do not have shift",
+    "viewShiftDetails": "View shift details",
+    "yes": "Yes",
+    "no": "No",
+    "endTimeError": "End Date/Time should be greater than Start Date/Time",
+    "noApprovedHours": "No approved hours",
+    "noBadgeToolTip": "Employee Badge Number is missing",
+    "incompleteBadgeToolTip": "Employee Badge Number is incomplete",
+    "sort": "Sort",
+    "exportOfficerWorklogs": "Export Reconciliation Report",
+    "exportOfficerWorkLogsHo": "Export Officers Work Logs",
+    "statusFilter": {
+      "payrollStatuses": "Payroll Statuses",
+      "approved": "Approved",
+      "unapproved": "Unapproved",
+      "allShiftStatuses": "All Shift Statuses",
+      "completed": "Completed",
+      "unassigned": "Unassigned",
+      "notStarted": "Not Started"
+    },
+    "sortOrder": {
+      "highToLow": "High to Low",
+      "lowToHigh": "Low to High",
+      "aToZ": "A -> Z",
+      "zToA": "Z -> A"
+    },
+    "title": "Payroll",
+    "lockedPayruns": "Locked Payruns",
+    "officerWorklogs": "{{officers}} Work Logs",
+    "dropDownSelectionRequiedForBreak": "Select one of the break",
+    "selectActivityLabel": "Select Activity",
+    "saveJobIntervals": "Save Job Intervals",
+    "saveJobIntervalsDescription": "Are you sure you want to save these job intervals? Once Intervals are save you can only update them.",
+    "allocatedHours": "Allocated Hours",
+    "overtimeHours": "Overtime Hours",
+    "totalHoursWorked": "Total Hours Worked",
+    "splitShiftsInTwoAtMidnight": "Split shifts in two at midnight"
+  },
+  "lockedPayruns": {
+    "payrunDetails": "Payrun Details",
+    "payrunStartPeriod": "Payrun Start Period",
+    "payrunEndPeriod": "Payrun End Period",
+    "employeesCount": "Employees Count",
+    "totalHours": "Total Hours",
+    "downloadOfficersPayroll": "Download {{officers}} Payroll",
+    "selectDateRange": "Select Date Range",
+    "downloadCSV": "Download CSV",
+    "cancel": "Cancel"
+  },
+  "invoice": {
+    "disclaimer": "Disclaimer:",
+    "disclaimerTextExportInvoice": "Only invoice reconciliation will be the part of this CSV.",
+    "splitShiftsInTwoAtMidnight": "Split shifts in two at midnight",
+    "exportInvoice": "Export Invoice Reconciliation",
+    "exportInvoiceButton": "Export Invoice",
+    "export": "Export",
+    "invoiceReconciliation": "Invoice Reconciliation",
+    "exportText": "Invoice data will be exported for selected duration.",
+    "startDateError": "Start date should be before end date",
+    "endDateError": "End date should be after start date",
+    "from": "From",
+    "to": "To",
+    "exportInvoiceText": "Invoice reconciliation will be exported for selected duration.",
+    "lineItemTotal": "Line Item Total",
+    "taxAmount": "Tax Amount",
+    "invoiceGrandTotal": "Grand Total",
+    "deliveredAt": "Report Distributed At",
+    "pushedToStage": "Pushed To Stage",
+    "viewSageInvoice": "View SAGE invoice",
+    "viewSageInvoiceDisabled": "Sage Invoice will be shown once its distributed",
+    "viewQuickbooksInvoice": "View Quickbooks invoice",
+    "viewQuickbooksInvoiceDisabled": "Quickbooks Invoice will be shown once its distributed",
+    "search": "Search by Invoice Number",
+    "createInvoice": "Create Invoice",
+    "create": "Create",
+    "regularInvoice": "Regular Invoice",
+    "correctionInvoice": "Correction Invoice",
+    "approvePushToSage": "Approve & Push to Sage",
+    "approvePushToQuickbooks": "Approve & push to Quickbooks",
+    "payInvoice": "Pay Invoice",
+    "paymentDetailsText": "Add payment details to mark this invoice as paid",
+    "payNow": "Pay Now",
+    "paid": "Paid",
+    "cashCheck": "Cash/Check",
+    "selectPaymentMethod": "Select Payment method",
+    "cash": "Cash",
+    "check": "Check",
+    "amountPaid": "Amount Paid",
+    "receivingDate": "Receiving Date",
+    "enterCheckNo": "Enter check no.",
+    "pushToQuickbooks": "Push to Quickbooks",
+    "invoiceNumber": "Invoice Number",
+    "siteName": "Site Name",
+    "type": "Type",
+    "invoiceDate": "Invoice Date",
+    "dueDate": "Due Date",
+    "invoiceDuration": "Invoice Duration",
+    "originalInvoiceNumber": "Original Invoice Number",
+    "originalInvoiceCreateDate": "Original Invoice Date",
+    "approveInvoice": "Approve Invoice",
+    "approveInvoiceText": "Are you sure you want to approve the selected invoice? This invoice will be locked and pushed to Sage.",
+    "approveInvoiceTextQuickbooks": "Are you sure you want to approve the selected invoice? This invoice will be locked and pushed to Quickbooks.",
+    "approve": "Approve",
+    "delete": "Delete",
+    "cancel": "Cancel",
+    "approveSelectedInvoice": "Approve Selected Invoices",
+    "approveSelectedInvoiceText": "Are you sure you want to approve the selected invoices? Invoices will be pushed to Sage after approval. This action will apply to all chosen invoices.",
+    "deleteInvoice": "Delete This Invoice",
+    "deleteInvoiceText": "Are you sure you want to delete this invoice?. This action will not be reverted.",
+    "billFrom": "Bill From",
+    "billTo": "Bill To",
+    "email": "Email:",
+    "phone": "Phone:",
+    "contactPerson": "Contact Person:",
+    "contractDetails": "Contract Details",
+    "contract": "Contract",
+    "billingDetails": "Billing Details",
+    "invoiceGenerated": "Invoice Generated",
+    "lineItem": "Line Item",
+    "quantity": "Quantity",
+    "unitPrice": "Unit Price",
+    "total": "Total",
+    "action": "Action",
+    "lineItems": "Line Item (s)",
+    "description": "Description",
+    "discount": "Discount",
+    "taxes": "Taxes",
+    "grandTotal": "Grand Total",
+    "save": "Save",
+    "site": "Site",
+    "select": "Select",
+    "periodStart": "Period Start",
+    "periodEnd": "Period End",
+    "periodEndError": "Period end date should be after period start",
+    "periodStartError": "Period start date should be before period end",
+    "dueDateError": "Due date should be today or in future",
+    "invoiceDateError": "Invoice date should be today or in future",
+    "siteDropdownLabel": "Site Name",
+    "statusesDropdownLabel": "All Statuses",
+    "typesDropdownLabel": "All Types",
+    "inProgressStatus": "Sync In Progress",
+    "approveStatus": "Push to Sage",
+    "failedStatus": "Sync Failed, Retry",
+    "pushedToSageStatus": "Sync Approved",
+    "periodStartPastError": "Period start should be today or in future",
+    "status": "Status",
+    "add": "Add",
+    "resyncPayrollStatus": "Resync with Payroll",
+    "noContracts": "There is no contract against this site.",
+    "resyncInvoiceMessage": "Your invoice will be synced after 2-3 minutes",
+    "poNumberPlaceholder": "Add PO Number",
+    "poNumber": "PO Number",
+    "poNumberKey": "poNumber",
+    "customerId": "Customer ID",
+    "geofenceRadius": "Geofence Radius (meters)",
+    "billingFrom": {
+      "us": {
+        "title": "Signal 88, LLC.",
+        "address1": "PO Box 8246",
+        "address2": "Omaha, NE 68108"
+      },
+      "ca": {
+        "title": "Signal 88, Security Canada, Inc.",
+        "address1": "PO Box 57427, STN A",
+        "address2": "Toronto ON M5W 5M5"
+      }
+    },
+    "invoiceMemo": "Invoice Memo (Max 4000 Characters)",
+    "invoiceMemoPlaceHolder": "Invoice Memo (optional)",
+    "statuses": {
+      "all": "All Statuses",
+      "pending": "Pending",
+      "inProgress": "In Progress",
+      "syncApproved": "Sync Approved",
+      "syncFailed": "Sync Failed"
+    },
+    "types": {
+      "all": "All Types",
+      "adHoc": "Ad hoc",
+      "scheduled": "Scheduled"
+    },
+    "invoiceTotalQuantity": "Invoice total cannot be negative"
+  },
+  "billing": {
+    "primaryPhone": "Primary Phone",
+    "companyAddress": "Company Address",
+    "contacts": "Contacts",
+    "primaryContact": "Primary Contact",
+    "selectPrimaryContact": "Select primary contact",
+    "billTo": "Bill To (If billed to a different address and not the service location)",
+    "selectBillToContact": "Select bill to contact",
+    "shipTo": "Ship To (Service location - taxable service location)",
+    "selectShipToContact": "Select ship to contact",
+    "sameAsPrimaryContact": "Same as primary contact",
+    "secondaryEmailAddresses": "Secondary Email Addresses",
+    "edit": "Edit",
+    "contactDetails": "Contact Details",
+    "viewContacDetails": "View contact details",
+    "delete": "Delete",
+    "deleteText": "This action is irreversible. Are you sure you want to delete this contact?",
+    "deletePermanently": "Delete Permanently",
+    "addressLine1": "Address line 1",
+    "addressLine2": "Address line 2",
+    "enter": "Enter",
+    "primaryEmailAddress": "Primary Email Address",
+    "companyName": "Company Name",
+    "primaryEmail": "Primary Email",
+    "phoneNo": "Phone No.",
+    "addText": "Please fill the following information to create new contact",
+    "contactInformation": "Contact Information",
+    "address": "Address",
+    "additionalInformation": "Additional Information",
+    "addContact": "Add contact",
+    "noMergedInvoices": "No Merged Invoices!",
+    "noMergedInvoicesText": "There are no merged invoices. Select contracts with same.",
+    "contractDuration": "Contract Duration",
+    "cancel": "Cancel",
+    "mergedInvoicesTextModal": "Select contracts with same Cycle Reference Date and Billing Frequency to merge invoices.",
+    "cycleRefDate": "Cycle Ref. Date",
+    "set": "Set",
+    "srNo": "Sr No.",
+    "contractNames": "Contract Names",
+    "billingFrequency": "Billing Frequency",
+    "cycleReferenceDate": "Cycle Reference Date",
+    "dateTimeOfAction": " Date & Time of Action",
+    "mergeInvoices": "Merge Invoices",
+    "mergedInvoices": "Merged Invoices",
+    "mergedInvoicesText": "All the merged invoices of multiple contracts are listed here.",
+    "billing": "Billing",
+    "timesheet": "Timesheet",
+    "timesheetKey": "timesheet",
+    "invoices": "Invoices",
+    "billingDetails": "Billing Details",
+    "billingConfigurations": "Billing Configurations",
+    "firstName": "First Name",
+    "lastName": "Last Name",
+    "email": "Email",
+    "phoneNumber": "Phone Number",
+    "emailRecipients": "Email Recipients",
+    "billingAddress": "Billing Address",
+    "city": "City",
+    "state": "State/Province",
+    "country": "Country",
+    "zipcode": "Zip/Postal code",
+    "john": "e.g: John",
+    "snow": "e.g: Snow",
+    "emailPlaceholder": "e.g: Johns@teamsignal.com",
+    "typeToAddEmail": "Type to add email",
+    "type": "Type",
+    "phoneNumberPlaceHolder": "+1 234 567 8999",
+    "info": "The invoice for this site will be sent to all email addressess mentioned in the Email Recipients field.",
+    "update": "Update",
+    "periodStartPastError": "Period start should be today or in future",
+    "noContracts": "Selected site has no contracts",
+    "emailRecepientsPlaceholder": "Type and Enter to add email",
+    "billToContractPlaceholder": "Select bill to contact",
+    "shipToContractPlaceholder": "Select ship to contact",
+    "sameAsPrimary": "Same as primary contact",
+    "invoiceDeleteTitle": "Delete Merge Invoice!",
+    "invoiceDeleteDesc": "Are you sure you want to delete this merge invoice? This action cannot be undone.",
+    "mergeInviceDeleteButtonConfirm": "Delete Invoice"
+  },
+  "contacts": {
+    "primaryPhone": "Primary Phone",
+    "companyAddress": "Company Address",
+    "contacts": "Contacts",
+    "updateContact": "Update Contact",
+    "createContact": "Add Contact",
+    "editContact": "Edit Contact",
+    "primaryContact": "Primary Contact",
+    "selectPrimaryContact": "Select primary contact",
+    "billTo": "Bill To",
+    "selectBillToContact": "Select bill to contact",
+    "shipTo": "Ship To",
+    "selectShipToContact": "Select ship to contact",
+    "sameAsPrimaryContact": "Same as primary contact",
+    "secondaryEmailAddresses": "Secondary Email Addresses",
+    "edit": "Edit",
+    "contactDetails": "Contact Details",
+    "viewContacDetails": "View contact details",
+    "delete": "Delete",
+    "deleteText": "This action is irreversible. Are you sure you want to delete this contact?",
+    "deletePermanently": "Delete Permanently",
+    "addressLine1": "Address line 1",
+    "addressLine2": "Address line 2",
+    "enter": "Enter",
+    "primaryEmailAddress": "Primary Email Address",
+    "companyName": "Company Name",
+    "primaryEmail": "Primary Email Address",
+    "phoneNo": "Phone No.",
+    "addText": "Please fill the following information to create new contact",
+    "contactInformation": "Contact Information",
+    "address": "Address",
+    "additionalInformation": "Additional Information",
+    "addContact": "Add contact",
+    "noMergedInvoices": "No Merged Invoices!",
+    "noMergedInvoicesText": "There are no merged invoices. Select contracts with same.",
+    "contractDuration": "Contract Duration",
+    "cancel": "Cancel",
+    "mergedInvoicesTextModal": "Select contracts with same Cycle Reference Date and Billing Frequency to merge invoices.",
+    "cycleRefDate": "Cycle Ref. Date",
+    "set": "Set",
+    "srNo": "Sr No.",
+    "contractNames": "Contract Names",
+    "billingFrequency": "Billing Frequency",
+    "cycleReferenceDate": "Cycle Reference Date",
+    "dateTimeOfAction": " Date & Time of Action",
+    "mergeInvoices": "Merge Invoices",
+    "mergedInvoices": "Merged Invoices",
+    "mergedInvoicesText": "All the merged invoices of multiple contracts are listed here.",
+    "billing": "Billing",
+    "timesheet": "Timesheet",
+    "timesheetKey": "timesheet",
+    "invoices": "Invoices",
+    "billingDetails": "Billing Details",
+    "billingConfigurations": "Billing Configurations",
+    "firstName": "First Name",
+    "lastName": "Last Name",
+    "email": "Email",
+    "phoneNumber": "Phone Number",
+    "emailRecipients": "Email Recipients",
+    "billingAddress": "Billing Address",
+    "city": "City",
+    "state": "State/Province",
+    "country": "Country",
+    "zipcode": "Zip/Postal code",
+    "john": "e.g: John",
+    "snow": "e.g: Snow",
+    "emailPlaceholder": "e.g: Johns@teamsignal.com",
+    "typeToAddEmail": "Type to add email",
+    "type": "Type",
+    "phoneNumberPlaceHolder": "+1 234 567 8999",
+    "info": "The invoice for this site will be sent to all email addressess mentioned in the Email Recipients field.",
+    "update": "Update",
+    "periodStartPastError": "Period start should be today or in future",
+    "noContracts": "Selected site has no contracts",
+    "emailRecepientsPlaceholder": "Type and Enter Email Recipients"
+  },
+  "jobs": {
+    "endTime": "End Time",
+    "startTime": "Start Time",
+    "editVisit": "Edit Visit",
+    "duration": "Duration"
+  },
+  "dispatch": {
+    "sameAsSiteAddress": "Same as site address",
+    "useDifferentAddress": "Use a different address",
+    "dispatches": "Dispatches",
+    "monitoringServiceType": "Monitoring Service Type",
+    "searchByName": "Search By site name",
+    "searchByNameOrAddress": "Search By site name or site address",
+    "dispatcher": "{{dispatch}}er",
+    "creationDateTime": "Creation Date & Time",
+    "callerPhone": "Caller Phone",
+    "callerHistory": "Caller History",
+    "notes": "Notes",
+    "newNote": "New Note",
+    "assignOfficerlAert": "There are currently no shifts available to assign a {{dispatch}}. Choose a {{supervisor}} or {{officer}} and assign it to them.",
+    "rictTextPlaceholder": "Click to add {{dispatch}} details",
+    "callerRequestOfficerCallBack": "Caller Request {{officer}} Call Back",
+    "apartmentNumber": "Apartment Number",
+    "type": "Type",
+    "callerPhoneNumber": "Caller Phone Number",
+    "add": "Add",
+    "select": "Select",
+    "dispatchPostOrders": "{{dispatch}} Post Orders",
+    "siteAddress": "Site Address",
+    "assign": "assign",
+    "createDispatch": "Create {{dispatch}}",
+    "noShiftsAvailable!": "No Shifts Available!",
+    "noShiftsText": "There are currently no shifts available to assign a {{dispatch}}. Create a {{runsheet}} to assign.",
+    "createRunsheet": "Create {{runsheet}}",
+    "createARunsheet": "Create a {{runsheet}}",
+    "seeList": "See List",
+    "selectOfficer": "Select {{officer}}",
+    "selectVehicle": "Select Vehicle",
+    "createAssignRunsheet": "Create & Assign {{runsheet}}",
+    "dispatchHit": "{{dispatch}} {{hit}}",
+    "trackDispatch": "Track {{dispatch}}",
+    "dispatchLogs": "{{dispatch}} Logs",
+    "callDescription": "Call Description",
+    "callBackRequest": "Call Back Request",
+    "dispatchDetails": "{{dispatch}} Details",
+    "additionalDetails": "Additional Details",
+    "addButton": "Add additional details",
+    "additionalService": "Add Additional Details",
+    "editButton": "Edit",
+    "save": "Save",
+    "update": "Update",
+    "placeHolderAdditionalService": "Click to add instructions",
+    "editAdditionalService": "Edit Additional Details",
+    "additionalServiceText": "Add Additional Details",
+    "callerAddress": "Caller Address",
+    "buildingNumber": "Building Number",
+    "callerName": "Caller Name",
+    "callerPhoneNo": "Caller Phone No.",
+    "callerDetails": "Caller Details",
+    "generalInformation": "General Information",
+    "createdAt": "Created At",
+    "searchBySitename": "Search by site name",
+    "newAlarmsTooltip": "Count of {{dispatch}} requests that are not assigned to an {{officer}}",
+    "alertsMRTsTooltip": "{{officer}} has not acknowledged the {{dispatch}} request within the time defined",
+    "activeDispatchesTooltip": "Count of {{dispatch}} requests are assigned to an {{officer}}, but have not been completed yet",
+    "notFoundDescription": "No {{dispatch}} match your search. Try different keyword.",
+    "alertsMRTs": "Alerts (MRTs)",
+    "newAlarms": "New Alarms",
+    "activeDispatches": "Active {{dispatches}}",
+    "id": "{{dispatch}} ID",
+    "site": "Site",
+    "franchise": "Franchise",
+    "dispatchType": "{{dispatch}} Type",
+    "status": "Status",
+    "timeElapsed": "Time Elapsed",
+    "createdDate": "Created Date",
+    "createdTime": "Created Time",
+    "assignedTo": "Assigned To",
+    "runsheetName": "{{runsheet}}/Shift Name",
+    "search": "Search by Site or ID",
+    "assignDispatch": "Assign {{dispatch}}",
+    "closeDispatch": "Close {{dispatch}}",
+    "closeDispatchText": "Are you sure you want to close this {{dispatch}}? This action can’t be undone.",
+    "sites": "Sites",
+    "officer": "Officer",
+    "createdBy": "Created By",
+    "cancel": "Cancel",
+    "reason": "Reason",
+    "addReason": "Add Reason",
+    "dedicatedJobs": "{{dedicated}} Jobs ",
+    "patrolJobs": "{{patrol}} Jobs ({{runsheets}}) ",
+    "users": "Available Users ",
+    "action": "Action",
+    "searchSupervisor": "Search for a {{supervisor}}",
+    "siteKey": "site",
+    "dispatchTypeKey": "dispatchType",
+    "callerNameKey": "callerName",
+    "callerAddressKey": "callerAddress",
+    "jobId": "Job/Ticket Number",
+    "buildingNumberKey": "buildingNumber",
+    "apartmentNumberKey": "apartmentNumber",
+    "dispatchDescriptionKey": "dispatchDescription",
+    "callFromMonitoringServiceType": "Call from Monitoring Service Type",
+    "callFromMonitoringServiceTypeKey": "callFromMonitoringServiceType",
+    "callerRequestOfficerCallBackKey": "callerRequestOfficerCallBack",
+    "callerPhoneNumberKey": "callerPhoneNumber",
+    "phoneNumberKey": "phoneNumber",
+    "callerPhoneNoLengthError": "National number length must be equal to 10",
+    "dispatchAddress": "{{dispatch}} Address",
+    "filters": {
+      "monitoringService": {
+        "label": "Monitoring Service",
+        "placeholder": "Select Monitoring Service"
+      },
+      "requestType": {
+        "label": "Request Type",
+        "placeholder": "Request Type"
+      }
+    },
+    "downloadDetailsSuccess": "{{dispatch}} details downloaded successfully.",
+    "downloadDetailsFail": "Failed to download {{dispatch}} details. Please try again.",
+    "detailTabs": {
+      "detail": "{{dispatch}} Details",
+      "report": "Report",
+      "notes": "Notes",
+      "logs": "Activity Logs"
+    },
+    "cretedAt": "Created At: ",
+    "updatedAt": "Updated At: ",
+    "statusFilter": {
+      "unassigned": "Unassigned",
+      "assigned": "Assigned",
+      "newAlarm": "New Alarm",
+      "callReceived": "Call Received",
+      "acknowledged": "Acknowledged",
+      "onTheWay": "On the Way",
+      "onSite": "On Site",
+      "onSiteAllClear": "On Site: All Clear",
+      "incidentToReport": "Incident To Report",
+      "completed": "Completed",
+      "closed": "Closed"
+    },
+    "timeElapsedOptions": {
+      "all": "All",
+      "upTo10Mins": "Upto 10 mins",
+      "10to30": "10-30",
+      "30to60": "30-60",
+      "moreThan1Hour": "More than 1 hour"
+    },
+    "shiftTime": {
+      "oneHour": "Next 1 Hour",
+      "twoHours": "Next 2 Hours",
+      "fourHours": "Next 4 Hours",
+      "sixHours": "Next 6 Hours",
+      "eightHours": "Next 8 Hours",
+      "tenHours": "Next 10 Hours",
+      "twelveHours": "Next 12 Hours",
+      "dropdownLabel": "Time window"
+    },
+    "callerRequestOfficerOption": {
+      "yes": "Yes",
+      "no": "No"
+    },
+    "monitoringService": {
+      "noService": "No monitoring service",
+      "mapCommunications": "Map Communications (Spanish Speaking)",
+      "rspndr": "RSPNDR",
+      "securitas": "Securitas",
+      "stealthMonitoring": "Stealth Monitoring",
+      "stMoritz": "St. Moritz",
+      "verisure": "Verisure"
+    },
+    "dispatchReport": "{{dispatch}} Report",
+    "address": "{{dispatch}} Address",
+    "download": "Download",
+    "noReportDispatch": "No Report Submitted",
+    "noReportDispatchDesc": "You haven't submitted any report yet.",
+    "runsheetShfitName": "{{runsheet}}/Shift Name",
+    "moniteroingService": "Monitoring Service",
+    "contract": "Contract",
+    "editAddress": {
+      "editAddressCta": "Edit Address",
+      "title": "Edit Dispatch Address",
+      "description": "Edit location of dispatch address",
+      "update": "Update"
+    }
+  },
+  "requireAttention": {
+    "serviceStepperTitle": "Service",
+    "serviceStepperSubText": "+/- or change in service(s)",
+    "devicesStepperTitle": "Devices",
+    "devicesStepperSubText": "+/- or change in devices",
+    "onDemandServiceStepperTitle": "On-Demand Services",
+    "onDemandServiceStepperSubText": "Change in on-demand services",
+    "paymentTermsStepperTitle": "Payment Terms",
+    "paymentTermsStepperSubText": "Change in payment terms",
+    "descriptionStepperTitle": "Description",
+    "descriptionStepperSubText": "Change in description",
+    "signeesStepperTitle": "Signees",
+    "signeesStepperSubText": "+/- or change in signee(s)",
+    "shiftSelectErrorMin": "`Please select all the {{number}} shifts you want to keep`",
+    "hitSelectErrorMin": "`Please select all the {{number}} {{hits}} you want to keep`",
+    "shiftSelectErrorMax": "`Please select only {{number}} shifts you want to keep`",
+    "hitSelectErrorMax": "`Please select only {{number}} {{hits}} you want to keep`",
+    "selectShiftFromAllServicesError": "Please select shifts from all the {{numberOfServiceToAcknowledge}} services",
+    "contractAddendum": "Contract {{type}}",
+    "contractAddendumDesc": "Below are {{type}} items to be taken care off",
+    "contractRenewal": "Renewal Contract",
+    "renewalContractDesc": "Below are renewal contract items to be taken care off",
+    "nextButton": "Next",
+    "backButton": "Back",
+    "cancelButton": "Cancel",
+    "acknowledgeButton": "Acknowledge",
+    "selectShiftsKeep": "Select Shifts to Keep",
+    "selectHitsKeep": "Select {{hits}} to Keep",
+    "totalShifts": "Total Shift(s)",
+    "selectedShifts": "Selected Shift(s)",
+    "toSelect": "To Select",
+    "instructions": "Instructions",
+    "services": "Services",
+    "jobsAreReduced": "Job(s) are reduced, select to keep.",
+    "servicesAdded": "Service(s) Added",
+    "servicesRemoved": "Service(s) Removed",
+    "patrolService": "{{patrol}} Service",
+    "dedicatedService": "{{dedicated}} Service",
+    "servicesChanged": "Service(s) Changed",
+    "devices": "Devices",
+    "addedDevices": "Added Devices",
+    "occurrence": "one time",
+    "removedDevices": "Removed Device(s)",
+    "changedDevices": "Changed Device(s)",
+    "changedSignee": "Changed Signee(s)",
+    "quantity": "Quantity",
+    "onDemandServices": "On-Demand Services",
+    "addedServices": "Added Service(s)",
+    "removedServices": "Removed Service(s)",
+    "paymentTerms": "Payment Terms",
+    "noChangesMade": "No changes made",
+    "noChangesMadeDesc": "This section has not been modified as part of the contract addendum.",
+    "description": "Description",
+    "oldDescription": "Previous Description",
+    "newDescription": "Updated Description",
+    "signees": "Signees",
+    "addedSignees": "Added Signee(s)",
+    "removedSignees": "Removed Signee(s)"
+  },
+  "tourReportAbendum": "Client report will not be generated for this shift as there's no {{tour}} report associated.",
+  "franchise": {
+    "awards": "Awards",
+    "status": "Status"
+  },
+  "franchiseMap": {
+    "allStates": "All States",
+    "allFranchises": "All Franchises",
+    "allSites": "All Sites",
+    "allJobs": "All Jobs",
+    "allOfficers": "All {{officers}}",
+    "searchSites": "Search for a site",
+    "searchOfficer": "Search for an {{officer}}",
+    "live": "Live",
+    "address": "Address",
+    "client": "Client",
+    "phoneNumber": "Phone Number",
+    "latitude": "Latitude",
+    "longitude": "Longitude",
+    "showSites": "Show Sites",
+    "noOfficersFound": "No active user found!"
+  },
+  "profile": {
+    "personalInfo": "Personal info",
+    "personalInfoText": "Update your photo and personal details here.",
+    "obxData": "OBX Forms",
+    "obxDataText": "Review and Submit your OBX Form",
+    "tabs": {
+      "labels": {
+        "personalInfo": "Personal Info",
+        "obxData": "OBX Data"
+      }
+    }
+  },
+  "templatableTypes": {
+    "equipmentInspection": "Equipment Inspection",
+    "vehicleInspection": "Vehicle Inspection",
+    "tourReports": "{{tour}} Reports",
+    "shiftDayEndReport": "Shift Day End Report",
+    "incidentReport": "Incident Report",
+    "dispatch": "{{dispatch}}",
+    "activityReport": "Activity Report",
+    "obxOnboardingForm": "OBX Onboarding Form",
+    "default": "Default",
+    "shiftReport": "Shift Report",
+    "tourReport": "{{tour}} Report",
+    "singleTourReport": "Single {{tour}} Report",
+    "siteReport": "Site Report",
+    "checkpointReport": "Checkpoint Report",
+    "visitor": "Visitor",
+    "load": "Load",
+    "siteHitReport": "Site {{hit}} Report"
+  },
+  "notificationRelease": {
+    "table": {
+      "columns": {
+        "name": "Title & Message",
+        "status": "Status",
+        "createdBy": "Created By",
+        "createdAt": "Created At"
+      }
+    },
+    "searchFilter": "Search",
+    "createDrawer": {
+      "title": "Create Notification",
+      "subtitle": "Fill the following info to create new notification",
+      "titleLabel": "Title",
+      "titlePlaceholder": "Security Patch Update v2.4.1",
+      "messageLabel": "Message",
+      "messagePlaceholder": "Add Message Here",
+      "scheduleToggleLabel": "Schedule Notification",
+      "scheduleToggleDescription": "Schedule this notification to send at a later time",
+      "scheduleDateLabel": "Schedule Date & Time",
+      "scheduleDatePlaceholder": "Select date & time",
+      "cancel": "Cancel",
+      "create": "Create"
+    }
+  },
+  "release": {
+    "roadmap": {
+      "noDataFound": "No data found",
+      "noDataDescription": "No roadmap data available",
+      "title": "Quarter ",
+      "configure": "Configure",
+      "emptyState": {
+        "message": "Milestones not planned for this quarter yet."
+      },
+      "status": {
+        "completed": "Completed",
+        "inProgress": "In Progress",
+        "upcoming": "Upcoming",
+        "incomplete": "Incomplete",
+        "notPlanned": "Not Planned"
+      },
+      "summary": {
+        "features": "Features {{count}}",
+        "fixes": "Fixes {{count}}",
+        "improvements": "Improvements {{count}}"
+      },
+      "details": {
+        "features": "Features",
+        "fixes": "Fixes",
+        "improvements": "Improvements",
+        "featureCount": "Feature",
+        "fixedCount": "Fixed",
+        "improvementsCount": "Improvements"
+      }
+    },
+    "releaseNotes": {
+      "latest": "Latest",
+      "startDate": "Release Date",
+      "newRelease": "New Release"
+    },
+    "tabs": {
+      "roadmap": "Roadmap",
+      "releaseNotes": "Release Notes"
+    },
+    "configure": {
+      "title": "Quarter Configuration",
+      "cancel": "Cancel",
+      "save": "Save Changes",
+      "addInformation": "Add information..."
+    },
+    "releaseNotesDetails": {
+      "title": "Release Notes Details",
+      "content": "Release notes details will be displayed here.",
+      "emptyContent": "No record found.",
+      "emptyContentDescription": "No description available for this release.",
+      "errorLoading": "Failed to load release details.",
+      "unknownVersion": "Unknown version"
+    },
+    "addRelease": {
+      "title": "Add Release",
+      "save": "Save changes",
+      "cancel": "Cancel",
+      "editTitle": "Edit Release",
+      "saveDraft": "Save as draft",
+      "savePublish": "Save & Publish",
+      "selectYear": "Select year",
+      "releaseVersion": "Release Version / Name",
+      "releaseVersionPlaceholder": "Signal 4.4",
+      "publishDate": "Publish Date",
+      "description": "Description",
+      "published": "Release published successfully",
+      "draftSaved": "Release saved as draft",
+      "errorPublishing": "Failed to publish release",
+      "errorSavingDraft": "Failed to save draft",
+      "releaseVersionRequired": "Release version is required",
+      "publishDateRequired": "Publish date is required"
+    }
+  }
+}

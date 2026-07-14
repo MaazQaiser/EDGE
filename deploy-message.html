@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Deployment Notification</title>
+  <style>
+    /* Reset styles for email compatibility */
+    body,
+    table,
+    td,
+    div,
+    p {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Arial, sans-serif;
+    }
+
+    body {
+      background-color: #f4f6f8;
+      padding: 20px 0;
+    }
+
+    .email-container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: #ffffff;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+      border: 1px solid #e0e5eb;
+    }
+
+    .header {
+      background: #0052CC;
+      color: white;
+      padding: 24px 30px;
+      text-align: center;
+    }
+
+    .header h1 {
+      font-size: 24px;
+      margin-bottom: 15px;
+    }
+
+    .status-badge {
+      display: inline-block;
+      background: rgba(255, 255, 255, 0.2);
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 14px;
+      margin-top: 8px;
+    }
+
+    .project-name {
+      font-size: 16px;
+      margin: 15px 0 5px;
+    }
+
+    .project-name a {
+      color: white;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .deployment-details {
+      padding: 25px 30px;
+      background: #ffffff;
+    }
+
+    .section-title {
+      font-size: 18px;
+      color: #0052CC;
+      margin-bottom: 18px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #e6edf8;
+      display: flex;
+      align-items: center;
+    }
+
+    .icon {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      margin-right: 10px;
+    }
+
+    .info-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    .info-table td {
+      padding: 10px 0;
+      vertical-align: top;
+      border-bottom: 1px solid #f0f5ff;
+    }
+
+    .info-label {
+      width: 120px;
+      font-weight: 600;
+      color: #6B7280;
+      padding-right: 15px;
+      display: flex;
+      align-items: center;
+    }
+
+    .info-value {
+      color: #1F2937;
+      font-weight: 500;
+    }
+
+    .info-value a {
+      color: #0052CC;
+      text-decoration: none;
+    }
+
+    .cta-container {
+      text-align: center;
+      padding: 15px 30px 25px;
+      background: #ffffff;
+    }
+
+    .btn {
+      display: inline-block;
+      background: #36B37E;
+      color: white;
+      padding: 14px 40px;
+      border-radius: 24px;
+      font-size: 16px;
+      font-weight: 600;
+      text-decoration: none;
+      box-shadow: 0 2px 8px rgba(54, 179, 126, 0.3);
+      transition: background 0.2s;
+    }
+
+    .btn:hover {
+      background: #2D9D71;
+    }
+
+    .advanced-section {
+      padding: 0 30px 25px;
+    }
+
+    .advanced-header {
+      display: flex;
+      align-items: center;
+      padding: 12px 0;
+      border-top: 1px solid #f0f5ff;
+      color: #0052CC;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .advanced-content {
+      margin-top: 15px;
+      border-top: 1px solid #f0f5ff;
+      padding-top: 20px;
+    }
+
+    .advanced-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    .advanced-table td {
+      padding: 8px 10px;
+      border-bottom: 1px solid #f0f5ff;
+      vertical-align: top;
+    }
+
+    .card-title {
+      font-weight: 600;
+      color: #6B7280;
+      width: 150px;
+    }
+
+    .footer {
+      background: #f9fbfd;
+      color: #6B7280;
+      text-align: center;
+      padding: 20px 30px;
+      font-size: 12px;
+      border-top: 1px solid #e6edf8;
+    }
+
+    .footer a {
+      color: #0052CC;
+      text-decoration: none;
+    }
+
+    /* Media query for mobile */
+    @media screen and (max-width: 600px) {
+      .email-container {
+        border-radius: 0;
+        margin: 0;
+      }
+
+      .header,
+      .deployment-details,
+      .cta-container,
+      .advanced-section,
+      .footer {
+        padding-left: 20px;
+        padding-right: 20px;
+      }
+
+      .info-label {
+        width: 100px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="email-container">
+    <div class="header">
+      <h1>🚀 Deployment Successful</h1>
+      <div class="status-badge">
+        <svg role="presentation" width="16" height="16" viewBox="0 0 16 16">
+          <path
+            d="M11.922 6.375l-4.328 4.36c-.188.145-.37.218-.547.218h-.375a.791.791 0 01-.297-.062.708.708 0 01-.25-.156L4.078 8.672A.342.342 0 014 8.445c0-.088.026-.164.078-.226l.813-.798a.257.257 0 01.22-.11c.093 0 .17.037.234.11L6.64 8.72a.32.32 0 00.227.093.314.314 0 00.227-.094l3.562-3.595a.41.41 0 01.243-.078c.086 0 .157.026.21.078l.812.797a.408.408 0 01.078.242c0 .09-.026.16-.078.21M15.367 4.9a8.039 8.039 0 00-1.703-2.546A8.098 8.098 0 0011.11.644 7.709 7.709 0 008 0C6.916 0 5.883.21 4.9.633a8.025 8.025 0 00-2.548 1.703A8.087 8.087 0 00.642 4.89 7.693 7.693 0 000 8c0 1.083.21 2.117.633 3.102.422.984.99 1.833 1.703 2.546a8.08 8.08 0 002.555 1.71c.99.428 2.026.642 3.11.642 1.083 0 2.117-.21 3.102-.633a8.055 8.055 0 002.547-1.703 8.182 8.182 0 001.71-2.555 7.79 7.79 0 00.64-3.11c0-1.083-.21-2.117-.633-3.102"
+            fill="currentColor" fill-rule="evenodd"></path>
+        </svg>
+        0.$BITBUCKET_BUILD_NUMBER.$BITBUCKET_STEP_RUN_NUMBER-$BITBUCKET_BRANCH
+      </div>
+      <div class="project-name">
+        <a href="$BITBUCKET_GIT_HTTP_ORIGIN">$BITBUCKET_REPO_FULL_NAME</a>
+      </div>
+    </div>
+
+    <div class="deployment-details">
+      <div class="section-title">
+        <div class="icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+            stroke="#0052CC" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="16" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+          </svg>
+        </div>
+        Deployment Details
+      </div>
+
+      <table class="info-table">
+        <tr>
+          <td class="info-label">
+            <div class="icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" role="presentation">
+                <path fill="currentcolor" fill-rule="evenodd"
+                  d="M19 11c0 1.3-.8 2.4-2 2.8V15c0 2.2-1.8 4-4 4h-2.2c-.4 1.2-1.5 2-2.8 2-1.7 0-3-1.3-3-3 0-1.3.8-2.4 2-2.8V8.8C5.9 8.4 5 7.3 5 6c0-1.7 1.3-3 3-3s3 1.3 3 3c0 1.3-.8 2.4-2.1 2.8v6.4c.9.3 1.6.9 1.9 1.8H13c1.1 0 2-.9 2-2v-1.2c-1.2-.4-2-1.5-2-2.8 0-1.7 1.3-3 3-3s3 1.3 3 3M8 5c-.5 0-1 .4-1 1s.4 1 1 1 1-.4 1-1-.4-1-1-1m8 7c.6 0 1-.4 1-1s-.4-1-1-1-1 .4-1 1 .4 1 1 1m-8 7c.6 0 1-.4 1-1s-.4-1-1-1-1 .4-1 1 .4 1 1 1">
+                </path>
+              </svg>
+            </div>
+            Branch:
+          </td>
+          <td class="info-value">$BITBUCKET_BRANCH</td>
+        </tr>
+        <tr>
+          <td class="info-label">
+            <div class="icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" role="presentation">
+                <path fill="currentcolor" fill-rule="evenodd"
+                  d="M16 12c0-1.9-1.3-3.4-3-3.9V4c0-.6-.4-1-1-1s-1 .4-1 1v4.1c-1.7.4-3 2-3 3.9s1.3 3.4 3 3.9V20c0 .6.4 1 1 1s1-.4 1-1v-4.1c1.7-.5 3-2 3-3.9m-4 2c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2">
+                </path>
+              </svg>
+            </div>
+            Commit:
+          </td>
+          <td class="info-value">
+            <a href="https://bitbucket.org/$BITBUCKET_REPO_FULL_NAME/commits/$BITBUCKET_COMMIT">$BITBUCKET_COMMIT</a>
+          </td>
+        </tr>
+        <tr>
+          <td class="info-label">
+            <div class="icon">
+              <svg role="presentation" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                version="1.1">
+                <path fill="currentColor" fill-rule="evenodd"
+                  d="M13 12.394v7.6C13 20.55 12.552 21 12 21s-1-.45-1-1.007v-7.648l-.313.317c-.386.388-1.012.388-1.398 0-.386-.39-.386-1.02 0-1.408l1.918-1.933c.216-.216.5-.323.78-.32h.013c.19 0 .364.052.514.142.083.048.16.107.232.18l1.965 1.98c.387.388.386 1.018 0 1.407-.386.387-1.01.387-1.397-.002L13 12.394zm3.84-6.976c2.804 0 5.16 2.202 5.16 5.08C22 13.41 19.615 16 16.9 16h-2.88v-1.993h2.88c1.657 0 3.115-1.663 3.115-3.508 0-1.78-1.47-3.088-3.104-3.088h-.01c-.39 0-.687.05-.97.15l-.17.063c-.606.248-.876-.246-.876-.246l-.15-.268c-.73-1.347-2.2-2.096-3.716-2.12-2.082.035-3.797 1.548-4.07 3.645l-.045.34s-.07.525-.665.525c-.013 0-.012.006-.023.006H5.96c-1.135 0-1.975.957-1.975 2.157 0 1.206.987 2.342 2.07 2.342h3.964V16H6.054C3.895 16 2 13.955 2 11.665 2 9.665 3.312 8 5.138 7.59 5.845 4.885 8.19 3.04 11.024 3c1.975.02 3.9.9 5.038 2.48.256-.04.516-.062.777-.062z">
+                </path>
+              </svg>
+            </div>
+            Env:
+          </td>
+          <td class="info-value">$BITBUCKET_DEPLOYMENT_ENVIRONMENT</td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="cta-container">
+      <a class="btn" href="https://bitbucket.org/$BITBUCKET_REPO_FULL_NAME/pipelines/results/$BITBUCKET_BUILD_NUMBER">
+        View Pipeline Run
+      </a>
+    </div>
+
+    <div class="advanced-section">
+      <div class="advanced-header">
+        <div class="icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+            stroke="#0052CC" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="16" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+          </svg>
+        </div>
+        Advanced Pipeline Info
+        <div class="icon" style="margin-left: 10px;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+            stroke="#0052CC" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </div>
+      </div>
+
+      <div class="advanced-content">
+        <table class="advanced-table">
+          <tr>
+            <td class="card-title">Project UUID</td>
+            <td class="card-value">$BITBUCKET_PROJECT_UUID</td>
+          </tr>
+          <tr>
+            <td class="card-title">Repo UUID</td>
+            <td class="card-value">$BITBUCKET_REPO_UUID</td>
+          </tr>
+          <tr>
+            <td class="card-title">Repo Full Name</td>
+            <td class="card-value">$BITBUCKET_REPO_FULL_NAME</td>
+          </tr>
+          <tr>
+            <td class="card-title">Repo Private?</td>
+            <td class="card-value">$BITBUCKET_REPO_IS_PRIVATE</td>
+          </tr>
+          <tr>
+            <td class="card-title">Clone (SSH)</td>
+            <td class="card-value">$BITBUCKET_GIT_SSH_ORIGIN</td>
+          </tr>
+          <tr>
+            <td class="card-title">Pipeline UUID</td>
+            <td class="card-value">$BITBUCKET_PIPELINE_UUID</td>
+          </tr>
+          <tr>
+            <td class="card-title">Step Run Number</td>
+            <td class="card-value">$BITBUCKET_STEP_RUN_NUMBER</td>
+          </tr>
+          <tr>
+            <td class="card-title">Step UUID</td>
+            <td class="card-value">$BITBUCKET_STEP_UUID</td>
+          </tr>
+          <tr>
+            <td class="card-title">Build Number</td>
+            <td class="card-value">$BITBUCKET_BUILD_NUMBER</td>
+          </tr>
+          <tr>
+            <td class="card-title">Triggered By</td>
+            <td class="card-value">$BITBUCKET_STEP_TRIGGERER_UUID</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="footer">
+      <p>This is an automated deployment notification. Please do not reply to this email.</p>
+      <p>© 2025 Signal Deployment System | <a
+          href="https://bitbucket.org/tkxel/workspace/projects/$BITBUCKET_PROJECT_KEY">Manage Repos</a></p>
+    </div>
+  </div>
+</body>
+
+</html>

@@ -1,0 +1,10 @@
+<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="feather" clip-path="url(#clip0_49304_291849)">
+<path id="Icon" d="M10.6654 5.33368L1.33203 14.667M11.6654 10.0003H5.9987M13.492 8.16035C14.2426 7.40979 14.6643 6.3918 14.6643 5.33035C14.6643 4.26889 14.2426 3.25091 13.492 2.50035C12.7415 1.74979 11.7235 1.32813 10.662 1.32812C9.60058 1.32813 8.58259 1.74979 7.83203 2.50035L3.33203 7.00035V12.667H8.9987L13.492 8.16035Z" stroke="#146DFF" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<defs>
+<clipPath id="clip0_49304_291849">
+<rect width="16" height="16" fill="white"/>
+</clipPath>
+</defs>
+</svg>

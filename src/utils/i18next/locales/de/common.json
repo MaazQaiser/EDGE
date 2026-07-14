@@ -1,0 +1,961 @@
+{
+  "sideNavBar": {
+    "linkText": {
+      "reportProblem": "Ein Problem melden",
+      "leadsMap": "Signalkarte",
+      "customers": "Kunden",
+      "logout": "Abmelden",
+      "polygon": "Polygon",
+      "zoneArea": "Zonenbereich",
+      "franchiseArea": "Franchise -Bereich",
+      "siteArea": "Standortbereich",
+      "dashboard": "Armaturenbrett",
+      "hoDashboard": "Ho Dashboard",
+      "obxDashboard": "Armaturenbrett",
+      "franchiseMap": "Franchise -Karte",
+      "franchises": "Franchise",
+      "franchise": "Franchise",
+      "zones": "Zonen",
+      "sites": "Standorte",
+      "schedules": "Zeitplan",
+      "runSheets": "Runsheets",
+      "dispatch": "Interventionsfahrten",
+      "reports": "Schichtberichte",
+      "users": "Benutzer",
+      "analytics": "Analyse",
+      "leaderBoard": "Rangliste",
+      "devices": "Geräte",
+      "vehicles": "Fahrzeuge",
+      "obxSetting": "Einstellungen",
+      "invoices": "Rechnungen",
+      "hoSetting": "Einstellungen",
+      "operations": "Operationen",
+      "sales": "Verkäufe",
+      "companies": "Unternehmen",
+      "locations": "Standorte",
+      "industryVerticals": "Branchen -Branchen",
+      "commercial": "Einzelhandelsbranche",
+      "housing": "Gebäudemanagement",
+      "industry": "Industriebranche",
+      "transit": "Transit",
+      "retail": "Einzelhandel",
+      "profile": "Profil",
+      "settings": "Einstellungen",
+      "deals": "Angebote",
+      "attendance": "Teilnahme",
+      "leaveRequest": "Freizeitanfragen",
+      "contacts": "Kontakte",
+      "scoutingRoutes": "Routen",
+      "scoutingRoute": "Routen",
+      "notificationsRoute": "Benachrichtigungen",
+      "allVerticals": "Alle Branchen",
+      "faq": "FAQ",
+      "payroll": "Gehaltsabrechnung"
+    }
+  },
+  "links": {
+    "backToLogin": "Zurück zum Anmeldung",
+    "cancel": "Stornieren",
+    "submit": "Einreichen",
+    "edit": "Bearbeiten",
+    "delete": "Löschen",
+    "save": "Speichern",
+    "dnd": "Drag & Drop oder",
+    "clickToUpload": "Klicken Sie hier, um hochzuladen",
+    "imageSizeEF": "PNG, JPG oder JPEG",
+    "fileSelected": "Datei ausgewählt",
+    "back": "Zurück",
+    "next": "Nächste",
+    "finish": "Beenden",
+    "export": "Export",
+    "buttonStartEndDate": "Wählen Sie Start & Enddatum",
+    "suspendAccount": "Konto aussetzen",
+    "editUserRole": "Benutzerrolle des Benutzers bearbeiten",
+    "deleteUser": "Benutzer löschen",
+    "inviteUser": "Benutzer einladen",
+    "exportData": "Daten exportieren",
+    "exportSiteSummaries": "Standortzusammenfassungen exportieren"
+  },
+  "messages": {
+    "isError": {
+      "shift": {
+        "invalidAssignment": "Diese Zuweisung ist für die gewählte Schicht, die Daten oder die Wochentage ungültig."
+      }
+    }
+  },
+  "form": {
+    "input": {
+      "textField": {
+        "locations": {
+          "header": "Standorte",
+          "label": "Standort",
+          "placeHolder": "Eingeben Sie den Standortnamen"
+        },
+        "name": {
+          "label": "Name",
+          "placeHolder": "Namen eingeben"
+        },
+        "postalCode": {
+          "label": "Postleitzahl",
+          "placeHolder": "Geben Sie Ihre Postleitzahl ein."
+        },
+        "firstName": {
+          "label": "Vorname",
+          "placeHolder": "Geben Sie Ihren Vornamen ein"
+        },
+        "lastName": {
+          "label": "Nachname",
+          "placeHolder": "Geben Sie Ihren Nachnamen ein"
+        },
+        "workCellNumber": {
+          "label": "Arbeitszellnummer"
+        },
+        "phoneNumber": {
+          "label": "Telefon",
+          "placeHolder": "z. B. +00 856 3369",
+          "regex": "Ungültiges Format"
+        },
+        "email": {
+          "label": "E-Mail",
+          "placeHolder": "Geben Sie Ihre E -Mail ein"
+        },
+        "primaryEmail": {
+          "label": "Primär -E -Mail",
+          "placeHolder": "Geben Sie Ihre primäre E -Mail ein"
+        },
+        "owner": {
+          "label": "Besitzer",
+          "info": "Info & Kontakt"
+        },
+        "country": {
+          "header": "Landregion",
+          "label": "Land",
+          "placeHolder": "Betreten Sie Ihr Land"
+        },
+        "address": {
+          "header": "Adresse",
+          "label": "Adresse",
+          "placeHolder": "Geben Sie Ihre Adresse ein"
+        },
+        "address2": {
+          "header": "Adresszeile 2",
+          "label": "Adresszeile 2",
+          "placeHolder": "Geben Sie die Adresszeile 2 ein"
+        },
+        "state": {
+          "header": "Staat/Provinz",
+          "label": "Staat/Provinz",
+          "placeHolder": "Betreten Sie Ihren Staat/Ihre Provinz"
+        },
+        "zipCode": {
+          "label": "Postleitzahl",
+          "placeHolder": "Geben Sie Ihre Postleitzahl ein."
+        },
+        "dailySiteSummaryReceivers": {
+          "label": "Tägliche Site -Zusammenfassung Empfänger",
+          "placeHolder": "Geben Sie ein, um mehr hinzuzufügen"
+        },
+        "incidentReportReceivers": {
+          "label": "Empfänger von Incident Report",
+          "placeHolder": "Geben Sie ein, um mehr hinzuzufügen"
+        },
+        "reportsDistribution": {
+          "header": "Meldet die Verteilung",
+          "placeHolder": "Geben Sie ein, um mehr hinzuzufügen"
+        },
+        "city": {
+          "label": "Stadt",
+          "placeHolder": "Betreten Sie Ihre Stadt"
+        },
+        "suburb": {
+          "label": "Suburb",
+          "placeHolder": "Betreten Sie Ihren Suburb"
+        },
+        "emergencyContacts": {
+          "header": "Notfallkontakte"
+        },
+        "contact": {
+          "label": "Telefon",
+          "placeHolder": "Telefonnummer eingeben"
+        },
+        "selectOption": {
+          "label": "Option auswählen",
+          "placeholder": "Option auswählen"
+        },
+        "selectOptions": {
+          "label": "Optionen auswählen",
+          "placeHolder": "Optionen auswählen"
+        },
+        "selectSites": {
+          "label": "Websites auswählen",
+          "placeHolder": "Websites auswählen"
+        },
+        "search": {
+          "label": "Suchen",
+          "placeHolder": "Suchen"
+        },
+        "geoFencing": {
+          "header": "Geo-Fencing",
+          "zoneOverview": "Zonenübersicht",
+          "setSame": {
+            "label": "Setzen Sie gleich wie Franchise -Grenze"
+          }
+        },
+        "zoneOverView": {
+          "header": "Zonenübersicht"
+        },
+        "zone": {
+          "label": "Zonenname",
+          "placeHolder": "Geben Sie den Zonennamen ein"
+        },
+        "supervisor": {
+          "label": "Aufsicht",
+          "header": "Geo-Fencing"
+        },
+        "vehicle": {
+          "info": "Fahrzeuginformationen"
+        },
+        "vehicleMakeInput": {
+          "label": "Machen/Modell/Jahr",
+          "placeHolder": "Betreten Sie das Auto Make, das Modell und das Jahr"
+        },
+        "vehicleRegistrationNumber": {
+          "label": "Registrierte Nummer",
+          "placeHolder": "Registrierte Nummer"
+        },
+        "vehicleCreatedAt": {
+          "label": "Erstellt at",
+          "placeHolder": "Zum Zeitpunkt erstellt"
+        },
+        "vehicleLastMaintenance": {
+          "label": "Letzte Wartung",
+          "placeHolder": "Letzter Wartungsdatum"
+        },
+        "password": {
+          "label": "Passwort",
+          "placeHolder": "Geben Sie Ihr Passwort ein"
+        },
+        "currentPassword": {
+          "label": "Aktuelles Passwort",
+          "placeHolder": "Geben Sie das aktuelle Passwort ein*"
+        },
+        "newPassword": {
+          "label": "Neues Passwort",
+          "placeHolder": "Ein neues Passwort eingeben*"
+        },
+        "confirmPassword": {
+          "label": "Passwort bestätigen",
+          "placeHolder": "Neues Passwort bestätigen*"
+        },
+        "logType": {
+          "placeHolder": "ex. "
+        },
+        "visitorType": {
+          "placeHolder": "ex. "
+        },
+        "title": {
+          "label": "Titel"
+        },
+        "description": {
+          "label": "Beschreibung"
+        },
+        "site": {
+          "label": "Site auswählen",
+          "sites": "Website",
+          "placeHolderSites": "Geben Sie den Namen Ihrer Website ein",
+          "sitesInfo": "Informationen und Kontakte auf der Website",
+          "name": "Name",
+          "clients": "Kunde",
+          "placeHolderClients": "Geben Sie Ihren Kundennamen ein",
+          "localWorked": "Lokale Arbeiten (ADP -Steuergesetzbuch)",
+          "siteRate": "Site -Rate ($)",
+          "secondaryEmail": "Kunden sekundäre E -Mail"
+        },
+        "editor": {
+          "placeHolder": "Beschreibung eingeben"
+        }
+      },
+      "dropDown": {
+        "pleaseSelectAnOption": "Bitte wählen Sie eine Option aus"
+      }
+    }
+  },
+  "buttons": {
+    "markUnqualified": "Markieren Sie uneingeschränkt",
+    "addVehicle": "Fahrzeug hinzufügen",
+    "updateVehicle": "Fahrzeug aktualisieren",
+    "updatePassword": "Passwort aktualisieren",
+    "continue": "Weitermachen",
+    "resendInvite": "Wiedererladung einladend",
+    "changeFranchiseOwner": "Franchise -Besitzer ändern",
+    "deActivateFranchise": "Machen Sie dieses Franchise nicht Funktionell",
+    "activateFranchise": "Machen Sie dieses Franchise Funktionell",
+    "yes": "Ja",
+    "no": "Stornieren",
+    "splitRunSheet": "Split Runsheet",
+    "createRunSheet": "{{runblatt}} erstellen",
+    "updateRunsheet": "Runsheet aktualisieren",
+    "changeOwner": "Besitzer wechseln",
+    "cancel": "Stornieren",
+    "confirm": "Bestätigen",
+    "makeItFunctional": "Funktionell machen",
+    "makeFunctional": "Funktionell machen",
+    "deleteNote": "Notiz löschen",
+    "yesSplit": "Ja, teilen",
+    "splitConfirmationDescription": "Sie sind dabei, das systemgenerierte {{runsheet}} aufzuteilen, und die ausgewählte Patrouille wird dem neu erstellten, aufgeteilten {{runsheet}} hinzugefügt.",
+    "confirmSplit": "Aufteilung bestätigen?",
+    "updateInstructions": "Aktualisieren Sie Anweisungen",
+    "createInstruction": "Anweisung erstellen",
+    "addException": "Postbestellung hinzufügen",
+    "addExceptionInstructions": "Fügen Sie Anweisungen zur Auftragsbestellung hinzu",
+    "updateExceptionInstructions": "Aktualisieren Sie Anweisungen zur Postbestellung",
+    "pending": "Ausstehend",
+    "approved": "Genehmigt",
+    "rejected": "Abgelehnt",
+    "rejectReport": "Bericht ablehnen",
+    "approveReport": "Bericht genehmigen",
+    "approve": "Genehmigen",
+    "reject": "Ablehnen",
+    "update": "Aktualisieren",
+    "editReport": "Bericht bearbeiten",
+    "downloadReport": "Bericht herunterladen",
+    "downloadPDF": "PDF herunterladen",
+    "back": "Zurück"
+  },
+  "commonText": {
+    "exportDescription": "Wählen Sie den Datumsbereich aus, um Daten zu exportieren",
+    "successMessagePayRun": "Pay -Well -Sperre, die gegen den bereitgestellten Datumsbereich erstellt wurde.",
+    "successMessageEditJobTime": "Die Arbeitszeit wurde erfolgreich aktualisiert",
+    "estCompeletionTime": "Est. ",
+    "day": "Tag",
+    "days": "Tage",
+    "hour": "Stunde",
+    "hours": "Std",
+    "seconds": "Sekunden",
+    "second": "Zweite",
+    "minute": "Minute",
+    "minutes": "Minuten",
+    "viewDetails": "Details anzeigen",
+    "goToLocation": "Gehen Sie zur Lage.",
+    "goToFranchise": "Gehen Sie zum Franchise.",
+    "goToSite": "Gehen Sie zur Website.",
+    "exitCreateMode": "Exit erstellen Modus.",
+    "noOfOfficers": "Anzahl der {{officers}}",
+    "boundry": "Grenze",
+    "new": "Neu",
+    "old": "Alt",
+    "existing": "Bestehend",
+    "lost": "Verloren",
+    "franchiseBoundry": "Franchise -Boundry",
+    "updateSuccess": "Active Franchise wurde erfolgreich aktualisiert!",
+    "confirmDelete": "Bestätigen Sie löschen",
+    "confirmDeleteMessage": "Sind Sie sicher, dass Sie löschen möchten?",
+    "delete": "Löschen",
+    "back": "Zurück",
+    "createAZone": "Erstellen Sie eine Zone",
+    "export": "Export",
+    "perHour": "HR",
+    "table": {
+      "noRecordFound": "Kein Aufzeichnung gefunden",
+      "rowsPerPage": "Zeile pro Seite:"
+    },
+    "squareMeter": "Quadratmeter",
+    "newFranchise": "Neues Franchise",
+    "newZone": "Neue Zone",
+    "newSite": "Neue Seite",
+    "deleteZone": "Zone löschen",
+    "vehicle": "Fahrzeug",
+    "image": {
+      "alt": "{{name}}Bild"
+    },
+    "forgetPassword": {
+      "title": "Ihr Passwort vergessen?",
+      "desc": "Bitte geben Sie Ihre E -Mail für den Überprüfungsprozess ein. "
+    },
+    "resetPassword": {
+      "title": "Passwort zurücksetzen",
+      "desc": "Geben Sie ein neues Passwort für Ihr Konto ein, damit Sie sich anmelden und auf Funktionen zugreifen können."
+    },
+    "text": {
+      "days": "Tage",
+      "day": "Tag"
+    },
+    "attachments": "Anhänge",
+    "contacts": "Kontakte",
+    "deals": "Angebote",
+    "allFilters": "Alle Filter",
+    "clearAll": "Alle klar",
+    "cities": "Städte",
+    "states": "Staaten/Provinzen",
+    "lastActivityDate": "Letzte Aktivitätsdatum",
+    "createdDate": "Datum erstellt",
+    "applyFilters": "Filter anwenden",
+    "welcome": "Willkommen!",
+    "login": {
+      "welcome": "Willkommen!",
+      "desc": "Verwalten Sie Ihr Franchise und Ihre Wachen besser und effizient.",
+      "copyRightText": "Alle Rechte vorbehalten.",
+      "buttons": {
+        "login": "Login",
+        "loginSSO": "Login",
+        "forgotPassword": "Passwort vergessen?"
+      }
+    },
+    "statuses": {
+      "franchise": {
+        "functional": "Funktionell",
+        "requiresAttention": "Benötigt Aufmerksamkeit",
+        "nonFunctional": "Nicht funktionell"
+      }
+    },
+    "modal": {
+      "changeFranchiseOwner": {
+        "title": "Franchise -Besitzer ändern",
+        "text": "Bitte vervollständigen Sie unter den Feldern, um den Eigentümer dieses Franchise zu ändern."
+      },
+      "csvModal": {
+        "title": "Download Officers Gehaltsabrechnung",
+        "dateRangeLabel": "Wählen Sie Datumsbereich",
+        "downloadCsv": "Laden Sie CSV herunter"
+      },
+      "areYouSure": {
+        "deleteZone": "Zone löschen!",
+        "descZone": "Sind Sie sicher, dass Sie die Zone löschen möchten? ",
+        "title": "Bist du sicher?",
+        "desc": "Sie werden diese Änderung nicht zurückversetzen können!",
+        "descExc": "Sind Sie sicher, dass Sie diese Postbestellung löschen möchten?",
+        "deleteVehicle": "Sind Sie sicher, dass Sie dieses Fahrzeug löschen möchten? ",
+        "banVisitor": "Sind Sie sicher, dass Sie diesen Benutzer verbieten möchten?",
+        "banLoader": "Sind Sie sicher, dass Sie diesen Lader verbieten möchten?"
+      },
+      "makeFranchiseFunctional": {
+        "title": "Machen Sie Franchise Funktionell!",
+        "text": "Sind Sie sicher, dass Sie dieses Franchise funktionieren möchten?"
+      },
+      "makeFranchiseNonFunctional": {
+        "title": "Machen Sie Franchise nicht funktionell!",
+        "text": "Sind Sie sicher, dass Sie dieses Franchise nicht funktionsfähig machen möchten?"
+      },
+      "deleteException": {
+        "title": "Postbestellung löschen",
+        "button": "Postbestellung löschen"
+      },
+      "notes": {
+        "deleteNote": "Notiz löschen!",
+        "deleteMessage": "Sind Sie sicher, dass Sie diese Notiz löschen möchten? "
+      },
+      "leadDelete": {
+        "deleteNote": "Bist du sicher?",
+        "deleteMessage": "Dadurch wird die Führung gelöscht "
+      },
+      "closeLead": {
+        "closeNote": "Markieren Sie den Standort als unqualifiziert?",
+        "closeMessage": "Sind Sie sicher, diesen Ort als unqualifiziert zu markieren?"
+      },
+      "rejectModal": {
+        "title": "Bericht ablehnen",
+        "description": "Sind Sie sicher, dass Sie diesen Bericht ablehnen möchten? "
+      },
+      "approveModal": {
+        "title": "Bericht genehmigen",
+        "description": "Sind Sie sicher, dass Sie diesen Bericht genehmigen möchten? "
+      },
+      "languageModal": {
+        "title": "Sprache ändern",
+        "description": "Wählen Sie die Sprache, die Sie verwenden möchten.",
+        "englishUk": "Englisch (Großbritannien)",
+        "englishUS": "Englisch (uns)",
+        "franch": "Franch",
+        "spanish": "Spanisch"
+      }
+    },
+    "dropDown": {
+      "searchPlaceholder": "Suchen",
+      "stagePlaceholder": "Wählen Sie die Bühne"
+    },
+    "input": {
+      "defaultPlaceholder": "Bitte geben Sie hier ein."
+    },
+    "Loading": {
+      "title": "Laden..."
+    },
+    "updatePassword": "Passwort aktualisieren",
+    "nA": "N/A",
+    "miles": "Meilen",
+    "updatePasswordText": "Aktualisieren Sie Ihr Passwort, um Ihr Konto zu sichern",
+    "searchPlaceholders": {
+      "siteFilter": {
+        "placeHolder": "Suche nach Site"
+      },
+      "franchiseListing": {
+        "searchBar": {
+          "placeHolder": "Suche nach Franchise"
+        },
+        "stateFilter": {
+          "placeHolder": "Suche nach einem Staat/Provinz"
+        },
+        "cityFilter": {
+          "placeHolder": "Suche nach einer Stadt"
+        }
+      }
+    },
+    "select": "Wählen",
+    "clear": "Klar",
+    "signature": "Unterschrift"
+  },
+  "profile": {
+    "label": "Profil",
+    "language": "Sprache",
+    "photo": {
+      "label": "Dein Foto",
+      "description": "Dies wird in Ihrem Profil angezeigt."
+    },
+    "accountPassword": {
+      "title": "Konto Passwort",
+      "accountPasswordDesc": "Aktualisieren Sie Ihr Passwort, um Ihr Konto sicher zu halten",
+      "updatePassword": "Passwort aktualisieren"
+    },
+    "address": {
+      "label": "Adresse (optional)"
+    },
+    "email": {
+      "label": "E-Mail-Adresse",
+      "placeHolder": "Geben Sie Ihre E -Mail ein"
+    },
+    "switchToSalesView": "Setzen Sie sich auf"
+  },
+  "errors": {
+    "invalid_format_wage": "{{#label}} Der Wert sollte zwischen 00.01 und 99,99 betragen",
+    "retry": "Wiederholen",
+    "noServer": "Etwas lief schief!",
+    "noServertext": "Serverfehler! ",
+    "noInternet": "Keine Internetverbindung!",
+    "noInternetConnectionText": "Sie sind derzeit nicht mit dem Internet verbunden. ",
+    "emptyImage": "Zumindest eins {{label}} ist erforderlich.",
+    "childrenIntersecting": "Darf sich nicht mit anderen Zonen überlappen.",
+    "selfIntersection": " Linien dürfen sich nicht schneiden",
+    "insideParent": "{{label}} Muss in der Nähe von Franchise Pin -Standort sein.",
+    "zoneShouldBeInsideFranchise": "{{label}} Muss sich in der Eltern -Franchise -Franchise sein.",
+    "notAString": "{{#label}} sollte nur aus Alphabeten bestehen.",
+    "fallBackForOutsideBoundry": "{{label}} muss im Elternteil sein",
+    "zonesIntersecting": "{{label}} darf sich nicht mit anderen Zonen überschneiden.",
+    "franchiseIntersecting": "{{label}} Darf sich nicht mit anderen Franchise -Unternehmen überschneiden.",
+    "zoneMustContainAllSites": "{{label}} Muss alle darin enthaltenen Stellen enthalten.",
+    "sitesIntersecting": "{{label}} darf sich nicht mit anderen Standorten überschneiden.",
+    "markerNotInsideSite": "{{label}} Muss in der Nähe des Standorts der Standort sein.",
+    "markerNotInsideSiteLocation": "Die Standortmarkierung muss innerhalb der Standortgrenze platziert werden.",
+    "any.greaterThanZero": "{{#label}} sollte größer als 0 sein",
+    "any.required": "{{#label}} ist erforderlich.",
+    "any.max": "{{#label}} muss höchstens 20 Zeichen lang sein",
+    "any.invoiceMemoMax": "{{#label}} mag maximaal 4000 tekens lang zijn",
+    "any.min": "{{#label}} muss mindestens 3 Zeichen lang sein",
+    "any.max.wage": "{{#label}} sollte weniger oder gleich sein  {{max}}",
+    "any.min.wage": "{{#label}} sollte dann größer oder gleich sein {{min}}",
+    "any.empty": "{{#label}} ist erforderlich",
+    "any.dropdown": "{{#label}} muss ausgewählt werden",
+    "string.required": "{{#label}} ist erforderlich",
+    "number.base": "{{#label}} Muss eine Nummer sein.",
+    "number.required": "{{#label}} ist erforderlich",
+    "number.empty": "{{#label}} ist erforderlich",
+    "number.greater": "{{#label}} sollte größer sein",
+    "number.maxPrice": "{{#label}} kann nicht länger als 15 Ziffern sein",
+    "number.maxQuantity": "{{#label}} kann nicht länger als 10 Ziffern sein",
+    "number.min": "{{#label}} sollte größer sein als 0",
+    "number.integer": "{{#label}} kann keine Dezimalwerte haben",
+    "number.precision": "{{#label}} Der Dezimalwert kann nicht länger sein als 4 Ziffern",
+    "array.min": "{{#label}} Muss mindestens 1 Artikel haben.",
+    "boundry.min": "{{#label}} Muss eine Boundry haben.",
+    "array.minTwo": "{{#label}} Muss mindestens 2 Artikel haben.",
+    "array.max": "{{#label}} kann nur enthalten {{#limit}} Artikel.",
+    "array.base": "{{#label}} Feld muss ein Array sein.",
+    "string.pattern.base": "{{#label}} Das Format ist ungültig.",
+    "string.pattern.base.runsheet": "{{#label}} kann nur Buchstaben, Zahlen, Bindestriche und Kommas enthalten.",
+    "any.email": "{{#label} ist ungültig.",
+    "string.email": "{{#label}} sollte gültig sein.",
+    "string.empty": "{{#label}} ist erforderlich",
+    "dropdown.base": "{{#label}} kann nicht leer sein",
+    "any.minWithValue": "{{#label}} muss mindestens sein {{#limit}} Charaktere lang",
+    "any.maxWithValue": "{{#label}} kann nicht größer sein als {{#limit}} Charaktere lang",
+    "somethingWentWrong": "Etwas lief schief!",
+    "unauthorized": "Unbefugter Zugang",
+    "access_denied": "Zugriff verweigert",
+    "passwordConfirmation.string.only": "Passwörter müssen übereinstimmen",
+    "password.string.min": "Das Passwort muss mindestens 8 Zeichen lang sein",
+    "password.string.max": "Das Passwort muss höchstens 20 Zeichen lang sein",
+    "password.string.pattern.base": "Muss 8 Zeichen, einen Großbuchstaben, einen Kleinbuchstaben, eine Nummer und einen Spezialkoffer -Zeichen enthalten",
+    "fileSizeExceededTwentyMBs": "Die Dateigröße überschreitet 25 MB. ",
+    "fileSizeExceeded": "Die Dateigröße überschreitet {{maxFileSize}} MB -Grenze. ",
+    "locationSource": "Ort ist erforderlich.",
+    "supervisorValidationErr": "Vorgesetzter ist erforderlich.",
+    "addressValidationErr": "Adresse ist erforderlich.",
+    "value.min": "{{#label} muss größer oder gleich 1 sein",
+    "value.max": "{{#label} muss weniger oder gleich 9999 sein",
+    "onlyAlphabets": "{{#label}} sollte nur Alphabete enthalten",
+    "alphabetsCharacterLength": "{{#label}} sollte 100 Zeichen nicht überschreiten",
+    "onlyPositiveIntegers": "{{#label}} sollte nur positive Ganzzahlen enthalten.",
+    "addressCharacters": "{{#label}} sollte 200 Zeichen nicht überschreiten",
+    "postalCodeCharacters": "{{#label}} sollte 50 Zeichen nicht überschreiten",
+    "emailRecepients": "Das E -Mail -Format ist nicht gültig",
+    "dynamic.time.required": "Zeit ist erforderlich.",
+    "dynamic.date.required": "Datum ist erforderlich.",
+    "dynamic.date.time.required": "Datum und Uhrzeit sind erforderlich.",
+    "dynamic.option.required": "Auswahl ist erforderlich.",
+    "dynamic.webCam.required": "Bild ist erforderlich.",
+    "dynamic.required": "Dieses Feld ist erforderlich.",
+    "data.notFound": "Daten nicht gefunden."
+  },
+  "ho_franchise": {
+    "detail": {
+      "franchise_information": {
+        "title": "Franchise -Informationen",
+        "info": "Infos hinzufügen",
+        "name": "Franchise -Name",
+        "owner": "Name des Besitzers",
+        "email": "E-Mail",
+        "number": "Telefon",
+        "address": "Adresse",
+        "country": "Land",
+        "city": "Stadt",
+        "region": "Region/Staat",
+        "generalInformation": "Allgemeine Informationen",
+        "Id": "Franchise -ID",
+        "joined": "Verbunden",
+        "monthlyRevenue": "Monatliche Einnahmen",
+        "noOfCustomers": "Anzahl der Kunden",
+        "serviceZips": "Service -Reißverschlüsse",
+        "noOfEmployees": "Anzahl der Mitarbeiter",
+        "companyCode": "Firmencode",
+        "labourEfficiency": "Arbeiteffizienz",
+        "customerRelation": "Kundenbindung",
+        "hubSpotFranchiseId": "Hubspot -Franchise Nr."
+      }
+    }
+  },
+  "questions": {
+    "idNotProvided": "Frage -ID wurde nicht bereitgestellt!",
+    "notProvided": "Frage wurde nicht gestellt!"
+  },
+  "report": {
+    "notProvided": "Der Bericht wurde nicht bereitgestellt!"
+  },
+  "stubedData": {
+    "inProgress": "Im Gange",
+    "franchiseId": "ID: 1234",
+    "tbd": "TBD"
+  },
+  "inProgress": {
+    "title": "Arbeiten in Arbeit!",
+    "text": "Dieses Modul arbeitet derzeit in Arbeit."
+  },
+  "mapPopUp": {
+    "createLocationsButtonText": "Erstellen Sie den Standort über Karte",
+    "createLocationsButtonTextSite": "Standort erstellen ",
+    "createLocationsDesc": "Bitte wählen Sie ein vorhandenes Unternehmen oder geben Sie eine PIN ab, um einen neuen Standort hinzuzufügen."
+  },
+  "notifications": {
+    "title": "Benachrichtigungen",
+    "viewMoreLink": "Alle Benachrichtigungen anzeigen",
+    "placeholderTitle": "Keine Benachrichtigungen",
+    "placeholderText": "Du bist eingeholt! "
+  },
+  "clockInOut": {
+    "clockOut": "Uhr-Out",
+    "clockIn": "Uhr-In"
+  },
+  "reportProblem": {
+    "reportProblem": "Ein Problem melden",
+    "email": "E-Mail",
+    "title": "Titel",
+    "addTitle": "Titel hinzufügen",
+    "description": "Beschreibung",
+    "addDescription": "Beschreibung hinzufügen",
+    "addEmail": "Ex: mike@teamsignal.com",
+    "submit": "Einreichen",
+    "search": "Suchen",
+    "problemsReported": "Probleme gemeldet",
+    "problemsReportedText": "Erhalten Sie den vollen Zugang zu allen Problemen, die hier von Signalmitarbeitern getroffen wurden",
+    "allStatus": "All Status",
+    "id": "Ticket -ID",
+    "titleDescription": "Titel / Beschreibung",
+    "submittedBy": "Eingereicht von",
+    "date": "Gemeldetes Datum und Uhrzeit",
+    "status": "Status",
+    "action": "Aktion",
+    "EmailSent": "E -Mail gesendet",
+    "SendEmail": "E -Mail senden",
+    "mailtext": "Teilen Sie Ihre Bemerkungen per E -Mail für Ticket",
+    "to": "Zu",
+    "emailPlaceholder": "mike@teamsignal.com",
+    "subject": "Thema",
+    "subjectPlaceholder": "Signal -Support -Team - Ticket -ID:",
+    "textarea": "Klicken Sie hier, um zu tippen ...",
+    "back": "Zurück",
+    "statuses": {
+      "all": "All Status",
+      "inProgress": "Im Gange",
+      "toDo": "Zu tun",
+      "cancelled": "Abgesagt",
+      "resolved": "Gelöst"
+    },
+    "reportProblemModal": {
+      "title": "Ein Problem melden!",
+      "description": "Bitte protokollieren Sie Ihre Bedenken, indem Sie die entsprechende Plattform unten auswählen.",
+      "sales": "Für Verkaufsaktivitätstools",
+      "obx": "Für Edge 2.0"
+    }
+  },
+  "visitor": {
+    "editVisitorProfile": "Besucherprofil bearbeiten",
+    "editLoadProfile": "Ladeprofil bearbeiten",
+    "name": "Name",
+    "driversName": "Name des Fahrers",
+    "status": "Status",
+    "phone": "Telefon",
+    "noOfVisits": "Anzahl der Besuche",
+    "checkIn": "Check-in-Datum und Uhrzeit",
+    "checkOut": "Check-out-Datum und Uhrzeit",
+    "inBound": "Date und Uhrzeit eingehender",
+    "outBound": "Ausgebildetes Datum und Uhrzeit",
+    "vehicleNumber": "Fahrzeugnummer",
+    "loadType": "Lasttyp",
+    "state": "Staat/Provinz",
+    "action": "Aktion",
+    "search": "Suche nach Namen",
+    "checkInVisitor": "Check-in-Besucher",
+    "checkOutVisitor": "Check-out Besucher",
+    "checkOutVisitorDesc": "Bitte fügen Sie die folgenden Informationen hinzu",
+    "newVisitor": "Neuer Besucher",
+    "addPreAuthorizedVisitor": "Fügen Sie vorautorisierter Besucher hinzu",
+    "addBannedVisitor": "Fügen Sie verbotener Besucher hinzu",
+    "editEntry": "Eintrag bearbeiten",
+    "printVisitorCard": "Besucherkarte drucken",
+    "banVisitor": "Besucher verbieten",
+    "totalVisitors": "Gesamtbesucher",
+    "checkedInVisitors": "Besucher eingecheckt",
+    "preAuthorizedVisitors": "Vorautorisierte Besucher",
+    "bannedVisitors": "Verbotte Besucher",
+    "subText": "Bitte fügen Sie die folgenden Informationen hinzu",
+    "visitorType": "Besuchertyp",
+    "select": "Wählen",
+    "phonePlaceholder": "Z. B. +1 234 567 8999",
+    "fullName": "Vollständiger Name",
+    "enter": "Eingeben",
+    "Ssn": "SSN",
+    "meetingWith": "Treffen mit",
+    "enterHostName": "Geben Sie den Hostnamen ein",
+    "reasonOfVisit": "Grund des Besuchs",
+    "reason": "Grund",
+    "attachment": "Anhaftung (en)",
+    "addVisitor": "Besucher hinzufügen",
+    "cancel": "Stornieren",
+    "image": "Profilbild",
+    "reasonofBan": "Grund des Verbots",
+    "visitDate": "Date besuchen",
+    "arrivalTime": "Ankunftszeit",
+    "attachments": "Anhänge",
+    "export": "Export",
+    "visitors": "Besucher",
+    "loads": "Lasten",
+    "banVisitor!": "Besucher verbieten!",
+    "banVisitorText": "Sind Sie sicher, dass Sie diesen Besucher verbieten möchten?",
+    "addReason": "Vernunft hinzufügen",
+    "cardHeading": "Besucherkarte drucken",
+    "printCard": "Druckkarte",
+    "date": "Datum",
+    "site": "Website",
+    "unbanVisitor!": "Unbran Besucher!",
+    "unbanVisitor": "Unbran Besucher",
+    "unbanVisitorTex": "Sind Sie sicher, dass Sie das Verbot für diesen Besucher entfernen möchten?",
+    "uNBanVisitor": "Unbran Besucher",
+    "banned": "Verboten",
+    "visitor": "Besucher",
+    "searchVisitor": "Besucher suchen",
+    "searchForVisitor": "Suche nach bereits eingecheckten Besuchern nach",
+    "checkInsSearchVisitor": "Schnelle Check-Ins.",
+    "livePhotoTitle": "Live -Foto",
+    "liveRetakePhoto": "Foto wiederholen",
+    "liveCapturePhoto": "Foto erfassen",
+    "visitorsEmptyStateTitle": "Wählen Sie einen Besuchertyp",
+    "visitorsEmptyStateText": "Wählen Sie einen Besuchertyp zum Einchecken aus",
+    "visitorReason": "Dieser Benutzer wurde von der Besetzung dieser Website verboten",
+    "visitorBy": "von",
+    "numberOfVisit": "Anzahl der Besuche",
+    "downloadVisitorProfile": "PDF herunterladen",
+    "bannedDetails": {
+      "lastInBound": "Letzter Check-in-Datum und Uhrzeit",
+      "lastOutBound": "Letzter Check-out-Datum und Uhrzeit"
+    },
+    "detailView": {
+      "checkOutDetails": "Check-out-Details"
+    },
+    "phoneIsRequired": "Telefonnummer ist erforderlich",
+    "editVisitorLoads": "Besucherprofil bearbeiten"
+  },
+  "loads": {
+    "searchByVehicalNumber": "Suche nach Fahrzeugnummer",
+    "editLoadProfile": "Ladeprofil bearbeiten",
+    "loadWeight": "Lastgewicht",
+    "temperature": "Temperatur",
+    "name": "Name des Fahrers",
+    "status": "Status",
+    "vehicleNumber": "Fahrzeugnummer",
+    "inBoundTime": "Date und Uhrzeit eingehender",
+    "outBoundTime": "Ausgebildetes Datum und Uhrzeit",
+    "state": "Staat/Provinz",
+    "action": "Aktion",
+    "search": "Suche nach Namen",
+    "searchByNameAndVehicle": "Suche nach Namen und Fahrzeug",
+    "inBoundALoad": "In gebundenes Ladung eingehalten",
+    "newVisitor": "Neuer Besucher",
+    "addPreAuthorizedVisitor": "Fügen Sie vorautorisierter Besucher hinzu",
+    "addBannedLoad": "Fügen Sie verbotene Last hinzu",
+    "inBoundedLoads": "In-Bund-Lasten",
+    "inBoundedLoad": "In-Bund-Last",
+    "outBoundLoad": "Ausgebundene Last",
+    "outBoundLoadDesc": "Bitte fügen Sie die folgenden Informationen hinzu",
+    "editEntry": "Eintrag bearbeiten",
+    "printVisitorCard": "Besucherkarte drucken",
+    "printLoadCard": "Lastkarte drucken",
+    "banVisitor": "Besucher verbieten",
+    "totalloads": "Gesamtlasten",
+    "checkedInVisitors": "Besucher eingecheckt",
+    "checkedInLoads": "Überprüfte Ladungen",
+    "preAuthorizedVisitors": "Vorautorisierte Besucher",
+    "bannedLoads": "Verbotene Lasten",
+    "subText": "Bitte fügen Sie die folgenden Informationen hinzu",
+    "loadType": "Lasttyp",
+    "select": "Wählen",
+    "phonePlaceholder": "Z. B. +1 234 567 8999",
+    "fullName": "Vollständiger Name",
+    "enter": "Eingeben",
+    "Ssn": "SSN",
+    "meetingWith": "Treffen mit",
+    "enterHostName": "Geben Sie den Hostnamen ein",
+    "reasonOfVisit": "Grund des Besuchs",
+    "reason": "Grund",
+    "attachment": "Anhaftung (en)",
+    "addVisitor": "Besucher hinzufügen",
+    "cancel": "Stornieren",
+    "image": "Bild (en)",
+    "reasonofBan": "Grund des Verbots",
+    "visitDate": "Date besuchen",
+    "arrivalTime": "Ankunftszeit",
+    "attachments": "Anhänge",
+    "export": "Export",
+    "loads": "Lasten",
+    "banLoad": "Verbotlast",
+    "banLoad!": "Verbotlast",
+    "uNBanLoad": "Unbran Last",
+    "banLoadText": "Sind Sie sicher, dass Sie diese Ladung verbieten möchten?",
+    "addReason": "Vernunft hinzufügen",
+    "cardHeading": "Lastkarte drucken",
+    "printCard": "Druckkarte",
+    "date": "Datum",
+    "site": "Website",
+    "unbanload!": "Unbran Last!",
+    "unbanLoadTex": "Sind Sie sicher, dass Sie das Verbot für diese Ladung entfernen möchten?",
+    "uNBanVisitor": "Unbran Besucher",
+    "banned": "Verboten",
+    "visitors": "Besucher",
+    "navText": "Besucher- und Lastverwaltung",
+    "load": "Lasten",
+    "searchLoad": "Suchlast",
+    "searchForLoad": "Suchen Sie nach bereits eingebundenen Lasten für",
+    "checkInsSearchLoad": "Schnelle Eingriffe.",
+    "checkInLoad": "Check-in-Last",
+    "loadsEmptyStateTitle": "Wählen Sie einen Lasttyp",
+    "loadsEmptyStateText": "Wählen Sie einen Lastentyp in eingebundenes Einsatztyp aus",
+    "numberOfVisit": "Anzahl der einheimischen",
+    "bannedDetails": {
+      "lastInBound": "Letzter Check-in-Datum und Uhrzeit",
+      "lastOutBound": "Letzter Check-out-Datum und Uhrzeit",
+      "inBoundDetails": "Eingegriffene Details",
+      "outBoundDetails": "Ausgebundene Details"
+    },
+    "detailView": {
+      "checkOutDetails": "Check-out-Details"
+    },
+    "vehicleNameRequired": "Fahrzeugnummer ist erforderlich",
+    "editBanLoads": "Ladeprofil bearbeiten"
+  },
+  "status": {
+    "onTime": "Pünktlich",
+    "lateStarted": "Verspätet",
+    "present": "Anwesend",
+    "onLeave": "Freizeit",
+    "absent": "Abwesend",
+    "dedicated": "Dediziert",
+    "earlyLeft": "Früh gegangen",
+    "dispatch": "Versand",
+    "completed": "Abgeschlossen",
+    "extra": "Extra",
+    "escalated": "Eskaliert",
+    "leaveApproved": "Genehmigt",
+    "missedCheckpoint": "Kontrollpunkt verpasst",
+    "missedReport": "Bericht verpasst",
+    "overTime": "Überstunden",
+    "notStarted": "Nicht begonnen",
+    "breakStarted": "Pause begonnen",
+    "breakEnded": "Pause beendet",
+    "shiftStarted": "Schicht begonnen",
+    "shiftEnded": "Schicht beendet",
+    "leaveApplied": "Beantragt",
+    "lateShiftStarted": "Schicht verspätet begonnen",
+    "earlyShiftStarted": "Schicht früh begonnen",
+    "leaveRejected": "Abgelehnt",
+    "pendingApproval": "Genehmigung ausstehend",
+    "approved": "Genehmigt",
+    "rejected": "Abgelehnt",
+    "pending": "Ausstehend",
+    "functional": "Funktional",
+    "nonFunctional": "Nicht funktional",
+    "requiresAttention": "Erfordert Aufmerksamkeit",
+    "accepted": "Akzeptiert",
+    "notSubmitted": "Nicht eingereicht",
+    "checked_out": "Ausgecheckt",
+    "checked_in": "Eingecheckt",
+    "in_bound": "Eingehend",
+    "out_bound": "Ausgehend",
+    "inProgress": "In Bearbeitung",
+    "syncApproved": "Sync Genehmigt",
+    "syncFailed": "Sync Fehlgeschlagen",
+    "deleted": "Gelöscht",
+    "patrol": "Streife"
+  },
+  "days": {
+    "monday": "Montag",
+    "tuesday": "Dienstag",
+    "wednesday": "Mittwoch",
+    "thursday": "Donnerstag",
+    "friday": "Freitag",
+    "saturday": "Samstag",
+    "sunday": "Sonntag"
+  },
+  "dispatchStatus": {
+    "onTime": "Pünktlich",
+    "lateStarted": "Verspätet",
+    "present": "Anwesend",
+    "onLeave": "Freizeit",
+    "absent": "Abwesend",
+    "dedicated": "Dediziert",
+    "earlyLeft": "Früh gegangen",
+    "dispatch": "Versand",
+    "completed": "Abgeschlossen",
+    "extra": "Extra",
+    "escalated": "Eskaliert",
+    "leaveApproved": "Genehmigt",
+    "missedCheckpoint": "Kontrollpunkt verpasst",
+    "missedReport": "Bericht verpasst",
+    "overTime": "Überstunden",
+    "notStarted": "Nicht begonnen",
+    "breakStarted": "Pause begonnen",
+    "breakEnded": "Pause beendet",
+    "shiftStarted": "Schicht begonnen",
+    "shiftEnded": "Schicht beendet",
+    "petrol": "Benzin",
+    "leaveApplied": "Beantragt",
+    "available": "Verfügbar",
+    "notAvailable": "Nicht verfügbar",
+    "clockedIn": "Eingestempelt"
+  }
+}

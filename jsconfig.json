@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "esnext",
+    "baseUrl": "./src",
+    "jsx": "react",
+    "resolveJsonModule": true,
+    "paths": {
+      "src/*": ["./*"],
+      "salesComponents/*": ["./app/components/salesComponents/*"],
+      "commonComponents/*": ["./app/components/common/*"],
+      "salesPages/*": ["./app/sales/pages/*"],
+      "globalUtils/*": ["./utils/*"],
+      "services/*": ["./services/*"],
+      "assetsComponents/*": ["./assets/*"],
+      "routerComponent/*": ["./app/router/*"]
+    }
+  },
+  "exclude": ["node_modules", "**/node_modules/*", "build"]
+}

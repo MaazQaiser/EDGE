@@ -1,0 +1,626 @@
+{
+  "sideNavBar": {
+    "linkText": {
+      "reportProblem": "Reportar un Problema",
+      "leadsMap": "Mapa de Prospectos",
+      "customers": "Clientes",
+      "logout": "Cerrar Sesión",
+      "polygon": "Polígono",
+      "zoneArea": "Área de Zona",
+      "franchiseArea": "Área de Franquicia",
+      "siteArea": "Área del Sitio",
+      "dashboard": "Tablero",
+      "hoDashboard": "Tablero HO",
+      "obxDashboard": "Tablero",
+      "franchiseMap": "Mapa de Franquicias",
+      "franchises": "Franquicias",
+      "franchise": "Franquicia",
+      "zones": "Zonas",
+      "sites": "Sitios",
+      "schedules": "Horario",
+      "runSheets": "{{runSheets}}",
+      "dispatch": "Despacho",
+      "reports": "Informes de Turno",
+      "users": "Usuarios",
+      "analytics": "Analítica",
+      "leaderBoard": "Tabla de Líderes",
+      "devices": "Dispositivos",
+      "vehicles": "Vehículos",
+      "obxSetting": "Ajuste",
+      "hoSetting": "Ajustes",
+      "operations": "Operaciones",
+      "sales": "Ventas",
+      "companies": "Compañías",
+      "locations": "Ubicaciones",
+      "industryVerticals": "Verticales de la Industria",
+      "commercial": "Comercial",
+      "housing": "Vivienda",
+      "industry": "Industria",
+      "transit": "Tránsito",
+      "retail": "Comercio Minorista",
+      "profile": "Perfil",
+      "settings": "Ajustes",
+      "deals": "Ofertas",
+      "attendance": "Asistencia",
+      "leaveRequest": "Solicitudes de Ausencia",
+      "contacts": "Contactos",
+      "scoutingRoutes": "Rutas de Exploración",
+      "scoutingRoute": "Rutas de Exploración",
+      "notificationsRoute": "Notificaciones",
+      "allVerticals": "Todos los Verticales",
+      "faq": "Preguntas Frecuentes"
+    }
+  },
+  "links": {
+    "backToLogin": "Volver a Iniciar Sesión",
+    "cancel": "Cancelar",
+    "submit": "Enviar",
+    "edit": "Editar",
+    "delete": "Eliminar",
+    "save": "Guardar",
+    "dnd": "Arrastrar y Soltar o",
+    "clickToUpload": "Haga clic para cargar",
+    "imageSizeEF": "PNG, JPG o JPEG",
+    "fileSelected": "Archivo Seleccionado",
+    "back": "Atrás",
+    "next": "Siguiente",
+    "finish": "Terminar",
+    "export": "Exportar",
+    "buttonStartEndDate": "Select Start & End Date",
+    "suspendAccount": "Suspender Cuenta",
+    "editUserRole": "Editar Rol del Usuario",
+    "deleteUser": "Eliminar Usuario",
+    "inviteUser": "Invitar Usuarios"
+  },
+  "messages": {
+    "isError": {
+      "shift": {
+        "invalidAssignment": "Esta asignación no es válida para el turno, las fechas o los días seleccionados."
+      }
+    }
+  },
+  "form": {
+    "input": {
+      "textField": {
+        "locations": {
+          "header": "Ubicaciones",
+          "label": "Ubicación",
+          "placeHolder": "Ingrese el Nombre de la Ubicación"
+        },
+
+        "name": {
+          "label": "Nombre",
+          "placeHolder": "Ingrese el Nombre"
+        },
+        "postalCode": {
+          "label": "Servicio zip/postal",
+          "placeHolder": "Ingrese su código postal."
+        },
+        "firstName": {
+          "label": "Nombre",
+          "placeHolder": "Ingrese su Nombre"
+        },
+        "lastName": {
+          "label": "Apellido",
+          "placeHolder": "Ingrese su Apellido"
+        },
+        "workCellNumber": {
+          "label": "Número de Teléfono del Trabajo"
+        },
+        "phoneNumber": {
+          "label": "Teléfono",
+          "placeHolder": "por ejemplo, +00 856 3369",
+          "regex": "Formato Inválido"
+        },
+        "email": {
+          "label": "Correo Electrónico",
+          "placeHolder": "Ingrese su Correo Electrónico"
+        },
+        "primaryEmail": {
+          "label": "Correo Electrónico Principal",
+          "placeHolder": "Ingrese su Correo Electrónico Principal"
+        },
+        "owner": {
+          "label": "Propietario",
+          "info": "Información y Contacto"
+        },
+        "country": {
+          "header": "Región del País",
+          "label": "País",
+          "placeHolder": "Ingrese su país"
+        },
+
+        "address": {
+          "header": "Dirección",
+          "label": "Dirección",
+          "placeHolder": "Ingrese su Dirección"
+        },
+        "address2": {
+          "header": "Línea de Dirección 2",
+          "label": "Línea de Dirección 2",
+          "placeHolder": "Ingrese la Línea de Dirección 2"
+        },
+        "state": {
+          "header": "estado/provincia/Provincia",
+          "label": "estado/provincia/Provincia",
+          "placeHolder": "Ingrese su estado/provincia/Provincia"
+        },
+        "zipCode": {
+          "label": "Servicio zip/postal",
+          "placeHolder": "Ingrese su código postal."
+        },
+        "city": {
+          "label": "Ciudad",
+          "placeHolder": "Ingrese su Ciudad"
+        },
+        "suburb": {
+          "label": "Suburb",
+          "placeHolder": "Ingrese su Suburb"
+        },
+        "emergencyContacts": {
+          "header": "Contactos de Emergencia"
+        },
+        "contact": {
+          "label": "Teléfono",
+          "placeHolder": "Ingrese Número de Teléfono"
+        },
+        "selectOption": {
+          "label": "Seleccionar Opción",
+          "placeholder": "Seleccionar Opción"
+        },
+        "selectOptions": {
+          "label": "Seleccionar Opciones",
+          "placeHolder": "Seleccionar Opciones"
+        },
+        "selectSites": {
+          "label": "Seleccionar Sitios",
+          "placeHolder": "Seleccionar Sitios"
+        },
+        "search": {
+          "label": "Buscar",
+          "placeHolder": "Buscar"
+        },
+        "geoFencing": {
+          "header": "Geo-Cercado",
+          "zoneOverview": "Resumen de Zona",
+          "setSame": {
+            "label": "Establecer igual que el límite de la Franquicia"
+          }
+        },
+        "zoneOverView": {
+          "header": "Resumen de Zona"
+        },
+        "zone": {
+          "label": "Nombre de Zona",
+          "placeHolder": "Ingrese el Nombre de la Zona"
+        },
+        "supervisor": {
+          "label": "Supervisor",
+          "header": "Geo-Cercado"
+        },
+        "vehicle": {
+          "info": "Información del Vehículo"
+        },
+        "vehicleMakeInput": {
+          "label": "Marca/Modelo/Año",
+          "placeHolder": "Ingrese marca, modelo y año del coche"
+        },
+        "vehicleRegistrationNumber": {
+          "label": "Número de Registro",
+          "placeHolder": "Número de Registro"
+        },
+        "vehicleCreatedAt": {
+          "label": "Creado en",
+          "placeHolder": "Fecha de Creación"
+        },
+        "vehicleLastMaintenance": {
+          "label": "Último Mantenimiento",
+          "placeHolder": "Fecha de Último Mantenimiento"
+        },
+        "password": {
+          "label": "Contraseña",
+          "placeHolder": "Ingrese su Contraseña"
+        },
+        "currentPassword": {
+          "label": "Contraseña Actual",
+          "placeHolder": "Ingrese Contraseña Actual*"
+        },
+        "newPassword": {
+          "label": "Nueva Contraseña",
+          "placeHolder": "Ingrese Nueva Contraseña*"
+        },
+        "confirmPassword": {
+          "label": "Confirmar Contraseña",
+          "placeHolder": "Confirmar Nueva Contraseña*"
+        },
+        "logType": {
+          "placeHolder": "por ejemplo, contenedor de alimentos"
+        },
+        "title": { "label": "Título" },
+        "description": { "label": "Descripción" },
+        "site": {
+          "label": "Seleccionar Sitio",
+          "sites": "Sitio",
+          "placeHolderSites": "Ingrese el Nombre de su Sitio",
+          "sitesInfo": "Información y Contacto del Sitio",
+          "name": "Nombre",
+          "clients": "Cliente",
+          "placeHolderClients": "Ingrese el Nombre de su Cliente",
+          "localWorked": "Local worked (ADP tax code)"
+        },
+        "editor": {
+          "placeHolder": "Ingrese descripción"
+        }
+      },
+      "dropDown": {
+        "pleaseSelectAnOption": "Por favor Seleccione una Opción"
+      }
+    }
+  },
+  "buttons": {
+    "markUnqualified": "Marcar como No Calificado",
+    "addVehicle": "Agregar Vehículo",
+    "updateVehicle": "Actualizar Vehículo",
+    "updatePassword": "Actualizar Contraseña",
+    "continue": "Continuar",
+    "resendInvite": "Reenviar Invitación",
+    "changeFranchiseOwner": "Cambiar Propietario de la Franquicia",
+    "deActivateFranchise": "Hacer esta Franquicia No Funcional",
+    "activateFranchise": "Hacer esta Franquicia Funcional",
+    "yes": "Sí",
+    "no": "Cancelar",
+    "changeOwner": "Cambiar Propietario",
+    "cancel": "Cancelar",
+    "confirm": "Confirmar",
+    "makeItFunctional": "Hacer Funcional",
+    "makeFunctional": "Hacer Funcional",
+    "deleteNote": "Eliminar Nota",
+    "confirmSplit": "¿Confirmar la división?",
+    "updateInstructions": "Actualizar Instrucciones",
+    "createInstruction": "Crear Instrucción",
+    "addException": "Agregar Excepción",
+    "addExceptionInstructions": "Agregar Instrucciones Excepcionales",
+    "updateExceptionInstructions": "Actualizar Instrucciones Excepcionales",
+    "pending": "Pendiente",
+    "approved": "Aprobado",
+    "rejected": "Rechazado",
+    "rejectReport": "Rechazar Informe",
+    "approveReport": "Aprobar Informe",
+    "approve": "Aprobar",
+    "reject": "Rechazar"
+  },
+  "commonText": {
+    "viewDetails": "Ver Detalles",
+    "goToLocation": "Ir a la ubicación.",
+    "goToFranchise": "Ir a la franquicia.",
+    "goToSite": "Ir al sitio.",
+    "exitCreateMode": "Salir del modo de creación.",
+    "noOfOfficers": "No. de {{officers}}",
+    "boundry": "Límite",
+    "new": "Nuevo",
+    "old": "Antiguo",
+    "existing": "Existente",
+    "lost": "Perdido",
+    "franchiseBoundry": "Límite de Franquicia",
+    "updateSuccess": "¡La franquicia activa se ha actualizado con éxito!",
+    "confirmDelete": "Confirmar Eliminación",
+    "confirmDeleteMessage": "¿Estás seguro de que quieres eliminar?",
+    "delete": "Eliminar",
+    "back": "Atrás",
+    "createAZone": "Crear una Zona",
+    "export": "Exportar",
+    "perHour": "hr",
+    "table": {
+      "noRecordFound": "No se Encontraron Registros"
+    },
+    "squareMeter": "Metros Cuadrados",
+    "newFranchise": "Nueva Franquicia",
+    "newZone": "Nueva Zona",
+    "newSite": "Nuevo Sitio",
+    "deleteZone": "Eliminar Zona",
+    "vehicle": "Vehículo",
+    "image": {
+      "alt": "Imagen de {{name}}"
+    },
+    "forgetPassword": {
+      "title": "¿Olvidó su Contraseña?",
+      "desc": "Por favor ingrese su correo electrónico para el proceso de verificación. Enviaremos un enlace para restablecer la contraseña a su correo electrónico."
+    },
+    "resetPassword": {
+      "title": "Restablecer Contraseña",
+      "desc": "Ingrese una nueva contraseña para su cuenta para que pueda iniciar sesión y acceder a las funciones."
+    },
+    "text": {
+      "days": "Días",
+      "day": "Día"
+    },
+    "attachments": "Adjuntos",
+    "contacts": "Contactos",
+    "deals": "Ofertas",
+    "allFilters": "Todos los Filtros",
+    "clearAll": "Limpiar Todo",
+    "cities": "Ciudades",
+    "states": "estado/provincias",
+    "lastActivityDate": "Fecha de Última Actividad",
+    "createdDate": "Fecha de Creación",
+    "applyFilters": "Aplicar Filtros",
+    "welcome": "¡Bienvenido!",
+    "login": {
+      "welcome": "¡Bienvenido!",
+      "desc": "Administre mejor y de manera más eficiente su Franquicia y Guardias.",
+      "copyRightText": "Todos los derechos reservados.",
+      "buttons": {
+        "login": "Iniciar Sesión",
+        "loginSSO": "Iniciar Sesión",
+        "forgotPassword": "¿Olvidó la Contraseña?"
+      }
+    },
+    "statuses": {
+      "franchise": {
+        "functional": "Funcional",
+        "requiresAttention": "Requiere Atención",
+        "nonFunctional": "No Funcional"
+      }
+    },
+    "modal": {
+      "changeFranchiseOwner": {
+        "title": "Cambiar Propietario de la Franquicia",
+        "text": "Por favor complete los campos a continuación para cambiar el propietario de esta franquicia."
+      },
+      "csvModal": {
+        "title": "Descargar Nómina de Oficiales",
+        "dateRangeLabel": "Seleccione Rango de Fechas",
+        "downloadCsv": "Descargar CSV"
+      },
+      "areYouSure": {
+        "deleteZone": "¡Eliminar Zona!",
+        "descZone": "¿Está seguro de que desea eliminar la zona? ¡Esta acción no se puede deshacer!",
+        "title": "¿Estás seguro?",
+        "desc": "¡No podrás revertir este cambio!",
+        "descExc": "¿Estás seguro de que quieres eliminar esta excepción?",
+        "deleteVehicle": "¿Está seguro de que desea eliminar este vehículo? ¡No podrá revertir esta acción!",
+        "banVisitor": "¿Está seguro de que desea prohibir a este usuario?",
+        "banLoader": "¿Está seguro de que desea prohibir a este cargador?"
+      },
+      "makeFranchiseFunctional": {
+        "title": "¡Hacer Funcional la Franquicia!",
+        "text": "¿Está seguro de que desea hacer funcional esta franquicia?"
+      },
+      "makeFranchiseNonFunctional": {
+        "title": "¡Hacer No Funcional la Franquicia!",
+        "text": "¿Está seguro de que desea hacer no funcional esta franquicia?"
+      },
+      "deleteException": {
+        "title": "Eliminar Excepción",
+        "button": "Eliminar Excepción"
+      },
+      "notes": {
+        "deleteNote": "¡Eliminar Nota!",
+        "deleteMessage": "¿Está seguro de que desea eliminar esta nota? ¡Esta acción no se puede deshacer!"
+      },
+      "leadDelete": {
+        "deleteNote": "¿Estás seguro?",
+        "deleteMessage": "Esto eliminará el lead "
+      },
+      "closeLead": {
+        "closeNote": "¿Marcar ubicación como No Calificada?",
+        "closeMessage": "¿Está seguro de marcar esta ubicación como no calificada?"
+      },
+      "rejectModal": {
+        "title": "Rechazar Informe",
+        "description": "¿Está seguro de que desea rechazar este informe? Puede agregar comentarios para informar al oficial del motivo. Tenga en cuenta que esta acción no se puede deshacer."
+      },
+      "approveModal": {
+        "title": "Aprobar Informe",
+        "description": "¿Está seguro de que desea aprobar este informe? Tenga en cuenta que esta acción no se puede deshacer."
+      },
+      "languageModal": {
+        "title": "Cambiar Idioma",
+        "description": "Elige el idioma que te gustaría usar.",
+        "englishUk": "inglés (RU)",
+        "englishUS": "inglés (EE. UU.)",
+        "franch": "francés",
+        "spanish": "español"
+      }
+    },
+    "dropDown": {
+      "searchPlaceholder": "Buscar",
+      "stagePlaceholder": "Elegir Etapa"
+    },
+    "input": {
+      "defaultPlaceholder": "Por favor ingrese aquí."
+    },
+    "Loading": {
+      "title": "Cargando..."
+    },
+    "updatePassword": "Actualizar Contraseña",
+    "nA": "N/A",
+    "updatePasswordText": "Actualice su contraseña para proteger su cuenta",
+    "searchPlaceholders": {
+      "siteFilter": {
+        "placeHolder": "Buscar por sitio"
+      },
+      "franchiseListing": {
+        "searchBar": {
+          "placeHolder": "Buscar por Franquicia"
+        },
+        "stateFilter": {
+          "placeHolder": "Buscar por estado/provincia"
+        },
+        "cityFilter": {
+          "placeHolder": "Buscar por Ciudad"
+        }
+      }
+    }
+  },
+  "profile": {
+    "label": "Perfil",
+    "language": "Idioma",
+    "photo": {
+      "label": "Tu foto",
+      "description": "Esto se mostrará en tu perfil."
+    },
+    "accountPassword": {
+      "title": "Contraseña de la Cuenta",
+      "accountPasswordDesc": "Actualice su contraseña para mantener segura su cuenta",
+      "updatePassword": "Actualizar Contraseña"
+    },
+    "address": {
+      "label": "Dirección (Opcional)"
+    },
+    "email": {
+      "label": "Dirección de Correo Electrónico",
+      "placeHolder": "Ingrese su Correo Electrónico"
+    }
+  },
+  "errors": {
+    "retry": "Reintentar",
+    "noServer": "¡Algo Salió Mal!",
+    "noServertext": "¡Problema de servidor! A toda velocidad en la solución, ¡con el objetivo de recuperarse antes de que te des cuenta!",
+    "noInternet": "¡Sin Conexión a Internet!",
+    "noInternetConnectionText": "Actualmente no estás conectado a Internet. Por favor, verifica tu conexión e inténtalo de nuevo.",
+    "emptyImage": "Se requiere al menos una {{label}}.",
+    "childrenIntersecting": "no deben superponerse con otras zonas.",
+    "selfIntersection": " las líneas no deben intersectar",
+    "insideParent": "{{label}} debe estar alrededor de la ubicación del pin de la franquicia.",
+    "zoneShouldBeInsideFranchise": "{{label}} debe estar dentro del límite de la franquicia principal.",
+    "notAString": "{{#label}} debe consistir solo en alfabetos.",
+    "fallBackForOutsideBoundry": "{{label}} debe estar dentro del padre",
+    "zonesIntersecting": "{{label}} no debe intersectar con otras zonas.",
+    "franchiseIntersecting": "{{label}} no debe intersectar con otras franquicias.",
+    "zoneMustContainAllSites": "{{label}} debe contener todos los sitios dentro de él.",
+    "sitesIntersecting": "{{label}} no debe intersectar con otros sitios.",
+    "markerNotInsideSite": "{{label}} debe estar alrededor de la ubicación del pin del sitio.",
+    "markerNotInsideSiteLocation": "El pin del sitio debe colocarse dentro del límite del sitio.",
+    "any.greaterThanZero": "{{#label}} debe ser mayor que 0",
+    "any.required": "{{#label}} es requerido.",
+    "any.max": "{{#label}} debe tener como máximo 20 caracteres de largo",
+    "any.invoiceMemoMax": "{{#label}} debe tener como máximo 4000 caracteres",
+    "any.min": "{{#label}} debe tener al menos 3 caracteres de largo",
+    "any.empty": "{{#label}} es requerido",
+    "any.dropdown": "{{#label}} debe ser seleccionado",
+    "string.required": "{{#label}} es requerido",
+    "number.base": "{{#label}} debe ser un número.",
+    "number.required": "{{#label}} es requerido",
+    "number.empty": "{{#label}} es requerido",
+    "number.greater": "{{#label}} debe ser mayor",
+    "array.min": "{{#label}} debe tener al menos 1 ítem.",
+    "boundry.min": "{{#label}} debe tener al menos 3 puntos.",
+    "array.minTwo": "{{#label}} debe tener al menos 2 ítems.",
+    "array.max": "{{#label}} solo puede contener {{#limit}} ítems.",
+    "array.base": "El campo {{#label}} debe ser un array.",
+    "string.pattern.base": "El formato de {{#label}} es inválido.",
+    "any.email": "{{#label}} es inválido.",
+    "string.email": "{{#label}} debe ser válido.",
+    "string.empty": "{{#label}} es requerido",
+    "dropdown.base": "{{#label}} no puede estar vacío",
+    "somethingWentWrong": "¡Algo salió mal!",
+    "unauthorized": "Acceso no autorizado",
+    "access_denied": "Acceso Denegado",
+    "passwordConfirmation.string.only": "Las contraseñas deben coincidir",
+    "password.string.min": "La contraseña debe tener al menos 8 caracteres de largo",
+    "password.string.max": "La contraseña debe tener como máximo 20 caracteres de largo",
+    "password.string.pattern.base": "Debe Contener 8 Caracteres, Una Mayúscula, Una Minúscula, Un Número y Un Carácter Especial",
+    "fileSizeExceededTwentyMBs": "El tamaño del archivo excede el límite de 25 MB. Por favor, elija un archivo más pequeño.",
+    "fileSizeExceeded": "El tamaño del archivo excede el límite de {{maxFileSize}} MB. Por favor, elija un archivo más pequeño.",
+    "locationSource": "Se requiere ubicación.",
+    "supervisorValidationErr": "Se requiere supervisor.",
+    "addressValidationErr": "Se requiere dirección."
+  },
+  "ho_franchise": {
+    "detail": {
+      "franchise_information": {
+        "title": "Información de la Franquicia",
+        "info": "Agregar Información",
+        "name": "Nombre de la Franquicia",
+        "owner": "Nombre del Propietario",
+        "email": "Correo Electrónico",
+        "number": "Teléfono",
+        "address": "Dirección",
+        "country": "País",
+        "city": "Ciudad",
+        "region": "Región/estado/provincia",
+        "generalInformation": "Información General",
+        "Id": "ID de la Franquicia",
+        "joined": "Ingresó",
+        "monthlyRevenue": "Ingresos Mensuales",
+        "noOfCustomers": "No. de Clientes",
+        "serviceZips": "Códigos de Servicio",
+        "noOfEmployees": "No. de Empleados",
+        "companyCode": "Código de la Empresa",
+        "labourEfficiency": "Eficiencia Laboral",
+        "customerRelation": "Retención de Clientes",
+        "hubSpotFranchiseId": "ID de Franquicia de Hubspot"
+      }
+    }
+  },
+  "questions": {
+    "idNotProvided": "¡El ID de la pregunta no fue proporcionado!",
+    "notProvided": "¡La pregunta no fue proporcionada!"
+  },
+  "report": {
+    "notProvided": "¡El informe no fue proporcionado!"
+  },
+  "stubedData": {
+    "inProgress": "En Progreso",
+    "franchiseId": "ID: 1234",
+    "tbd": "Pendiente"
+  },
+
+  "inProgress": {
+    "title": "¡Trabajo en Progreso!",
+    "text": "Este módulo está actualmente en desarrollo."
+  },
+  "mapPopUp": {
+    "createLocationsButtonText": "Crear Ubicación a través del Mapa",
+    "createLocationsButtonTextSite": "Crear Ubicación",
+    "createLocationsDesc": "Por favor selecciona un negocio existente o coloca un pin para añadir una nueva ubicación."
+  },
+  "notifications": {
+    "title": "Notificaciones",
+    "viewMoreLink": "Ver todas las notificaciones",
+    "placeholderTitle": "No hay notificaciones",
+    "placeholderText": "¡Estás al día! Vuelve más tarde para nuevas notificaciones."
+  },
+  "clockInOut": {
+    "clockOut": "Registrar Salida",
+    "clockIn": "Registrar Entrada"
+  },
+  "reportProblem": {
+    "reportProblem": "Reportar un Problema",
+    "email": "Correo Electrónico",
+    "title": "Título",
+    "addTitle": "Agregar Título",
+    "description": "Descripción",
+    "addDescription": "Agregar Descripción",
+    "addEmail": "ej: mike@teamsignal.com",
+
+    "submit": "Enviar",
+    "search": "Buscar",
+    "problemsReported": "Problemas Reportados",
+    "problemsReportedText": "Obtén acceso completo a todos los problemas encontrados por los empleados de Signal aquí",
+    "allStatus": "Todos los estado/provincias",
+    "id": "ID del Ticket",
+    "titleDescription": "Título / Descripción",
+    "submittedBy": "Enviado Por",
+    "date": "Fecha y Hora del Reporte",
+    "status": "estado/provincia",
+    "action": "Acción",
+    "EmailSent": "Correo Electrónico Enviado",
+    "SendEmail": "Enviar Correo Electrónico",
+    "mailtext": "Comparte tus comentarios por correo electrónico para el ticket",
+    "to": "Para",
+    "emailPlaceholder": "mike@teamsignal.com",
+    "subject": "Asunto",
+    "subjectPlaceholder": "Equipo de Soporte Signal - ID del Ticket:",
+    "textarea": "Haz clic para comenzar a escribir...",
+    "back": "Atrás",
+    "statuses": {
+      "all": "Todos los estado/provincias",
+      "inProgress": "En Progreso",
+      "toDo": "Por Hacer",
+      "cancelled": "Cancelado",
+      "resolved": "Resuelto"
+    }
+  }
+}

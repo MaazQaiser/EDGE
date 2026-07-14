@@ -1,0 +1,145 @@
+.addTypeModal {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 8px;
+  border-bottom: 1px solid #e6e6e7;
+  background: #ffffff;
+  max-width: 600px;
+  width: 100%;
+  max-height: 70dvh;
+  overflow-y: hidden;
+  margin: 0 auto;
+  .modalBody {
+    overflow-y: auto;
+    overflow-x: hidden;
+    height: calc(70vh - 125px);
+  }
+
+  & .addTypeModalTitle {
+    padding: 16px 24px;
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: 24px;
+    color: #262527;
+    border-bottom: 1px solid #e6e6e6;
+  }
+
+  & .addTypeModalContent {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    column-gap: 12px;
+    border-bottom: 1px solid #e6e6e6;
+    padding: 12px 24px;
+
+    & .addTypeModalText {
+      font-size: 12px;
+      font-weight: 500;
+      line-height: 16px;
+      color: #5b5b5f;
+      white-space: nowrap;
+    }
+
+    & .addTypeModalRight {
+      width: 100%;
+    }
+  }
+
+  & .addTypeModalSection {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    column-gap: 12px;
+    border-bottom: 1px solid #e6e6e6;
+    padding: 8px 24px;
+    & .addTypeModalSectionText {
+      font-size: 14px;
+      font-weight: 500;
+      line-height: 20px;
+      color: #444446;
+    }
+
+    & .addTypeModalSectionRight {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 8px 0px;
+      width: 90px;
+    }
+
+    & .addTypeModalSectionInput {
+      [class*='MuiInputBase-root'] {
+        max-height: 36px;
+        width: 243px;
+        &:hover {
+          [class*='MuiOutlinedInput-notchedOutline'] {
+            border-color: #d0cfd2 !important;
+            box-shadow: none !important;
+          }
+        }
+      }
+      [class*='MuiInputBase-input'] {
+        font-size: 14px;
+        font-weight: 400;
+        line-height: 20px;
+      }
+    }
+
+    & .addTypeModalDropdown {
+      width: 243px;
+    }
+
+    & .addTypeModalField {
+      display: flex;
+      align-items: center;
+      column-gap: 12px;
+      padding-left: 24px;
+
+      & .addTypeModalSectionInput {
+        padding-right: 0;
+      }
+    }
+
+    & .addTypeModalBtnTransparent {
+      background: transparent;
+      border: none;
+      padding: 16px 24px;
+      color: #004fe3;
+      font-size: 14px;
+      font-weight: 500;
+      line-height: 20px;
+      text-transform: capitalize;
+    }
+  }
+
+  & .addTypeModalBtns {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    column-gap: 12px;
+    padding: 16px 24px;
+    border-top: 1px solid #e6e6e6;
+  }
+  .invalidFeedback {
+    color: #b32318;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 20px;
+    text-align: start;
+    text-transform: lowercase;
+    &.invalidFeedback::first-letter {
+      text-transform: capitalize;
+    }
+  }
+
+  .textSkeleton {
+    width: 70px;
+  }
+
+  .toggleSkeleton {
+    width: 40px;
+  }
+}

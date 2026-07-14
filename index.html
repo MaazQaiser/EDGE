@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#000000" />
+    <meta
+      name="description"
+      content="Signal (Formerly Signal 88) provides a full suite of world-class security services for residential, commercial, retail & institutional customers."
+    />
+    <link rel="apple-touch-icon" href="%PUBLIC_URL%/favicon.ico" />
+    <script type="text/javascript">
+      (function (c, l, a, r, i, t, y) {
+        c[a] =
+          c[a] ||
+          function () {
+            (c[a].q = c[a].q || []).push(arguments);
+          };
+        t = l.createElement(r);
+        t.async = 1;
+        t.src = 'https://www.clarity.ms/tag/' + i;
+        y = l.getElementsByTagName(r)[0];
+        y.parentNode.insertBefore(t, y);
+        c[a]('consent', {
+          heatmap: true,
+          recording: true,
+        });
+      })(window, document, 'clarity', 'script', '%REACT_APP_CLARITY_KEY%');
+    </script>
+    <title>Signal</title>
+  </head>
+
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+
+    <div id="root"></div>
+    <script src="%PUBLIC_URL%/multiTenant.js"></script>
+    <script>
+      window.__TENANT__ = "%REACT_APP_TENANT%";
+      window.__NODE_ENV__ = "%REACT_APP_NODE_ENV%";
+    </script>
+    <script>
+      const tenant = window.getTenantConfig();
+      document.title = tenant.brand;
+      let metaDesc = document.querySelector('meta[name="description"]');
+
+      if (!metaDesc) {
+        metaDesc = document.createElement('meta');
+        metaDesc.name = 'description';
+        document.head.appendChild(metaDesc);
+      }
+
+      metaDesc.setAttribute(
+              'content',
+              tenant.brandText ||
+              'Signal provides world-class security services.'
+      );
+    </script>
+
+    <!-- Vite entrypoint -->
+    <script type="module" src="/src/index.jsx"></script>
+  </body>
+
+</html>
+

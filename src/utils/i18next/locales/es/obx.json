@@ -1,0 +1,4127 @@
+{
+  "sideNavBar": {
+    "linkText": {
+      "dashboard": "Tablero",
+      "Setting": "Configuración"
+    }
+  },
+  "obxZones": {
+    "labels": {
+      "updateZone": "Actualizar Zona",
+      "createZone": "Crear Zona",
+      "basicInfo": "Información Básica",
+      "displayedOnProfile": "Esta es la información básica para la zona",
+      "location": "Ubicación",
+      "profileLocation": "Agregue el cercado de esta zona, puede dibujar el cercado de la zona dentro de la franquicia",
+      "filterSites": "Seleccione los sitios que estarán en esta zona",
+      "sites": "Sitios",
+      "assignedZones": "Sitios Asignados ({{count}})",
+      "unAssignedZones": "Sitios No Asignados ({{count}})"
+    },
+    "popUps": {
+      "removeSite": "¡Eliminar Sitio!",
+      "removeSiteDes": "¿Estás seguro de que quieres eliminar este sitio de la zona? Esta acción no se puede deshacer.",
+      "changeZone": "¡Cambiar Zona!",
+      "changeZoneDes": "Selecciona una zona que quieras cambiar."
+    },
+    "searchFilter": "Buscar por Zona"
+  },
+  "schedules": {
+    "dutyDuplicate": "Este deber es igual al deber no. {{copyIndex}}",
+    "selectDate": "Seleccionar Fecha",
+    "dutyDuration": "Duración del Trabajo",
+    "endTimeGreater": "La hora de finalización debe ser posterior a la hora de inicio",
+    "startTimeBeforeEnd": "La hora de inicio debe ser anterior a la hora de finalización",
+    "timeDiffOf30minutes": "La duración mínima de un trabajo {{extra}} es de 30 minutos",
+    "startTimeIsPast": "El tiempo seleccionado ya ha pasado",
+    "valueRange": "El valor debe estar entre {{min}} y {{max}}",
+    "maxSevenDays": "El deber debe ser de un máximo de 7 días",
+    "hourlyRateForExtraDuty": "Tarifa Horaria/Oficial ($)",
+    "selectDays": "Seleccionar Días",
+    "splitShift": {
+      "cancelShift": "Cancelar turno",
+      "restoreShift": "Restaurar turno",
+      "splitShift": "Dividir turno",
+      "title": "Dividir turno",
+      "description": "Divide el turno en 2 segmentos continuos.",
+      "splitPointTimeTooltip": "No se puede dividir antes del tiempo de ejecución actual del turno en curso.",
+      "shiftName": "Turno",
+      "time": "Hora",
+      "duration": "Duración",
+      "date": "Fecha",
+      "shift1": "Turno 1",
+      "shift2": "Turno 2",
+      "startTime": "Hora de inicio",
+      "endTime": "Hora de finalización",
+      "totalShiftDuration": "Duración total del turno",
+      "allocatedHours": "Horas asignadas",
+      "unallocated": "no asignadas",
+      "success": "Turno dividido correctamente",
+      "cancel": "Cancelar",
+      "save": "Guardar",
+      "saving": "Guardando...",
+      "errors": {
+        "startTimeRequired": "La hora de inicio es obligatoria",
+        "pastStartTime": "No puedes seleccionar una fecha u hora pasada",
+        "endTimeRequired": "La hora de finalización es obligatoria",
+        "notContinuous": "Las divisiones deben ser continuas. No se permiten huecos.",
+        "overlapping": "Los intervalos se superponen. Ajusta las horas.",
+        "durationMismatch": "Las horas asignadas deben coincidir con la duración total del turno.",
+        "shift1StartMustMatch": "El inicio del turno 1 debe coincidir con el inicio original del turno",
+        "shift2EndMustMatch": "El final del turno 2 debe coincidir con el final original del turno",
+        "shift1EndTimeRequired": "La hora de finalización del turno 1 es obligatoria.",
+        "shift2StartTimeRequired": "La hora de inicio del turno 2 es obligatoria.",
+        "shift1EndAfterOriginalStart": "La hora de finalización del turno 1 debe ser posterior a la hora de inicio original del turno.",
+        "shift2StartBeforeOriginalEnd": "La hora de inicio del turno 2 debe ser anterior a la hora de finalización original del turno.",
+        "shift2EndAtOrBeforeOriginalEnd": "La hora de fin del segundo turno debe ser igual o anterior a la hora de fin del turno original.",
+        "splitPointAtOrAfterCurrentTime": "No se puede dividir antes del tiempo de ejecución actual del turno en curso.",
+        "saveFailed": "No se pudo dividir el turno. Inténtalo nuevamente."
+      }
+    },
+    "restoreShiftModal": {
+      "title": "¡Restaurar turno!",
+      "subtitle": "¿Seguro que deseas restaurar este turno y devolverlo al calendario?",
+      "close": "Cerrar",
+      "confirm": "Restaurar"
+    },
+    "cancelShiftModal": {
+      "startEndDate": "Fecha de inicio y fin",
+      "title": "¡Cancelar turno!",
+      "subtitle": "¿Seguro que deseas cancelar este turno?",
+      "thisShift": "Este turno",
+      "thisAndFollowingShifts": "Este y los siguientes turnos",
+      "customRange": "Rango personalizado",
+      "startDate": "Fecha de inicio",
+      "endDate": "Fecha de fin",
+      "shiftDays": "Días del turno",
+      "reasonLabel": "Motivo",
+      "reasonPlaceholder": "Agrega el motivo de la cancelación del turno",
+      "close": "Cerrar",
+      "confirm": "Cancelar turno"
+    },
+    "assignDedicatedDuty": {
+      "stepper": {
+        "stepperTitle": "Trabajo {{dedicated}}",
+        "stepperSubTitle": {
+          "label": "Servicios Adicionales:",
+          "visitorManagement": "Gestión de Visitantes",
+          "loadManagement": "Gestión de Carga"
+        },
+        "rules": "Reglas Estatales",
+        "totalHours": "{{totalHours}} horas",
+        "step1": {
+          "label": "Paso 1",
+          "title": "Desglose del Trabajo",
+          "description": "Desglose del Trabajo",
+          "tooltipMsg": "El turno ya está dividido"
+        },
+        "step2": {
+          "label": "Paso 2",
+          "title": "Asignar Turnos",
+          "description": "Asignar Turnos"
+        }
+      },
+      "splitDuties": {
+        "title": "Turno 1",
+        "stateRules": "Reglas Estatales",
+        "subTitle": "Dividir Turno",
+        "subtitleDescription": "Elija cómo desea dividir el turno",
+        "splitOnwards": "A partir de Hoy",
+        "defaultShiftName": "Turno {{index}}",
+        "splitType": {
+          "default": {
+            "title": "Predeterminado",
+            "description": "Dividir el turno según las horas de turno predeterminadas",
+            "defaultTiming": "Horario de Turno Predeterminado",
+            "shiftDuration": "{{number}} horas"
+          },
+          "custom": {
+            "title": "Personalizado",
+            "description": "Personaliza tus divisiones",
+            "startTime": "Hora de Inicio",
+            "endTime": "Hora de Finalización",
+            "specifyDays": "Especificar Días",
+            "days": {
+              "sun": "Dom",
+              "mon": "Lun",
+              "tue": "Mar",
+              "wed": "Mié",
+              "thu": "Jue",
+              "fri": "Vie",
+              "sat": "Sáb"
+            },
+            "splitBtn": "Dividir Turno",
+            "shiftDuration": "Duración Total del Turno",
+            "allocatedHours": "Horas Asignadas",
+            "unallocatedHours": "{{time}} no asignadas",
+            "error": {
+              "invalidAllocatedHoursError": "Las horas asignadas para {{time1}} - {{time2}} son {{allocatedHours}} en lugar de {{total}}",
+              "totalAllocatedHoursError": "Las horas totales asignadas son {{allocatedHours}} en lugar de {{total}}",
+              "invalidDaySelection": "La selección del día para {{day}} no está dentro del contrato",
+              "invalidTimeSelection": "La selección de hora para {{day}} no está dentro del contrato",
+              "invalidStartTime": "La Hora de Inicio es inválida para {{day}}",
+              "invalidEndTime": "La Hora de Finalización es inválida para {{day}}",
+              "requiredStartTime": "Se requiere la Hora de Inicio",
+              "requiredEndTime": "Se requiere la Hora de Finalización",
+              "requiredDay": "Se debe seleccionar un Día",
+              "timeOverlapped": "La misma hora se superpone en {{name}} para {{day}}",
+              "infoMsg": "Resuelve primero todos los errores"
+            }
+          }
+        },
+        "assignDuty": {
+          "title": "Los cambios afectarán este trabajo a partir de hoy."
+        },
+        "splitDuty": {
+          "title": "Dividir Trabajo",
+          "description": "Elija cómo desea dividir el turno",
+          "option1": {
+            "label": "Predeterminado",
+            "description": "Dividir trabajos según las horas de turno predeterminadas",
+            "defaultTiming": "Horario de Turno Predeterminado",
+            "defaultHours": "{{hour}} Horas"
+          },
+          "option2": {
+            "label": "Por Igual",
+            "description": "Dividir trabajos equitativamente dentro de las horas de turno predeterminadas"
+          },
+          "option3": {
+            "label": "Personalizado",
+            "description": "Personaliza tus divisiones",
+            "select": {
+              "title": "Turnos",
+              "option1": "Seleccionar"
+            }
+          },
+          "hrs": "hrs"
+        },
+        "error": {
+          "fieldMissing": "Los turnos son requeridos",
+          "shiftTimeValidations": {
+            "hoursMissmatch": "Las horas totales no coinciden con el tiempo del trabajo o los turnos se superponen",
+            "invalidShiftTimes": "Ingrese horas de turno válidas para todos los turnos"
+          }
+        }
+      },
+      "toursAndReports": {
+        "defaultTourName": "{{tour}} {{id}}",
+        "title": "{{tour}}s",
+        "subTitle": "Agregue {{tour}}s para el trabajo y asígnele puntos de control e informes",
+        "addTour": "Agregar {{tour}}",
+        "deleteTour": "Eliminar {{tour}}",
+        "checkpoints": {
+          "addCheckpoints": "Agregar Dispositivos/Puntos de Control",
+          "dropdownTitle": "Dispositivos/Puntos de Control",
+          "all": "Todos",
+          "searchPlaceholder": "Buscar un dispositivo",
+          "addInstructions": "Agregar Descripción"
+        },
+        "reports": {
+          "addReports": "Agregar Informes",
+          "dropdownTitle": "Informes",
+          "searchPlaceholder": "Buscar un informe",
+          "noOfReports": "No. de Informes",
+          "listing": {
+            "columns": {
+              "name": "Informes",
+              "site": "Sitio",
+              "dueDate": "Hora de Vencimiento",
+              "submittedBy": "Enviado Por",
+              "submittedDate": "Enviado En",
+              "submittedTime": "Hora de Envío",
+              "reason": "Motivo de Rechazo",
+              "shiftTiming": "Horario del turno",
+              "shiftName": "Nombre del turno",
+              "templateableType": "Tipo"
+            },
+            "shiftTiming": "Horario del turno"
+          },
+          "details": {
+            "level": "Nivel",
+            "status": "estado/provincia",
+            "submittedDate": "Fecha de Envío",
+            "submittedTime": "Hora de Envío"
+          }
+        },
+        "startEndTime": {
+          "title": "Agregar Hora de Inicio y Fin"
+        },
+        "error": {
+          "fieldMissing": "Todos los campos en {{tour}}s e Informes son obligatorios"
+        }
+      },
+      "assignOfficers": {
+        "title": "Asignar Oficial",
+        "error": {
+          "fieldMissing": "Todos los campos en Asignar {{officers}} son obligatorios"
+        }
+      },
+      "assignShift": {
+        "title": {
+          "shift": "Asignar Turno",
+          "tourTemplate": "Crear Plantilla de {{tour}}",
+          "reassignment": "Reasignación de Turno",
+          "editReassignment": "Editar Reasignación",
+          "tourAssignment": "Agregar recorrido",
+          "location": "Ubicación",
+          "officer": "Oficial"
+        },
+        "chipText": "La asignación del oficial ha sido cambiada para el turno actual",
+        "cancel": "Cancelar",
+        "save": "Guardar",
+        "shiftScheduleCancelled": "El horario de turnos está cancelado.",
+        "shiftScheduleFullyCancelledTooltip": "El horario de este turno está cancelado por completo.",
+        "defaultShiftName": "Turno {{index}}",
+        "selectDate": "Seleccionar Fecha",
+        "startAndEndDateRequired": "Se requieren la fecha de inicio y la fecha de finalización",
+        "startDateRequired": "Se requiere la fecha de inicio",
+        "endDateRequired": "Se requiere la fecha de finalización",
+        "locationPlaceholder": "Seleccionar Ubicación",
+        "officerPlaceholder": "Seleccionar Oficial",
+        "officerAssignMe": "Asignarme",
+        "officerUnavailable": "No Disponible",
+        "changeHourlyRate": "Cambiar Tarifa Horaria ($)",
+        "changeHourlyRatePlaceholder": "Ingrese la Tarifa por Hora",
+        "shiftReassignment": "Reasignación de Turno",
+        "addTours": "Agregar {{tour}}s",
+        "optional": "(opcional)",
+        "toursTitle": "{{tour}}s",
+        "toursSubtitle": "Agregar {{tour}}s para los turnos",
+        "toursInfo": "Estos recorridos se aplicarán a todos los turnos futuros, independientemente del tipo de turno seleccionado",
+        "locationInfo": "Solo se aplica dentro del rango de fechas seleccionado",
+        "defaultTourName": "{{tour}} {{index}}",
+        "selectTourPlaceholder": "Seleccionar {{tour}}",
+        "tourCreateBtn": "Crear Plantilla de {{tour}}",
+        "addOccurances": "Agregar Ocurrencias",
+        "occurances": "Ocurrencias",
+        "repeatTourLabel": "Repetir {{tour}}",
+        "repeatTourPlaceholder": "Repetir {{tour}}",
+        "repeatInfinite": "infinito (signo)",
+        "repeatAfterTimeLabel": "Repetir después de tiempo (mins)",
+        "repeatAfterTimePlaceholder": "Repetir después de tiempo",
+        "tourtemplate": {
+          "nameLabel": "Nombre de la Plantilla de {{tour}}",
+          "namePlaceholder": "Escribir Nombre",
+          "checkpointsLabel": "Asignar Puntos de Control",
+          "checkpointsPlaceholder": "Elegir Punto de Control",
+          "descriptionBtn": "Agregar Descripción",
+          "descriptionPlaceholder": "Escribir Aquí",
+          "reportLabel": "Asignar Informe",
+          "reportPlaceholder": "Elegir Plantilla de Informe",
+          "startTimeLabel": "Hora de Inicio",
+          "startTimePlaceholder": "Hora de Inicio",
+          "duration": "Duración (mins)",
+          "required": "{{name}} es requerido",
+          "dateRequiredError": "Se requiere la fecha",
+          "endDateRequiredError": "Se requiere la fecha de finalización",
+          "serviceTimeLabel": "Tiempo de servicio (min)",
+          "serviceTimeLabelInfo": "El tiempo de servicio es la duración dentro de la cual el oficial debe completar sus tareas/informes",
+          "serviceTimePlaceholder": "Elegir tiempo de servicio",
+          "between": "Entre 1 y {{max}}",
+          "serviceTimeBoundError": "El tiempo de servicio debe estar entre 1 y {{max}}",
+          "officerDaysRequiredError": "Es obligatorio seleccionar los días"
+        },
+        "reassignment": {
+          "startTimeLabel": "Hora de Inicio",
+          "startTimePlaceholder": "Hora de Inicio",
+          "endTimeLabel": "Hora de Finalización",
+          "endTimePlaceholder": "Hora de Finalización",
+          "officerDropdown": "Elegir Oficial Disponible",
+          "chipText": "Los cambios se están implementando solo para el turno actual.",
+          "startTimeBelowError": "La hora de inicio debe ser mayor que la hora actual",
+          "reassignSelectedHit": "Reasignar impacto(s) seleccionado(s)"
+        },
+        "assignShiftsFor": {
+          "locationLabel": "Asignar Ubicación para",
+          "officerLabel": "Asignar Oficial para",
+          "toursLabel": "Asignar {{tour}}s para",
+          "options": {
+            "option1": "Solo Hoy",
+            "option2": "A partir de Hoy"
+          }
+        },
+        "visitorManagement": "Gestión de Visitantes",
+        "loadManagement": "Gestión de Carga",
+        "selectLocation": {
+          "label": "Asignar Ubicación",
+          "options": {
+            "option1": "Puerta Principal",
+            "option2": "4to Piso",
+            "option3": "Sala Verde"
+          }
+        },
+        "officerAlreadyAssigned": "{{name}} ya está asignado a otro turno en 'tiempo de superposición'",
+        "error": {
+          "invalidStartTime": "Hora de Inicio Inválida",
+          "invalidEndTime": "El turno termina en una hora inválida",
+          "timeOverlapped": "La misma hora se superpone con {{name}}",
+          "infoMsg": "Resuelve primero todos los errores",
+          "requiredHourlyRate": "Se requiere tarifa horaria"
+        },
+        "editedDedicetedShift": "Turno actualizado. Ahora es independiente de las acciones masivas.",
+        "thisShift": {
+          "title": "Turno Actual",
+          "startDateTime": "Fecha y Hora de Inicio",
+          "startDateTimePlaceholder": "Seleccionar Fecha y Hora de Inicio",
+          "endDateTime": "Fecha y Hora de Finalización",
+          "endDateTimePlaceholder": "Seleccionar Fecha y Hora de Finalización"
+        },
+        "thisAndFollowingShift": {
+          "title": "Turno Actual y Siguiente",
+          "startDateTime": "Fecha y Hora de Inicio",
+          "startDateTimePlaceholder": "Seleccionar Fecha y Hora de Inicio",
+          "endDateTime": "Fecha y Hora de Finalización",
+          "endDateTimePlaceholder": "Seleccionar Fecha y Hora de Finalización"
+        },
+        "customShift": {
+          "title": "Rango Personalizado",
+          "startDate": "Fecha de Inicio",
+          "startDatePlaceholder": "Seleccionar Fecha de Inicio",
+          "endDate": "Fecha de Finalización",
+          "endDatePlaceholder": "Seleccionar Fecha de Finalización",
+          "shiftDays": "Días de Turno",
+          "subtitle": "Seleccionar Fecha"
+        },
+        "autoClockout": {
+          "title": "Auto-Cierre de Turno",
+          "description": "Cierra automáticamente el turno a la hora programada para una precisión en la información"
+        },
+        "shiftPayRate": {
+          "title": "Sobreescritura de Tarifa de Pago del Turno",
+          "description": "Esta es la tarifa específica del turno que reemplazará la tarifa base del trabajo cuando sea aplicable"
+        },
+        "shiftReassignmentSection": {
+          "title": "Reasignación de Turno",
+          "description": "Los cambios se están implementando solo para el turno actual",
+          "startTimeLabel": "Hora de Inicio",
+          "startTimePlaceholder": "Hora de Inicio",
+          "endTimeLabel": "Hora de Finalización",
+          "endTimePlaceholder": "Hora de Finalización",
+          "officerDropdown": "Elegir Oficial Disponible",
+          "officerPlaceholder": "Seleccionar Oficial"
+        },
+        "changesToApply": {
+          "title": "Cambios a aplicar",
+          "location": "Ubicación",
+          "officer": "Oficial",
+          "shiftDays": "Días de Turno",
+          "shiftTime": "Hora de Turno",
+          "shiftPayRate": "Tarifa de Pago del Turno",
+          "shiftReassignment": "Reasignación de Turno",
+          "reassignedOfficer": "Oficial Reasignado",
+          "reassignedStartTime": "Hora de Inicio Reasignada"
+        },
+        "selectDays": "Seleccionar Días:",
+        "atLeastOneDayRequired": "Seleccione al menos un día para aplicar los cambios.",
+        "available": "Disponible",
+        "unassignOfficer": "Desasignar oficial",
+        "unassignVehicle": "Desasignar vehículo",
+        "officerAllocated": "Asignado",
+        "notInZone": "Fuera de la zona",
+        "unavailable": "No disponible",
+        "onLeave": "De licencia",
+        "thisShiftOnly": "Solo este turno",
+        "upcomminShiftOnwards": "A partir del próximo turno",
+        "deleteTourTemplateConfirmation": {
+          "title": "¡Eliminar plantilla de recorrido!",
+          "description": "¿Estás seguro de que deseas eliminar esta plantilla de recorrido?",
+          "cancelBtn": "Cancelar",
+          "deleteBtn": "Eliminar recorrido"
+        },
+        "patrolTour": {
+          "tourAssignment": "Agregar recorrido",
+          "editTourAssignment": "Editar recorrido",
+          "tourTemplateTitle": "Plantilla de recorrido"
+        }
+      },
+      "errors": {
+        "pastShiftAssignment": "No se puede asignar un trabajo pasado",
+        "timePassedError": "No se puede dividir o asignar un trabajo pasado",
+        "tourTimeOutOfRange": "El rango de tiempo del {{tour}} no coincide con el rango de tiempo del turno respectivo",
+        "shiftDurationError": "No se encontró la duración predeterminada del turno en las preferencias"
+      },
+      "assignOrEditShiftCard": {
+        "time": "Hora",
+        "duration": "Duración",
+        "date": "Fecha",
+        "day": "Día"
+      }
+    },
+    "filters": {
+      "sites": {
+        "label": "Todos los Sitios",
+        "all": "Todos los Sitios",
+        "searchPlaceholder": "Buscar un Sitio"
+      },
+      "duties": {
+        "label": "Todos los Trabajos",
+        "all": "Todos los Trabajos",
+        "patrol": "Trabajo de {{patrol}}",
+        "dedicated": "Trabajo {{dedicated}}",
+        "extra": "Trabajo {{extra}}",
+        "dispatch": "Despacho"
+      },
+      "status": {
+        "label": "Todos los estado/provincias",
+        "all": "Todos los estado/provincias",
+        "functional": "Funcional",
+        "requiresAttention": "Requiere Atención",
+        "unassigned": "Sin asignar",
+        "upcoming": "Próximos",
+        "notStarted": "No iniciado",
+        "inProgress": "En progreso",
+        "completed": "Completado",
+        "notStartedKey": "notStarted",
+        "functionalKey": "functional",
+        "requiresAttentionKey": "requiresAttention",
+        "inProgressKey": "inProgress",
+        "completedKey": "completed"
+      },
+      "zones": {
+        "label": "Todas las Zonas",
+        "all": "Todas las Zonas"
+      },
+      "reportTypes": {
+        "label": "Todos los Informes",
+        "all": "Todos los Informes"
+      },
+      "officers": {
+        "label": "Todos los {{officers}}",
+        "all": "Todos los {{officers}}"
+      },
+      "locations": {
+        "label": "Todos los Sitios",
+        "all": "Todas las Ubicaciones",
+        "searchPlaceholder": "Buscar una Ubicación"
+      }
+    },
+    "calendar": {
+      "view": {
+        "day": "Día",
+        "week": "Semana",
+        "month": "Mes"
+      },
+      "tooltips": {
+        "dedicatedAttention": "El trabajo {{dedicated}} necesita atención",
+        "patrolAttention": "La visita de {{patrol}} necesita atención",
+        "extraAttention": "El trabajo {{extra}} necesita atención"
+      },
+      "jobsRequireAttention": "{{count}} Trabajos Requieren Asignación",
+      "noEvents": {
+        "title": "¡No se encontraron turnos!",
+        "description": "No hay turnos para este mes."
+      },
+      "notStartedDuty": "No iniciado",
+      "unassigned": "Sin asignar",
+      "weekViewlocationTitle": "Ubicación",
+      "unassignedLocation": "Sin asignar",
+      "hitsMissed": "{{count}} fallidos",
+      "scheduleStatus": {
+        "completed": "Completado",
+        "inProgress": "En progreso",
+        "upComing": "Próximos",
+        "inComplete": "Incompleto",
+        "missed": "Perdido",
+        "cancelled": "Cancelado",
+        "unAssigned": "Sin asignar",
+        "notStarted": "No iniciado",
+        "noteStatusShow": "Existen notas",
+        "exceeded40Hours": "Horas extra del oficial",
+        "overTime": "HE"
+      }
+    },
+    "legends": {
+      "dedicated": "{{dedicated}}",
+      "patrol": "{{patrol}}",
+      "dispatch": "Dispatch",
+      "extra": "Trabajo {{extra}}",
+      "attention": "Requiere Atención"
+    },
+    "extraDuty": {
+      "deleteDutySuccess": "Trabajo {{extra}} eliminado correctamente",
+      "deleteDutyError": "Error al eliminar el trabajo {{extra}}",
+      "deleteBtn": "Eliminar Trabajo {{extra}}",
+      "deleteModal": {
+        "title": "Eliminar Trabajo {{extra}}",
+        "description": "¿Seguro que quieres eliminar este trabajo {{extra}}? ¡Esta acción no se puede deshacer!"
+      }
+    },
+    "officers": {
+      "available": "{{officers}} Disponibles",
+      "unavailable": "{{officers}} No Disponibles",
+      "alreadyAssignedMsg": "Este oficial ya está asignado a otro turno. ¿Estás seguro de que quieres asignarle este oficial?",
+      "yes": "Sí",
+      "no": "no"
+    },
+    "dutyDetail": {
+      "dispatchTour": "Recorrido de despacho",
+      "detail": {
+        "title": "Detalles",
+        "generalInfo": "Información General",
+        "shiftTiming": "Horario del Turno",
+        "tours": "{{tour}}s",
+        "visits": "Visitas",
+        "toursRatio": "{{completed}} / {{total}} recorridos",
+        "notours": "Sin recorridos",
+        "novisit": "Sin visitas",
+        "toursCompletionRatio": "{{completedTours}} de {{totalNoOfTours}} completados",
+        "dutyTime": "Hora del Turno",
+        "assignedTo": "Asignado a",
+        "reassignedTo": "Reasignado a",
+        "payRate": "Tarifa de Pago del Oficial",
+        "onSchedule": "Según lo Programado",
+        "behindSchedule": "Retrasado",
+        "checkpoints": "Puntos de Control",
+        "instructions": "Instrucciones",
+        "tourShiftStatus": {
+          "notStarted": "No iniciado",
+          "inProgress": "En progreso",
+          "completed": "Completado",
+          "upcoming": "Próximo",
+          "behindSchedule": "Atrasado respecto al horario",
+          "onSchedule": "Según el horario"
+        },
+        "outOfShiftTime": "Fuera del horario de turno"
+      },
+      "activities": {
+        "title": "Informes",
+        "currentShift": "Turno Actual",
+        "viewReport": "Ver Informe",
+        "reportSubmittionTime": "Enviado a las: {{submittedAt}}",
+        "shiftProgress": "Progreso del Turno"
+      },
+      "logs": {
+        "title": "Registros de Actividad",
+        "defaultOfficerName": "Oficial",
+        "actions": {
+          "breakStarted": "{{name}} inició el descanso.",
+          "breakEnded": "{{name}} finalizó el descanso.",
+          "shiftStarted": "{{name}} inició el turno.",
+          "shiftEnded": "{{name}} finalizó el turno.",
+          "dedicatedShiftCancelled": "{{userName}} canceló el turno {{shiftName}} {{shiftTime}}, motivo {{reason}}.",
+          "dedicatedShiftRestored": "{{userName}} restauró {{shiftName}} {{shiftTime}}.",
+          "reportSubmitted": "{{name}} envió el informe.",
+          "incidentReportSubmitted": "{{name}} envió el informe de incidente.",
+          "tourCompleted": "{{name}} completó el {{tour}}.",
+          "tourStarted": "{{name}} inició el {{tour}}.",
+          "checkpointChecked": "{{name}} revisó el punto de control.",
+          "notStarted": "{{name}} no inició el turno.",
+          "shiftAutoEnded": "{{name}} terminó el turno automáticamente.",
+          "clockedIn": "{{name}} registró entrada",
+          "clockedOut": "{{name}} registró salida",
+          "navigationStarted": "{{name}} inició la navegación",
+          "navigationEnded": "{{name}} llegó",
+          "endLocationVisited": "{{name}} llegó al estacionamiento",
+          "navigationCancelled": "{{name}} canceló la navegación",
+          "initialNavigation": "{{name}} inició la navegación",
+          "visitEnded": "{{name}} completó la visita",
+          "visitedSite": "{{name}} visitó el sitio",
+          "officerAssigned": "{{name}} está asignado",
+          "officerUnassigned": "{{name}} está desasignado",
+          "vehicleAssigned": "{{name}} está asignado",
+          "vehicleUnassigned": "{{name}} está desasignado",
+          "payrollApproved": "{{name}} aprobó la nómina.",
+          "adhocPayrollAdded": "Se agregó una nómina ad hoc para {{name}}.",
+          "hitAdded": "{{name}} agregó impacto(s)",
+          "hitRemoved": "{{name}} eliminó impacto(s)",
+          "hitCancelled": "{{site}} - {{hit}} cancelado{{actionBy}}",
+          "hitCancelledActionBy": " por {{name}}",
+          "hitAddedTo": "Impacto agregado a {{name}}",
+          "hitAddedFrom": "Impacto agregado desde {{name}}",
+          "clockedInAgain": "{{name}} registró nuevamente la entrada",
+          "shiftTimeUpdated": "{{name}} cambió la hora de {{type}} del turno de {{oldTime}} a {{newTime}}",
+          "date": "fecha del turno",
+          "time": "hora del turno",
+          "shift": "turno",
+          "checkpointCompleted": "{{name}} completó el punto de control",
+          "reportTypes": {
+            "equipmentInspection": "{{name}} envió el informe de inspección de equipos",
+            "vehicleInspection": "{{name}} envió el informe de inspección de vehículos",
+            "tourReports": "{{name}} envió los informes de recorrido",
+            "shiftDayEndReport": "{{name}} envió el informe de fin de turno",
+            "incidentReport": "{{name}} envió el informe de incidente",
+            "checkpoints": "{{name}} envió el informe de puntos de control",
+            "dispatch": "{{name}} envió el informe de despacho"
+          },
+          "splittedTheShift": "{{name}} dividió {{shiftName}}",
+          "splittedTheShiftContent": "{{name}} dividió {{shiftName}} ({{oldTime}}) en {{splitDetails}} el {{actionTime}}."
+        },
+        "defaultVehicleName": "Vehículo"
+      },
+      "errors": {
+        "timePassedError": "No se puede editar un trabajo pasado"
+      },
+      "acceptRejectReport": {
+        "approveReport": "Aprobar Informe",
+        "rejectReport": "Rechazar Informe",
+        "reject": "Rechazar",
+        "approve": "Aprobar",
+        "approveReportDesc": "¿Estás seguro de que quieres aprobar este informe? Ten en cuenta que esta acción no se puede deshacer.",
+        "rejectReportDesc": "¿Estás seguro de que quieres rechazar este informe? Puedes agregar comentarios para que el oficial sepa la razón. Ten en cuenta que esta acción no se puede deshacer.",
+        "addComment": "Agregar Comentarios",
+        "applyLeave": "Aplicar Ausencia"
+      },
+      "editShiftDetail": "Editar detalles del turno",
+      "notes": {
+        "title": "Notas",
+        "addNotesErrorMsg": "Las notas son obligatorias",
+        "addNotesTextLimitErrorMsg": "El texto no puede exceder los {{limit}} caracteres"
+      },
+      "reassignHit": {
+        "headerTitle": "Reasignar impacto",
+        "headerTitleReassignHits": "Reasignar impacto(s)",
+        "description": "Seleccionar hoja de ruta para asignar este impacto",
+        "selectDatesLabel": "Seleccionar fecha(s) de inicio",
+        "searchPlaceholder": "Buscar por nombre de hoja de ruta",
+        "officersLabel": "Todos los oficiales",
+        "officersSearchPlaceholder": "Buscar un oficial",
+        "confirmationModal": {
+          "title": "¡Reasignar impacto!",
+          "description": "¿Estás seguro de que quieres reasignar el impacto a la hoja de ruta seleccionada? Esta acción actualizará la asignación actual."
+        },
+        "selectHit": "Seleccionar impacto(s)",
+        "selectHitDes": "Selecciona impacto(s) para reasignar a otra hoja de ruta",
+        "runsheetSelectionForHits": "Selecciona la hoja de ruta para reasignar los impactos seleccionados",
+        "selectedHit": "Impacto(s) seleccionado(s):"
+      },
+      "cancelHit": {
+        "title": "¡Cancelar impacto!",
+        "description": "¿Estás seguro de que quieres cancelar el impacto?",
+        "cancel": "No",
+        "save": "Sí"
+      },
+      "hitDetail": {
+        "editButtons": {
+          "cancelHit": "Cancelar impacto",
+          "editTour": "Editar recorrido",
+          "reassignHit": "Reasignar impacto"
+        }
+      },
+      "runsheetDetail": {
+        "editButtons": {
+          "splitRunsheet": "Dividir hoja de ruta",
+          "reassignHits": "Reasignar impacto(s)",
+          "clockBackIn": "Registrar nueva entrada",
+          "editRunsheet": "Editar {{runsheet}}"
+        },
+        "editRunsheetModal": {
+          "title": "Editar {{runsheet}}",
+          "description": "Actualice la fecha y hora de finalización de este turno en curso. La hora de inicio no se puede cambiar.",
+          "descriptionFuture": "Actualice la fecha y hora de inicio y fin de este turno futuro.",
+          "startDate": "Fecha y hora de inicio",
+          "endDate": "Fecha y hora de fin",
+          "selectOfficer": "Seleccionar {{officer}}",
+          "update": "Actualizar",
+          "cancel": "Cancelar"
+        },
+        "clockBackInModal": {
+          "title": "Registrar nueva entrada",
+          "description": "¿Estás seguro de que deseas volver a registrar la entrada del oficial? Esta acción reanudará su turno."
+        },
+        "hitsDone": "Impactos realizados",
+        "officer": "Oficial",
+        "assign": "asignar",
+        "vehicle": "Vehículo",
+        "spentTime": "Tiempo transcurrido / Est.",
+        "coveredDistance": "Distancia recorrida / Est.",
+        "milesUnit": "mi",
+        "kilometersUnit": "km",
+        "status": "Estado"
+      },
+      "assignOnRunsheet": {
+        "officerRequiredError": "El oficial es obligatorio",
+        "vehicleRequiredError": "El vehículo es obligatorio",
+        "updateAssignment": "Actualizar asignación",
+        "assignOfficer": "Asignar oficial",
+        "assignVehicle": "Asignar vehículo",
+        "startEndDate": "Fecha de inicio y fin",
+        "selectedDay": "Día seleccionado",
+        "selectOfficer": "Seleccionar oficial",
+        "selectVehicle": "Seleccionar vehículo",
+        "cancelBtn": "Cancelar",
+        "update": "Actualizar",
+        "assign": "Asignar"
+      }
+    },
+    "errorMessages": {
+      "isStartAfterEnd": "La hora de finalización debe ser posterior a la hora de inicio.",
+      "timeDurationMoreThan24": "La duración del turno no puede exceder las 24 horas.",
+      "endTimeBeforeCurrentTime": "La hora de fin no puede ser anterior a la hora actual.",
+      "startTimeCannotBeEditedForOngoingShifts": "La hora de inicio no se puede editar para turnos en curso.",
+      "endTimeBeforeCurrent": "La hora de fin no puede ser anterior a la hora actual.",
+      "startTimeBeforeCurrent": "La hora de inicio no puede ser anterior a la hora actual.",
+      "endTimeBeforeExecution": "La hora de fin no puede ser anterior a la hora de ejecución del turno.",
+      "contractBoundaryViolation": "Actualización del turno no permitida. Uno o más impactos están fuera de las fechas de inicio y fin del contrato.",
+      "officerUnavailable": "Los horarios del turno están fuera de la disponibilidad del oficial."
+    },
+    "editDedicatedShift": "¡Editar hora de turno!",
+    "editDedicatedShiftDes": "¿Está seguro de que desea editar la hora del turno?",
+    "editDedicatedShiftAlert": "Los turnos editados se vuelven independientes y no se ven afectados por acciones masivas.",
+    "editDedicatedShiftDropDown": "Editar hora de turno",
+    "editDedicatedShiftDay": "Día del turno:",
+    "checkpoints": "Puntos de control",
+    "autoClockoutShift": "Turno con cierre automático",
+    "selectExisting": "Seleccionar un sitio existente",
+    "chooseSite": "Elegir sitio",
+    "tourOne": "Recorrido 1"
+  },
+  "invoice": {
+    "disclaimer": "Descargo de responsabilidad:",
+    "disclaimerTextExportInvoice": "Solo la conciliación de facturas formará parte de este archivo CSV.",
+    "splitShiftsInTwoAtMidnight": "Dividir los turnos en dos a medianoche",
+    "exportInvoice": "Exportar conciliación de facturas",
+    "exportInvoiceButton": "Exportar factura",
+    "export": "Exportar",
+    "invoiceReconciliation": "Conciliación de facturas",
+    "exportText": "Los datos de la factura se exportarán para el periodo seleccionado.",
+    "startDateError": "La fecha de inicio debe ser anterior a la fecha de fin",
+    "endDateError": "La fecha de fin debe ser posterior a la fecha de inicio",
+    "from": "Desde",
+    "to": "Hasta",
+    "lineItemTotal": "Total del artículo",
+    "taxAmount": "Monto del impuesto",
+    "invoiceGrandTotal": "Total general",
+    "deliveredAt": "Informe distribuido en",
+    "pushedToStage": "Enviado a Stage",
+    "viewSageInvoice": "Ver factura en SAGE",
+    "viewSageInvoiceDisabled": "La factura de Sage se mostrará una vez sea distribuida",
+    "viewQuickbooksInvoice": "Ver factura en Quickbooks",
+    "viewQuickbooksInvoiceDisabled": "La factura de Quickbooks se mostrará una vez sea distribuida",
+    "search": "Buscar por número de factura",
+    "createInvoice": "Crear factura",
+    "create": "Crear",
+    "regularInvoice": "Factura normal",
+    "correctionInvoice": "Factura de corrección",
+    "approvePushToSage": "Aprobar y enviar a Sage",
+    "approvePushToQuickbooks": "Aprobar y enviar a Quickbooks",
+    "payInvoice": "Pagar factura",
+    "paymentDetailsText": "Agregue detalles de pago para marcar esta factura como pagada",
+    "payNow": "Pagar ahora",
+    "paid": "Pagado",
+    "cashCheck": "Efectivo/Cheque",
+    "selectPaymentMethod": "Seleccionar método de pago",
+    "cash": "Efectivo",
+    "check": "Cheque",
+    "amountPaid": "Monto pagado",
+    "receivingDate": "Fecha de recepción",
+    "enterCheckNo": "Ingrese número de cheque",
+    "pushToQuickbooks": "Enviar a Quickbooks",
+    "invoiceNumber": "Número de factura",
+    "siteName": "Nombre del sitio",
+    "type": "Tipo",
+    "invoiceDate": "Fecha de factura",
+    "dueDate": "Fecha de vencimiento",
+    "invoiceDuration": "Duración de la factura",
+    "originalInvoiceNumber": "Número de factura original",
+    "originalInvoiceCreateDate": "Fecha de factura original",
+    "approveInvoice": "Aprobar factura",
+    "approveInvoiceText": "¿Está seguro de que desea aprobar la factura seleccionada? Esta factura será bloqueada y enviada a Sage.",
+    "approveInvoiceTextQuickbooks": "¿Está seguro de que desea aprobar la factura seleccionada? Esta factura será bloqueada y enviada a Quickbooks.",
+    "approve": "Aprobar",
+    "delete": "Eliminar",
+    "cancel": "Cancelar",
+    "approveSelectedInvoice": "Aprobar facturas seleccionadas",
+    "approveSelectedInvoiceText": "¿Está seguro de que desea aprobar las facturas seleccionadas? Las facturas serán enviadas a Sage después de la aprobación. Esta acción se aplicará a todas las facturas elegidas.",
+    "deleteInvoice": "Eliminar esta factura",
+    "deleteInvoiceText": "¿Está seguro de que desea eliminar esta factura? Esta acción no se puede revertir.",
+    "billFrom": "Facturar desde",
+    "billTo": "Facturar a",
+    "email": "Correo electrónico:",
+    "phone": "Teléfono:",
+    "contactPerson": "Persona de contacto:",
+    "contractDetails": "Detalles del contrato",
+    "contract": "Contrato",
+    "billingDetails": "Detalles de facturación",
+    "invoiceGenerated": "Factura generada",
+    "lineItem": "Artículo",
+    "quantity": "Cantidad",
+    "unitPrice": "Precio unitario",
+    "total": "Total",
+    "action": "Acción",
+    "lineItems": "Artículo(s)",
+    "description": "Descripción",
+    "discount": "Descuento",
+    "taxes": "Impuestos",
+    "grandTotal": "Total general",
+    "save": "Guardar",
+    "site": "Sitio",
+    "select": "Seleccionar",
+    "periodStart": "Inicio del período",
+    "periodEnd": "Fin del período",
+    "periodEndError": "La fecha final debe ser después de la fecha de inicio",
+    "periodStartError": "La fecha de inicio debe ser antes de la fecha final",
+    "dueDateError": "La fecha de vencimiento debe ser hoy o en el futuro",
+    "invoiceDateError": "La fecha de factura debe ser hoy o en el futuro",
+    "siteDropdownLabel": "Nombre del sitio",
+    "statusesDropdownLabel": "Todos los estados",
+    "typesDropdownLabel": "Todos los tipos",
+    "inProgressStatus": "Sincronización en progreso",
+    "approveStatus": "Enviar a Sage",
+    "failedStatus": "Sincronización fallida, reintentar",
+    "pushedToSageStatus": "Sincronización aprobada",
+    "periodStartPastError": "La fecha de inicio debe ser hoy o en el futuro",
+    "status": "Estado",
+    "add": "Agregar",
+    "resyncPayrollStatus": "Resincronizar con nómina",
+    "noContracts": "No hay contratos para este sitio.",
+    "resyncInvoiceMessage": "Su factura se sincronizará después de 2-3 minutos",
+    "poNumberPlaceholder": "Agregar número de orden de compra (PO)",
+    "poNumber": "Número de orden de compra (PO)",
+    "poNumberKey": "poNumber",
+    "customerId": "ID del cliente",
+    "geofenceRadius": "Radio de geocerca (metros)",
+    "billingFrom": {
+      "us": {
+        "title": "Signal 88, LLC.",
+        "address1": "PO Box 8246",
+        "address2": "Omaha, NE 68108"
+      },
+      "ca": {
+        "title": "Signal 88, Security Canada, Inc.",
+        "address1": "PO Box 57427, STN A",
+        "address2": "Toronto ON M5W 5M5"
+      }
+    },
+    "invoiceMemo": "Memo de la factura (máx. 4000 caracteres)",
+    "invoiceMemoPlaceHolder": "Memo de la factura (opcional)",
+    "statuses": {
+      "all": "Todos los estados",
+      "pending": "Pendiente",
+      "inProgress": "En progreso",
+      "syncApproved": "Sincronización aprobada",
+      "syncFailed": "Sincronización fallida"
+    },
+    "types": {
+      "all": "Todos los tipos",
+      "adHoc": "Ad hoc",
+      "scheduled": "Programado"
+    },
+    "invoiceTotalQuantity": "El total de la factura no puede ser negativo"
+  },
+  "runsheet": {
+    "detailPage": {
+      "systemSuggested": "Sistema Sugerido",
+      "sites": "Sitios",
+      "revisits": "Revisitas",
+      "hits": "Aciertos",
+      "estimatedCompletionTime": "Tiempo Estimado de Finalización",
+      "sitesList": {
+        "title": "Sitios de {{runsheet}}",
+        "editBtn": "Editar",
+        "doneBtn": "Hecho",
+        "deleteBtn": "Eliminar",
+        "time": "Tiempo",
+        "generalInformation": "Información General",
+        "target": "Objetivo",
+        "estimatedTime": "Tiempo Estimado",
+        "freeTime": "15 minutos de tiempo libre",
+        "makeThisBreak": "Hacer este descanso"
+      }
+    },
+    "yes": "Sí",
+    "no": "No",
+    "associateBreakRule": "Asociar regla de descansos",
+    "payOfficerForBreaks": "Pagar al oficial por los descansos:",
+    "runsheetDetails": "Detalles de la hoja de ruta",
+    "breakConfigurations": "Configuración de descansos",
+    "selectAllSites": "Seleccionar todos los sitios",
+    "exitRunSheet": "Salir de la hoja de ruta",
+    "unAssignedHits": "Impactos sin asignar",
+    "selectRunsheet": "Seleccionar hoja de ruta",
+    "assignedHits": "Impactos asignados",
+    "hit": "Impacto",
+    "runSheet": "Hoja de ruta",
+    "noRunsheets": "¡No hay hojas de ruta!",
+    "noRunsheetsText": "Actualmente no hay hojas de ruta disponibles en el sistema. Crea aquí tus hojas de ruta personalizadas.",
+    "startEndDate": "Fecha de inicio y fin",
+    "selectOffice": "Seleccionar oficina",
+    "assign": "Asignar",
+    "selectDateRange": "Seleccionar rango de fechas",
+    "missedHits": "Impactos perdidos",
+    "estimatedTime": "Tiempo estimado de la hoja de ruta:",
+    "patrol": "Patrulla",
+    "dayTimeRunsheet": "Hoja de ruta diurna",
+    "applyOnMap": "Aplicar en el mapa",
+    "selectMap": "Selecciona un día de la lista de la izquierda para cargar las hojas de ruta en el mapa",
+    "mapPlaceholder": "Selecciona un día en el menú desplegable para ver las hojas de ruta",
+    "selectRunsheetDateDesc": "Selecciona el día de la hoja de ruta para empezar a asignar impactos",
+    "selectDay": "Seleccionar día",
+    "selectOfficer": "Seleccionar oficial",
+    "selectVehicle": "Seleccionar vehículo",
+    "optional": "(opcional)",
+    "assignHeading": "Asignar oficial y vehículo a una nueva hoja de ruta",
+    "reorderHits": "Reordenar impactos",
+    "reorderHitsText": "Organiza tus impactos en la secuencia deseada.",
+    "patrolShift1": "Patrulla Turno 1",
+    "patrolShift2": "Patrulla Turno 2",
+    "shift1EndMustEqualShift2Start": "La hora de fin del split 1 debe ser igual a la hora de inicio del split 2.",
+    "selectStartTimeOfNewRunSheet": "Nueva hoja de ruta",
+    "selectStartTimeOfParentRunSheet": "Hoja de ruta principal",
+    "addStartingAndEndingPointOfNewRunsheet": "Agregar punto de inicio y fin de la nueva hoja de ruta",
+    "starting&EndingLocation": "Ubicación de inicio y fin",
+    "noTourTemplateSelected!": "¡Ninguna plantilla de recorrido seleccionada!",
+    "selectHits": "Seleccionar impactos",
+    "selectHitsText": "Selecciona los impactos que deseas agregar a una nueva hoja de ruta.",
+    "noTourTemplateSelectedText": "Agrega una plantilla de recorrido para asignar este impacto a una hoja de ruta.",
+    "addTemplate": "Agregar plantilla",
+    "updateRunsheet!": "¡Actualizar hoja de ruta!",
+    "updateRunsheetText": "La información actualizada se reflejará en el próximo turno. Si se actualiza la duración de la hoja de ruta, el oficial y el vehículo asignados se eliminarán de todas las hojas de ruta futuras. ¿Quieres continuar con este cambio?",
+    "updateRunsheet": "Actualizar hoja de ruta",
+    "deleteRunsheet!": "¡Eliminar hoja de ruta!",
+    "deleteText": "Vas a eliminar la hoja de ruta. Todos los impactos asociados quedarán sin asignar y si la hoja de ruta está en progreso no se eliminará ni se podrá dividir. Esta acción no se puede deshacer.",
+    "activityLogs": "Registros de actividad",
+    "addUnassignedHits": "Agregar impactos sin asignar",
+    "addUnassignedHitsBtnTooltip": "Se requiere la ubicación de inicio y fin",
+    "hits": "Impactos",
+    "site": "Sitio",
+    "editRunsheet": "Editar hoja de ruta",
+    "deleteRunsheet": "Eliminar hoja de ruta",
+    "viewActivity": "Ver actividad",
+    "searchBySiteName": "Buscar por nombre del sitio",
+    "franchise": "Franquicia",
+    "existingHit": "Impacto existente",
+    "addedHit": "Impacto agregado",
+    "deletedHit": "Impacto eliminado",
+    "runsheet": "Hoja de ruta",
+    "duplicateRunsheet": "Duplicar hoja de ruta",
+    "duplicateRunsheetText": "Para duplicar la hoja de ruta debes elegir una fecha de inicio y días para la nueva hoja de ruta.",
+    "duplicateRunsheetStartDate": "Fecha de inicio",
+    "duplicateRunsheetSelectDays": "Seleccionar días",
+    "duplicateRunsheetDescription": "Ten en cuenta que todos los impactos existentes, programados ese día según el contrato y que no estén incluidos en otra hoja de ruta, se agregarán a esta hoja de ruta.",
+    "startingEndingPoint": "Punto de inicio y fin",
+    "atLeastOneDayRequired": "Este campo es obligatorio, selecciona al menos 1 día",
+    "covered": "Cubierto",
+    "unvisitedHit": "Impacto no visitado",
+    "visitedHit": "Impacto visitado",
+    "vehicle": "Vehículo",
+    "mapSuggested": "Sugerido por el mapa",
+    "save": "Guardar",
+    "totalHits": "Impactos totales",
+    "runsheetTime": "Tiempo de hoja de ruta",
+    "estDistance": "Distancia estimada",
+    "search": "Buscar por nombre del sitio",
+    "selectAll": "Seleccionar todo",
+    "createRunsheet": "Crear hoja de ruta",
+    "assignHits": "Asignar impactos",
+    "unAssignHits": "Impactos sin asignar",
+    "noRunSheetYet": "¡Aún no hay hojas de ruta!",
+    "noRunsheetDetails": "Actualmente no hay hojas de ruta disponibles en el sistema. Crea aquí tus hojas de ruta personalizadas.",
+    "edit": "Editar",
+    "addLocationHeading": "Agregar ubicación de inicio y fin",
+    "editLocationHeading": "Actualizar ubicación de inicio y fin",
+    "mapSubHeading": "Proporciona la ubicación exacta del punto de inicio y fin de la hoja de ruta",
+    "searchLocation": "Buscar ubicación",
+    "typeaddress": "Escribir dirección",
+    "cancel": "Cancelar",
+    "addLocation": "Agregar ubicación",
+    "editLocation": "Editar ubicación",
+    "addStartingEndingLocation": "Agregar ubicación de inicio y fin",
+    "startingEndingLocation": "Ubicación de inicio y fin",
+    "runsheetName": "Nombre de la hoja de ruta",
+    "enterRunsheetName": "Ingresa el nombre de la hoja de ruta",
+    "startDate": "Fecha de inicio",
+    "selectStartDate": "Seleccionar fecha de inicio",
+    "startTime": "Hora de inicio",
+    "selectStartTime": "Seleccionar hora de inicio",
+    "endTime": "Hora de fin",
+    "selectEndTime": "Seleccionar hora de fin",
+    "selectedDay": "Día seleccionado",
+    "back": "Atrás",
+    "next": "Siguiente",
+    "SeeList": "Ver más",
+    "confirmAssignment": "Confirmar asignación",
+    "confirmAssignmentText": "¿Estás seguro de que deseas asignar los impactos seleccionados a la(s) hoja(s) de ruta elegida(s)? Esto actualizará la(s) hoja(s) de ruta existente(s).",
+    "keys": {
+      "runsheetName": "runsheetName",
+      "isBreakPayable": "isBreakPayable",
+      "breakRule": "breakRule"
+    },
+    "noTourTemplateAssigned": "¡Ninguna plantilla de recorrido asignada!",
+    "noTourTemplateAssignedDescription": "Agrega una plantilla de recorrido para asignar este impacto a una hoja de ruta.",
+    "addUnassignedHitsToRunsheet": "Agregar impactos sin asignar a una hoja de ruta",
+    "addHit": "Agregar impacto",
+    "noTour": "Asigna primero una plantilla de recorrido para agregar esto a una hoja de ruta",
+    "assignTourFirst": "Asigna primero una plantilla de recorrido para agregar esto a una hoja de ruta.",
+    "hitAdded": "Impacto agregado",
+    "noInstructions": "Sin instrucciones",
+    "patrolSetup": "Configuración de patrulla",
+    "noReportsText": "No hay ningún informe o punto de control asociado a esta visita. Asigna un informe de visita para completar la configuración.",
+    "checkpoints": "Puntos de control",
+    "durationUnit": "min",
+    "visitType": "Tipo de visita",
+    "status": "Estado",
+    "serviceTime": "Tiempo de servicio",
+    "viewRunSheet": "Ver hoja de ruta",
+    "viewShiftDetails": "Ver detalles del turno",
+    "checkpointsSection": "Puntos de control:",
+    "reportsSection": "Informe",
+    "noCheckpointsSection": "No hay puntos de control asignados",
+    "instructionsSection": "Instrucciones:",
+    "instructionsSuffix": "Garantizar un estricto control de acceso al sitio.",
+    "actions": {
+      "created": "ha creado una hoja de ruta",
+      "hitAdded": "ha agregado un impacto",
+      "hitDeleted": "ha eliminado un impacto",
+      "sequenceChanged": "ha cambiado la secuencia",
+      "startEndLocationUpdated": "ha actualizado el punto de inicio y fin",
+      "startEndTimeUpdated": "ha actualizado la hora de inicio/fin",
+      "createdDuplicateRunsheetMonday": "creó una hoja de ruta duplicada para el lunes",
+      "createdDuplicateRunsheetTuesday": "creó una hoja de ruta duplicada para el martes",
+      "createdDuplicateRunsheetWednesday": "creó una hoja de ruta duplicada para el miércoles",
+      "createdDuplicateRunsheetThursday": "creó una hoja de ruta duplicada para el jueves",
+      "createdDuplicateRunsheetFriday": "creó una hoja de ruta duplicada para el viernes",
+      "createdDuplicateRunsheetSaturday": "creó una hoja de ruta duplicada para el sábado",
+      "createdDuplicateRunsheetSunday": "creó una hoja de ruta duplicada para el domingo"
+    },
+    "startDateBeforeStart": "No puedes seleccionar una hora anterior a la hora de inicio",
+    "startCantBeSame": "El inicio de la hoja de ruta principal y de la nueva hoja de ruta no puede ser el mismo",
+    "startDateAfterEnd": "No puedes seleccionar una hora posterior a la hora de fin",
+    "noRouteFoundError": "No se encontró ninguna ruta para los impactos indicados.",
+    "invalidRouteError": "No se puede dibujar la ruta porque la selección cruza un área inaccesible. Ajusta tu selección para evitar obstáculos.",
+    "seeMore": "Ver más",
+    "runsheetNameError": "El nombre de la hoja de ruta no puede estar vacío.",
+    "noSiteNameMatchesSearch": "Ningún nombre de sitio coincide con tu búsqueda. Prueba con otra palabra clave.",
+    "minimumSearchLength": "La longitud mínima de búsqueda es 2",
+    "maximumSearchLength": "La longitud máxima de búsqueda es 100",
+    "cannotSplitRunsheet": "La hoja de ruta no se puede dividir porque se ha eliminado.",
+    "excludedHitsEditRunsheet": "Algunos impactos se han eliminado debido al cambio en el tiempo de la hoja de ruta.",
+    "excludedHits": "Impactos excluidos",
+    "excludedHitsDescription": "Los impactos siguientes se han eliminado de esta hoja de ruta debido al cambio de tiempo.",
+    "allHitsSelectedException": "No puedes seleccionar todos los impactos para dividir",
+    "placeholders": {
+      "selectBreakRule": "Seleccionar regla de descansos"
+    },
+    "runsheetDetailsSubtext": "Agregar información y seleccionar impactos",
+    "selectHitsSubtext": "Elegir impactos de la hoja de ruta",
+    "reorderHitsSubtext": "Agregar secuencia de impactos",
+    "hitsSubtext": "Seleccionar impactos y hora de inicio",
+    "assignSubtext": "Agregar nueva hoja de ruta"
+  },
+  "obxExtraDuty": {
+    "labels": {
+      "chooseSite": "Elegir Sitio",
+      "chooseSiteDescription": "Seleccione el sitio que desea administrar",
+      "shiftDateAndTime": "Fecha y Hora del Turno",
+      "shiftDateAndTimeDescription": "Elija la fecha y la hora para este trabajo",
+      "assignOfficers": "Asignar {{officers}}",
+      "assignOfficersDescription": "Elija {{officers}} para este trabajo",
+      "chooseReport": "Elegir Informe",
+      "chooseReportDescription": "Elija una plantilla de informe para el trabajo",
+      "hourlyRateChange": "Cambiar Tarifa Horaria",
+      "dutyInstructions": "Instrucciones del Trabajo",
+      "dutyInstructionDescription": "Agregue instrucciones relacionadas con el trabajo",
+      "createExtraDuty": "Crear Trabajo {{extra}}",
+      "addExtraDutyInfo": "Agregue la información a continuación para crear un trabajo {{extra}}"
+    },
+    "placeholders": {
+      "descriptions": "Ingrese instrucciones aquí"
+    }
+  },
+  "form": {
+    "input": {
+      "textField": {
+        "locations": {
+          "header": "Ubicaciones",
+          "label": "Ubicación",
+          "placeHolder": "Ingrese el nombre de la ubicación"
+        },
+        "name": {
+          "label": "Nombre",
+          "placeHolder": "Ingrese el nombre"
+        },
+        "postalCode": {
+          "label": "Código Postal",
+          "placeHolder": "Ingrese su código postal."
+        },
+        "firstName": {
+          "label": "Nombre",
+          "placeHolder": "Ingrese su nombre"
+        },
+        "lastName": {
+          "label": "Apellido",
+          "placeHolder": "Ingrese su apellido"
+        },
+        "phoneNumber": {
+          "label": "Teléfono",
+          "placeHolder": "ej. +00 856 3369"
+        },
+        "email": {
+          "label": "Correo electrónico",
+          "placeHolder": "Ingrese su correo electrónico"
+        },
+        "primaryEmail": {
+          "label": "Correo electrónico de contacto principal",
+          "placeHolder": "Ingrese su correo electrónico principal"
+        },
+        "owner": {
+          "label": "Propietario",
+          "info": "Información y contacto"
+        },
+        "country": {
+          "header": "País/Región",
+          "label": "País",
+          "placeHolder": "Ingrese su país"
+        },
+        "address": {
+          "header": "Dirección",
+          "label": "Dirección",
+          "placeHolder": "Ingrese su dirección"
+        },
+        "address2": {
+          "header": "Línea de Dirección 2",
+          "label": "Línea de Dirección 2",
+          "placeHolder": "Ingrese la línea de dirección 2"
+        },
+        "state": {
+          "header": "estado/provincia/Provincia",
+          "label": "estado/provincia/Provincia",
+          "placeHolder": "Ingrese su estado/provincia/Provincia"
+        },
+        "zipCode": {
+          "label": "Código Postal",
+          "placeHolder": "Ingrese su código postal"
+        },
+        "city": {
+          "label": "Ciudad",
+          "placeHolder": "Ingrese su ciudad"
+        },
+        "suburb": {
+          "label": "Suburb",
+          "placeHolder": "Ingrese su Suburb"
+        },
+        "additionalContacts": {
+          "header": "Contactos Adicionales"
+        },
+        "markEmergencyContact": {
+          "label": "Marcar como contacto de emergencia"
+        },
+        "contact": {
+          "label": "Teléfono",
+          "placeHolder": "Ingrese número de teléfono"
+        },
+        "selectOption": {
+          "label": "Seleccionar Opción",
+          "placeholder": "Seleccionar Opción"
+        },
+        "selectOptions": {
+          "label": "Seleccionar Opciones",
+          "placeHolder": "Seleccionar Opciones"
+        },
+        "search": {
+          "label": "Buscar",
+          "placeHolder": "Buscar..."
+        },
+        "geoFencing": {
+          "header": "Geo-Vallado",
+          "setSame": {
+            "label": "Establecer igual que el límite de franquicia"
+          }
+        },
+        "zone": {
+          "label": "Nombre de la Zona",
+          "placeHolder": "Ingrese el nombre de la zona"
+        },
+        "supervisor": {
+          "label": "Seleccionar Supervisor",
+          "header": "Geo-Vallado"
+        },
+        "vehicle": {
+          "info": "Información del Vehículo"
+        },
+        "vehicleMakeInput": {
+          "label": "Marca/Modelo/Año",
+          "placeHolder": "Ingrese la marca, modelo y año del vehículo"
+        },
+        "vehicleRegistrationNumber": {
+          "label": "Número de Registro",
+          "placeHolder": "Número de Registro"
+        },
+        "vehicleCreatedAt": {
+          "label": "Creado en",
+          "placeHolder": "Fecha de creación"
+        },
+        "vehicleLastMaintenance": {
+          "label": "Último Mantenimiento",
+          "placeHolder": "Fecha de último mantenimiento"
+        },
+        "password": {
+          "label": "Contraseña",
+          "placeHolder": "Ingrese su contraseña"
+        },
+        "logType": {
+          "placeHolder": "por ejemplo, contenedor de alimentos"
+        },
+        "officersCount": {
+          "label": "Número de {{officers}}",
+          "placeHolder": "Seleccione el número de {{officers}}"
+        },
+        "reports": {
+          "label": "Plantilla de Informe",
+          "placeHolder": "Informes"
+        },
+        "report": {
+          "label": "Plantilla de Informe",
+          "placeHolder": "Informe"
+        },
+        "officerOptional": {
+          "label": "Oficial"
+        },
+        "officersHourlyRate": {
+          "placeHolder": "$18-$25"
+        },
+        "dutyTime": {
+          "label": "Fecha del Trabajo",
+          "placeHolder": "Ingrese la fecha del trabajo"
+        },
+        "startTime": {
+          "label": "Hora de Inicio",
+          "placeholder": "Seleccione la hora de inicio"
+        },
+        "endTime": {
+          "label": "Hora de Finalización",
+          "placeholder": "Seleccione la hora de finalización"
+        },
+        "instructions": {
+          "label": "Ingrese Instrucciones",
+          "placeHolder": "Ingrese instrucciones aquí"
+        },
+        "exceptions": {
+          "label": "Ingrese Excepción",
+          "placeHolder": "Haga clic para agregar instrucciones excepcionales"
+        },
+        "startDate": {
+          "label": "Fecha de Inicio",
+          "placeholder": "Seleccione la fecha de inicio"
+        },
+        "endDate": {
+          "label": "Fecha de Finalización",
+          "placeholder": "Seleccione la fecha de finalización"
+        },
+        "billableHours": {
+          "header": "Marcar como contacto de emergencia",
+          "label": "Descansos facturables"
+        },
+        "title": {
+          "label": "Introducir título de la orden de puesto",
+          "placeHolder": "Agregar título de la orden de puesto"
+        },
+        "cycleReferenceDate": {
+          "label": "Fecha de Referencia del Ciclo",
+          "placeHolder": "Seleccione la fecha de referencia del ciclo"
+        },
+        "integrations": {
+          "header": "Integraciones",
+          "enabled": "Habilitado",
+          "disabled": "Deshabilitado"
+        },
+        "geofencing": {
+          "title": "Geovalla",
+          "description": "Habilitar el interruptor activa la función de geovalla para el sitio"
+        }
+      },
+      "dropDown": {
+        "pleaseSelectAnOption": "Seleccione una Opción",
+        "selectSite": {
+          "label": "Seleccionar Sitio"
+        },
+        "selectSites": {
+          "label": "Todos los Sitios"
+        },
+        "selectOfficer": {
+          "label": "Seleccionar Oficial"
+        },
+        "selectReport": {
+          "label": "Seleccionar Informe"
+        },
+        "selectOfficersCount": {
+          "label": "Seleccionar Número de {{officers}}"
+        },
+        "selectSupervisor": {
+          "label": "Seleccionar Supervisor"
+        },
+        "selectCountry": {
+          "label": "Seleccionar País"
+        },
+        "selectStateRegion": {
+          "label": "Seleccionar estado/provincia/Provincia"
+        },
+        "selectCity": {
+          "label": "Seleccionar Ciudad"
+        },
+        "selectSuburb": {
+          "label": "Seleccionar Suburb"
+        },
+        "selectFranchise": {
+          "label": "Seleccionar una Franquicia"
+        },
+        "selectZones": {
+          "label": "Todas las Zonas"
+        },
+        "selectDuties": {
+          "label": "Todos los Trabajos"
+        },
+        "selectDevices": {
+          "label": "Todos los Dispositivos"
+        },
+        "selectStates": {
+          "label": "Seleccionar estado/provincias"
+        },
+        "selectCities": {
+          "label": "Seleccionar Ciudades"
+        },
+        "selectStatus": {
+          "label": "Seleccionar estado/provincia"
+        },
+        "selectShift": {
+          "label": "Seleccionar Turno"
+        },
+        "selectVisitors": {
+          "label": "Todos los estado/provincias"
+        },
+        "selectVehicles": {
+          "label": "Todos los Vehículos"
+        },
+        "selectZone": {
+          "label": "Seleccionar Zona"
+        },
+        "checkInNotSelected": {
+          "label": "El tipo de registro de entrada es obligatorio"
+        }
+      }
+    }
+  },
+  "shiftReports": {
+    "descriptionAI": {
+      "currentVersion": "Versión actual",
+      "suggestedVersion": "Versión sugerida",
+      "reselect": "Volver a seleccionar",
+      "fixesCount": "{{count}} correcciones",
+      "aiBadge": "IA",
+      "aiModifiedPill": "Modificado por IA",
+      "aiModifiedPillTooltip": "Esta respuesta incluye cambios sugeridos por IA."
+    },
+    "aiBadge": {
+      "needsReview": "Necesita revisión",
+      "aiRefined": "Refinado por IA"
+    },
+    "filters": {
+      "reports": {
+        "label": "Reportes",
+        "search": "Buscar por nombre"
+      },
+      "sites": {
+        "label": "Sitios",
+        "searchPlaceholder": "Buscar un Sitio"
+      },
+      "users": {
+        "label": "Usuarios",
+        "searchPlaceholder": "Buscar por nombre de usuario"
+      },
+      "runsheetName": {
+        "label": "Nombre de la hoja de ruta",
+        "searchPlaceholder": "Buscar por nombre"
+      }
+    },
+    "tabtitle": {
+      "shift": "Informes de turno",
+      "incident": "Resumen de informes de incidentes",
+      "dailyRunsheet": "Informes de hoja de ruta",
+      "siteSummaryReport": "Informes de resumen del sitio"
+    }
+  },
+  "buttons": {
+    "addVehicle": "Agregar Vehículo",
+    "cancel": "Cancelar",
+    "submit": "Enviar",
+    "edit": "Editar",
+    "save": "Guardar",
+    "addContacts": "Agregar Contacto",
+    "addLocations": "+ Agregar Localizaciones",
+    "dnd": "o arrastrar y soltar",
+    "clickToUpload": "Haga clic para cargar",
+    "imageSizeEF": "SVG, PNG, JPG",
+    "fileSelected": "Archivo Seleccionado",
+    "back": "Atrás",
+    "removeContact": "Eliminar Contacto",
+    "addBannedVisitor": "Agregar Visitante Prohibido",
+    "addBannedLoader": "Agregar Cargador Prohibido",
+    "changeZone": "Cambiar Zona",
+    "removeSites": "Eliminar Sitio",
+    "downloadOfficersPayroll": "Descargar Nómina de {{officers}}",
+    "reset": "Restablecer disponibilidad",
+    "resetTo247": "Establecer disponibilidad 24/7",
+    "saveChanges": "Guardar cambios"
+  },
+  "ho_franchise": {
+    "detail": {
+      "franchise_information": {
+        "officerType": "Tipo de Oficial",
+        "title": "Información de Franquicia",
+        "info": "Agregar Información",
+        "name": "Nombre de la Franquicia",
+        "owner": "Nombre del Propietario",
+        "email": "Correo Electrónico",
+        "number": "Teléfono",
+        "address": "Dirección",
+        "country": "País",
+        "city": "Ciudad",
+        "region": "Región/estado/provincia",
+        "generalInformation": "Información General",
+        "Id": "ID de Franquicia",
+        "joined": "Unido",
+        "monthlyRevenue": "Ingresos Mensuales",
+        "noOfCustomers": "No. de Clientes",
+        "noOfOfficers": "No. de {{officers}}",
+        "serviceZips": "Códigos de Servicio",
+        "noOfEmployees": "No. de Empleados",
+        "labourEfficiency": "Eficiencia Laboral",
+        "hubSpotFranchiseId": "ID de Franquicia de Hubspot",
+        "companyCode": "Código de Empresa",
+        "customerRelation": "Retención de Clientes",
+        "legalEntityName": "Nombre de la entidad legal",
+        "securityLicenseNo": "N.º de licencia de seguridad",
+        "tCsVersion": "Versión de Términos y Condiciones"
+      }
+    },
+    "sidebarListing": {
+      "noFranchiseFound": "¡No se encontraron franquicias!",
+      "searchedTermNotFound": "Tu búsqueda '{{searchedTerm}}' no coincide con ninguna franquicia. Por favor, inténtalo de nuevo."
+    }
+  },
+  "commonText": {
+    "selectContract": "Seleccionar Contrato",
+    "startTime": "Hora de Inicio",
+    "endTime": "Hora de Fin",
+    "table": {
+      "noRecordFound": "No se encontraron Registros"
+    },
+    "squareMeter": "Metros Cuadrados",
+    "newFranchise": "Nueva Franquicia",
+    "newZone": "Nueva Zona",
+    "deleteShape": "Eliminar Forma",
+    "newSite": "Nuevo Sitio",
+    "image": {
+      "alt": "Imagen de {{name}}"
+    },
+    "standAloneSite": "Sitio",
+    "standAloneOfficer": "Oficial",
+    "standAloneSupervisor": "Supervisor",
+    "attachments": "Adjuntos",
+    "contacts": "Contactos",
+    "deals": "Negocios",
+    "tours": "Recorridos",
+    "hits": "Impactos",
+    "allFilters": "Todos los filtros",
+    "clearAll": "Limpiar Todo",
+    "cities": "Ciudades",
+    "states": "estado/provincias",
+    "lastActivityDate": "Fecha de Última Actividad",
+    "createdDate": "Fecha de Creación",
+    "applyFilters": "Aplicar Filtros",
+    "siteNotAdded": "Los Sitios aún no han sido agregados",
+    "notAdded": {
+      "text": "{{name}} aún no ha sido agregado"
+    }
+  },
+  "sales": {
+    "companies": {
+      "noCompanies": "No hay empresas que coincidan con los filtros actuales.",
+      "companiesDataSync": "¿Esperando ver nuevas empresas? Inténtalo de nuevo en unos segundos mientras el sistema se pone al día.",
+      "industryVerticals": "Vertical de la Industria"
+    }
+  },
+  "errors": {
+    "lessThanFour": "Por favor, sube menos de 5 archivos",
+    "maxFilesAllowed": "Máximo {{max}} archivos permitidos",
+    "fileAlreadyUploaded": "El archivo {{fileName}} ya ha sido subido.",
+    "childrenIntersecting": "no debe superponerse con otros elementos hermanos.",
+    "markerNotInsideSite": "debe contener el marcador dentro de él.",
+    "insideParent": "{{label}} debe estar alrededor de la ubicación del pin de la franquicia.",
+    "any.required": "{{#label}} es obligatorio.",
+    "any.max": "{{#label}} debe tener como máximo 20 caracteres de longitud",
+    "any.min": "{{#label}} debe tener al menos 3 caracteres de longitud",
+    "any.minWithValue": "{{#label}} debe tener al menos {{#limit}} caracteres de longitud",
+    "any.empty": "{{#label}} es obligatorio",
+    "any.dropdown": "{{#label}} debe ser seleccionado",
+    "string.required": "{{#label}} es obligatorio",
+    "number.base": "{{#label}} debe ser un número.",
+    "number.required": "{{#label}} es obligatorio",
+    "number.empty": "{{#label}} es obligatorio",
+    "array.min": "{{#label}} debe tener al menos 1 elemento.",
+    "array.base": "El campo {{#label}} debe ser un array.",
+    "string.pattern.base": "El formato de {{#label}} es inválido.",
+    "any.email": "{{#label}} es inválido.",
+    "string.email": "{{#label}} debe ser válido.",
+    "string.empty": "{{#label}} es obligatorio",
+    "dropdown.base": "{{#label}} no puede estar vacío",
+    "somethingWentWrong": "¡Algo salió mal!",
+    "unsupportedImageFormat": "Por favor, sube un archivo jpeg, jpg o png",
+    "notAString": "{{#label}} debe consistir solo en letras."
+  },
+  "toastMessages": {
+    "getSiteDetails": {
+      "success": "¡Datos recuperados exitosamente!",
+      "failure": "No se pudieron obtener los detalles del sitio."
+    },
+    "siteUpdated": {
+      "success": "¡Sitio actualizado exitosamente!",
+      "failure": "¡No se pudo actualizar el sitio!"
+    },
+    "getZoneDetails": {
+      "success": "¡Datos recuperados exitosamente!",
+      "failure": "No se pudieron obtener los detalles de la zona."
+    }
+  },
+  "zones": {
+    "table": {
+      "listing": {
+        "columns": {
+          "name": "Zona",
+          "supervisor": "Supervisor",
+          "sites": "Número de Sitios",
+          "officers": "Número de {{officers}}",
+          "supervisors": "Supervisor(es)"
+        }
+      }
+    },
+    "deleteZone": {
+      "title": "Eliminar zona",
+      "tooltip": "Para eliminar esta zona, elimina primero todos los sitios asociados.",
+      "description": "¿Estás seguro de que deseas eliminar esta zona? Esta acción no se puede deshacer.",
+      "action": "Eliminar zona"
+    }
+  },
+  "vehicles": {
+    "table": {
+      "listing": {
+        "columns": {
+          "registeredNumber": "Número Registrado",
+          "assignedZone": "Asignado a",
+          "image": "Imagen del Auto",
+          "makeModelYear": "Marca/Modelo/Año",
+          "lastMaintenance": "Último Mantenimiento"
+        }
+      },
+      "placeHolder": {
+        "search": "Buscar por Registrado"
+      }
+    },
+    "noImageText": "No se ha cargado ninguna imagen"
+  },
+  "users": {
+    "table": {
+      "listing": {
+        "columns": {
+          "name": "Nombre",
+          "permission": "Permisos",
+          "designation": "Designación",
+          "department": "Departamento",
+          "contact": "Contacto",
+          "status": "estado/provincia de la Cuenta",
+          "dateOfBirth": "Fecha de Nacimiento",
+          "joinedDate": "Fecha de Ingreso",
+          "action": "Acción",
+          "title": "Título",
+          "dutyType": "Tipo de Trabajo",
+          "zone": "Zona",
+          "overtime": "Horas Extras",
+          "lastDeviceScanned": "Último Dispositivo Escaneado",
+          "currentDutyProgress": "Trabajo Actual",
+          "sitesAllocated": "Sitios",
+          "email": "Correo Electrónico",
+          "number": "Teléfono",
+          "joinedOn": "Ingresó el",
+          "userType": "Tipo de Usuario",
+          "jobType": "Tipo de Trabajo",
+          "companyClient": "Empresa / Cliente",
+          "franchiseCount": "Franquicias asociadas",
+          "amount": "Monto",
+          "invoiceDate": "Fecha de factura",
+          "siteName": "Nombre del sitio",
+          "duration": "Duración",
+          "dueDate": "Fecha de vencimiento"
+        }
+      }
+    },
+    "userInformation": {
+      "lastWorkingDay": "Último Día de Trabajo",
+      "title": "Información Básica",
+      "jobDetails": "Detalles del Trabajo",
+      "firstName": "Nombre",
+      "lastName": "Apellido",
+      "email": "Correo Electrónico",
+      "number": "Teléfono",
+      "designation": "Designación",
+      "site": "Sitio",
+      "country": "País",
+      "skill": "Habilidad",
+      "role": "Rol",
+      "zone": "Zona",
+      "generalInformation": "Información General",
+      "gender": "Género",
+      "contact": "Contacto",
+      "type": "Tipo",
+      "level": "Nivel",
+      "userType": "Rol de usuario",
+      "assignedFranchises": "Franquicias asignadas",
+      "roles": "Rol",
+      "john": "p. ej. Juan",
+      "doe": "p. ej. Pérez",
+      "emailPlaceholder": "p. ej. franquicia@teamsignal.com",
+      "phoneNumberPlaceHolder": "p. ej. +12025550167",
+      "select": "Seleccionar",
+      "enter": "Ingresar",
+      "file": "Archivo n.º",
+      "baseRate": "Tarifa base",
+      "changePassword": "Cambiar contraseña",
+      "add": "Agregar",
+      "roll": "Rol"
+    },
+    "details": {
+      "tabs": {
+        "labels": {
+          "profile": "Perfil",
+          "employees": "Empleados",
+          "devices": "Dispositivos",
+          "checkpoints": "Puntos de Control",
+          "attendance": "Asistencia",
+          "availability": "Disponibilidad",
+          "visitors": "Visitantes",
+          "loads": "Cargas",
+          "generalInformation": "Información General",
+          "instructions": "Instrucciones",
+          "reportTemplates": "Reportes",
+          "contracts": "Contratos",
+          "duty": "Trabajo",
+          "locations": "Ubicaciones",
+          "scoreCard": "Tarjeta de Puntuación",
+          "schedule": "Horario",
+          "billing": "Facturación",
+          "permissions": "Permisos",
+          "obxData": "Datos de OBX",
+          "employmentHistory": "Historial de empleo",
+          "invoice": "Facturas"
+        }
+      }
+    },
+    "usersAttendance": {
+      "assignedShifts": "Turnos Asignados",
+      "presentShifts": "Turnos Presentes",
+      "absentShifts": "Turnos Ausentes",
+      "table": {
+        "listing": {
+          "columns": {
+            "site": "Sitio",
+            "date": "Fecha",
+            "checkIn": "Entrada",
+            "checkOut": "Salida ",
+            "status": "estado/provincia",
+            "shiftType": "Tipo de Turno",
+            "shiftStart": "Inicio de Turno",
+            "shiftEnd": "Fin de Turno"
+          }
+        }
+      },
+      "dropDownOptionsLabels": {
+        "statuses": "estado/provincias",
+        "supervisor": "Supervisor",
+        "allUsers": "Todos los Usuarios",
+        "userType": "Tipo de Usuario",
+        "officers": "{{officers}}",
+        "allStatuses": "Todos los estado/provincias",
+        "pending": "Pendiente",
+        "approved": "Aprobado",
+        "rejected": "Rechazado",
+        "present": "Presente",
+        "absent": "Ausente",
+        "onLeave": "En Licencia",
+        "all": "Todos",
+        "dedicated": "{{dedicated}}",
+        "patrol": "{{patrol}}",
+        "shiftType": "Tipo de Turno",
+        "extra": "Trabajo extra"
+      }
+    },
+    "usersAvailability": {
+      "listing": {
+        "columns": {
+          "days": "Inicio del Día",
+          "startTime": "Hora de Inicio",
+          "endTime": "Hora de Fin",
+          "dayEnd": "Fin del Día"
+        }
+      },
+      "heading": "Disponibilidad del Oficial",
+      "desc": "Programa de disponibilidad diaria de {{officers}} para trabajos",
+
+      "submit": "Guardar"
+    },
+    "graph": {
+      "users": "Usuarios",
+      "missedJobs": "Trabajos Perdidos",
+      "jobsPerformed": "Trabajos Realizados",
+      "dedicated": "{{dedicated}}",
+      "patrol": "{{patrol}}"
+    },
+    "homeofficeusers": "Usuarios de Home Office",
+    "franchiseusers": "Usuarios de franquicia",
+    "level": "Nivel",
+    "filters": {
+      "userType": {
+        "all": "Todos los usuarios",
+        "dataCleaner": "Data Cleaner",
+        "dataEnricher": "Data Enricher",
+        "dataValidator": "Data Validator",
+        "leadsManager": "Leads Manager",
+        "hoAgent": "Ho Agent",
+        "marketsManager": "Markets Manager",
+        "homeOfficerPayroll": "Home Officer Payroll",
+        "salesPerson": "Sales Person",
+        "homeOfficerFulfillment": "Home Officer Fulfillment",
+        "salesManager": "Sales Manager",
+        "homeOfficer": "Home Officer",
+        "homeOfficerStar": "Home Officer Star",
+        "homeOfficeMember": "Miembro de Home Office"
+      },
+      "franchiseUserType": {
+        "all": "Todos los usuarios",
+        "supervisor": "Supervisor",
+        "officer": "Oficial",
+        "director": "Director",
+        "advancedOfficer": "Oficial avanzado",
+        "coordinator": "Coordinador",
+        "franchiseOwner": "Propietario de franquicia"
+      }
+    },
+    "userRoles": "Roles de usuario",
+    "employmentHistory": {
+      "reason": "Motivo",
+      "franchise": "Franquicia:",
+      "hired": {
+        "dateTitle": "Fecha de contratación",
+        "title": "Contratado"
+      },
+      "terminated": {
+        "dateTitle": "Último día de trabajo",
+        "title": "Dado de baja"
+      },
+      "rehired": {
+        "dateTitle": "Fecha de recontratación",
+        "title": "Recontratado"
+      }
+    },
+    "terminateUser": {
+      "title": "Dar de baja usuario",
+      "description": "Estás a punto de dar de baja a este usuario. Confirma esta acción y proporciona un motivo en el campo de abajo.",
+      "lastWorkingDay": "Último día de trabajo",
+      "addReason": "Agregar motivo",
+      "terminateCta": "Dar de baja"
+    },
+    "obxData": {
+      "due": "Vencimiento",
+      "employee": "Empleado",
+      "manager": "Gerente",
+      "submittedOn": "Enviado el",
+      "on": "el",
+      "waitingForSubmission": "Aún esperamos tu envío",
+      "pendingSubmissionDescription": "Parece que aún no has enviado el formulario. Por favor complétalo para que podamos continuar.",
+      "submitForm": "Enviar formulario",
+      "questions": "Preguntas",
+      "yourAnswers": "Tus respuestas",
+      "yourSubmission": "Tu envío",
+      "yes": "Sí",
+      "no": "No",
+      "modal": {
+        "header": "Este formulario debe completarse para continuar con la incorporación del usuario.",
+        "selectOption": "Selecciona una opción",
+        "selectOptionValidation": "Por favor selecciona una opción",
+        "submitForm": "Enviar formulario",
+        "cancel": "Cancelar"
+      },
+      "obxFormTitles": {
+        "day1": "Día 1",
+        "day30": "Día 30",
+        "day90": "Día 90",
+        "day365": "1 año completado"
+      }
+    }
+  },
+  "sites": {
+    "table": {
+      "listing": {
+        "columns": {
+          "site": "Nombre del Sitio",
+          "client": "Cliente",
+          "company": "Empresa",
+          "dutyType": "Tipo",
+          "zone": "Zona",
+          "supervisor": "Supervisor",
+          "officers": "{{officers}}",
+          "status": "estado/provincia",
+          "monthlyRevenue": "Ingresos Mensuales",
+          "clientsName": "Nombre del Cliente",
+          "contact": "Contacto",
+          "supervisors": "Supervisor(es)",
+          "clientsPhone": "Teléfono del cliente",
+          "customerId": "ID del cliente"
+        }
+      }
+    },
+    "createSite": {
+      "holidayMultiplier": "Multiplicador de Vacaciones",
+      "holidayGroup": "Grupo de Vacaciones",
+      "holidayMultiplierPlaceholder": "Ej., 1.5x",
+      "holidayMultiplierPlaceholderNoX": "Ej., 1.5",
+      "billingOptions": {
+        "flatRate": "Tarifa Fija",
+        "chargePerAlarm": "Cobro por alarma",
+        "nonBillable": "No facturable"
+      },
+      "yes": "Sí",
+      "no": "No",
+      "applyFlatRate": "Aplicar tarifa fija",
+      "toggleNotApply": "Activa si deseas aplicar una tarifa fija para este contrato.",
+      "toggleApply": "Introduce el valor para el contrato de tarifa fija",
+      "billableBreaks": "Descansos facturables:",
+      "createSite": "Crear sitio",
+      "selectInvoiceLineItem": "Seleccionar concepto de factura",
+      "inUTC": "(en UTC)",
+      "billingRate": "Facturación",
+      "peakHours": "Horas pico",
+      "billingType": "Tipo de facturación",
+      "dispatch": "Despacho",
+      "dispatchBillingInfoComponent": "Información de facturación de despacho",
+      "createASite": "Crear un sitio",
+      "siteDetails": "Detalles del sitio",
+      "siteName": "Nombre del sitio",
+      "companyName": "Nombre de la empresa",
+      "industryVertical": "Vertical de la industria",
+      "siteType": "Tipo de sitio",
+      "address": "Dirección",
+      "addressLine1": "Línea de dirección 1",
+      "addAddress1": "Agregar dirección 1",
+      "addressLine2": "Línea de dirección 2",
+      "addAddress2": "Agregar dirección 2",
+      "typeToAddLocation": "Escribe para agregar ubicación",
+      "add": "Agregar",
+      "select": "Seleccionar",
+      "state": "Estado/Provincia",
+      "country": "País",
+      "zipCode": "Código postal",
+      "clientDetails": "Detalles del cliente",
+      "name": "Nombre",
+      "phone": "Teléfono",
+      "email": "Correo electrónico",
+      "createAContract": "Crear un contrato",
+      "contractName": "Nombre del contrato",
+      "addContractName": "Agregar nombre de contrato",
+      "timeZone": "Zona horaria",
+      "service": "Servicio",
+      "serviceType": "Tipo de servicio",
+      "officersRequired": "Oficiales requeridos",
+      "hourlyRate": "Tarifa por hora",
+      "lineItem": "Conceptos de factura",
+      "billRate": "Tarifa de facturación ($)",
+      "startTime": "Hora de inicio",
+      "endTime": "Hora de fin",
+      "jobDays": "Días de trabajo:",
+      "additionalServices": "Servicios adicionales:",
+      "visitorManagement": "Gestión de visitantes",
+      "loadManagement": "Gestión de cargas",
+      "pushNotification": "Notificación push",
+      "billingFrequency": "Frecuencia de facturación",
+      "billingFrequencyType": "Tipo de frecuencia de facturación",
+      "billingStartDate": "Fecha de inicio de facturación",
+      "contractStartDate": "Fecha de inicio del contrato",
+      "contractEndDate": "Fecha de fin del contrato",
+      "PaymentTerms": "Términos de pago",
+      "firstName": "Nombre",
+      "lastName": "Apellido",
+      "serviceName": "Agregar nombre de servicio",
+      "attachmentLink": "Enlace de adjunto",
+      "attachmentLinkPlaceholder": "https://...",
+      "revenue": "Ingresos",
+      "cycleReferenceDate": "Fecha de referencia del ciclo",
+      "siteLocation": "Ubicación del sitio",
+      "franchiseId": "ID de franquicia",
+      "designation": "Designación",
+      "instructions": "Instrucciones",
+      "cancel": "Cancelar",
+      "save": "Guardar",
+      "contractDetails": "Detalles del contrato",
+      "addServices": "Agregar servicios",
+      "addServicesText": "Agregar servicios para el contrato del sitio",
+      "city": "Ciudad",
+      "eg20": "Ej., 20",
+      "eg2": "Ej., 2",
+      "holidayRate": "Tarifa de vacaciones",
+      "frequency": {
+        "monthly": "Mensual",
+        "biWeekly": "Quincenal",
+        "weekly": "Semanal",
+        "semiMonthly": "Dos veces al mes",
+        "event": "Evento",
+        "flat": "Fijo"
+      },
+      "billingTypeOptions": {
+        "preBill": "Pre-facturación",
+        "postBill": "Post-facturación"
+      },
+      "dueUponReceipt": "Vencimiento al recibir",
+      "serviceTypes": {
+        "dedicated": "Dedicado",
+        "patrol": "Patrulla",
+        "dispatch": "Despacho"
+      },
+      "industryTypes": {
+        "manufacturing": "Manufactura",
+        "industrial": "Industrial",
+        "distribution": "Distribución",
+        "residential": "Residencial",
+        "commercial": "Comercial"
+      }
+    },
+    "filters": {
+      "attendance": {
+        "all": "Todos"
+      },
+      "duties": {
+        "all": "Todos los Turnos"
+      },
+      "locations": {
+        "all": "Todos"
+      },
+      "zoneType": {
+        "all": "Todas las Zonas"
+      },
+      "sitesType": {
+        "all": "Todos los Sitios",
+        "functional": "Funcional",
+        "requiresAttention": "Requiere Atención",
+        "nonFunctional": "No Funcional",
+        "site": "Sitios",
+        "allSitesValue": "todos",
+        "allStatus": "Todos los estados"
+      },
+      "serviceType": {
+        "all": "Todos los Servicios",
+        "dedicated": "{{dedicated}}",
+        "patrol": "{{patrol}}",
+        "hybrid": "Híbrido"
+      }
+    },
+    "searchFilter": "Buscar por Nombre del Sitio",
+    "details": {
+      "tabs": {
+        "labels": {
+          "clients": "Clientes",
+          "employees": "Empleados",
+          "devices": "Dispositivos",
+          "checkpoints": "Puntos de Control",
+          "attendance": "Asistencia",
+          "visitors": "Visitantes",
+          "loads": "Cargas",
+          "generalInformation": "Información General",
+          "instructions": "Instrucciones",
+          "reportTemplates": "Reportes",
+          "contracts": "Contratos",
+          "jobs": "Trabajos",
+          "duty": "Programación",
+          "locations": "Ubicaciones",
+          "Email": "Correo"
+        }
+      },
+      "addendumNotificationBar": "Se ha creado un anexo para el/los contrato(s). Revísalo, reconócelo y realiza las acciones necesarias si corresponde.",
+      "reviewAndAcknowledge": "Revisar y reconocer",
+      "viewAddendum": "Ver anexo",
+      "addendum": {
+        "selectContract": "Seleccionar contrato",
+        "selectContractDesc": "Selecciona un contrato para ver su anexo."
+      }
+    },
+    "siteInformation": {
+      "secondaryEmail": "Correo electrónico secundario del cliente",
+      "title": "Información del Sitio",
+      "info": "Agregar Información",
+      "name": "Nombre del Sitio",
+      "owner": "Nombre del Propietario",
+      "client": "Nombre del Cliente",
+      "email": "Correo Electrónico del Cliente",
+      "primaryEmail": "Correo Electrónico de Contacto Principal",
+      "number": "Teléfono del Cliente",
+      "address": "Dirección",
+      "country": "País",
+      "city": "Ciudad",
+      "region": "Región/estado/provincia",
+      "generalInformation": "Información General",
+      "instructions": "Agregar Instrucciones",
+      "dispatchInstructions": "{{dispatch}} Instrucciones",
+      "instructionsDesc": "Para anular las instrucciones originales o agregar nuevas, puedes seleccionar un sitio y agregar nuevas instrucciones",
+      "Id": "ID del Sitio",
+      "joined": "Unido",
+      "lastName": "Apellido",
+      "monthlyRevenue": "Ingresos Mensuales",
+      "noOfCustomers": "No. de Clientes",
+      "serviceZips": "Códigos Postales de Servicio",
+      "noOfEmployees": "No. de Empleados",
+      "labourEfficiency": "Eficiencia Laboral",
+      "customerRelation": "Retención de Clientes",
+      "person": "Persona",
+      "location": "Ubicación",
+      "type": "Tipo",
+      "supervisor": "Supervisor",
+      "supervisors": "Supervisores",
+      "contact": "Teléfono del Supervisor",
+      "status": "estado/provincia",
+      "generalInstructions": "Instrucciones Generales",
+      "generalInstructionsDescription": "Estas son instrucciones genéricas y se mostrarán en todos los trabajos",
+      "dispatchInstructionsDescription": "Estas son órdenes de puesto para el agente del centro de llamadas",
+      "exceptionEditor": "Editor de instrucciones de órdenes de puesto",
+      "exceptionEditorDes": "Puedes editar o agregar órdenes de puesto para las instrucciones del sitio desde este editor.",
+      "instructionEditor": "Editor de Instrucciones",
+      "instructionEditorDes": "Puedes editar o agregar instrucciones desde este editor.",
+      "specifyDate": "Especificar Día (opcional)",
+      "addException": "Agregar orden de puesto",
+      "addExceptionInstructions": "Instrucciones de órdenes de puesto",
+      "addExceptionDetails": "Estas son instrucciones de órdenes de puesto que se seguirán en días específicos.",
+      "contractDuration": "Duración del Contrato",
+      "noInstructionAdded": "¡No se han agregado instrucciones!",
+      "noInstructionDesc": "Actualmente no hay instrucciones agregadas para este sitio. Continúa y agrega instrucciones para que los {{officers}} las sigan.",
+      "noDispatchInstructionTitle": "¡No se han agregado instrucciones de {{dispatch}}!",
+      "noDispatchInstructionDesc": "Actualmente no hay instrucciones de orden de puesto de {{dispatch}} agregadas para este sitio. Continúe y agregue instrucciones para que los {{officers}} las sigan.",
+      "createDispatchInstruction": "Crear instrucción de orden de puesto de {{dispatch}}",
+      "zoneRequire": "El sitio debe ser parte de la zona,",
+      "supervisorRequire": "El sitio debe tener un supervisor",
+      "customerPortalInvitedEmails": "Correos Electrónicos Invitados del Portal del Cliente",
+      "zone": "zona",
+      "emergencyContact": "Contacto de Emergencia",
+      "siteRate": "Tarifa del sitio",
+      "contractDeleteTitle": "¡Eliminar contrato!",
+      "contractDeleteDesc": "¿Estás seguro de que deseas eliminar este contrato? Esta acción no se puede deshacer.",
+      "contractDeleteButtonConfirm": "Eliminar contrato",
+      "postOrders": "Órdenes de puesto",
+      "dailySiteSummaryReceivers": "Destinatarios del resumen diario del sitio",
+      "incidentReportReceivers": "Destinatarios del informe de incidentes",
+      "inviteCbxUsers": "Invitar Usuarios de CBX al Sitio",
+      "billableBreaks": "Pausas Facturables",
+      "yes": "Sí",
+      "no": "No",
+      "attachments": "Anexos",
+      "customerId": "ID de Cliente",
+      "geofenceRadius": "Radio de Geovalla (metros)",
+      "enabled": "Habilitado",
+      "disabled": "Deshabilitado",
+      "geofencing": {
+        "title": "Geovalla",
+        "description": "Habilitar el interruptor activa la función de geovalla para el sitio"
+      }
+    },
+    "graph": {
+      "sites": "Sitios",
+      "clients": "Clientes",
+      "contracts": "Contratos",
+      "active": "Activo",
+      "upcoming": "Próximos",
+      "inActive": "Inactivo",
+      "education": "Educación",
+      "healthCare": "Cuidado de la Salud",
+      "residential": "Residencial",
+      "others": "Otros",
+      "hyperstores": "Hipermercados",
+      "industryVerticals": "Vertical de la Industria",
+      "functional": "Funcional",
+      "nonFunctional": "No Funcional"
+    },
+    "sidebarListing": {
+      "noFranchiseFound": "¡No se encontraron sitios!",
+      "notFound": "¡No se encontraron {{sidebarModule}}!",
+      "noSiteFound": "¡No se encontraron sitios!",
+      "filteredDataFound": "No se encontraron datos para los filtros seleccionados. Por favor, inténtalo de nuevo.",
+      "searchedTermNotFound": "Tu búsqueda '{{searchedTerm}}' no coincidió con ningún sitio. Por favor, inténtalo de nuevo."
+    },
+    "jobs": {
+      "accordionHeader": {
+        "designation": "Designación",
+        "shiftDays": "Días de Turno",
+        "additionalServices": "Servicios Adicionales",
+        "visitor": "Visitante",
+        "load": "Carga",
+        "createExtraJob": "Crear Trabajo Adicional",
+        "deleteExtraJob": "Eliminar Trabajo Adicional",
+        "name": {
+          "dedicated": "Trabajo {{dedicated}}",
+          "extra": "Trabajo Adicional",
+          "patrol": "Trabajo de Patrulla",
+          "extraHit": "Golpe Extra",
+          "extraTag": "Extra"
+        },
+        "serviceName": "Nombre del servicio",
+        "contract": "Contrato",
+        "createNewNote": "Crear nueva nota",
+        "created": "Creado por: ",
+        "updated": "Actualizado por: ",
+        "At": "el "
+      },
+      "deleteExtraJobModal": {
+        "title": "¡Eliminar Trabajo Adicional!",
+        "description": "¿Estás seguro de que deseas eliminar este trabajo adicional? Se eliminarán todos los trabajos adicionales asociados con este.",
+        "deleteBtn": "Eliminar Trabajo"
+      },
+      "shiftList": {
+        "shifts": "Turnos",
+        "startTime": "Hora de Inicio",
+        "endTime": "Hora de Finalización",
+        "days": "Días",
+        "serviceTime": "Tiempo de servicio",
+        "visitType": "Tipo"
+      },
+      "contractsFilterTitle": "Todos los contratos",
+      "splitBtn": "Dividir turno",
+      "editJobBtn": "Editar trabajo",
+      "breakConfigurations": "Configuración de descansos",
+      "editHit": "Editar impacto",
+      "assignToRunsheet": "Asignar a hoja de ruta",
+      "cancelBadge": "Cancelado",
+      "addTourInfoMsg": "Asigna primero una plantilla de recorrido para agregar este impacto a una hoja de ruta.",
+      "cancelHit": "Cancelar impacto",
+      "cancelHitModal": {
+        "title": "¡Cancelar impacto!",
+        "description": "¿Estás seguro de que quieres cancelar este impacto en las fechas seleccionadas? Esto también lo eliminará de la programación. Ten en cuenta que todos los impactos de una hoja de ruta en progreso, donde el usuario no haya iniciado la navegación, también se cancelarán (si los hay).",
+        "deleteBtn": "Sí, cancelar impacto",
+        "cancelBtn": "No"
+      },
+      "noTourAssignedModal": {
+        "title": "¡Ninguna plantilla de recorrido asignada!",
+        "description": "Agrega una plantilla de recorrido para asignar este impacto a una hoja de ruta.",
+        "addBtn": "Agregar plantilla",
+        "cancelBtn": "Cancelar"
+      },
+      "assignToRunsheetModal": {
+        "title": "Asignar a hoja de ruta",
+        "description": "Expande el día del impacto que quieres asignar a una hoja de ruta. Al expandir el día del impacto se mostrarán todas las hojas de ruta donde se puede agregar este impacto.",
+        "cancelBtn": "Cancelar",
+        "saveBtn": "Asignar",
+        "selectLabel": "Seleccionar",
+        "pathCreationFailed": "{{days}} hoja(s) de ruta no pudieron crear la ruta",
+        "noRunsheetSelected": "Ninguna hoja de ruta seleccionada",
+        "noRunsheetAvailable": "¡No hay hojas de ruta disponibles!",
+        "noRunsheetText": "Actualmente no hay hojas de ruta presentes en el momento de este impacto."
+      },
+      "deleteShiftModal": {
+        "title": "¡Eliminar turno!",
+        "description": "Selecciona las fechas en las que deseas eliminar este turno.",
+        "dateRangeSelectText": "Seleccionar rango de fechas",
+        "deleteBtn": "Eliminar turno",
+        "cancelBtn": "Cancelar",
+        "errorMessages": {
+          "startDateRequired": "La fecha de inicio es obligatoria",
+          "endDateRequired": "La fecha de fin es obligatoria"
+        }
+      },
+      "error": {
+        "jobEnded": "La duración del trabajo ha finalizado",
+        "contractTerminated": "El contrato ha expirado"
+      },
+      "editJob": {
+        "title": "¡Editar hora de trabajo!",
+        "description": "¿Estás seguro de que deseas editar la hora de trabajo? Ten en cuenta que la duración total del trabajo debe mantenerse igual. Si el trabajo está dividido, la división se eliminará y todas las asignaciones existentes se borrarán. El nuevo horario de trabajo será efectivo a partir del próximo turno.",
+        "updateJobTime": "Actualizar hora de trabajo",
+        "startTime": "Hora de inicio",
+        "endTime": "Hora de fin",
+        "cancel": "Cancelar"
+      },
+      "editDedicatedJobTime": {
+        "title": "¡Editar hora de trabajo!",
+        "description": "¿Estás seguro de que deseas editar la hora de trabajo? Ten en cuenta que la duración total del trabajo debe mantenerse igual. Si el trabajo está dividido, la división se eliminará y todas las asignaciones existentes se borrarán. El nuevo horario de trabajo será efectivo a partir del próximo turno.",
+        "updateJobTime": "Actualizar hora de trabajo",
+        "startTime": "Hora de inicio",
+        "endTime": "Hora de fin",
+        "cancel": "Cancelar",
+        "updateShiftTime": "Actualizar hora de turno"
+      },
+      "breakRuleConfiguration": {
+        "details": "Detalles",
+        "description": "A continuación se muestra la información sobre la configuración de descansos",
+        "saveChanges": "Guardar cambios",
+        "payable": "Pagar al oficial por los descansos:",
+        "cancel": "Cancelar",
+        "breakRule": "Regla de descansos"
+      }
+    },
+    "cannotCreateExtraJobForNonFunctionalSite": "No se pueden crear trabajos adicionales para un sitio no funcional",
+    "tooltips": {
+      "secondaryContactEmailTooltip": "Los informes diarios se enviarán a este correo electrónico.",
+      "primaryContactEmailTooltip": "Los informes diarios se enviarán a este correo electrónico.",
+      "siteRateTooltip": "Esta será la tarifa por hora de todos los oficiales que realicen trabajos en este sitio.",
+      "clientPhoneNoTooltip": "El número de teléfono debe tener el formato +15523344332.",
+      "applyFlatRateTooltip": "Se aplica solo cuando no se selecciona una tarifa fija."
+    }
+  },
+  "sitesAttendance": {
+    "table": {
+      "listing": {
+        "columns": {
+          "user": "Usuario",
+          "date": "Fecha",
+          "checkInTime": "Hora de Entrada",
+          "checkOutTime": "Hora de Salida",
+          "status": "estado/provincia",
+          "jobType": "Tipo de Trabajo"
+        }
+      }
+    },
+    "graph": {
+      "userTypes": "Tipos de Usuario",
+      "attendanceTypes": "Tipos de Asistencia",
+      "absents": "Ausencias",
+      "leaves": "Licencias",
+      "contracts": "Contratos",
+      "noOfRequest": "Número de Solicitudes",
+      "petrolMissed": "{{patrol}}s Perdidas",
+      "dedicatedMissed": "Trabajos {{dedicated}}s Perdidos",
+      "dedicated": "{{dedicated}}",
+      "petrol": "{{patrol}}",
+      "missRate": "Tasa de Ausencias",
+      "dutiesPerformed": "Trabajos Realizados"
+    }
+  },
+  "devices": {
+    "tables": {
+      "listing": {
+        "columns": {
+          "id": "ID",
+          "name": "Nombre del Dispositivo",
+          "type": "Tipo",
+          "installationDate": "Fecha de Instalación",
+          "batteryRenewal": "Renovación de Batería",
+          "lastScannedOn": "Último Escaneo en",
+          "lastScannedBy": "Último Escaneado Por",
+          "site": "Ubicación del Sitio"
+        }
+      }
+    }
+  },
+  "checkpoints": {
+    "tables": {
+      "listing": {
+        "columns": {
+          "name": "Nombre del Punto de Control",
+          "type": "Tipo de Punto de Control",
+          "deviceName": "Dispositivo",
+          "location": "Ubicación"
+        }
+      }
+    },
+    "update": {
+      "button": {
+        "updateCheckpoint": "Actualizar Punto de Control"
+      }
+    },
+    "create": {
+      "button": {
+        "createCheckpoint": "Crear Punto de Control"
+      }
+    },
+    "form": {
+      "checkPointName": {
+        "label": "Nombre del Punto de Control",
+        "placeHolder": "Seleccionar Nombre del Punto de Control"
+      },
+      "checkPointType": {
+        "label": "Tipo de Punto de Control",
+        "placeHolder": "Seleccionar Tipo de Punto de Control"
+      },
+      "device": {
+        "label": "Seleccionar un Dispositivo",
+        "placeHolder": "Seleccionar Dispositivo"
+      },
+      "location": {
+        "label": "Seleccionar una Ubicación",
+        "placeHolder": "Seleccionar Ubicación"
+      },
+      "emptyDevicesList": "No hay dispositivos configurados para este sitio."
+    },
+    "model": {
+      "texts": {
+        "createACheckpoint": "Crear un Punto de Control",
+        "updateACheckpoint": "Actualizar Punto de Control",
+        "createACheckpointDes": "Selecciona un dispositivo y asocia una ubicación para crear un punto de control",
+        "updateACheckpointDes": "Selecciona un dispositivo y asocia una ubicación para actualizar un punto de control"
+      }
+    },
+    "createCheckpoint": "Crear un Punto de Control"
+  },
+  "locations": {
+    "tables": {
+      "listing": {
+        "columns": {
+          "id": "ID",
+          "name": "Nombre de la Ubicación",
+          "coordinates": "Coordenadas"
+        }
+      }
+    },
+    "update": {
+      "button": {
+        "updateLocation": "Actualizar Ubicación"
+      }
+    },
+    "create": {
+      "button": {
+        "createLocation": "Crear Ubicación"
+      }
+    },
+    "form": {
+      "locationName": {
+        "label": "Nombre de la Ubicación",
+        "placeHolder": "por ejemplo: Estacionamiento"
+      }
+    },
+    "model": {
+      "texts": {
+        "createLocation": "Crear Ubicación",
+        "createLocationDes": "Crea una nueva ubicación dentro de un sitio donde deseas agregar tus dispositivos o agregar Geo-Localización."
+      }
+    },
+    "createLocation": "Crear Ubicación"
+  },
+  "reportTemplates": {
+    "tables": {
+      "listing": {
+        "columns": {
+          "shift": "Turno",
+          "assignedBy": "Asignado Por",
+          "assignedTo": "Asignado A",
+          "templateType": "Tipo de Plantilla"
+        },
+        "columnsHeader": {
+          "event": "Evento",
+          "description": "Descripción",
+          "time": "Tiempo (en minutos)"
+        }
+      }
+    }
+  },
+  "thresholdValues": {
+    "headings": {
+      "main": "Valores Umbral",
+      "desc": "Estos valores afectarán la generación de Incumplimientos del oficial"
+    },
+    "tables": {
+      "listing": {
+        "columnsHeader": {
+          "event": "Evento",
+          "description": "Descripción del Evento",
+          "time": "Intervalo de Tiempo (en minutos)"
+        }
+      }
+    }
+  },
+  "runSheetSettings": {
+    "headings": {
+      "duration": "Duración",
+      "hits": "Golpes",
+      "main": "Configuraciones de {{runsheet}}",
+      "desc": "Establezca valores mínimos y máximos para la generación optimizada de hojas de ruta",
+      "listing": "Estas son plantillas de hoja de ruta. Asigna hoja de ruta desde la programación."
+    },
+    "tables": {
+      "listing": {
+        "columnsHeader": {
+          "event": "Evento",
+          "description": "Descripción",
+          "time": "Tiempo (en minutos)",
+          "count": "Conteo"
+        }
+      }
+    }
+  },
+  "breakRules": {
+    "headings": {
+      "main": "Reglas de Descanso",
+      "desc": "Defina intervalos de descanso que actúan como reglas genéricas para todas las hojas de ruta"
+    },
+    "tables": {
+      "listing": {
+        "columnsHeader": {
+          "breakType": "Tipo de Descanso",
+          "description": "Descripción del Evento",
+          "time": "Intervalo de Tiempo (en minutos)"
+        }
+      }
+    },
+    "searchPlaceholder": "Buscar regla de descanso"
+  },
+  "serviceRatesSettings": {
+    "headings": {
+      "operationalServices": "Servicios Operativos",
+      "additionalClientServices": "Servicios Adicionales para Clientes",
+      "main": "Tarifas de Servicios",
+      "desc": "Los cargos por servicios se pueden establecer de forma general, pero se pueden cambiar para los clientes"
+    },
+    "tables": {
+      "listing": {
+        "columnsHeader": {
+          "serviceType": "Tipo de Servicio",
+          "unitRate": "Tarifa Unitaria",
+          "rate": "Tarifa (en $)"
+        }
+      }
+    }
+  },
+  "systemDefaults": {
+    "headings": {
+      "jobShift": "Turno de Trabajo",
+      "devices": "Dispositivo",
+      "autoClocOut": "Cierre de Sesión Automático",
+      "officersAvailability": "Disponibilidad de {{officers}}",
+      "supervisorAvailability": "Disponibilidad de Supervisores",
+      "extraServices": "Servicios Adicionales",
+      "main": "Configuración Predeterminada del Sistema",
+      "geofence": "Geovalla",
+      "boundaryRadius": "Radio de límite",
+      "desc": "Estas son configuraciones predeterminadas del sistema, puedes cambiarlas según tus preferencias",
+      "emailAutomation": "Automatización de correo electrónico",
+      "overtimeHoursLimit": "Límite de horas extra",
+      "invoiceGeneration": "Generación de facturas",
+      "payrollProcessor": "Procesador de nómina",
+      "timeFormat": "Formato de hora",
+      "onDemandTracking": "Seguimiento bajo demanda"
+    },
+    "tables": {
+      "listing": {
+        "columnsHeader": {
+          "serviceType": "Tipo de Servicio",
+          "unitRate": "Tarifa Unitaria",
+          "rate": "Tarifa (en $)",
+          "value": "Valores",
+          "eventName": "Nombre del Evento",
+          "deviceName": "Nombre del Dispositivo",
+          "description": "Descripción",
+          "eventDescription": "Descripción del Evento",
+          "event": "Evento",
+          "userType": "Tipo de Usuario",
+          "timeBracketsInMins": "Intervalo de Tiempo (en minutos)",
+          "time": "Tiempo",
+          "configurationType": "Tipo de configuración",
+          "currentSetting": "Configuración actual",
+          "timeAutomation": "Tiempo",
+          "timeInvoiceGeneration": "Tiempo (hora local de la franquicia)"
+        }
+      }
+    }
+  },
+  "templates": {
+    "staticFields": {
+      "visitor": {
+        "visitorLabel": "Visitor CheckIn/CheckOut",
+        "firstLabel": "Visitor CheckIn",
+        "secondInputLabel": "Visitor CheckOut",
+        "checkIn": "Visitor Check In",
+        "checkOut": "Visitor Check Out",
+        "changeableValueCriteria": "visitorsCheckOut"
+      },
+      "loads": {
+        "loadsLabel": "Loads CheckIn/CheckOut",
+        "firstLabel": "Loads CheckIn",
+        "secondInputLabel": "Loads CheckOut",
+        "checkIn": "Loads Check In",
+        "checkOut": "Loads Check Out",
+        "changeableValueCriteria": "loadsCheckOut"
+      }
+    },
+    "listing": {
+      "columns": {
+        "title": "Informe",
+        "createdOn": "Creado En",
+        "templateType": "Tipo de Plantilla",
+        "actions": "Acciones"
+      },
+      "actions": {
+        "edit": "Editar",
+        "replace": "Reemplazar Plantilla de Informe",
+        "delete": "Eliminar"
+      }
+    },
+    "create": {
+      "addReportTemplate": "Agregar Plantilla de Informe",
+      "report": {
+        "title": "Título del Informe",
+        "type": "Tipo de Informe",
+        "titlePlaceholder": "Título de la Plantilla de Informe (por ejemplo, Informe de Inspección de Equipos)",
+        "description": "Descripción del Informe",
+        "descriptionPlaceholder": "Descripción Adicional (opcional)",
+        "dropdown": {
+          "equipmentInspection": "Inspección de Equipos",
+          "vehicleInspection": "Inspección de Vehículos",
+          "tourReports": "Informes de {{tour}}",
+          "shiftDayEndReport": "Informe de Fin de Día de Turno",
+          "incidentReport": "Informe de Incidente"
+        }
+      },
+      "section": {
+        "title": "Título de la Sección",
+        "titlePlaceholder": "Título de la Sección (por ejemplo, Protocolos de Seguridad y Características)",
+        "description": "Descripción de la Sección",
+        "descriptionPlaceholder": "Descripción Adicional (opcional)",
+        "field": {
+          "title": "Declaración de Pregunta",
+          "titlePlaceholder": "Declaración de la Pregunta (por ejemplo, ¿Está funcionando correctamente el mecanismo de apagado de emergencia?)",
+          "description": "Descripción de la Pregunta",
+          "descriptionPlaceholder": "Instrucciones (opcional)",
+          "answerType": "Tipo de Respuesta",
+          "responseType": {
+            "webCam": "Imagen de cámara web",
+            "text": "Texto/Descripción",
+            "number": "Número",
+            "dateTime": "Fecha y Hora",
+            "radio": "Botones de Radio (Selección Única)",
+            "multiselect": "Selección Múltiple",
+            "imageVideo": "Imagen/Video",
+            "date": "Fecha",
+            "time": "Hora",
+            "dropdown": "Desplegable",
+            "phoneNumber": "Número de teléfono",
+            "description": "Caja de descripción",
+            "signature": "Firma"
+          },
+          "option": {
+            "placeholder": "Etiqueta de Opción"
+          }
+        }
+      },
+      "btn": {
+        "back": "Atrás",
+        "save": "Guardar",
+        "cancel": "Cancelar",
+        "addQuestion": "Agregar Pregunta",
+        "addSection": "Agregar Sección",
+        "delete": "Eliminar",
+        "newOption": "Agregar opción"
+      },
+      "checkbox": {
+        "required": "Requerido"
+      }
+    },
+    "delete": {
+      "title": "¡Eliminar Informe!",
+      "description": "¿Estás seguro de que deseas eliminar este informe?",
+      "deleteButtonText": "Eliminar Informe",
+      "cancelButtonText": "Cancelar"
+    },
+    "replace": {
+      "title": "Reemplazar Plantilla de Informe",
+      "bothDescription": "Selecciona un sitio y una plantilla de informe para reemplazar",
+      "description": "Selecciona un sitio para reemplazar la plantilla",
+      "siteDropdownLabel": "Seleccionar Sitio",
+      "reportDropdownLabel": "Seleccionar una Plantilla de Informe",
+      "replaceButtonText": "Reemplazar Plantilla de Informe",
+      "cancelButtonText": "Cancelar"
+    },
+    "edit": {
+      "error": {
+        "fileLength": "No se pueden cargar más de 4 archivos"
+      }
+    }
+  },
+  "contracts": {
+    "tables": {
+      "listing": {
+        "columns": {
+          "duty": "Trabajo",
+          "startDate": "Fecha de Inicio",
+          "endDate": "Fecha de Fin",
+          "startTime": "Hora de Inicio",
+          "endTime": "Hora de Fin",
+          "designation": "Designación",
+          "dutyDays": "Días de Trabajo",
+          "shifts": "Turnos",
+          "additionalServices": "Servicios Adicionales",
+          "officersCount": "Cantidad de {{officers}}",
+          "name": "Nombre",
+          "serviceName": "Nombre del servicio",
+          "jobType": "Tipo de trabajo",
+          "jobDays": "Días de trabajo",
+          "noOfOfficers": "N.º de Oficiales",
+          "noOfHits": "N.º de impactos",
+          "hourlyRate": "Tarifa por hora",
+          "fuelSurcharge": "Carga de combustible",
+          "nonBillable": "No facturable",
+          "yes": "Sí",
+          "no": "No"
+        }
+      }
+    },
+    "status": {
+      "active": "Activo",
+      "expired": "Vencido",
+      "terminated": "Finalizado",
+      "terminatingAt": "Terminación el: {{date}}"
+    },
+    "billingInformation": "Información de facturación",
+    "billingFrequency": "Frecuencia de facturación",
+    "billingFrequencyType": "Tipo de facturación",
+    "contractTenureType": "Tipo de duración del contrato",
+    "contractTenureTypes": {
+      "temporary": "Temporal",
+      "ongoing": "Continuo",
+      "eventBased": "Basado en evento"
+    },
+    "billingStartDate": "Fecha de inicio de facturación",
+    "billingEndDate": "Fecha de fin de facturación",
+    "nextInvoiceDate": "Próxima fecha de factura",
+    "paymentsTerms": "Términos de pago",
+    "viewDetails": "Ver detalles",
+    "holidayGroup": "Grupo de vacaciones",
+    "flatRateApplied": "Tarifa fija aplicada",
+    "holidayMultiplier": "Multiplicador de vacaciones",
+    "holidayflatRate": "Tarifa fija de vacaciones",
+    "dollarSign": "$",
+    "cycleReferenceDate": "Fecha de referencia del ciclo"
+  },
+  "settings": {
+    "preferences": {
+      "title": "Preferencias",
+      "visitorTypes": {
+        "settingTitle": "Tipos de Visitantes",
+        "associatedSites": "Sitios Asociados",
+        "addQuestions": "Agregar Preguntas",
+        "fields": "Campos",
+        "addField": "+ Agregar Campo",
+        "addVisitorType": "Agregar Tipo de Visitante",
+        "updateVisitorType": "Actualizar Tipo de Visitante",
+        "addLoadType": "Agregar Tipo de Carga",
+        "updateLoadType": "Actualizar Tipo de Carga",
+        "visitorLog": "Nombre del Registro de Visitantes",
+        "loaderLog": "Nombre del Registro de Carga",
+        "export": "Exportar",
+        "cancel": "Cancelar"
+      },
+      "loadTypes": {
+        "settingTitle": "Tipos de Carga"
+      },
+      "language": {
+        "settingTitle": "Idioma"
+      },
+      "thresholdValues": {
+        "settingTitle": "Valores Umbral"
+      },
+      "notifications": {
+        "settingTitle": "Notificaciones"
+      },
+      "breakRules": {
+        "settingTitle": "Reglas de Descanso",
+        "addJobText": "Agregar trabajos/hojas de ruta para asociar turnos a esta regla de descanso",
+        "yesRemove": "Sí, eliminar",
+        "removeJobText": "¿Estás seguro de que deseas eliminar este trabajo? Esta acción no se puede deshacer.",
+        "removeJob": "Eliminar trabajo",
+        "search": "Buscar por nombre de turno",
+        "searchbyName": "Buscar",
+        "addJobsRunsheets": "Agregar trabajos/hojas de ruta",
+        "jobsRunsheets": "Trabajos/hojas de ruta",
+        "type": "Tipo",
+        "site": "Sitio",
+        "shiftCount": "Recuento de turnos",
+        "editRule": "Editar regla",
+        "deleteRule": "Eliminar regla",
+        "deleteBreakRule": "Eliminar regla de descanso",
+        "deleteBreakRuleText": "Al eliminar esta regla, los turnos asociados ya no tendrán descansos programados. Sugerimos crear otra regla primero y reasociar estos turnos a la nueva regla.",
+        "breakTypes": "Tipos de descanso",
+        "ruleName": "Nombre de la regla",
+        "dateCreated": "Fecha de creación",
+        "associatedShifts": "Turnos asociados",
+        "editType": "Editar tipo",
+        "deleteType": "Eliminar tipo",
+        "removeBreakType": "Eliminar tipo de descanso",
+        "removeBreakTypeText": "¿Estás seguro de que deseas eliminar este tipo de descanso? Se eliminará de todas las reglas de descanso asociadas. Esta acción no se puede deshacer.",
+        "cancel": "Cancelar",
+        "removeCondition": "Eliminar condición",
+        "removeRuleCondition": "¡Eliminar condición de regla!",
+        "removeRuleConditionText": "¿Estás seguro de que deseas eliminar esta condición de regla? Esta acción no se puede deshacer.",
+        "save": "Guardar",
+        "addBreakType": "Agregar tipo de descanso",
+        "updateBreakType": "Actualizar tipo de descanso",
+        "manageBreakTypes": "Administrar tipos de descanso",
+        "breakType": "Tipo de descanso",
+        "editbreakType": "Editar tipo de descanso",
+        "breakStartEndOffsetMissing": "La hora de inicio y fin del descanso es obligatoria.",
+        "addCondition": "Agregar condición",
+        "breakDuration": "Duración del descanso",
+        "breakCondition": "Condición del descanso",
+        "breakStarts": "El descanso comienza",
+        "afterClockingIn": "después de registrar la entrada",
+        "breakStartsFrom": "El descanso comienza desde",
+        "to": "hasta",
+        "notifyUser": "Notificar al usuario",
+        "payOfficerForBreak": "Pagar al oficial por el descanso",
+        "payOfficer": "Pagar al oficial",
+        "yes": "Sí",
+        "no": "No",
+        "notifyTheUser": "Notificar al usuario",
+        "beforeStartOfTheBreak": "antes del inicio del descanso",
+        "selectTime": "Seleccionar hora",
+        "fixed": "Fijo",
+        "range": "Rango",
+        "runsheets": "Hojas de ruta",
+        "dedicatedJobs": "Trabajos dedicados",
+        "addBreakRule": "Agregar regla de descanso",
+        "noConditionAdded": "¡Ninguna condición agregada!",
+        "noConditionAddedDescription": "No se han agregado condiciones para esta regla. Agrega condiciones según las normas estatales.",
+        "breakConditions": "Condiciones de descanso",
+        "conditionAlreadyExists": "Las condiciones de descanso no pueden tener la misma hora.",
+        "breakRuleAlreadyExists": "Las reglas de descanso no pueden ser iguales",
+        "preBreakBeforeStartTimeError": "La alerta previa al descanso no puede ser anterior a la hora de inicio del descanso",
+        "breakEndBeforeBreakStartError": "La hora de fin del descanso no puede ser anterior a la hora de inicio del descanso",
+        "breakStartTimeNullError": "La hora de inicio del descanso no puede ser cero",
+        "breakEndTimeNullError": "La hora de fin del descanso no puede ser cero",
+        "preBreakTimeNullError": "La hora previa al descanso no puede ser cero",
+        "breakTime": "Hora del descanso",
+        "duration": "Duración",
+        "condition": "Condición",
+        "notifyOfficer": "Notificar al oficial",
+        "editCondition": "Editar condición",
+        "deleteCondition": "Eliminar condición",
+        "placeholders": {
+          "breakType": "Seleccionar tipo de descanso",
+          "breakDuration": "Seleccionar duración del descanso",
+          "selectTime": "Seleccionar hora",
+          "ruleName": "Introducir nombre de la regla",
+          "runsheets": "Seleccionar hojas de ruta",
+          "dedicatedJobs": "Seleccionar trabajos dedicados"
+        },
+        "extraJob": "Trabajo adicional",
+        "breakTypeName": "Nombre del tipo de descanso",
+        "addBreakTypeName": "Agregar nombre del tipo de descanso"
+      },
+      "runsheetSettings": {
+        "settingTitle": "Configuraciones de {{runsheet}}",
+        "supervisors": "Supervisores",
+        "runsheetHeading": "Supervisores de hoja de ruta",
+        "runsheetDesc": "Define quién puede gestionar las hojas de ruta.",
+        "supervisorName": "Nombre del supervisor",
+        "addedOn": "Agregado el",
+        "action": "Acción",
+        "supervisor": "Supervisor",
+        "addSupervisor": "Agregar supervisores de hoja de ruta",
+        "addSupervisorText": "El supervisor agregado tendrá acceso a partir de hoy.",
+        "addSupervisorLabel": "Seleccionar supervisores",
+        "save": "Guardar",
+        "dropdownPlaceholder": "Elegir supervisor",
+        "errorMessage": "Selecciona un supervisor",
+        "deleteTitle": "Confirmar eliminación de acceso",
+        "deleteText": "¿Estás seguro de que deseas eliminar el acceso? Este supervisor ya no tendrá acceso a las hojas de ruta.",
+        "deleteConfirm": "Eliminar acceso",
+        "deleteCancel": "Cancelar",
+        "visitHeading": "Configuraciones de visitas",
+        "visitDesc": "Define el tiempo dedicado en cada sitio durante la visita de patrulla.",
+        "visitEvent": "Evento",
+        "visitTime": "Hora de la visita",
+        "visitServiceTime": "Tiempo de servicio de la visita",
+        "visitServiceTimeTooltip": "Tiempo estimado que se debe pasar en el sitio durante la visita."
+      },
+      "systemDefault": {
+        "settingTitle": "Configuración Predeterminada del Sistema"
+      },
+      "extraServicesCharges": {
+        "settingTitle": "Tarifas de Servicios"
+      },
+      "mappingPreferences": {
+        "title": "Preferencias de Mapeo",
+        "locationsData": {
+          "settingTitle": "Ubicaciones",
+          "tagLine": "Puedes elegir mapear diferentes etapas de ubicación de Hubspot aquí",
+          "table": {
+            "columnsHeader": {
+              "stages": "Etapas de Hubspot",
+              "mapTo": "Mapear A"
+            }
+          }
+        },
+        "deals": {
+          "settingTitle": "Negocios",
+          "tagLine": "Puedes elegir mapear diferentes etapas de negocios dentro de los pipelines de Hubspot aquí",
+          "table": {
+            "columnsHeader": {
+              "pipeline": "Pipeline",
+              "noOfStages": "Número de Etapas",
+              "assignedStages": "Etapas Asignadas",
+              "unassignedStages": "Etapas No Asignadas"
+            }
+          }
+        }
+      },
+      "holidayGroups": {
+        "editGroup": "Editar grupo",
+        "deleteGroup": "Eliminar grupo",
+        "title": "Grupos de vacaciones",
+        "subTitle": "Grupos de vacaciones para multiplicadores según los términos del contrato",
+        "groupName": "Nombre del grupo",
+        "numberOfHolidays": "Número de vacaciones",
+        "createdBy": "Creado por",
+        "createdOn": "Creado el",
+        "addNewGroup": "Agregar nuevo grupo",
+        "createGroup": "Crear grupo",
+        "updateGroup": "Actualizar grupo",
+        "selectHolidays": "Seleccionar vacaciones",
+        "cancel": "Cancelar",
+        "addGroupName": "Agregar nombre del grupo",
+        "selectedHolidaysKey": "selectedHolidays",
+        "groupNameKey": "groupName",
+        "federalHolidays": "Vacaciones federales",
+        "federalHolidaysSubText": "Los grupos de vacaciones son conjuntos de días festivos para multiplicadores de tarifa",
+        "deactivateGroup": "Desactivar grupo",
+        "deactivateGroupSubText": "¿Estás seguro de que deseas eliminar este grupo de vacaciones? Se eliminará de los contratos asociados. Esta acción no se puede deshacer.",
+        "deactivateGroupBtn": "Desactivar grupo",
+        "deleteGroupBtn": "Eliminar grupo",
+        "searchGroup": "Buscar grupo",
+        "nameKey": "name",
+        "add": "Agregar",
+        "keys": {
+          "name": "name",
+          "groupName": "groupName",
+          "selectedHolidays": "selectedHolidays"
+        }
+      },
+      "invoiceSettings": {
+        "settingTitle": "Configuración de facturas",
+        "invoiceSettingTitle": "Configuración de conceptos de factura",
+        "invoiceSettingDesc": "Define los conceptos que se agregarán a las facturas.",
+        "lineItemName": "Nombre del concepto",
+        "lineItemNumber": "Número de concepto",
+        "glGroup": "Grupo GL",
+        "action": "Acción",
+        "lineItemBtnText": "Nuevo concepto",
+        "editLineItem": "Editar concepto",
+        "createLineItem": "Agregar concepto",
+        "editLineItemDesc": "Actualizar nombre del concepto o grupo GL",
+        "createLineItemDesc": "Agregar un nuevo concepto para las facturas",
+        "lineItem": "Concepto",
+        "textFieldPlaceholder": "Ej., Informe de inspección de equipos",
+        "dropdownPlaceholder": "Elegir grupo GL",
+        "update": "Actualizar",
+        "create": "Agregar"
+      }
+    },
+    "reportTemplates": {
+      "title": "Plantillas de Informe"
+    },
+    "activityLog": {
+      "title": "Registro de Actividad"
+    },
+    "stateRules": {
+      "title": "Reglas de estado/provincia"
+    },
+    "skillsDesignations": {
+      "title": "Habilidades y Designaciones"
+    },
+    "userGroups": {
+      "removeUser": "Eliminar usuario",
+      "removeUserText": "¿Estás seguro de que deseas eliminar este usuario? Esta acción no se puede deshacer.",
+      "permissionsSelected": "Permisos seleccionados: ",
+      "title": "Grupos de usuarios",
+      "homeOfficeUsers": "Usuarios de Home Office",
+      "franchiseUsers": "Usuarios de franquicia",
+      "search": "Buscar grupos",
+      "viewActivity": "Ver actividad",
+      "addNewGroup": "Agregar un grupo de usuarios",
+      "groupName": "Nombre del grupo",
+      "users": "Usuarios",
+      "addUsers": "Agregar usuarios",
+      "createdOn": "Creado el",
+      "createdBy": "Creado por",
+      "selectroleText": "Selecciona roles para otorgar acceso a este grupo",
+      "franchiesOwner": "Propietario de franquicia",
+      "director": "Director",
+      "coordinator": "Coordinador",
+      "supervisor": "Supervisor",
+      "managerGroup": "Grupo de gestión",
+      "cencel": "Cancelar",
+      "cancel": "Cancelar",
+      "saveChanges": "Guardar cambios",
+      "createGroup": "Crear grupo",
+      "selectOrganizationLevel": "Seleccionar nivel de organización",
+      "selectGroupName": "Seleccionar nombre del grupo",
+      "selectUsers": "Seleccionar usuarios",
+      "permissions": "Permisos",
+      "organizationLevel": "Nivel de organización",
+      "pickADate": "Seleccionar una fecha",
+      "user": "Usuario",
+      "activityLogs": "Registros de actividad",
+      "timeStamp": "Marca de tiempo",
+      "group": "Grupo",
+      "action": "Acción",
+      "actionDetail": "Detalle de la acción",
+      "groupsPermissions": "Permisos de grupos",
+      "editPermissions": "Editar permisos",
+      "addUser": "Agregar usuario",
+      "addedOn": "Agregado el",
+      "role": "Rol",
+      "searchbyUser": "Buscar por nombre de usuario",
+      "name": "Nombre",
+      "addNewUsers": "Agregar usuario(s)",
+      "addUserSubText": "Agregar usuario a este grupo para permisos específicos",
+      "selectUser": "Seleccionar usuario"
+    },
+    "rolesPermissions": {
+      "section": {
+        "HO": "Permisos a nivel de Home Office",
+        "FO": "Permisos a nivel de franquicia",
+        "SET": "Permisos a nivel del equipo de ventas"
+      },
+      "hoDashboard": "Panel de Home Office",
+      "obxDashboard": "Panel de OBX",
+      "masterControl": "Tiene acceso completo a todos los módulos",
+      "analytics": "Analítica",
+      "visitorLoadLogs": "Gestión de cargas",
+      "attendance": "Asistencia",
+      "availability": "Disponibilidad",
+      "companies": "Empresas",
+      "contacts": "Contactos",
+      "contractRate": "Tarifa del contrato",
+      "deals": "Oportunidades",
+      "vehicles": "Vehículos",
+      "devices": "Dispositivos",
+      "dispatch": "Despacho",
+      "userInformation": "Información del usuario",
+      "franchiseMap": "Rastreador de ubicación",
+      "preferences": "Preferencias",
+      "reportTemplates": "Plantillas de informe",
+      "mappingPreference": "Preferencias de mapeo",
+      "userGroups": "Grupos de usuarios",
+      "rolesAndPermissions": "Roles y permisos",
+      "emploeeRates": "Tarifas de empleados",
+      "siteRates": "Tarifas de sitios",
+      "contracts": "Contratos",
+      "jobs": "Trabajos",
+      "extraJobs": "Trabajos adicionales",
+      "privileges": "Privilegios",
+      "billings": "Facturación",
+      "visitorLogs": "Gestión de visitantes",
+      "checkpoints": "Puntos de control",
+      "visitorLoadTemplates": "Plantillas de gestión de visitantes/cargas",
+      "officerVisitorLoadManagementAccess": "Gestión de visitantes/cargas del oficial",
+      "siteInstructions": "Instrucciones del sitio",
+      "franchises": "Franquicias",
+      "industryVerticals": "Verticales de industria",
+      "invoices": "Facturas",
+      "leaderBoard": "Tabla de clasificación",
+      "leadsMap": "Mapa de leads",
+      "leaveRequest": "Solicitudes de ausencia",
+      "locations": "Ubicaciones",
+      "mobileExperiences": "Experiencias móviles",
+      "others": "Otros",
+      "payrolls": "Nóminas",
+      "runsheets": "Hojas de ruta",
+      "salesDashboard": "Panel de ventas",
+      "schedules": "Programaciones",
+      "schedule": "Programaciones",
+      "scoutingRoutes": "Rutas de prospección",
+      "settings": "Configuración",
+      "employeeRates": "Tarifas de empleados",
+      "shiftReports": "Informes de turno",
+      "sites": "Sitios",
+      "timeOffRequests": "Solicitudes de tiempo libre",
+      "scheduling": "Programación",
+      "users": "Usuarios",
+      "zones": "Zonas",
+      "save": "Guardar",
+      "title": "Roles y permisos",
+      "subTitle": "Especifica permisos para roles específicos",
+      "subTitleNote": "(Estos cambios se aplicarán a todas las franquicias)",
+      "franchies": "Franquicia",
+      "ho": "HO",
+      "resetToDefault": "Restablecer predeterminado",
+      "viewActivity": "Ver actividad",
+      "addNewRole": "Agregar nuevo rol",
+      "resetChanges": "Restablecer predeterminado",
+      "resetToDefaultText": "¿Estás seguro de que deseas restablecer los valores predeterminados?",
+      "cancel": "Cancelar",
+      "reset": "Restablecer cambios",
+      "selectRole": "Nivel de organización",
+      "roleName": "Nombre del rol",
+      "createRole": "Crear rol",
+      "addNewRoleText": "Este rol se está agregando en la franquicia.",
+      "hasFullAccess": "Tiene acceso completo a todos los módulos",
+      "modules": "Módulos",
+      "create": "Crear",
+      "view": "Ver",
+      "update": "Actualizar",
+      "delete": "Eliminar",
+      "siteRate": "Tarifa del sitio",
+      "employeeRate": "Tarifa del empleado",
+      "mobileApp": "Experiencia móvil",
+      "jobExecution": "Ejecución del trabajo",
+      "supervision": "Supervisión"
+    },
+    "country": {
+      "title": "Configuraciones regionales"
+    }
+  },
+  "visitors": {
+    "tables": {
+      "listing": {
+        "columns": {
+          "status": "estado/provincia",
+          "phoneNumber": "Teléfono",
+          "lastCheckIn": "Último Check-in",
+          "lastCheckOut": "Último Check-out",
+          "action": "Acción",
+          "name": "Nombre",
+          "driverName": "Nombre del conductor",
+          "visitorType": "Tipo de visitante",
+          "vehicleNumber": "Número de vehículo",
+          "inBound": "Fecha y hora de entrada",
+          "outBound": "Fecha y hora de salida",
+          "loadType": "Tipo de carga",
+          "createdOn": "Creado el",
+          "createdBy": "Creado por",
+          "createdAt": "Creado en",
+          "createNewTemplate": "Crear nueva plantilla",
+          "search": "Buscar",
+          "officerName": "Nombre del oficial",
+          "authorizedOn": "Autorizado el",
+          "authorizedBy": "Autorizado por",
+          "addOfficer": "Agregar oficial",
+          "type": "Tipo",
+          "checkIn": "Check-in",
+          "checkOut": "Check-out",
+          "visitorsCheckIn": "Check-in",
+          "visitorsCheckOut": "Check-out",
+          "loadsCheckIn": "Check-in",
+          "loadsCheckOut": "Check-out",
+          "shiftDayEndReport": "Informe de fin de turno",
+          "equipmentInspection": "Inspección de equipos",
+          "vehicleInspection": "Inspección de vehículos",
+          "tourReports": "Informes de recorrido",
+          "incidentReport": "Informe de incidente",
+          "reportTitle": "Título del informe"
+        },
+        "filters": {
+          "all": "Todos los estado/provincias",
+          "banned": "Prohibido",
+          "allowed": "Permitido"
+        },
+        "reason": "Motivo",
+        "banVisitor": "Prohibir Visitante",
+        "unbanVisitor": "Permitir Visitante",
+        "unbanVisitorpopover": "Permitir Visitante",
+        "visitorBannedOn": "Visitante prohibido el",
+        "visitorBannedBy": "por"
+      }
+    },
+    "modals": {
+      "banVisitor": {
+        "banVisitor": "¡Prohibir Visitante!",
+        "areYouSure": "¿Estás seguro de que quieres prohibir este visitante?",
+        "reason": "Motivo",
+        "cancel": "Cancelar",
+        "button": "Prohibir Visitante",
+        "addReason": "Agregar Motivo"
+      },
+      "unbanVisitor": {
+        "unbanVisitor": "¡Permitir Visitante!",
+        "areYouSure": "¿Estás seguro de que quieres quitar la prohibición a este visitante?",
+        "reason": "Motivo",
+        "cancel": "Cancelar",
+        "button": "Permitir Visitante",
+        "addReason": "Agregar Motivo"
+      }
+    },
+    "drawer": {
+      "title": "Agregar Visitante Prohibido",
+      "phoneNumber": "Número de Teléfono",
+      "phoneNumberPlaceHolder": "Ingrese el número de teléfono",
+      "fullName": "Nombre Completo",
+      "fullNamePlaceholder": "Ingrese el nombre completo",
+      "attachments": "Adjuntos",
+      "reason": "Motivo",
+      "reasonPlaceholder": "Agregar motivo",
+      "addBannedVisitorButton": "Agregar Visitante Prohibido",
+      "cancel": "Cancelar"
+    },
+    "detail": {
+      "lastVisit": "Última Visita:",
+      "lastCheckIn": "Último Check-in:",
+      "lastCheckout": "Último Check-out:",
+      "totalVisits": "Visitas Totales:"
+    },
+    "filters": {
+      "search": "Buscar por Visitante"
+    },
+    "title": "Gestión de visitantes",
+    "edit": "Editar",
+    "delete": "Eliminar",
+    "officerName": "Nombre del oficial",
+    "authorizedOn": "Autorizado el",
+    "authorizedBy": "Autorizado por",
+    "removeAccess": "Eliminar acceso",
+    "addOfficer": "Agregar oficial",
+    "dropdownTypeLabel": "Tipo",
+    "searchPlaceholder": "Buscar por nombre",
+    "visitorsLog": "Registro de visitantes",
+    "template": "Plantilla",
+    "officers": "Oficiales"
+  },
+  "loads": {
+    "tables": {
+      "listing": {
+        "columns": {
+          "driverName": "Nombre del Conductor",
+          "vehicleNumber": "Número de Vehículo",
+          "vehicleType": "Tipo de Vehículo",
+          "lastInboundDateAndTime": "Fecha y Hora de Entrada",
+          "lastOutboundDateAndTime": "Fecha y Hora de Salida",
+          "status": "estado/provincia",
+          "action": "Acción",
+          "id": "ID#",
+          "amount": "Monto",
+          "dueDate": "Fecha de vencimiento",
+          "invoiceDate": "Fecha de factura",
+          "duration": "Duración",
+          "loadType": "Tipo de carga",
+          "shiftDayEndReport": "Informe de fin de turno",
+          "equipmentInspection": "Inspección de equipos",
+          "vehicleInspection": "Inspección de vehículos",
+          "tourReports": "Informes de recorrido",
+          "incidentReport": "Informe de incidente"
+        },
+        "filters": {
+          "all": "Todos los estado/provincias",
+          "banned": "Prohibido",
+          "allowed": "Permitido"
+        },
+        "reason": "Motivo",
+        "banLoader": "Prohibir Cargador",
+        "unbanLoader": "Permitir Cargador",
+        "unbanLoaderPopover": "Permitir Cargador",
+        "loaderBannedOn": "Cargador prohibido el",
+        "loaderBannedBy": "por",
+        "searchFilter": "Buscar por Nombre del Conductor"
+      }
+    },
+    "modals": {
+      "banLoader": {
+        "banLoader": "¡Prohibir Cargador!",
+        "areYouSure": "¿Estás seguro de que quieres prohibir este cargador?",
+        "reason": "Motivo",
+        "cancel": "Cancelar",
+        "button": "Prohibir Cargador",
+        "addReason": "Agregar Motivo"
+      },
+      "unbanLoader": {
+        "unbanLoader": "¡Permitir Cargador!",
+        "areYouSure": "¿Estás seguro de que quieres quitar la prohibición a este cargador?",
+        "reason": "Motivo",
+        "cancel": "Cancelar",
+        "button": "Permitir Cargador",
+        "addReason": "Agregar Motivo"
+      }
+    },
+    "detail": {
+      "lastVisit": "Última Visita:",
+      "lastCheckIn": "Último Check-in:",
+      "carLicensePlate": "Placa de Carga:",
+      "totalVisits": "Visitas Totales:",
+      "timeSpent": "{{hours}} horas {{minutes}} minutos"
+    },
+    "drawer": {
+      "title": "Agregar Cargador Prohibido",
+      "vehicleIdentificationNumber": "Número de Identificación del Vehículo",
+      "vehicleIdentificationNumberPlaceHolder": "Ingrese el número de identificación del vehículo",
+      "driverName": "Nombre del Conductor",
+      "driverNamePlaceholder": "Ingrese el nombre del conductor",
+      "attachments": "Adjuntos",
+      "reason": "Motivo",
+      "reasonPlaceholder": "Agregar motivo",
+      "addBannedLoaderButton": "Agregar Cargador Prohibido",
+      "cancel": "Cancelar"
+    },
+    "title": "Gestión de cargas",
+    "loadsLog": "Registro de cargas",
+    "template": "Plantilla",
+    "officers": "Oficiales"
+  },
+  "visitorDetail": {
+    "tables": {
+      "listing": {
+        "columns": {
+          "image": "Imagen",
+          "ssn": "SSN",
+          "type": "Tipo de Visitante",
+          "meetingWith": "Reunión Con",
+          "reason": "Motivo",
+          "date": "Fecha",
+          "checkInTime": "Hora de Entrada",
+          "checkOutTime": "Hora de Salida",
+          "loadWeight": "Peso de la Carga"
+        }
+      }
+    }
+  },
+  "attendance": {
+    "table": {
+      "listing": {
+        "columns": {
+          "name": "Nombre",
+          "workingDays": "Días Laborables",
+          "absents": "Ausencias",
+          "leaves": "Licencias",
+          "pendingLeaveRequests": "Solicitudes de Licencia Pendientes",
+          "extraShifts": "Turnos {{extra}}",
+          "userType": "Tipo de Usuario",
+          "supervisors": "Supervisores",
+          "startDateAndTime": "Fecha y Hora de Inicio",
+          "endDateAndTime": "Fecha y Hora de Fin",
+          "leaveStatus": "estado/provincia de Licencia",
+          "reason": "Motivo",
+          "leaveReason": "Motivo de Licencia"
+        }
+      },
+      "pendingRequestLog": {
+        "columns": {
+          "date": "Fecha",
+          "jobType": "Tipo de Trabajo",
+          "reason": "Motivo"
+        }
+      },
+      "attendanceLogs": {
+        "columns": {
+          "date": "Fecha",
+          "jobType": "Tipo de Trabajo",
+          "shiftType": "Tipo de Turno",
+          "site": "Sitio",
+          "status": "estado/provincia",
+          "startTime": "Hora de Inicio",
+          "endTime": "Hora de Fin"
+        }
+      }
+    },
+    "pendingAttendanceRequestModal": {
+      "approveRequest": "Aprobar Solicitudes",
+      "rejectRequest": "Rechazar Solicitudes",
+      "reject": "Rechazar",
+      "approve": "Aprobar",
+      "approveRequestDesc": "¿Estás seguro de que quieres aprobar todas las solicitudes seleccionadas?",
+      "rejectRequestDesc": "¿Estás seguro de que quieres rechazar todas las solicitudes seleccionadas? Puedes agregar un comentario para informar al oficial sobre el motivo.",
+      "addComment": "Agregar Comentario",
+      "applyLeave": "Aplicar Licencia",
+      "deleteRequestTitle": "¡Eliminar solicitud de licencia!",
+      "deleteRequestDesc": "¿Estás seguro de que quieres eliminar esta solicitud de licencia? Una vez confirmada, se eliminará permanentemente del sistema.",
+      "deleteRequestButton": "Eliminar solicitud"
+    },
+    "dropDownOptionsLabels": {
+      "statuses": "estado/provincias",
+      "supervisor": "Supervisor",
+      "allUsers": "Todos los Usuarios",
+      "userType": "Tipo de Usuario",
+      "officers": "{{officers}}",
+      "allStatuses": "Todos los estado/provincias",
+      "pending": "Pendiente",
+      "approved": "Aprobado",
+      "rejected": "Rechazado",
+      "deleted": "Eliminado"
+    },
+    "leaveRequestForm": {
+      "title": "Formulario de Solicitud de Licencia",
+      "desc": "Puedes solicitar licencia completando este formulario",
+      "reason": "Motivo",
+      "endDateTime": "Fecha y Hora de Fin",
+      "startDateTime": "Fecha y Hora de Inicio",
+      "applyLeave": "Aplicar Licencia",
+      "terminateUser": "Dar de baja",
+      "characters": "Caracteres"
+    }
+  },
+  "dispatch": {
+    "id": "ID de {{dispatch}}",
+    "site": "Sitio",
+    "franchise": "Franquicia",
+    "dispatchType": "Tipo de {{dispatch}}",
+    "status": "estado/provincia",
+    "timeElapsed": "Tiempo Transcurrido",
+    "createdDate": "Fecha de Creación",
+    "createdTime": "Hora de Creación",
+    "assignedTo": "Asignado a",
+    "editAddress": {
+      "editAddressCta": "Editar Dirección",
+      "title": "Editar Dirección de Despacho",
+      "description": "Editar la ubicación de la dirección de despacho",
+      "update": "Actualizar"
+    },
+    "runsheetName": "Nombre de Turno/{{runsheet}}",
+    "sameAsSiteAddress": "Igual que la dirección del sitio",
+    "useDifferentAddress": "Usar una dirección diferente",
+    "dispatches": "Despachos",
+    "monitoringServiceType": "Tipo de servicio de monitoreo",
+    "searchByName": "Buscar por nombre del sitio",
+    "searchByNameOrAddress": "Buscar por nombre o dirección del sitio",
+    "dispatcher": "Despachador",
+    "creationDateTime": "Fecha y hora de creación",
+    "callerPhone": "Teléfono del llamante",
+    "callerHistory": "Historial del llamante",
+    "notes": "Notas",
+    "newNote": "Nueva nota",
+    "assignOfficerlAert": "Actualmente no hay turnos disponibles para asignar un despacho. Elige un supervisor u oficial y asígnaselo.",
+    "rictTextPlaceholder": "Haz clic para agregar detalles del despacho",
+    "callerRequestOfficerCallBack": "El llamante solicita devolución de llamada del oficial",
+    "apartmentNumber": "Número de apartamento",
+    "type": "Tipo",
+    "callerPhoneNumber": "Número de teléfono del llamante",
+    "add": "Agregar",
+    "select": "Seleccionar",
+    "dispatchPostOrders": "Órdenes de puesto del despacho",
+    "siteAddress": "Dirección del sitio",
+    "assign": "asignar",
+    "createDispatch": "Crear despacho",
+    "noShiftsAvailable!": "¡No hay turnos disponibles!",
+    "noShiftsText": "Actualmente no hay turnos disponibles para asignar un despacho. Crea una hoja de ruta para asignar.",
+    "createRunsheet": "Crear hoja de ruta",
+    "createARunsheet": "Crear una hoja de ruta",
+    "seeList": "Ver lista",
+    "selectOfficer": "Seleccionar oficial",
+    "selectVehicle": "Seleccionar vehículo",
+    "createAssignRunsheet": "Crear y asignar hoja de ruta",
+    "dispatchHit": "Impacto de despacho",
+    "trackDispatch": "Rastrear despacho",
+    "dispatchLogs": "Registros de despacho",
+    "callDescription": "Descripción de la llamada",
+    "callBackRequest": "Solicitud de devolución de llamada",
+    "dispatchDetails": "Detalles del despacho",
+    "additionalDetails": "Detalles adicionales",
+    "addButton": "Agregar detalles adicionales",
+    "additionalService": "Agregar detalles adicionales",
+    "editButton": "Editar",
+    "save": "Guardar",
+    "update": "Actualizar",
+    "placeHolderAdditionalService": "Haz clic para agregar instrucciones",
+    "editAdditionalService": "Editar detalles adicionales",
+    "additionalServiceText": "Agregar detalles adicionales",
+    "callerAddress": "Dirección del llamante",
+    "buildingNumber": "Número de edificio",
+    "callerName": "Nombre del llamante",
+    "callerPhoneNo": "Teléfono del llamante",
+    "callerDetails": "Detalles del llamante",
+    "generalInformation": "Información general",
+    "createdAt": "Creado en",
+    "searchBySitename": "Buscar por nombre del sitio",
+    "newAlarmsTooltip": "Cantidad de solicitudes de despacho que no están asignadas a un oficial",
+    "alertsMRTsTooltip": "El oficial no ha reconocido la solicitud de despacho dentro del tiempo definido",
+    "activeDispatchesTooltip": "Cantidad de solicitudes de despacho asignadas a un oficial, pero que aún no se han completado",
+    "notFoundDescription": "Ningún despacho coincide con tu búsqueda. Prueba con otra palabra clave.",
+    "alertsMRTs": "Alertas (MRTs)",
+    "newAlarms": "Nuevas alarmas",
+    "activeDispatches": "Despachos activos",
+    "search": "Buscar por sitio o ID",
+    "assignDispatch": "Asignar despacho",
+    "closeDispatch": "Cerrar despacho",
+    "closeDispatchText": "¿Estás seguro de que quieres cerrar este despacho? Esta acción no se puede deshacer.",
+    "sites": "Sitios",
+    "officer": "Oficial",
+    "createdBy": "Creado por",
+    "cancel": "Cancelar",
+    "reason": "Motivo",
+    "addReason": "Agregar motivo",
+    "dedicatedJobs": "Trabajos dedicados",
+    "patrolJobs": "Trabajos de patrulla (hojas de ruta)",
+    "users": "Usuarios disponibles",
+    "action": "Acción",
+    "searchSupervisor": "Buscar un supervisor",
+    "siteKey": "site",
+    "dispatchTypeKey": "dispatchType",
+    "callerNameKey": "callerName",
+    "callerAddressKey": "callerAddress",
+    "buildingNumberKey": "buildingNumber",
+    "apartmentNumberKey": "apartmentNumber",
+    "dispatchDescriptionKey": "dispatchDescription",
+    "callFromMonitoringServiceType": "Llamada desde servicio de monitoreo",
+    "callFromMonitoringServiceTypeKey": "callFromMonitoringServiceType",
+    "callerRequestOfficerCallBackKey": "callerRequestOfficerCallBack",
+    "callerPhoneNumberKey": "callerPhoneNumber",
+    "phoneNumberKey": "phoneNumber",
+    "callerPhoneNoLengthError": "La longitud del número nacional debe ser igual a 10",
+    "dispatchAddress": "Dirección del despacho",
+    "filters": {
+      "monitoringService": {
+        "label": "Servicio de monitoreo",
+        "placeholder": "Seleccionar servicio de monitoreo"
+      },
+      "requestType": {
+        "label": "Tipo de solicitud",
+        "placeholder": "Tipo de solicitud"
+      }
+    },
+    "downloadDetailsSuccess": "Los detalles del despacho se descargaron correctamente.",
+    "downloadDetailsFail": "Error al descargar los detalles del despacho. Inténtalo de nuevo.",
+    "detailTabs": {
+      "detail": "Detalles del despacho",
+      "report": "Informe",
+      "notes": "Notas",
+      "logs": "Registros de actividad"
+    },
+    "cretedAt": "Creado el: ",
+    "updatedAt": "Actualizado el: ",
+    "statusFilter": {
+      "unassigned": "Sin asignar",
+      "assigned": "Asignado",
+      "newAlarm": "Nueva alarma",
+      "callReceived": "Llamada recibida",
+      "acknowledged": "Reconocido",
+      "onTheWay": "En camino",
+      "onSite": "En el sitio",
+      "onSiteAllClear": "En el sitio: Todo claro",
+      "incidentToReport": "Incidente por reportar",
+      "completed": "Completado",
+      "closed": "Cerrado"
+    },
+    "timeElapsedOptions": {
+      "all": "Todos",
+      "upTo10Mins": "Hasta 10 min",
+      "10to30": "10-30",
+      "30to60": "30-60",
+      "moreThan1Hour": "Más de 1 hora"
+    },
+    "shiftTime": {
+      "oneHour": "Próxima 1 hora",
+      "twoHours": "Próximas 2 horas",
+      "fourHours": "Próximas 4 horas",
+      "sixHours": "Próximas 6 horas",
+      "eightHours": "Próximas 8 horas",
+      "tenHours": "Próximas 10 horas",
+      "twelveHours": "Próximas 12 horas",
+      "dropdownLabel": "Ventana de tiempo"
+    },
+    "callerRequestOfficerOption": {
+      "yes": "Sí",
+      "no": "No"
+    },
+    "monitoringService": {
+      "noService": "Sin servicio de monitoreo",
+      "mapCommunications": "Map Communications (habla hispana)",
+      "rspndr": "RSPNDR",
+      "securitas": "Securitas",
+      "stealthMonitoring": "Stealth Monitoring",
+      "stMoritz": "St. Moritz",
+      "verisure": "Verisure"
+    },
+    "dispatchReport": "Informe de despacho",
+    "address": "Dirección del despacho",
+    "download": "Descargar",
+    "noReportDispatch": "Sin informe enviado",
+    "noReportDispatchDesc": "Aún no has enviado ningún informe.",
+    "runsheetShfitName": "Nombre de hoja de ruta/turno",
+    "moniteroingService": "Servicio de monitoreo",
+    "contract": "Contrato"
+  },
+  "templatableTypes": {
+    "equipmentInspection": "Inspección de equipos",
+    "vehicleInspection": "Inspección de vehículos",
+    "tourReports": "Informes de {{tour}}s",
+    "shiftDayEndReport": "Informe de fin de turno",
+    "incidentReport": "Informe de incidente",
+    "dispatch": "{{dispatch}}",
+    "activityReport": "Informe de actividades",
+    "obxOnboardingForm": "Formulario de incorporación OBX",
+    "default": "Predeterminado",
+    "shiftReport": "Informe de turno",
+    "tourReport": "Informe de {{tour}}",
+    "singleTourReport": "Informe de {{tour}} único",
+    "siteReport": "Informe de sitio",
+    "checkpointReport": "Informe de punto de control",
+    "visitor": "Visitante",
+    "load": "Carga",
+    "siteHitReport": "Informe de impacto en el sitio"
+  },
+  "incidentReports": {
+    "table": {
+      "listing": {
+        "columns": {
+          "runsheetName": "Nombre de hoja de ruta",
+          "site": "Sitio",
+          "timeRange": "Rango de tiempo",
+          "punchIn": "Registro de entrada y salida",
+          "timeSpent": "Tiempo dedicado",
+          "submittedAt": "Enviado el",
+          "submittedBy": "Enviado por"
+        }
+      }
+    }
+  },
+  "notificatons": {
+    "headings": {
+      "officerAttandace": "Servicios operativos",
+      "dedicatedOfficerGeofenceAlerts": "Alertas de geocerca de oficiales dedicados"
+    },
+    "tables": {
+      "listing": {
+        "columnsHeader": {
+          "event": "Evento",
+          "description": "Descripción del evento",
+          "time": "Tiempo (en min)"
+        }
+      }
+    }
+  },
+  "visitorsLoadsOfficer": {
+    "dropdownPlaceholder": "Seleccionar oficial",
+    "dropdownErrorMessage": "Selecciona un oficial",
+    "dropdownLabel": "Seleccionar oficial",
+    "officerModalTitle": "Asignar oficial",
+    "officerCheckboxLabel": "También permitir que este oficial acceda",
+    "loadsManagement": "Gestión de cargas",
+    "visitorsManagement": "Gestión de visitantes",
+    "visitorsOfficerAlert": "Ciertos oficiales listados a continuación tienen acceso a la Plataforma de Gestión de Visitantes.",
+    "loadsOfficerAlert": "Ciertos oficiales listados a continuación tienen acceso a la Plataforma de Gestión de Cargas.",
+    "cancel": "Cancelar",
+    "save": "Guardar",
+    "deleteTitle": "Eliminar acceso",
+    "deleteText": "¿Estás seguro de que deseas eliminar el acceso?",
+    "deleteConfirm": "Eliminar acceso",
+    "searchOfficer": "Buscar por nombre",
+    "searchTemplateType": "Buscar por tipo"
+  },
+  "dashboard": {
+    "insights": "Información",
+    "hi": "Hola",
+    "welcome": "Bienvenido al Panel de Signal 👋",
+    "welcomeSubtext": "A continuación se muestran los insights de tu franquicia",
+    "functionalSites": "Sitios funcionales",
+    "patrolShifts": "Turnos de patrulla",
+    "dedicatedShifts": "Turnos dedicados",
+    "totalContracts": "Contratos totales",
+    "keyMetrics": "Métricas clave",
+    "additionalServices": "Servicios adicionales",
+    "jobEfficiency": "Eficiencia del trabajo",
+    "patrol": "Patrulla",
+    "dedicated": "Dedicado",
+    "completion": "Finalización",
+    "jobCompletion": "Finalización del trabajo",
+    "lastSevenDays": "(Últimos 7 días)",
+    "completedHours": "Horas completadas",
+    "missedHours": "Horas perdidas",
+    "actualHits": "Impactos completados",
+    "missedHits": "Impactos perdidos",
+    "topSites": "Sitios principales",
+    "contractedRevenue": "Ingresos contratados:",
+    "sitesIndustryVerticals": "Verticales de industria de los sitios",
+    "liveOperations": "Operaciones en vivo",
+    "jobsNotStarted": "Trabajos no iniciados",
+    "schedule": "Horario",
+    "franchiseInsights": "Insights de la franquicia",
+    "active": "Activo:",
+    "Active": "Activo",
+    "terminated": "Finalizado:",
+    "expired": "Expirado:",
+    "functionalSite": "Sitios funcionales:",
+    "activeContracts": "Contratos activos:",
+    "payableHours": "Horas pagaderas:",
+    "patrolJobs": "Trabajos de patrulla:",
+    "dedicatedJobs": "Trabajos dedicados:",
+    "terminatedContracts": "Contratos finalizados:",
+    "dedicatedEfficiency": "Eficiencia dedicada:",
+    "patrolEfficiency": "Eficiencia de patrulla:",
+    "contractStatsInfo": "Contratos que no han expirado ni han sido finalizados",
+    "terminatedInfo": "Número de contratos finalizados",
+    "expiredInfo": "Número de contratos que han expirado",
+    "functionalSiteInfo": "Sitios con al menos 1 contrato activo",
+    "activeContractInfo": "Contratos que no han expirado ni han sido finalizados",
+    "payableHoursInfo": "Horas trabajadas por oficiales aprobadas mediante informes",
+    "noOfPatrolInfo": "N.º de turnos de patrulla",
+    "dedicatedJobsInfo": "Número de contratos que han expirado",
+    "terminatedJobsInfo": "N.º de contratos finalizados",
+    "extraJobDispatchCount": "Cantidad de trabajos adicionales y solicitudes de despacho",
+    "efficiencyRateDesc": "Tasa de eficiencia de los trabajos asignados.",
+    "dedicatedEfficiencyInfo": "(Horas reales/Horas programadas)*100",
+    "patrolEfficiencyInfo": "(Impactos reales/Impactos objetivo)*100",
+    "jobCompletitionSevenDays": "Finalización de trabajos en los últimos 7 días:",
+    "completedHoursInfo": "Horas completadas: Duración entre registro de entrada y salida",
+    "missedHoursInfo": "Horas perdidas: Horas programadas menos horas completadas",
+    "actualHitsInfo": "Impactos reales: Sitios donde el oficial llegó",
+    "missedHitsInfo": "Impactos perdidos: Impactos objetivo menos impactos reales",
+    "contractSumInfo": "Suma de ingresos por contrato para sitios activos",
+    "breakDownFunctioanl": "Desglose de sitios funcionales según verticales de industria",
+    "listOfficersInfo": "Lista de oficiales cuyos turnos comenzaron hoy, pero no han registrado entrada",
+    "liveOperationsTooltip": {
+      "tooltip": {
+        "unassignedShifts": {
+          "title": "Turnos sin asignar:",
+          "description": " Cantidad de turnos sin asignar para hoy y mañana"
+        },
+        "nonFunctionalSites": {
+          "title": "Sitios no funcionales:",
+          "description": " Cantidad de sitios no funcionales"
+        },
+        "timeOffRequests": {
+          "title": "Solicitudes de tiempo libre:",
+          "description": " Solicitudes de tiempo libre pendientes que deben revisarse"
+        },
+        "reportApprovals": {
+          "title": "Aprobaciones de informes:",
+          "description": " Informes que deben revisarse"
+        },
+        "officersTimeOff": {
+          "title": "Oficiales de tiempo libre:",
+          "description": " Oficiales en tiempo libre hoy"
+        },
+        "officersAbsent": {
+          "title": "Oficiales ausentes:",
+          "description": " Oficiales en tiempo libre hoy sin solicitud aprobada"
+        },
+        "missedHits": {
+          "title": "Impactos perdidos:",
+          "description": " Impactos perdidos en las últimas 48 horas."
+        }
+      }
+    }
+  },
+  "payroll": {
+    "addActivity": "Agregar actividad",
+    "needBreakRule": "Para agregar una actividad, asocia una regla de descanso con este turno.",
+    "loggedTime": "Tiempo registrado",
+    "totalApprovedTime": "Tiempo total aprobado",
+    "saveChanges": "Guardar cambios",
+    "dedicatedShiftAlert": "A continuación se muestra el desglose detallado de los registros del turno y la(s) duración(es) de los descansos. Puedes editar el tiempo aprobado para cada actividad.",
+    "payroll": "Nómina",
+    "total": "Total",
+    "supervisor": "Supervisor",
+    "runSheetName": "Nombre de la hoja de ruta",
+    "activity": "Actividad",
+    "loggedtime": "Tiempo registrado",
+    "approvedTime": "Tiempo aprobado",
+    "hit": "Impacto #",
+    "modifiedEntities": "Entidades modificadas",
+    "gapsOverlappingTimeEntries": "Espacios/entradas de tiempo superpuestas",
+    "approveAll": "Aprobar todo",
+    "totalApprovedHours": "Total de horas aprobadas",
+    "timeOnJobHrs": "Tiempo en el trabajo (h)",
+    "timeOnBreakHrs": "Tiempo en descanso (h)",
+    "hitPunchInOut": "Registro de entrada/salida del impacto",
+    "commuteToNextSite": "Traslado al siguiente sitio",
+    "approvedHitTime": "Tiempo de impacto aprobado",
+    "approvedCommuteTime": "Tiempo de traslado aprobado",
+    "runSheetPayrollDetails": "Detalles de nómina de la hoja de ruta",
+    "totalHits": "Impactos totales",
+    "completedHits": "Impactos completados",
+    "missedHits": "Impactos perdidos",
+    "punchInOut": "Registro de entrada/salida",
+    "hitsDone": "Impactos realizados",
+    "site": "Sitio",
+    "select": "Seleccionar",
+    "contract": "Contrato",
+    "shiftStartDate": "Fecha de inicio del turno",
+    "runSheetStartDate": "Fecha de inicio de la hoja de ruta",
+    "shiftEndTime": "Hora de fin del turno",
+    "runSheetEndTime": "Hora de fin de la hoja de ruta",
+    "createPayroll": "Crear nómina",
+    "shiftLocation": "Turno/Ubicación",
+    "runSheetLocation": "Hoja de ruta/Ubicación",
+    "assignOfficer": "Asignar oficial",
+    "selectOfficer": "Seleccionar oficial",
+    "punchInTime": "Hora de entrada",
+    "punchOutTime": "Hora de salida",
+    "shiftStartTime": "Hora de inicio del turno",
+    "runSheetStartTime": "Hora de inicio de la hoja de ruta",
+    "lockPayrunText": "Las nóminas se bloquearán para la duración seleccionada.",
+    "resyncPayrunText": "¿Estás seguro de que deseas resincronizar la nómina bloqueada?",
+    "from": "Desde",
+    "to": "Hasta",
+    "disclaimerText": "Las horas aprobadas se publicarán en ADP y no se cambiarán en el futuro.",
+    "disclaimerTextExport": "Solo la nómina aprobada formará parte de este CSV.",
+    "disclaimer": "Aviso:",
+    "lockPayrun": "Bloquear nómina",
+    "resyncPayrun": "Resincronizar nómina bloqueada",
+    "resynsPayrunBtnText": "Resincronizar nómina",
+    "exportPayrun": "Exportar nómina",
+    "exportPayrunText": "Los datos de nómina se exportarán para la duración seleccionada.",
+    "exportPayrollDescription": "Seleccione un período que comience el sábado y termine el viernes para asegurar cálculos precisos de horas extra.",
+    "exportWorkLogs": "Exportar registros de trabajo",
+    "exportWorkLogText": "Los registros de trabajo de nómina se exportarán para la duración seleccionada.",
+    "exportWorklogSuccess": "El archivo CSV de registros de trabajo se ha descargado correctamente.",
+    "unlockPayroll!": "¡Desbloquear nómina!",
+    "unLockText": "¿Estás seguro de que deseas desbloquear esta entrada de nómina?",
+    "unlock": "Desbloquear",
+    "search": "Buscar por nombre o posición",
+    "downloadApprovedPayroll": "Descargar nómina aprobada",
+    "batchNo": "N.º de lote",
+    "employeeName": "Nombre del empleado",
+    "sites": "Sitio",
+    "shiftDate": "Fecha del turno",
+    "shiftTime": "Hora del turno",
+    "punchinOut": "Registro de entrada/salida",
+    "timeSpentOnJob": "Tiempo en el trabajo",
+    "timeSpentOnBreak": "Descanso (pagado)",
+    "timeSpentOnBreakNotPayable": "Descanso (no pagado)",
+    "payable": "Pagadero",
+    "notPayable": "No pagadero",
+    "breakRule": "Regla de descanso",
+    "billableBreaks": "Descansos facturables",
+    "approvedHours": "Horas aprobadas",
+    "type": "Tipo",
+    "invoiceAbleHours": "Horas facturables",
+    "wageOverride": "Anulación de salario",
+    "rateLevel": "Nivel de tarifa",
+    "rate": "Tarifa",
+    "stateWorked": "Estado de trabajo",
+    "localWorked": "Localidad de trabajo",
+    "location": "Ubicación",
+    "employeeType": "Tipo de empleado",
+    "notes": "Notas",
+    "action": "Acción",
+    "cancel": "Cancelar",
+    "approveLock": "Aprobar",
+    "approvedLockPayroll": "Aprobación masiva",
+    "alignToShiftHours": "Alinear con horas de turno",
+    "alignApprovedHoursTitle": "Alinear horas aprobadas con horas de turno",
+    "alignApprovedHoursDescription": "{{count}} entradas de nómina seleccionadas tendrán sus horas aprobadas alineadas con las horas programadas del turno. Esta acción no se puede deshacer.",
+    "alignApprovedHoursCta": "Alinear horas ({{count}})",
+    "alignApprovedHoursSuccess": "¡Horas aprobadas actualizadas!",
+    "approveShiftHours": "Aprobar horas del turno",
+    "approveShiftHoursText": "¿Estás seguro de que deseas aprobar las horas de este turno?",
+    "approveSelected": "Aprobar horas del turno",
+    "approveSelectedText": "¿Estás seguro de que deseas aprobar las horas de los turnos seleccionados?",
+    "notesText": "Nota(s) del supervisor para este turno",
+    "shiftNotesText": "Esta es una nota para el turno.",
+    "updateApprovedHours": "Actualizar horas aprobadas",
+    "invoiceAbleHourss": "Horas facturables (h)",
+    "jobWageAble": "Monto del salario",
+    "save": "Guardar",
+    "updateInvoiceAbleHours": "Actualizar horas facturables",
+    "updateJobWage": "Actualizar salario",
+    "startTime": "Hora de inicio",
+    "endTime": "Hora de fin",
+    "start": "Inicio",
+    "timeOffHeading": "Formulario de solicitud de tiempo libre",
+    "timeOfftext": "Puedes solicitar tiempo libre completando este formulario",
+    "endDateTime": "Fecha y hora de fin",
+    "startDateTime": "Fecha y hora de inicio",
+    "reason": "Motivo",
+    "applyTimeoff": "Solicitar tiempo libre",
+    "badgeNo": "N.º de lote",
+    "startDateError": "La fecha de inicio debe ser anterior a la fecha de fin",
+    "endDateError": "La fecha de fin debe ser posterior a la fecha de inicio",
+    "csvDownload": {
+      "title": "¡Descarga completada!",
+      "description": "La nómina para el período {{startDate}} a {{endDate}} se ha descargado correctamente."
+    },
+    "adhoc": "Ad hoc",
+    "noOfficerTooltip": "Este turno no tiene ningún oficial asignado",
+    "logged": "Registrado",
+    "allRunsheets": "Todas las hojas de ruta",
+    "users": "Usuarios",
+    "allStatuses": "Todos los estados",
+    "allSites": "Todos los sitios",
+    "all": "todos",
+    "allShiftStatuses": "Todos los estados de turno",
+    "shiftStatusKey": "shiftStatus",
+    "payrollStatuses": "Estados de nómina",
+    "approvedEndsAtTooltip": "Selecciona primero la hora de inicio.",
+    "supervisorTooltip": "El supervisor no tiene turno",
+    "viewShiftDetails": "Ver detalles del turno",
+    "yes": "Sí",
+    "no": "No",
+    "endTimeError": "La fecha/hora de fin debe ser mayor que la fecha/hora de inicio",
+    "noApprovedHours": "Sin horas aprobadas",
+    "noBadgeToolTip": "Falta el número de credencial del empleado",
+    "sort": "Ordenar",
+    "exportOfficerWorklogs": "Exportar informe de conciliación",
+    "exportOfficerWorkLogsHo": "Registros de trabajo de los oficiales de exportación",
+    "statusFilter": {
+      "payrollStatuses": "Estados de nómina",
+      "approved": "Aprobado",
+      "unapproved": "No aprobado",
+      "allShiftStatuses": "Todos los estados de turno",
+      "completed": "Completado",
+      "unassigned": "Sin asignar",
+      "notStarted": "No iniciado"
+    },
+    "sortOrder": {
+      "highToLow": "De mayor a menor",
+      "lowToHigh": "De menor a mayor",
+      "aToZ": "A -> Z",
+      "zToA": "Z -> A"
+    },
+    "title": "Nómina",
+    "lockedPayruns": "Nóminas bloqueadas",
+    "officerWorklogs": "Registros de trabajo de oficiales",
+    "dropDownSelectionRequiedForBreak": "Selecciona uno de los descansos",
+    "selectActivityLabel": "Seleccionar actividad",
+    "saveJobIntervals": "Guardar intervalos de trabajo",
+    "saveJobIntervalsDescription": "¿Estás seguro de que deseas guardar estos intervalos de trabajo? Una vez guardados, solo podrás actualizarlos.",
+    "allocatedHours": "Horas asignadas",
+    "overtimeHours": "Horas extra",
+    "totalHoursWorked": "Total de horas trabajadas",
+    "splitShiftsInTwoAtMidnight": "Dividir turnos en dos a la medianoche",
+    "incompleteBadgeToolTip": "El número de credencial del empleado está incompleto"
+  },
+  "lockedPayruns": {
+    "payrunDetails": "Detalles de la nómina",
+    "payrunStartPeriod": "Inicio del período de nómina",
+    "payrunEndPeriod": "Fin del período de nómina",
+    "employeesCount": "Cantidad de empleados",
+    "totalHours": "Horas totales",
+    "downloadOfficersPayroll": "Descargar nómina de oficiales",
+    "selectDateRange": "Seleccionar rango de fechas",
+    "downloadCSV": "Descargar CSV",
+    "cancel": "Cancelar"
+  },
+  "billing": {
+    "primaryPhone": "Teléfono principal",
+    "companyAddress": "Dirección de la empresa",
+    "contacts": "Contactos",
+    "primaryContact": "Contacto principal",
+    "selectPrimaryContact": "Seleccionar contacto principal",
+    "billTo": "Facturar a",
+    "selectBillToContact": "Seleccionar contacto de facturación",
+    "shipTo": "Enviar a",
+    "selectShipToContact": "Seleccionar contacto de envío",
+    "sameAsPrimaryContact": "Igual que el contacto principal",
+    "secondaryEmailAddresses": "Direcciones de correo secundarias",
+    "edit": "Editar",
+    "contactDetails": "Detalles del contacto",
+    "viewContacDetails": "Ver detalles del contacto",
+    "delete": "Eliminar",
+    "deleteText": "Esta acción es irreversible. ¿Estás seguro de que deseas eliminar este contacto?",
+    "deletePermanently": "Eliminar permanentemente",
+    "addressLine1": "Línea de dirección 1",
+    "addressLine2": "Línea de dirección 2",
+    "enter": "Ingresar",
+    "primaryEmailAddress": "Dirección de correo principal",
+    "companyName": "Nombre de la empresa",
+    "primaryEmail": "Correo electrónico principal",
+    "phoneNo": "N.º de teléfono",
+    "addText": "Completa la siguiente información para crear un nuevo contacto",
+    "contactInformation": "Información de contacto",
+    "address": "Dirección",
+    "additionalInformation": "Información adicional",
+    "addContact": "Agregar contacto",
+    "noMergedInvoices": "¡Sin facturas combinadas!",
+    "noMergedInvoicesText": "No hay facturas combinadas. Selecciona contratos con la misma configuración.",
+    "contractDuration": "Duración del contrato",
+    "cancel": "Cancelar",
+    "mergedInvoicesTextModal": "Selecciona contratos con la misma fecha de referencia del ciclo y frecuencia de facturación para combinar facturas.",
+    "cycleRefDate": "Fecha de ref. del ciclo",
+    "set": "Establecer",
+    "srNo": "N.º",
+    "contractNames": "Nombres de contrato",
+    "billingFrequency": "Frecuencia de facturación",
+    "cycleReferenceDate": "Fecha de referencia del ciclo",
+    "dateTimeOfAction": " Fecha y hora de la acción",
+    "mergeInvoices": "Combinar facturas",
+    "mergedInvoices": "Facturas combinadas",
+    "mergedInvoicesText": "Todas las facturas combinadas de múltiples contratos se listan aquí.",
+    "billing": "Facturación",
+    "timesheet": "Hoja de horas",
+    "timesheetKey": "timesheet",
+    "invoices": "Facturas",
+    "billingDetails": "Detalles de facturación",
+    "billingConfigurations": "Configuraciones de facturación",
+    "firstName": "Nombre",
+    "lastName": "Apellido",
+    "email": "Correo electrónico",
+    "phoneNumber": "Número de teléfono",
+    "emailRecipients": "Destinatarios del correo",
+    "billingAddress": "Dirección de facturación",
+    "city": "Ciudad",
+    "state": "Estado/Provincia",
+    "country": "País",
+    "zipcode": "Código postal",
+    "john": "p. ej.: Juan",
+    "snow": "p. ej.: Snow",
+    "emailPlaceholder": "p. ej.: juan@teamsignal.com",
+    "typeToAddEmail": "Escribe para agregar correo electrónico",
+    "type": "Tipo",
+    "phoneNumberPlaceHolder": "+1 234 567 8999",
+    "info": "La factura para este sitio se enviará a todas las direcciones de correo indicadas en el campo Destinatarios del correo.",
+    "update": "Actualizar",
+    "periodStartPastError": "El inicio del período debe ser hoy o en el futuro",
+    "noContracts": "El sitio seleccionado no tiene contratos",
+    "emailRecepientsPlaceholder": "Escribe y presiona Enter para agregar destinatarios de correo",
+    "billToContractPlaceholder": "Seleccionar contacto de facturación",
+    "shipToContractPlaceholder": "Seleccionar contacto de envío",
+    "sameAsPrimary": "Igual que el contacto principal",
+    "invoiceDeleteTitle": "¡Eliminar factura combinada!",
+    "invoiceDeleteDesc": "¿Estás seguro de que deseas eliminar esta factura combinada? Esta acción no se puede deshacer.",
+    "mergeInviceDeleteButtonConfirm": "Eliminar factura"
+  },
+  "contacts": {
+    "primaryPhone": "Teléfono principal",
+    "companyAddress": "Dirección de la empresa",
+    "contacts": "Contactos",
+    "updateContact": "Actualizar contacto",
+    "createContact": "Agregar contacto",
+    "editContact": "Editar contacto",
+    "primaryContact": "Contacto principal",
+    "selectPrimaryContact": "Seleccionar contacto principal",
+    "billTo": "Facturar a",
+    "selectBillToContact": "Seleccionar contacto de facturación",
+    "shipTo": "Enviar a",
+    "selectShipToContact": "Seleccionar contacto de envío",
+    "sameAsPrimaryContact": "Igual que el contacto principal",
+    "secondaryEmailAddresses": "Direcciones de correo secundarias",
+    "edit": "Editar",
+    "contactDetails": "Detalles del contacto",
+    "viewContacDetails": "Ver detalles del contacto",
+    "delete": "Eliminar",
+    "deleteText": "Esta acción es irreversible. ¿Estás seguro de que deseas eliminar este contacto?",
+    "deletePermanently": "Eliminar permanentemente",
+    "addressLine1": "Línea de dirección 1",
+    "addressLine2": "Línea de dirección 2",
+    "enter": "Ingresar",
+    "primaryEmailAddress": "Dirección de correo principal",
+    "companyName": "Nombre de la empresa",
+    "primaryEmail": "Dirección de correo principal",
+    "phoneNo": "N.º de teléfono",
+    "addText": "Completa la siguiente información para crear un nuevo contacto",
+    "contactInformation": "Información de contacto",
+    "address": "Dirección",
+    "additionalInformation": "Información adicional",
+    "addContact": "Agregar contacto",
+    "noMergedInvoices": "¡Sin facturas combinadas!",
+    "noMergedInvoicesText": "No hay facturas combinadas. Selecciona contratos con la misma configuración.",
+    "contractDuration": "Duración del contrato",
+    "cancel": "Cancelar",
+    "mergedInvoicesTextModal": "Selecciona contratos con la misma fecha de referencia del ciclo y frecuencia de facturación para combinar facturas.",
+    "cycleRefDate": "Fecha de ref. del ciclo",
+    "set": "Establecer",
+    "srNo": "N.º",
+    "contractNames": "Nombres de contrato",
+    "billingFrequency": "Frecuencia de facturación",
+    "cycleReferenceDate": "Fecha de referencia del ciclo",
+    "dateTimeOfAction": " Fecha y hora de la acción",
+    "mergeInvoices": "Combinar facturas",
+    "mergedInvoices": "Facturas combinadas",
+    "mergedInvoicesText": "Todas las facturas combinadas de múltiples contratos se listan aquí.",
+    "billing": "Facturación",
+    "timesheet": "Hoja de horas",
+    "timesheetKey": "timesheet",
+    "invoices": "Facturas",
+    "billingDetails": "Detalles de facturación",
+    "billingConfigurations": "Configuraciones de facturación",
+    "firstName": "Nombre",
+    "lastName": "Apellido",
+    "email": "Correo electrónico",
+    "phoneNumber": "Número de teléfono",
+    "emailRecipients": "Destinatarios del correo",
+    "billingAddress": "Dirección de facturación",
+    "city": "Ciudad",
+    "state": "Estado/Provincia",
+    "country": "País",
+    "zipcode": "Código postal",
+    "john": "p. ej.: Juan",
+    "snow": "p. ej.: Snow",
+    "emailPlaceholder": "p. ej.: juan@teamsignal.com",
+    "typeToAddEmail": "Escribe para agregar correo electrónico",
+    "type": "Tipo",
+    "phoneNumberPlaceHolder": "+1 234 567 8999",
+    "info": "La factura para este sitio se enviará a todas las direcciones de correo indicadas en el campo Destinatarios del correo.",
+    "update": "Actualizar",
+    "periodStartPastError": "El inicio del período debe ser hoy o en el futuro",
+    "noContracts": "El sitio seleccionado no tiene contratos",
+    "emailRecepientsPlaceholder": "Escribe y presiona Enter para agregar destinatarios de correo"
+  },
+  "jobs": {
+    "endTime": "Hora de fin",
+    "startTime": "Hora de inicio",
+    "editVisit": "Editar visita",
+    "duration": "Duración"
+  },
+  "addendum": {
+    "serviceStepperTitle": "Servicio",
+    "serviceStepperSubText": "+/- o cambio en servicio(s)",
+    "devicesStepperTitle": "Dispositivos",
+    "devicesStepperSubText": "+/- o cambio en dispositivos",
+    "onDemandServiceStepperTitle": "Servicios bajo demanda",
+    "onDemandServiceStepperSubText": "Cambio en servicios bajo demanda",
+    "paymentTermsStepperTitle": "Términos de pago",
+    "paymentTermsStepperSubText": "Cambio en términos de pago",
+    "descriptionStepperTitle": "Descripción",
+    "descriptionStepperSubText": "Cambio en la descripción",
+    "signeesStepperTitle": "Firmantes",
+    "signeesStepperSubText": "+/- o cambio en firmante(s)",
+    "shiftSelectErrorMin": "`Selecciona todos los {{number}} turnos que deseas conservar`",
+    "hitSelectErrorMin": "`Selecciona todos los {{number}} impactos que deseas conservar`",
+    "shiftSelectErrorMax": "`Selecciona solo {{number}} turnos que deseas conservar`",
+    "hitSelectErrorMax": "`Selecciona solo {{number}} impactos que deseas conservar`",
+    "selectShiftFromAllServicesError": "Selecciona turnos de todos los {{numberOfServiceToAcknowledge}} servicios",
+    "contractAddendum": "Anexo de contrato",
+    "contractAddendumDesc": "A continuación se muestran los puntos del anexo que deben atenderse",
+    "nextButton": "Siguiente",
+    "backButton": "Atrás",
+    "cancelButton": "Cancelar",
+    "acknowledgeButton": "Reconocer",
+    "selectShiftsKeep": "Seleccionar turnos a conservar",
+    "selectHitsKeep": "Seleccionar impactos a conservar",
+    "totalShifts": "Total de turno(s)",
+    "selectedShifts": "Turno(s) seleccionado(s)",
+    "toSelect": "Por seleccionar",
+    "instructions": "Instrucciones",
+    "services": "Servicios",
+    "jobsAreReduced": "Los trabajos se reducen, selecciona cuáles conservar.",
+    "servicesAdded": "Servicio(s) agregado(s)",
+    "servicesRemoved": "Servicio(s) eliminado(s)",
+    "patrolService": "Servicio de patrulla",
+    "dedicatedService": "Servicio dedicado",
+    "servicesChanged": "Servicio(s) cambiado(s)",
+    "devices": "Dispositivos",
+    "addedDevices": "Dispositivos agregados",
+    "occurrence": "una vez",
+    "removedDevices": "Dispositivo(s) eliminado(s)",
+    "changedDevices": "Dispositivo(s) cambiado(s)",
+    "changedSignee": "Firmante(s) cambiado(s)",
+    "quantity": "Cantidad",
+    "onDemandServices": "Servicios bajo demanda",
+    "addedServices": "Servicio(s) agregado(s)",
+    "removedServices": "Servicio(s) eliminado(s)",
+    "paymentTerms": "Términos de pago",
+    "noChangesMade": "No se realizaron cambios",
+    "noChangesMadeDesc": "Esta sección no se ha modificado como parte del anexo del contrato.",
+    "description": "Descripción",
+    "oldDescription": "Descripción anterior",
+    "newDescription": "Descripción actualizada",
+    "signees": "Firmantes",
+    "addedSignees": "Firmante(s) agregado(s)",
+    "removedSignees": "Firmante(s) eliminado(s)"
+  },
+  "tourReportAbendum": "No se generará un informe para este turno ya que no hay un informe de recorrido asociado.",
+  "franchise": {
+    "awards": "Premios",
+    "status": "Estado"
+  },
+  "franchiseMap": {
+    "allStates": "Todos los estado/provincias",
+    "allFranchises": "Todos las Franquicias",
+    "allSites": "Todos los Sitios",
+    "allJobs": "Todos los Trabajos",
+    "allOfficers": "Todos los Oficiales",
+    "searchSites": "Buscar un Sitio",
+    "searchOfficer": "Buscar un Oficial",
+    "live": "En Vivo",
+    "address": "Dirección",
+    "client": "Cliente",
+    "phoneNumber": "Número de Teléfono",
+    "latitude": "Latitud",
+    "longitude": "Longitud",
+    "showSites": "Mostrar Sitios",
+    "noOfficersFound": "No se encontraron oficiales"
+  },
+  "profile": {
+    "personalInfo": "Información personal",
+    "personalInfoText": "Actualiza tu foto y tus datos personales aquí."
+  },
+  "siteSummaryReports": {
+    "table": {
+      "listing": {
+        "columns": {
+          "runsheetName": "Nombre de la hoja de ruta",
+          "site": "Sitio",
+          "timeRange": "Rango de tiempo",
+          "punchIn": "Hora de entrada y salida",
+          "timeSpent": "Tiempo invertido",
+          "submittedAt": "Enviado el",
+          "submittedBy": "Enviado por",
+          "startDate": "Fecha de inicio",
+          "endDate": "Fecha de finalización"
+        }
+      }
+    }
+  }
+}

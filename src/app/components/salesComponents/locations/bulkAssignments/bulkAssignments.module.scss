@@ -1,0 +1,109 @@
+.BulkAssignWraper {
+  .bulkSubHeading {
+    color: #6a6a70;
+    font-size: 14px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 20px; /* 142.857% */
+  }
+  .bulkTopWrapper {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    gap: 16px;
+    align-items: baseline;
+    .bulkHeading {
+      color: #262527;
+    }
+    .bulkChipsWrapper {
+      display: flex;
+      gap: 12px;
+      .bulkChips {
+        color: #3c3c3d;
+        font-size: 14px;
+        font-style: normal;
+        font-weight: 400;
+        line-height: 20px;
+        border-radius: 48px;
+        background: #f5f5f5;
+        padding: 7px 10px;
+      }
+    }
+  }
+  .divide {
+    margin-top: 24px;
+    margin-bottom: 24px;
+  }
+  .bordered {
+    border: 1px solid #e6e6e7;
+    border-radius: 8px;
+    transition:
+      border 0.2s,
+      box-shadow 0.2s; /* Add a transition for smoother changes */
+    &:focus {
+      border-radius: 8px;
+      border: 1px solid #3f99ff !important;
+      box-shadow: 0px 0px 0px 4px rgba(14, 165, 233, 0.1) !important;
+      -webkit-box-shadow: 0px 0px 0px 4px rgba(14, 165, 233, 0.1) !important; /* Vendor prefix for WebKit browsers */
+      -moz-box-shadow: 0px 0px 0px 4px rgba(14, 165, 233, 0.1) !important; /* Vendor prefix for Mozilla Firefox */
+    }
+  }
+  .conditionWrapper {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 60vh;
+    .conditionBox {
+      .userHeading {
+        color: #262527;
+        font-size: 16px;
+        font-style: normal;
+        font-weight: 700;
+        line-height: 24px;
+      }
+      .radioOption {
+        margin: 16px 0px 24px 0px;
+        min-width: 200px;
+        margin-right: 0px !important;
+        [class*='MuiFormControlLabel-label'] {
+          color: #262527;
+          font-size: 14px;
+          font-style: normal;
+          font-weight: 500;
+          line-height: 20px;
+          min-width: 200px;
+          margin-right: 0px !important;
+        }
+      }
+
+      .subTitle {
+        color: #86868b;
+        font-size: 14px;
+        font-style: normal;
+        font-weight: 500;
+        line-height: 20px;
+        margin-bottom: 10px;
+      }
+      .secondDropdown {
+        margin-top: 30px;
+      }
+    }
+    .conditionMessage {
+      border-radius: 8px;
+      background: #e5f6ff;
+      padding: 10px 24px;
+      color: #000;
+      font-size: 16px;
+      font-style: normal;
+      font-weight: 500;
+      line-height: 24px;
+      letter-spacing: 0.05px;
+    }
+  }
+  .dropHigh {
+    height: 44px;
+  }
+}
+.radioWrapper {
+  gap: 53px;
+}

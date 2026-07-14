@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>Sign In with Auth0</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+ </head>
+  <style>
+    
+    *{
+      margin:0;
+      padding:0;
+      box-sizing:border-box;
+    }
+    
+ 
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: rgba(128, 128, 128, 0.4);
+    border-radius: 10px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: grey;
+  }
+
+  
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: grey transparent;
+  }
+    
+    body, html {
+      height: 100%;
+      background-color: #ffffff;
+      font-family: 'Inter', sans-serif;
+    }
+    
+    .welcome-heading{
+    	 color: #000000;
+		 	font-size: 24px;
+     	font-style: normal;
+     	font-weight: 700;
+     	line-height: 32px;
+          text-align: left;
+    }
+    
+    .description-text{
+		 	color: #86868B;
+     	text-align: center;
+    	font-size: 14px;
+     	font-style: normal;
+     	font-weight: 400;
+     	line-height: 20px;
+     	margin-top:4px;
+     
+    }
+    
+    .login-container {
+      display:flex;
+  		height: 100vh;
+  		overflow: hidden;
+    }
+    
+ 		.item1 {
+    	width:50%;
+  	}
+    
+    .banner-image{
+      width: 100%;
+    	height: 100%;
+    	object-fit: cover;
+    	object-position: left center;
+    }
+    
+    .login-box {
+    	width:50%;
+     	background:white;
+      display: flex;
+    	flex-direction: column;
+    	flex: 1;
+    	overflow: auto;
+    }
+
+    .login-header {
+      text-align: start;
+    }
+    
+    .login-box-container{
+      max-width:355px;
+      width:100%;
+      margin:0 auto;
+      display: flex;
+   	  flex-direction: column;
+    	flex: 1;
+    	overflow: auto;
+    }
+    
+    .logo-image {
+ 			display:flex;
+      justify-content:center;
+      align-items:center;
+      padding-top:118px;
+    }
+    
+    .login-form-box{
+      display: flex;
+    	flex-direction: column;
+      justify-content:center;
+    	flex: 1;
+      overflow: auto;
+    }
+    
+      .custom-form{
+    	margin-top:36px;
+    }
+    
+      .login-btn{
+        display:flex;
+        justify-content:center;
+        align-items:center;
+        padding:10px 14px;
+        height:40px;
+        border-radius: 8px;
+				border: 1px solid #146DFF;
+				background:  #146DFF;
+        color:  #FFF;
+				font-family: inherit;
+				font-size: 14px;
+				font-style: normal;
+				font-weight: 500;
+				line-height: 20px;
+        width:calc(100% - 8px);
+        margin: 0 auto;
+        margin-top:36px;
+        cursor:pointer;
+        transition: background-color 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms,box-shadow 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms,border-color 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms,color 250ms cubic-bezier(0.4, 0, 0.2, 1)
+    		}
+    
+    .login-btn:hover{
+      background-color:#0059FF
+    }
+    
+    .login-btn:active{
+    	box-shadow: 0px 0px 0px 4px #E5F6FF, 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
+		}
+    
+    .login-btn:disabled{
+      border: 1px solid  #A9DEFF;
+			background:  #A9DEFF;
+     	cursor: not-allowed;
+    }
+    
+      .form-group-custom{
+    		display:flex;
+      	flex-direction:column;
+        margin-bottom:16px;
+        position:relative;
+    }
+    
+     .form-group-custom:nth-child(2){
+        margin-bottom:0;
+    }
+    
+    
+    .custom-input-label{
+      display:block;
+      margin-bottom:6px;
+      color:  #86868B;
+      font-size: 14px;
+			font-style: normal;
+			font-weight: 500;
+			line-height: 20px;
+       margin-left:4px;
+    }
+    
+    .custom-input-field{
+      display:block;
+   		padding: 10px 14px 10px 42px;
+      border-radius:8px;
+			border: 1px solid  #D0CFD2;
+			background: #FFF;
+      color: #262527;
+			font-family: inherit;
+			font-size: 16px;
+			font-style: normal;
+			font-weight: 400;
+			line-height: 24px;
+      height:40px;
+        width:calc(100% - 8px);
+        margin:0 auto;
+    }
+    
+    .input-icon{
+      position: absolute;
+    top: 37px;
+    transform: translateY(-8%);
+    left: 17px;
+    width: 20px;
+    height: 20px;
+    }
+    
+    .password-eye{
+      position:absolute;
+      top:33px;
+      transform: translateY(-8%);
+      right:14px;
+      width:32px;
+      height:32px;
+      border-radius:50%;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      cursor:pointer;
+      transition: background-color 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms,box-shadow 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms,border-color 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms,color 250ms cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+     .password-eye:hover{
+       background-color: rgba(0, 0, 0, 0.04);
+    }
+    
+    .password-eye-icon{
+      display:block;
+      width:16px;
+      height:16px;
+    }
+    
+    .password-eye-icon.hide{
+      display:none;
+    }
+      
+    .custom-input-field:focus{
+      border: 1px solid  #146DFF;
+			box-shadow: 0px 0px 0px 4px rgba(14, 165, 233, 0.10);
+      outline:none;
+    }
+    .custom-input-field:focus:hover{
+        border: 1px solid  #146DFF;
+    }
+
+    .custom-input-field:hover{
+      border-color:#AEAEB2;
+    }
+    
+    .custom-input-field::placeholder{
+    	color: #6A6A70;
+    }
+    
+    .custom-input-field.error-field{
+      border: 1px solid #DF372B;
+    }
+    
+     .custom-input-field.error-field:focus{
+     	 border: 1px solid #DF372B;
+			box-shadow: 0px 0px 0px 4px #FEE4E2, 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
+    }
+    
+    .invalid-feedback{
+       display: none;
+      margin-top: 6px;
+      background-color: #fee4e2;
+      color: #b32318;
+      padding: 10px 14px;
+      text-shadow:
+        0px 0px 0px #fee4e2,
+        0px 1px 2px rgba(16, 24, 40, 0.05);
+      font-size: 14px;
+      font-style: normal;
+      font-weight: 400;
+      line-height: 20px;
+      margin-top:36px;
+      border-radius:8px;
+      text-align:center;
+       margin-left:4px;
+    }
+    
+     .invalid-feedback:first-letter{
+       text-transform: capitalize;
+    }
+  
+    .forgot-text{
+     	color: #146DFF;
+			text-align: right;
+			padding-top:6px;
+			font-size: 14px;
+			font-style: normal;
+			font-weight: 400;
+			line-height: 20px;
+      margin-right:4px;
+      display:block;
+      text-decoration:none;
+    }
+    
+    
+ 		.copy-right-text{
+    	 color: #6a6a70 ;
+    	 font-size: 12px ;
+    	 font-weight: 400 ;
+    	 line-height: 16px;
+    	 letter-spacing: 0.5px ;
+    	 text-align: center;
+       padding-bottom:53px;
+    }
+    
+    .forgot-password{
+      display:flex;
+      justify-content:flex-end;
+    }
+   
+  </style>
+<body>
+  
+  <div class="login-container">
+     <div class="item1">
+          <img alt="hello" class="banner-image" src="https://signalassets.blob.core.windows.net/signal/assets/Hales%20Photo-Signal-0643-4000x2668-14516be%201.png" />
+     </div>
+    <div class="login-box">
+     <div class="login-box-container">
+        <div class="logo-image">
+          <img src="https://signalassets.blob.core.windows.net/signal/assets/signalLogo.svg" style="height:49px;object-fit:contain"/>
+        </div>
+        <div class='login-form-box'>
+      <div class="login-header">
+        <h3 class="welcome-heading">Welcome!</h3>
+        <p class="description-text">Manage your Franchise better & efficient.</p>
+      </div>
+            <p class="invalid-feedback"></p>
+      <form onsubmit="return false;" method="post" class="custom-form" >   
+        <div class="form-group-custom">
+         <label for="name" class="custom-input-label">Email</label>
+          <input
+            type="email"
+            id="email"
+            placeholder="Enter your email"
+                 class="custom-input-field custom-input-field-mail">
+          <img class='input-icon' src="https://signalassets.blob.core.windows.net/signal/assets/mail.svg" />
+        </div>
+        <div class="form-group-custom">
+          <label for="name" class="custom-input-label">Password</label>
+          <input
+            type="password"
+            id="password"
+            placeholder="Enter your Password"
+                 class="custom-input-field custom-input-field-password">
+           <img class='input-icon' src="https://signalassets.blob.core.windows.net/signal/assets/lock.svg" />
+          <div class='password-eye'>
+          	<img class='password-eye-icon show' src="https://signalassets.blob.core.windows.net/signal/assets/eye.svg" />
+            <img class='password-eye-icon hide' src="https://signalassets.blob.core.windows.net/signal/assets/eye-off.svg" />
+          </div>
+        </div>
+        <div class='forgot-password'>
+                    <a href="https://green-wave-081fb4c10.3.azurestaticapps.net/forgot-password" class="forgot-text">
+         
+         Forgot Password?
+       
+      </a>
+        </div>
+        <div class="captcha-container form-group"></div>
+        <button
+          type="submit"
+          id="btn-login"
+                class="login-btn">
+            Log In
+        </button>    
+      </form>
+          </div>
+         
+          <p class="copy-right-text">@2023 Signal. All rights reserved.</p>
+         
+        </div>
+    </div>
+  </div>
+
+  <!--[if IE 8]>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/ie8/0.2.5/ie8.js"></script>
+  <![endif]-->
+
+  <!--[if lte IE 9]>
+  <script src="https://cdn.auth0.com/js/polyfills/1.0/base64.min.js"></script>
+  <script src="https://cdn.auth0.com/js/polyfills/1.0/es5-shim.min.js"></script>
+  <![endif]-->
+
+  <script src="https://cdn.auth0.com/js/auth0/9.18/auth0.min.js"></script>
+  <script src="https://cdn.auth0.com/js/polyfills/1.0/object-assign.min.js"></script>
+   <script>
+      const passwordEye = document.querySelector('.password-eye');
+      const passwordInput = document.getElementById('password');
+
+      passwordEye.addEventListener('click', () => {
+        if (passwordInput.type === 'password') {
+          passwordInput.type = 'text';
+          document.querySelector('.password-eye-icon.show').style.display = 'none';
+          document.querySelector('.password-eye-icon.hide').style.display = 'block';
+        } else {
+          passwordInput.type = 'password';
+          document.querySelector('.password-eye-icon.show').style.display = 'block';
+          document.querySelector('.password-eye-icon.hide').style.display = 'none';
+        }
+      });
+    </script>
+   <script>
+      window.addEventListener('load', function () {
+        var config = JSON.parse(decodeURIComponent(escape(window.atob('@@config@@'))));
+
+        var leeway = config.internalOptions.leeway;
+        if (leeway) {
+          var convertedLeeway = parseInt(leeway);
+
+          if (!isNaN(convertedLeeway)) {
+            config.internalOptions.leeway = convertedLeeway;
+          }
+        }
+
+        var params = Object.assign(
+          {
+            overrides: {
+              __tenant: config.auth0Tenant,
+              __token_issuer: config.authorizationServer.issuer,
+            },
+            domain: config.auth0Domain,
+            clientID: config.clientID,
+            redirectUri: config.callbackURL,
+            responseType: 'code',
+          },
+          config.internalOptions,
+        );
+
+        var webAuth = new auth0.WebAuth(params);
+        var databaseConnection = 'Username-Password-Authentication';
+        var captcha = webAuth.renderCaptcha(document.querySelector('.captcha-container'));
+
+        function login(e) {
+          e.preventDefault();
+          var button = this;
+          var username = document.getElementById('email').value;
+          var password = document.getElementById('password').value;
+          button.disabled = true;
+          webAuth.login(
+            {
+              realm: databaseConnection,
+              username: username,
+              password: password,
+              captcha: captcha.getValue(),
+            },
+            function (err) {
+              if (err) displayError(err);
+              button.disabled = false;
+            },
+          );
+        }
+
+        
+         function displayError(err) {
+          var errorMessage = document.querySelector('.invalid-feedback');
+          var errorFields = document.querySelectorAll('.custom-input-field');
+          if (err.description === null) {
+            errorMessage.innerText = 'Both email and password are required fields';
+          } else {
+            errorMessage.innerText = err.description.slice(0, -1);
+          }
+          errorMessage.style.display = 'block';
+          errorFields.forEach(function (field) {
+            field.classList.add('error-field');
+          });
+        }
+
+        document.getElementById('btn-login').addEventListener('click', login);
+      });
+    </script>
+</body>
+</html>

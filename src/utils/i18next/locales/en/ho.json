@@ -1,0 +1,375 @@
+{
+  "header": "HO",
+  "ho_franchise": {
+    "detail": {
+      "franchise_information": {
+        "title": "Franchise Information",
+        "info": "Add Info",
+        "name": "Franchise Name",
+        "workCellNumber": "Work Cell Number",
+        "owner": "Owner's Name",
+        "email": "Email",
+        "number": "Phone",
+        "address": "Address",
+        "country": "Country",
+        "city": "City",
+        "region": "Region/State",
+        "generalInformation": "Stats",
+        "Id": "Franchise ID",
+        "joined": "Functional Date",
+        "monthlyRevenue": "Monthly Revenue",
+        "noOfCustomers": "No. of Customers",
+        "serviceZips": "Zip/Postal Code",
+        "noOfEmployees": "No. of Employees",
+        "labourEfficiency": "Labour Efficiency",
+        "customerRelation": "Customer Retention",
+        "hubSpotFranchiseId": "Hubspot Franchise No.",
+        "companyCode": "Company Code",
+        "personNumber": "Person {{count}}",
+        "w2": "Employee (Hourly)",
+        "1099": "Contractor (Hourly)",
+        "legalEntityName": "Legal Entity Name",
+        "securityLicenseNo": "Security License No.",
+        "tCsVersion": "T&Cs Version",
+        "legalInformation": "Legal Information"
+      },
+      "settings": {
+        "ownerEmailIsNotPresentForInvite": "Please add owner email first to invite owner!",
+        "changeOwnerEmailIsSame": "Email must not be equal to the old email"
+      }
+    },
+    "tables": {
+      "franchiseListing": {
+        "columns": {
+          "id": "ID",
+          "name": "Franchise",
+          "owner": "Owner",
+          "monthlyRevenue": "Monthly Revenue",
+          "noOfCustomer": "No. of Customers",
+          "status": "Status",
+          "noOfServiceZips": "Zip/Postal Code",
+          "laborEfficiencyPercent": "Labor Efficiency",
+          "customerRetentionPercent": "Customer Retention",
+          "state": "State/Province",
+          "city": "City",
+          "noOfUser": "Users"
+        },
+        "filters": {
+          "statesDropdown": {
+            "label": "All States/Province"
+          },
+          "citiesDropdown": {
+            "label": "All Cities"
+          },
+          "statusDropdown": {
+            "label": "All Status"
+          }
+        },
+        "syncDataButton": {
+          "tooltip": "Sync data from Hubspot"
+        }
+      }
+    },
+    "sidebarListing": {
+      "noFranchiseFound": "No franchise found!",
+      "searchedTermNotFound": "Your search '{{searchedTerm}}' did not match any franchise. Please try again."
+    },
+    "tabs": {
+      "generalInformation": "General Information",
+      "sites": "Sites",
+      "employees": "Employees",
+      "devices": "Devices",
+      "settings": "Settings"
+    },
+    "makeItFunctional": "Details are required to make it functional!"
+  },
+  "vehicle": {
+    "detail": {
+      "vehicle_information": {
+        "title": "Vehicle Information",
+        "reg": "Registered Number",
+        "makeModeYear": "Make/Model/Year",
+        "createdAt": "Created at",
+        "lastMaintained": "Last Maintained",
+        "assignedTo": "Assigned to",
+        "removeButton": "Remove Vehicle"
+      },
+      "noImage": "No image found"
+    }
+  },
+  "zones": {
+    "detail": {
+      "zones_information": {
+        "title": "Zone Information",
+        "name": "Zone Name",
+        "supervisor": "Supervisor",
+        "email": "Email",
+        "number": "Phone",
+        "zoneSites": "Zone's Sites",
+        "zoneSupervisors": "Zone's {{supervisors}}",
+        "officer": "Officer",
+        "officers": "Officers"
+      }
+    }
+  },
+  "sites": {
+    "table": {
+      "listing": {
+        "columns": {
+          "site": "Site",
+          "client": "Client",
+          "company": "Company",
+          "dutyType": "Type",
+          "zone": "Zone",
+          "supervisor": "Supervisor",
+          "officers": "Officers",
+          "status": "Status",
+          "monthlyRevenue": "Monthly Revenue",
+          "termsAndConditionsVersion": "T&Cs Version",
+          "clientsName": "Client Name",
+          "contact": "Contact"
+        }
+      }
+    }
+  },
+  "devices": {
+    "tables": {
+      "listing": {
+        "columns": {
+          "id": "ID",
+          "name": "Name",
+          "type": "Type",
+          "installationDate": "Installation Date",
+          "batteryRenewal": "Battery renewal",
+          "lastScannedOn": "Last Scanned On",
+          "lastScannedBy": "Last Scanned By",
+          "zone": "Zone",
+          "site": "Site"
+        }
+      }
+    }
+  },
+  "employees": {
+    "tables": {
+      "listing": {
+        "columns": {
+          "name": "Name",
+          "userType": "User Type",
+          "overtime": "Overtime",
+          "email": "Email",
+          "number": "Phone",
+          "joinedOn": "Joined On",
+          "joinedDate": "Joined Date",
+
+          "title": "Title",
+          "dutyType": "Job Type",
+          "zone": "Zone",
+          "ratePerHour": "Rate/Hr",
+          "lastPayment": "Last Payment",
+          "currentDutyProgress": "Current Job",
+          "sitesAllocated": "Sites"
+        }
+      }
+    }
+  },
+  "templates": {
+    "staticFields": {
+      "visitor": {
+        "visitorLabel": "Visitor CheckIn/CheckOut",
+        "placeholder": "Select Form Type",
+        "firstLabel": "Visitor CheckIn",
+        "secondInputLabel": "Visitor CheckOut",
+        "checkIn": "Check-In Form",
+        "secondDropdownLabel": "Select Check In Type",
+        "checkOut": "Check-Out Form",
+        "changeableValueCriteria": "visitorsCheckOut"
+      },
+      "loads": {
+        "loadsLabel": "Loads CheckIn/CheckOut",
+        "firstLabel": "Loads CheckIn",
+        "placeholder": "Select Form Type",
+        "secondInputLabel": "Loads CheckOut",
+        "checkIn": "Add Load Form",
+        "secondDropdownLabel": "Select Check In Type",
+        "checkOut": "Out-Bound  Form",
+        "changeableValueCriteria": "loadsCheckOut"
+      }
+    },
+    "searchKeys": {
+      "all": "All",
+      "homeOffice": "Home Office",
+      "franchise": "Franchise"
+    },
+    "listing": {
+      "columns": {
+        "title": "Report",
+        "createdBy": "Created By",
+        "createdOn": "Created On",
+        "templateType": "Template Type",
+        "actions": "Actions"
+      },
+      "actions": {
+        "clone": "Clone",
+        "edit": "Edit",
+        "delete": "Delete"
+      }
+    },
+    "create": {
+      "addReportTemplate": "Add Report Template",
+      "includeDailySummary": "Include in daily site summary report",
+      "report": {
+        "title": "Report Title",
+        "type": "Report Type",
+        "titlePlaceholder": "Report Template Title (e.g. Equipment Inspection Report)",
+        "description": "Report Description",
+        "descriptionPlaceholder": "Additional Description (optional)",
+        "dropdown": {
+          "equipmentInspection": "Equipment Inspection",
+          "vehicleInspection": "Vehicle Inspection",
+          "tourReports": "{{tour}} Reports",
+          "shiftDayEndReport": "Shift Day End Report",
+          "incidentReport": "Incident Report",
+          "dispatch": "Dispatch",
+          "activityReport": "Activity Report"
+        },
+        "types": {
+          "equipmentInspection": "Equipment Inspection",
+          "vehicleInspection": "Vehicle Inspection",
+          "tourReports": "{{tour}} Reports",
+          "shiftDayEndReport": "Shift Day End Report",
+          "incidentReport": "Incident Report",
+          "visitorsCheckOut": "Visitors Checkout",
+          "activityReport": "Activity Report"
+        }
+      },
+      "section": {
+        "title": "Section Title",
+        "titlePlaceholder": "Section Title (e.g. Safety Protocols and Features)",
+        "description": "Section Description",
+        "descriptionPlaceholder": "Additional Description (optional)",
+        "field": {
+          "title": "Question Statement",
+          "titlePlaceholder": "Question Statment (e.g. Is the emergency shut-off mechanism working correctly?)",
+          "description": "Question Description",
+          "descriptionPlaceholder": "Instructions (optional)",
+          "answerType": "Answer Type",
+          "responseType": {
+            "text": "Text",
+            "number": "Number",
+            "dateTime": "Date & Time",
+            "radio": "Radio Buttons (Single Selection)",
+            "multiselect": "Multiple Selection",
+            "imageVideo": "Image/Video",
+            "date": "Date",
+            "time": "Time",
+            "dropdown": "DropDown",
+            "webCam": "Web Cam Image",
+            "phoneNumber": "Phone Number",
+            "description": "Description Box",
+            "attachment": "Attachment",
+            "signature": "Signature"
+          },
+          "option": {
+            "placeholder": "Option Label"
+          }
+        }
+      },
+      "btn": {
+        "back": "Back",
+        "save": "Save",
+        "cancel": "Cancel",
+        "addQuestion": "Add Question",
+        "addSection": "Add Section",
+        "delete": "Delete",
+        "newOption": "Add option"
+      },
+      "checkbox": {
+        "required": "Required"
+      }
+    },
+    "delete": {
+      "title": "Delete Report Template!",
+      "visitorTitle": "Delete Visitor Template!",
+      "visitorDescription": "Are you sure you want to delete this visitor template?",
+      "loadsTitle": "Delete Loads Template!",
+      "loadsDescription": "Are you sure you want to delete this loads template?",
+      "officerTitle": "Delete officer!",
+      "officerDescription": "Are you sure you want to delete this officer?",
+      "description": "Are you sure you want to delete this report template?",
+      "subDescription": "This action can not be reverted.",
+      "deleteOfficerText": "Delete Officer",
+      "deleteButtonText": "Delete Template",
+      "cancelButtonText": "Cancel",
+      "templateDescription": "Are you sure you want to delete this template?"
+    },
+    "clone": {
+      "title": "Name Report Clone",
+      "description": "To continue cloning report template please add a new name for it below.",
+      "titleFiledLabel": "Enter report name",
+      "titlePlaceHolder": "e.g. Equipment Inspection Report",
+      "cloneButtonText": "Clone",
+      "cancelButtonText": "Cancel"
+    }
+  },
+  "settings": {
+    "tabs": {
+      "preferences": "Preferences",
+      "portalAccesss": "Portal Accesss",
+      "overtimeRules": "Overtime Rules",
+      "activityLog": "Activity Log",
+      "reportTemplates": "Report Templates"
+    }
+  },
+  "graph": {
+    "users": "Users",
+    "usersByPost": "Users By Post",
+    "usersOverTheYear": "Users over the year",
+    "year": "Year",
+    "officers": "Officers",
+    "clients": "Clients",
+    "years": "Years",
+    "noOfClients": "No. of Clients"
+  },
+  "countryConfigurations": {
+    "country": "Country",
+    "status": "Status",
+    "actions": "Actions",
+    "all": "All",
+    "published": "Published",
+    "publish": "Publish",
+    "draft": "Draft",
+    "createNewCountry": "Add new Country configuration",
+    "dropdownLabel": "All Status",
+    "draftCountryRequired": "Country is required for draft.",
+    "saveAsDraft": "Save as Draft",
+    "basicConfigurations": "Basic Configurations",
+    "addNewCountryConfiguration": "Add New Country Configuration",
+    "basicConfigurationsList": "Configured Countries List",
+    "selectCountry": "Select Country",
+    "countryCode": "Country Code",
+    "phoneCode": "Phone Code",
+    "chooseCurrency": "Choose Currency",
+    "currency": "Currency",
+    "chooseDateFormat": "Choose Date Format",
+    "dateFormat": "Date Format",
+    "regionName": "Region (State/Province)",
+    "regionCode": "Region code (Zip/Postal)",
+    "zipCode": "Zip Code",
+    "postalCode": "Postal Code",
+    "state": "State",
+    "province": "Province",
+    "notApplicable": "notApplicable",
+    "distance": "Distance Measure",
+    "km": "Kilometers/Meters (km/m)",
+    "miles": "Miles/Foot (mi/ft)",
+    "employeeType": "Employee Type",
+    "typeHere": "Type Here",
+    "parmanentSalary": "Parmanent-Salary",
+    "parmanentHourly": "Parmanent-Hourly",
+    "contractor": " Contractor",
+    "publishModalTitle": "Are you sure you want to Publish this?",
+    "publishModalText": "Please review the configurations before publishing. This action is irreversible.",
+    "publishModalBtn": "Yes, publish",
+    "addMore": "Add more"
+  }
+}
