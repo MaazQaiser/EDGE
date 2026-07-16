@@ -1,10 +1,13 @@
-import { duties, dutiesMonth, shiftDetailMock } from 'src/stubbedData/mocks/dutyList.mock';
-import { runsheetDetail, runsheets } from 'src/stubbedData/mocks/runsheetList.mock';
+import { Contracts } from 'src/app/obx/pages/sites/listing/component/graph/stubbbedData';
 import { dealsData } from 'src/stubbedData/mocks/deals.mock';
-import { locationsData } from 'src/stubbedData/mocks/locations.mock';
 import { dispatchListMock } from 'src/stubbedData/mocks/dispatch.mock';
+import { duties, dutiesMonth, shiftDetailMock } from 'src/stubbedData/mocks/dutyList.mock';
+import { locationsData } from 'src/stubbedData/mocks/locations.mock';
 import { payrollListMock } from 'src/stubbedData/mocks/payroll.mock';
+import { runsheetDetail, runsheets } from 'src/stubbedData/mocks/runsheetList.mock';
 
+import { mainDomain } from '../utilityFunctions';
+import { getExternalClients, getExternalContacts } from './externalDirectoryMock';
 import {
   extractPath,
   extractPathParams,
@@ -16,8 +19,8 @@ import {
 } from './mockHelpers';
 import { addToStore, findInStore, getStore, removeFromStore, updateInStore } from './mockStores';
 import { getMockTenantLabels, getMockUserDataResponse } from './mockUserData';
+import { buildSiteGeoLocationResponse, getAddressConfigsMock } from './siteGeoMock';
 import { getTenantMockData } from './tenantMockData';
-import { mainDomain } from '../utilityFunctions';
 
 const invoiceList = [
   { id: 123, name: 'Bilal Malik', amount: 12312, companyName: 'ABC Company', dueDate: '1-24-2024' },
@@ -36,6 +39,15 @@ function matchPath(path, pattern) {
   return extractPathParams(path.split('?')[0], pattern);
 }
 
+function isPlainObject(value) {
+  return (
+    Boolean(value) &&
+    typeof value === 'object' &&
+    !Array.isArray(value) &&
+    !(value instanceof FormData)
+  );
+}
+
 export function resolveMockResponse(method, url, body = null) {
   const path = extractPath(url);
   const pathOnly = path.split('?')[0];
@@ -47,21 +59,30 @@ export function resolveMockResponse(method, url, body = null) {
   if (pathOnly.includes('/configs/user_data')) return getMockUserDataResponse();
   if (pathOnly.includes('/configs/tenant_labels'))
     return mockSuccess('Tenant labels fetched', getMockTenantLabels());
+  // Address dropdowns for site create/update (fetchConfigList → `/configs`)
+  if (pathOnly === '/configs' || /\/configs$/.test(pathOnly))
+    return mockSuccess('Configs fetched', getAddressConfigsMock());
+  // External application directory (clients + contacts) consumed by the site
+  // information edit form. These records are "owned" by another app; the form
+  // only links to them.
+  if (pathOnly.includes('/directory/clients'))
+    return mockSuccess('Clients fetched', { clients: getExternalClients(query?.search) });
+  if (pathOnly.includes('/directory/contacts'))
+    return mockSuccess('Contacts fetched', { contacts: getExternalContacts(query?.clientId) });
+
   if (pathOnly.includes('/auth/logout')) return mockMutationSuccess('Logged out successfully');
   if (pathOnly.includes('/auth/forgot_password') || pathOnly.includes('/auth/reset_password'))
     return mockMutationSuccess('Email sent successfully');
   if (pathOnly.includes('/auth/change_password'))
     return mockMutationSuccess('Password updated successfully');
 
+  // NOTE: these literal `/sites/*` routes must be checked before the generic
+  // `/sites/:id` matcher below - otherwise segments like "sites_graph" or
+  // "clients_graph" get swallowed as the `:id` param and return the wrong
+  // (site-detail) response shape instead of the graph data the callers expect.
   if (pathOnly.includes('/sites/list')) {
     const { items, pagination } = mockPaginate(getStore('sites'), query);
     return mockResponse({ sites: items, pagination }, 'Success Message');
-  }
-
-  if (matchPath(pathOnly, '/sites/:id')) {
-    const params = matchPath(pathOnly, '/sites/:id');
-    const site = findInStore('sites', params.id) || getStore('sites')[0];
-    return mockSuccess('Site fetched successfully', { site });
   }
 
   if (pathOnly.includes('/sites/sites_graph')) {
@@ -79,6 +100,31 @@ export function resolveMockResponse(method, url, body = null) {
     });
   }
 
+  if (pathOnly.includes('/franchise_contracts_yearly_stats')) {
+    return graphResponse('clientsOverTheYear', Contracts);
+  }
+
+  if (pathOnly === '/sites') {
+    const { items, pagination } = mockPaginate(getStore('sites'), query);
+    return mockResponse({ sites: items, pagination }, 'Success Message');
+  }
+
+  if (matchPath(pathOnly, '/sites/:id')) {
+    const params = matchPath(pathOnly, '/sites/:id');
+    const site = findInStore('sites', params.id) || getStore('sites')[0];
+    return mockSuccess('Site fetched successfully', { site });
+  }
+
+  // NOTE: these dropdown endpoints must be matched with their full, specific
+  // path before any broader `/sage_items` or `/holiday_groups` matcher is
+  // added, for the same reason as the `/sites/*` routes above.
+  if (pathOnly.includes('/sage_items/sage_items_dropdown'))
+    return mockSuccess('Sage items fetched', getStore('sageItems'));
+  if (pathOnly.includes('/holiday_groups/holiday_groups_dropdown'))
+    return mockSuccess('Holiday groups fetched', getStore('holidayGroups'));
+
+  if (pathOnly.includes('/zones/options'))
+    return mockSuccess('Zones fetched', { zones: getStore('zones') });
   if (pathOnly.includes('/zones/list') || pathOnly.endsWith('/zones'))
     return listResponse('zones', getStore('zones'), query);
   if (matchPath(pathOnly, '/zones/:id'))
@@ -146,6 +192,19 @@ export function resolveMockResponse(method, url, body = null) {
     return { statusCode: 200, message: 'invoices fetched successfully', data: items, pagination };
   }
 
+  // Geo-fencing boundaries used by the sites detail / edit map (getGeoLocation,
+  // a POST). This matcher is method-agnostic, so it must return the same shape
+  // `findParentAndSiblingsPolygon` expects — franchises carrying a `coordinates`
+  // polygon (the update/detail map gates on `parent.coordinates`). Delegating to
+  // buildSiteGeoLocationResponse keeps franchise/zone/site polygons in sync with
+  // the mock store.
+  if (pathOnly.includes('/geolocations')) {
+    return mockSuccess(
+      'Geolocations fetched',
+      buildSiteGeoLocationResponse(body, getStore('sites'), getStore('zones')),
+    );
+  }
+
   if (pathOnly.includes('/franchises'))
     return mockSuccess('Franchises fetched', {
       franchises: [{ id: 1, name: 'Filter Go Demo Franchise' }],
@@ -166,7 +225,7 @@ export function resolveMockResponse(method, url, body = null) {
   if (pathOnly.includes('/dashboards/top_sites_by_revenue')) {
     return mockSuccess('Top sites fetched', {
       sites: [
-        { id: 1, name: 'Lorem Site', revenue: 12000 },
+        { id: 1, name: 'Northgate Corporate Center', revenue: 12000 },
         { id: 2, name: 'Downtown Plaza', revenue: 9800 },
       ],
     });
@@ -240,13 +299,30 @@ export function resolveMockResponse(method, url, body = null) {
     return mockSuccess('Upload complete', { url: 'https://via.placeholder.com/300' });
 
   if (upperMethod !== 'GET') {
+    // Site detail + update form both call POST /geolocations for franchise/zone polygons
+    if (pathOnly.includes('/geolocations')) {
+      return mockSuccess(
+        'GeoLocation fetched successfully!',
+        buildSiteGeoLocationResponse(body, getStore('sites'), getStore('zones')),
+      );
+    }
+
     if (pathOnly.includes('/sites') && upperMethod === 'POST') {
-      const site = addToStore('sites', body?.site || body || { name: 'New Demo Site' });
+      const site = addToStore(
+        'sites',
+        body?.site ||
+          (isPlainObject(body) ? body : null) || {
+            name: 'New Demo Site',
+          },
+      );
       return mockMutationSuccess('Site created successfully', { site });
     }
     if (pathOnly.includes('/sites') && (upperMethod === 'PUT' || upperMethod === 'PATCH')) {
       const id = pathOnly.split('/').pop();
-      updateInStore('sites', id, body?.site || body || {});
+      // Update form submits multipart FormData — skip merging opaque FormData into the store
+      if (isPlainObject(body) || body?.site) {
+        updateInStore('sites', id, body?.site || body || {});
+      }
       return mockMutationSuccess('Site updated successfully');
     }
     if (pathOnly.includes('/sites') && upperMethod === 'DELETE') {

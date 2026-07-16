@@ -24,6 +24,7 @@ import RenderIfHasPermission from 'src/hoc/RenderIfHasPermission';
 import { useCurrency } from 'src/hooks/useCurrency';
 import {
   franchiseIdUrlQueryParam,
+  geoFencingPolygonTypeKeys,
   rolesEnumWithName,
   timeZoneKeyUrlQueryParam,
 } from 'src/utils/constants';
@@ -47,6 +48,7 @@ const GeneralInformation = ({ siteData, franchiseData, loading, keyId }) => {
 
   const searchParams = new URLSearchParams(location.search);
   const { currency: franchiseCurrency } = useCurrency();
+
   const franchiseIdWithRoleAndSource = getFranchiseIdWithRoleAndSource();
   const franchiseTimeZoneFromUrl = searchParams.get(timeZoneKeyUrlQueryParam);
 
@@ -72,22 +74,22 @@ const GeneralInformation = ({ siteData, franchiseData, loading, keyId }) => {
               {t('obx.sites.siteInformation.title')}
             </Typography>
           </Box>
-          {/* for release purpose we need to comment this data */}
 
           <Box className={classes.cardActionWrapper}>
             {loading ? (
               <Skeleton animation="wave" variant="rounded" className={classes.chipBar} />
             ) : (
               <>
-                {siteData?.id && mappedData?.coordinates?.length == 0 && (
-                  <Chip
-                    color="error"
-                    icon={<ErrorOutlineOutlinedIcon />}
-                    size="small"
-                    label={t('ho.ho_franchise.detail.franchise_information.info')}
-                    variant="outlined"
-                  />
-                )}
+                {siteData?.id &&
+                  (!mappedData?.coordinates || mappedData?.coordinates?.length == 0) && (
+                    <Chip
+                      color="error"
+                      icon={<ErrorOutlineOutlinedIcon />}
+                      size="small"
+                      label={t('ho.ho_franchise.detail.franchise_information.info')}
+                      variant="outlined"
+                    />
+                  )}
               </>
             )}
             <RenderIfHasPermission name={ACL_OBX_SITE_UPDATE}>
@@ -161,13 +163,6 @@ const GeneralInformation = ({ siteData, franchiseData, loading, keyId }) => {
               <Box className={classes.contentDetail}>
                 <Typography variant="body3" className={classes.columnHeading}>
                   {t('obx.sites.siteInformation.primaryEmail')}
-                  {/* <Tooltip
-                    placement="right"
-                    arrow
-                    title={t('obx.sites.tooltips.primaryContactEmailTooltip')}
-                  >
-                    <CautionIcon />
-                  </Tooltip> */}
                 </Typography>
                 <Typography variant="subtitle2" className={classes.columnDetail}>
                   {siteData?.primaryEmail || NA}
@@ -198,7 +193,7 @@ const GeneralInformation = ({ siteData, franchiseData, loading, keyId }) => {
                   {t('obx.sites.siteInformation.dailySiteSummaryReceivers')}
                 </Typography>
                 <Typography variant="subtitle2" className={classes.columnDetail}>
-                  {siteData?.dailySiteSummaryReceivers?.length}
+                  {siteData?.dailySiteSummaryReceivers?.length || 0}
                 </Typography>
               </Box>
               <Box className={classes.contentDetail}>
@@ -206,7 +201,7 @@ const GeneralInformation = ({ siteData, franchiseData, loading, keyId }) => {
                   {t('obx.sites.siteInformation.incidentReportReceivers')}
                 </Typography>
                 <Typography variant="subtitle2" className={classes.columnDetail}>
-                  {siteData?.incidentReportReceivers?.length}
+                  {siteData?.incidentReportReceivers?.length || 0}
                 </Typography>
               </Box>
               {isHomeOfficer && (
@@ -295,11 +290,11 @@ const GeneralInformation = ({ siteData, franchiseData, loading, keyId }) => {
                   </Box>
                 ))
               ) : (
-                <>
+                <Typography variant="body2" className={classes.emptyContacts}>
                   {t('obx.commonText.notAdded.text', {
                     name: `Contact`,
                   })}
-                </>
+                </Typography>
               )}
             </Box>
           </Box>
@@ -327,18 +322,28 @@ const GeneralInformation = ({ siteData, franchiseData, loading, keyId }) => {
             <Skeleton />
           </Box>
         )}
-        {franchiseData?.franchises?.length > 0 &&
-          !isObjectEmpty(siteData?.siteLocation) &&
-          !loading && (
+        {/* Same interactive Geo-Fencing map as the Site Information edit form, in a
+            read-only configuration (pin not draggable, no polygon editing). */}
+        {!loading &&
+          franchiseData?.franchises?.length > 0 &&
+          !isObjectEmpty(siteData?.siteLocation) && (
             <MapComponent
+              siblings={[]}
               franchiseData={franchiseData}
-              setErrorMessages={() => {}}
+              parentBoundry={franchiseData?.franchises?.[0]}
               errorMessages={{}}
+              setErrorMessages={() => {}}
               updateFormHandler={() => {}}
+              setActiveMarker={() => {}}
+              selectedLocation={{}}
+              updateMapValue={() => {}}
+              isSitePinDraggable={false}
               createOrUpdate={false}
-              formDataKey="siteArea"
               mapCenter={siteData?.siteLocation}
+              formDataKey={geoFencingPolygonTypeKeys.sites}
+              actionItem={mappedData}
               actionItemType={actionItemTypeKeys.site}
+              isEditingSite={false}
             />
           )}
       </Box>

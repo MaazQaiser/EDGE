@@ -135,9 +135,9 @@ export const useStyles = makeStyles((theme) => ({
   },
 
   mapSection: {
-    padding: '0 32px',
+    padding: '0 32px 32px',
     [theme.breakpoints.down('lg')]: {
-      padding: '0 24px',
+      padding: '0 24px 24px',
     },
   },
 
@@ -152,11 +152,25 @@ export const useStyles = makeStyles((theme) => ({
     width: '50%',
   },
 
+  emptyContacts: {
+    '&.MuiTypography-root': {
+      color: theme.palette.textSecondary3,
+    },
+  },
+
   mapSkeleton: {
-    height: '400px',
+    width: '100%',
+    aspectRatio: '747 / 267',
+    minHeight: 220,
+    maxHeight: 400,
+    [theme.breakpoints.down('sm')]: {
+      minHeight: 180,
+      maxHeight: 280,
+    },
     '& .MuiSkeleton-root': {
+      width: '100%',
       height: '100%',
-      borderRadius: '0 !important',
+      borderRadius: '8px !important',
       transform: 'unset',
       transformOrigin: 'unset',
     },

@@ -2,7 +2,7 @@
 export const dispatchListMock = [
   {
     id: 1,
-    siteName: 'Lorem Site',
+    siteName: 'Northgate Corporate Center',
     officerName: 'Mike Ross',
     status: 'pending',
     priority: 'high',

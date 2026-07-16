@@ -1,17 +1,22 @@
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import { Button, InputLabel, Switch, TextField, Tooltip, Typography } from '@mui/material';
+import {
+  Autocomplete,
+  Button,
+  InputLabel,
+  Switch,
+  TextField,
+  Tooltip,
+  Typography,
+} from '@mui/material';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
-import InputAdornment from '@mui/material/InputAdornment';
 import Stack from '@mui/material/Stack';
 import { useJsApiLoader } from '@react-google-maps/api';
 import booleanPointInPolygon from '@turf/boolean-point-in-polygon';
 import booleanWithin from '@turf/boolean-within';
 import { point as createTurfPoint, polygon as createPolygon } from '@turf/helpers';
-import { ReactComponent as EmailIcon } from 'assets/images/email.svg?react';
 import { ReactComponent as CautionIcon } from 'assets/svg/caution-thin.svg?react';
 // import { ReactComponent as PhoneIcon } from 'assets/svg/phoneIcon.svg';
-import classNames from 'classnames';
 import AutoCompleteCommon from 'commonComponents/autoCompleteCommon';
 import ProfileImageUpload from 'commonComponents/profileImageUpload';
 import {
@@ -29,6 +34,7 @@ import {
   findParentAndSiblingsPolygon,
   isEUInstance,
   mapLocationInfo,
+  removeKeysFromObject,
   scrollToInValidField,
 } from 'helper/utilityFunctions';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -38,22 +44,20 @@ import { useLocation, useParams } from 'react-router-dom';
 import { getSiteDetails, updateSite } from 'services/sites.services';
 import GoogleMapSearchAddressComponent from 'src/app/components/common/googleMap/searchAddress';
 import LoaderComponent from 'src/app/components/common/loader';
-import PhoneNumberWithCountry from 'src/app/components/common/phoneNumberWithCountry';
 import RequiredAsterik from 'src/app/components/common/requiredAsterik';
-import { useCustomAddressHook } from 'src/app/components/hooks/customAddressHook';
 import { getFranchiseIdWithRoleAndSource } from 'src/app/obx/pages/schedules/helper';
 import { ACL_OBX_SITE_RATE_UPDATE } from 'src/app/router/constant/OBXMODULE';
 import { useTenantLabel } from 'src/helper/utilityHooks';
 import RenderIfHasPermission from 'src/hoc/RenderIfHasPermission';
 import { useCurrency } from 'src/hooks/useCurrency';
+import { getExternalClients, getExternalContacts } from 'src/services/externalDirectory.services';
 import { getGeoLocation } from 'src/services/franchise.services';
 import userHasPermission from 'src/utils/auth/userHasPermission';
-import { disabledCountryStateCity } from 'src/utils/constants';
 import { formatNumber } from 'src/utils/regexField/regexFiledForm';
 import { toaster } from 'src/utils/toast';
 
 import formValidatorJoi from '../../../../../utils/formValidator/formValidator.requiredCheck';
-import EmergencyContactsComponent from '../../../../components/common/emergencyContacts/index.jsx';
+import ExternalContactsComponent from '../../../../components/common/externalContacts/index.jsx';
 import MapComponent from '../../../../components/common/geoFencing/index';
 import * as routes from '../../../../router/constant/ROUTE';
 import { HO_SITES_DETAIL_ROUTE } from '../../../../router/constant/ROUTE';
@@ -141,6 +145,21 @@ const Update = () => {
   const [address, setAddress] = useState('');
   const [selectedLocation, setSelectedLocation] = useState({});
 
+  // The site name defaults to the picked address. Once the user types their own
+  // name we stop mirroring the address; clearing the name lets it resume.
+  const [isSiteNameCustom, setIsSiteNameCustom] = useState(false);
+
+  // External application directory (clients + contacts). These records are owned
+  // by another app; this form only links to them.
+  const [clientOptions, setClientOptions] = useState([]);
+  const [contactOptions, setContactOptions] = useState([]);
+
+  // A client is only considered linked once explicitly selected from SET — it is
+  // never pre-selected, even when editing a site that already has client data.
+  const isClientLinked = !!formData?.clientId;
+  const selectedClientOption =
+    clientOptions.find((c) => String(c.id) === String(formData?.clientId)) || null;
+
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY,
     version: GOOGLE_MAPS_API_VERSION,
@@ -153,18 +172,28 @@ const Update = () => {
 
   const franchiseTimeZoneFromUrl = searchParams.get(timeZoneKeyUrlQueryParam);
 
-  const userRole = useSelector((state) => state?.auth?.userRole?.slug || {});
-  const { CityHookComponent, StateHookComponent, CountrySelectHookComponent } =
-    useCustomAddressHook({
-      formData,
-      setFormData,
-      errorMessages,
-      setErrorMessages,
-      hookDisabled: disabledCountryStateCity(userRole),
-    });
+  // Read-only location details rendered as a card above the address field. These
+  // are derived from the site record on load and refreshed whenever the user
+  // picks a new address (search) or drags the map pin.
+  const [locationDetails, setLocationDetails] = useState({
+    country: '',
+    state: '',
+    city: '',
+    postalCode: '',
+    address2: '',
+  });
+
+  // Snapshot of the address/location as loaded from the site record. Used by the
+  // "reset" affordance to undo an address picked via search or the map pin.
+  const [initialLocation, setInitialLocation] = useState(null);
   const inputChangedHandler = async (event) => {
     const { name, value } = event.target;
     let isError = false;
+    // Typing a site name opts out of address mirroring; clearing it opts back in
+    // so the next address selection can refill the field.
+    if (name === 'name') {
+      setIsSiteNameCustom(hasInputValue(value));
+    }
     if (name === 'officerRate' && !hasInputValue(value)) {
       setErrorMessages((prev) => {
         const updatedErrors = { ...prev };
@@ -214,6 +243,60 @@ const Update = () => {
   );
 
   const preventNegativeValues = (e) => ['e', 'E', '+', '-'].includes(e.key) && e.preventDefault();
+
+  // Linking a client pulls its identity fields (read-only here) into the form.
+  const handleClientSelect = (client) => {
+    setFormData((prev) => ({
+      ...prev,
+      clientId: client?.id || '',
+      firstName: client?.firstName || '',
+      lastName: client?.lastName || '',
+      company: client?.companyName || '',
+      primaryEmail: client?.primaryEmail || '',
+      phoneNumber: client?.phone || '',
+      customerId: client?.customerId || '',
+      // Secondary email + local worked (ADP tax code) are also sourced from SET.
+      email: client?.secondaryEmail || '',
+      localWorked: client?.localWorked || '',
+    }));
+    setErrorMessages((prev) =>
+      removeKeysFromObject(prev, [
+        'firstName',
+        'lastName',
+        'primaryEmail',
+        'phoneNumber',
+        'clientId',
+        'email',
+        'localWorked',
+      ]),
+    );
+  };
+
+  // Load the external client directory once.
+  useEffect(() => {
+    let active = true;
+    getExternalClients()
+      .then((res) => {
+        if (active) setClientOptions(res?.data?.clients || []);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  // Load contacts scoped to the linked client (plus shared contacts).
+  useEffect(() => {
+    let active = true;
+    getExternalContacts(formData?.clientId || null)
+      .then((res) => {
+        if (active) setContactOptions(res?.data?.contacts || []);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [formData?.clientId]);
 
   const getGeoLocationInfo = async () => {
     try {
@@ -286,6 +369,15 @@ const Update = () => {
 
   const handleFormSubmit = async (e) => {
     e.preventDefault();
+    // A linked client is required — client identity is sourced externally.
+    if (!formData?.clientId && !formData?.firstName) {
+      setErrorMessages((prev) => ({
+        ...prev,
+        clientId: 'Please link a client from the connected application.',
+      }));
+      scrollToInValidField();
+      return;
+    }
     // if (formData?.image?.length + profileImage?.length === 0) {
     //   setErrorMessages((prev) => ({
     //     ...prev,
@@ -326,16 +418,27 @@ const Update = () => {
       dataTovalidate.customerId = Number(formData?.customerId);
     }
 
-    dataTovalidate.contacts = dataTovalidate?.contacts?.map((item) => {
-      if (!item?.email) {
-        delete item?.email;
-        return item;
-      } else {
-        return item;
-      }
-    });
+    // Additional contacts are optional. Normalise to the active (non-removed)
+    // set, drop empty emails without mutating form state, and only keep the key
+    // when at least one contact remains — otherwise the validator's `min(1)`
+    // rule blocks saving a site that legitimately has no extra contacts, and a
+    // missing/undefined `contacts` array would throw here on submit.
+    const activeContacts = (formData?.contacts ?? [])
+      .filter((contact) => !contact?._destroy)
+      .map((contact) => {
+        if (!contact?.email) {
+          // eslint-disable-next-line no-unused-vars
+          const { email, ...rest } = contact;
+          return rest;
+        }
+        return contact;
+      });
 
-    delete dataTovalidate.contacts.email;
+    if (activeContacts.length) {
+      dataTovalidate.contacts = activeContacts;
+    } else {
+      delete dataTovalidate.contacts;
+    }
 
     if (!dataTovalidate.email) {
       delete dataTovalidate.email;
@@ -438,7 +541,29 @@ const Update = () => {
           let formDetails = mapLocationInfo(data?.[0]);
           formDetails.mapCenter = data?.[0]?.siteLocation;
           formDetails.customerId = data?.[0]?.customerId || '';
+          // Default the site name to the address when the record has none yet,
+          // otherwise keep the saved name and treat it as user-provided.
+          const hasLoadedName = !!String(formDetails?.name || '').trim();
+          if (!hasLoadedName && formDetails?.address) {
+            formDetails.name = formDetails.address;
+          }
+          setIsSiteNameCustom(hasLoadedName);
           setFormData(formDetails);
+          const loadedLocationDetails = {
+            country: data?.[0]?.country?.name || '',
+            state: data?.[0]?.state?.name || '',
+            city: data?.[0]?.city?.name || '',
+            postalCode: data?.[0]?.zipCode || data?.[0]?.postalCode || '',
+            address2: data?.[0]?.address2 || '',
+          };
+          setLocationDetails(loadedLocationDetails);
+          setInitialLocation({
+            address: formDetails?.address || '',
+            siteLocation: data?.[0]?.siteLocation,
+            mapCenter: data?.[0]?.siteLocation,
+            zipCode: formDetails?.zipCode || loadedLocationDetails.postalCode,
+            locationDetails: loadedLocationDetails,
+          });
           setDisabled(false);
           setAddress?.(formDetails?.address);
         })
@@ -487,19 +612,78 @@ const Update = () => {
     }
   };
 
+  // Pull country / state / city / postal code out of a Google geocode result so
+  // the read-only location card can reflect the newly picked address.
+  const parseAddressComponents = (components = []) => {
+    const pick = (type) => components.find((item) => item?.types?.includes(type));
+    return {
+      country: pick('country')?.long_name || '',
+      state: pick('administrative_area_level_1')?.long_name || '',
+      city:
+        pick('locality')?.long_name ||
+        pick('sublocality')?.long_name ||
+        pick('postal_town')?.long_name ||
+        pick('administrative_area_level_2')?.long_name ||
+        '',
+      postalCode: pick('postal_code')?.long_name || '',
+    };
+  };
+
   const updateMapValue = (_name, value) => {
+    // Mirror the picked address into the site name until the user overrides it.
+    const shouldMirrorName = !isSiteNameCustom && !!value?.name;
     setFormData((prevState) => ({
       ...prevState,
       address: value?.name,
       siteLocation: value?.position,
+      ...(shouldMirrorName ? { name: value.name } : {}),
     }));
+    if (shouldMirrorName) {
+      setErrorMessages((prev) => removeKeysFromObject(prev, ['name']));
+    }
     setAddress(value?.name);
+
+    if (value?.addressComponents?.length) {
+      const parsed = parseAddressComponents(value.addressComponents);
+      setLocationDetails((prevState) => ({
+        ...prevState,
+        country: parsed.country || prevState.country,
+        state: parsed.state || prevState.state,
+        city: parsed.city || prevState.city,
+        postalCode: parsed.postalCode || prevState.postalCode,
+      }));
+      if (parsed.postalCode) {
+        setFormData((prevState) => ({ ...prevState, zipCode: parsed.postalCode }));
+      }
+    }
   };
   const updateCenter = (coordinates) => {
     setFormData((prevState) => ({
       ...prevState,
       mapCenter: coordinates,
     }));
+  };
+
+  // The address is "dirty" once it differs from what the site loaded with,
+  // whether it was changed via the search field or by dragging the map pin.
+  const isAddressDirty =
+    !!initialLocation && (formData?.address || '') !== (initialLocation?.address || '');
+
+  // Restore the original address, map pin and derived location details.
+  const handleResetAddress = () => {
+    if (!initialLocation) return;
+    setAddress(initialLocation.address);
+    setFormData((prevState) => ({
+      ...prevState,
+      address: initialLocation.address,
+      siteLocation: initialLocation.siteLocation,
+      mapCenter: initialLocation.mapCenter,
+      zipCode: initialLocation.zipCode,
+      ...(!isSiteNameCustom && initialLocation.address ? { name: initialLocation.address } : {}),
+    }));
+    setLocationDetails(initialLocation.locationDetails);
+    setSelectedLocation({});
+    setActiveMarker(null);
   };
 
   return (
@@ -527,373 +711,299 @@ const Update = () => {
               </Button>
             </Box>
           </Box>
-          <>
-            {!showMap && (
-              <Stack sx={{ width: '100%', marginTop: '6px' }} spacing={2}>
-                <Alert severity="error">
-                  {t('obx.sites.siteInformation.zoneRequire').slice(0, -1)}
-                </Alert>
-              </Stack>
-            )}
-            <Box className={classes.sitesFieldsWrapper}>
-              <Typography variant="subtitle1" className={classes.sitesFieldsTitle}>
-                {t('form.input.textField.site.sites')} {t('form.input.textField.owner.info')}
-              </Typography>
-              <Box className={classes.formBox}>
-                <Box className={classes.flexControl}>
-                  <InputLabel>
-                    {`${t('form.input.textField.site.sites')} ${t('form.input.textField.site.name')}`}
-                    <RequiredAsterik />
-                  </InputLabel>
-                  <TextField
-                    error={!!errorMessages?.name}
-                    id="outlined-search"
-                    onChange={inputChangedHandler}
-                    name="name"
-                    placeholder={t('form.input.textField.site.placeHolderSites')}
-                    variant="outlined"
-                    disabled={true}
-                    value={formData?.name}
-                    fullWidth
-                    type="text"
-                    helperText={!!errorMessages?.name ? errorMessages?.name : null}
-                  />
-                </Box>
-
-                <Box className={classes.flexControl}>
-                  <InputLabel className={classes.inputLabel}>
-                    {t('obx.form.input.textField.primaryEmail.label')}
-                    <RequiredAsterik />
-                  </InputLabel>
-                  <TextField
-                    error={!!errorMessages?.primaryEmail}
-                    id="outlined-start-adornment"
-                    className={classes.customInputMessage}
-                    disabled={false}
-                    type="email"
-                    name="primaryEmail"
-                    onChange={inputChangedHandler}
-                    value={formData?.primaryEmail}
-                    placeholder={t('obx.form.input.textField.primaryEmail.placeHolder')}
-                    variant="outlined"
-                    fullWidth
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <EmailIcon />
-                        </InputAdornment>
-                      ),
-                    }}
-                    helperText={!!errorMessages?.primaryEmail ? errorMessages?.primaryEmail : null}
-                  />
-                </Box>
-              </Box>
-              <Box className={classes.formBox}>
-                <Box className={classes.flexControl}>
-                  <InputLabel>
-                    {`${t('form.input.textField.site.clients')} ${t(
-                      'form.input.textField.firstName.label',
-                    )}`}
-                    <RequiredAsterik />
-                  </InputLabel>
-                  <TextField
-                    id="outlined-search"
-                    error={!!errorMessages?.firstName}
-                    variant="outlined"
-                    name="firstName"
-                    onChange={inputChangedHandler}
-                    placeholder={t('form.input.textField.site.placeHolderClients')}
-                    value={`${formData?.firstName || ''}`}
-                    fullWidth
-                    type="search"
-                    helperText={!!errorMessages?.firstName ? errorMessages?.firstName : null}
-                  />
-                </Box>
-                <Box className={classes.flexControl}>
-                  <InputLabel>
-                    {`${t('form.input.textField.site.clients')} ${t(
-                      'obx.sites.siteInformation.lastName',
-                    )}`}
-                    <RequiredAsterik />
-                  </InputLabel>
-                  <TextField
-                    id="outlined-search"
-                    error={!!errorMessages?.lastName}
-                    variant="outlined"
-                    name="lastName"
-                    onChange={inputChangedHandler}
-                    placeholder={t('obx.sites.siteInformation.lastName')}
-                    value={`${formData?.lastName || ''}`}
-                    fullWidth
-                    type="search"
-                    helperText={!!errorMessages?.lastName ? errorMessages?.lastName : null}
-                  />
-                </Box>
-              </Box>
-              <Box className={classes.formBox}>
-                <Box className={classes.flexControl}>
-                  <InputLabel className={classes.inputLabel}>
-                    {`${t('form.input.textField.site.secondaryEmail')}`}
-                    <Tooltip
-                      placement="right"
-                      arrow
-                      title={t('obx.sites.tooltips.secondaryContactEmailTooltip')}
-                    >
-                      <CautionIcon />
-                    </Tooltip>
-                  </InputLabel>
-                  <TextField
-                    error={!!errorMessages?.email}
-                    id="outlined-start-adornment"
-                    className={classes.customInputMessage}
-                    type="email"
-                    name="email"
-                    onChange={inputChangedHandler}
-                    value={formData?.email}
-                    placeholder={t('form.input.textField.email.placeHolder')}
-                    variant="outlined"
-                    fullWidth
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <EmailIcon />
-                        </InputAdornment>
-                      ),
-                    }}
-                    helperText={!!errorMessages?.email ? errorMessages?.email : null}
-                  />
-                </Box>
-
-                <Box className={classes.flexControl}>
-                  <InputLabel>
-                    {`${t('form.input.textField.site.clients')} ${t(
-                      'form.input.textField.phoneNumber.label',
-                    )}
-              `}
-                    <RequiredAsterik />
-                    <Tooltip
-                      placement="right"
-                      arrow
-                      title={t('obx.sites.tooltips.clientPhoneNoTooltip')}
-                    >
-                      <CautionIcon />
-                    </Tooltip>
-                  </InputLabel>
-                  <PhoneNumberWithCountry
-                    value={formData.phoneNumber || ''}
-                    onChange={(value) =>
-                      inputChangedHandler({ target: { name: 'phoneNumber', value } })
-                    }
-                    name={'phoneNumber'}
-                    isError={!!errorMessages?.phoneNumber}
-                    international={true}
-                    error={!!errorMessages?.phoneNumber ? errorMessages?.phoneNumber : null}
-                    className={classes.countryPhnNumber}
-                  />
-                </Box>
-              </Box>
-              <Box className={classes.formBox}>
-                <Box className={classes.flexControl}>
-                  <InputLabel className={classes.inputLabel}>
-                    {t('form.input.textField.site.localWorked')}
-                  </InputLabel>
-                  <TextField
-                    error={!!errorMessages?.localWorked}
-                    id="outlined-start-adornment"
-                    className={classes.customInputMessage}
-                    disabled={false}
-                    type="text"
-                    name="localWorked"
-                    onChange={inputChangedHandler}
-                    value={formData?.localWorked || ''}
-                    placeholder={t('form.input.textField.site.localWorked')}
-                    variant="outlined"
-                    fullWidth
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">{/* <EmailIcon /> */}</InputAdornment>
-                      ),
-                    }}
-                    helperText={!!errorMessages?.localWorked ? errorMessages?.localWorked : null}
-                  />
-                </Box>
-
-                <RenderIfHasPermission name={ACL_OBX_SITE_RATE_UPDATE}>
-                  <Box className={classes.flexControl}>
-                    <InputLabel className={classes.inputLabel}>
-                      {t('form.input.textField.site.siteRate')}
-                      {franchiseCurrency}
-                      <Tooltip
-                        placement="right"
-                        arrow
-                        title={t('obx.sites.tooltips.siteRateTooltip', {
-                          officers: getLabel('terms', 'officers', t)?.toLowerCase(),
-                        })}
-                      >
-                        <CautionIcon />
-                      </Tooltip>
-                    </InputLabel>
-                    <TextField
-                      error={!!errorMessages?.officerRate}
-                      id="outlined-start-adornment"
-                      className={classes.customInputMessage}
-                      disabled={false}
-                      type="number"
-                      name="officerRate"
-                      onKeyDown={preventNegativeValues}
-                      onChange={inputChangedHandler}
-                      value={formData?.officerRate ?? ''}
-                      placeholder="0"
-                      variant="outlined"
-                      fullWidth
-                      helperText={!!errorMessages?.officerRate ? errorMessages?.officerRate : null}
-                    />
-                  </Box>
-                </RenderIfHasPermission>
-              </Box>
-              <Box className={classes.formBox}>
-                {siteId && isGermanFranchise && (
-                  <Box className={classes.flexControl}>
-                    <InputLabel className={classes.inputLabel}>
-                      {t('obx.sites.siteInformation.customerId')}
-                    </InputLabel>
-                    <TextField
-                      error={!!errorMessages?.customerId}
-                      id="outlined-customer-id"
-                      onChange={inputChangedHandler}
-                      name="customerId"
-                      placeholder={t('form.input.textField.site.customerIdPlaceholder')}
-                      variant="outlined"
-                      value={formData?.customerId || ''}
-                      fullWidth
-                      type="number"
-                      onKeyDown={preventNegativeValues}
-                      helperText={!!errorMessages?.customerId ? errorMessages?.customerId : null}
-                    />
-                  </Box>
-                )}
-              </Box>
-
-              {/* <Box className={classes.formBox}>
-                <Box className={classes.sitesContactCheckbox}>
-                  <Checkbox
-                    id="mark-emergency-contact"
-                    onChange={(e) => {
-                      updateFormHandler('isBreakPayable', e.target.checked);
-                    }}
-                    name="isBreakPayable"
-                    icon={<CheckBoxRegularIcon />}
-                    checked={formData.isBreakPayable}
-                    checkedIcon={<CheckBoxCheckedIcon />}
-                    className={classes.checkBoxCustom}
-                  />
-                  <InputLabel htmlFor="mark-emergency-contact">
-                    {t('obx.form.input.textField.billableHours.label')}
-                  </InputLabel>
-                </Box>
-              </Box> */}
-
-              {/** Profile Image */}
-              {formData?.image && Array.isArray(formData?.image) && (
-                <ProfileImageUpload
-                  formData={formData}
-                  formImageKey="image"
-                  multiple={true}
-                  updateFormHandler={updateFormHandler}
-                  errorMessages={errorMessages}
-                  setErrorMessages={setErrorMessages}
-                  image={profileImage}
-                  setImage={setImage}
-                />
-              )}
-            </Box>
-          </>
+          {!showMap && (
+            <Stack sx={{ width: '100%', marginTop: '6px' }} spacing={2}>
+              <Alert severity="error">
+                {t('obx.sites.siteInformation.zoneRequire').slice(0, -1)}
+              </Alert>
+            </Stack>
+          )}
+          {/* Client — linked from the connected application. Identity fields are
+              read-only here; only site-specific fields are editable. */}
           <Box className={classes.sitesFieldsWrapper}>
-            <Typography variant="subtitle1" className={classes.sitesFieldsTitle}>
+            <Box className={classes.sectionHead}>
+              <Typography variant="subtitle1" className={classes.sitesFieldsTitle}>
+                {t('form.input.textField.site.clients')}
+              </Typography>
+            </Box>
+
+            <Box className={classes.formBox}>
+              <Box className={classes.flexControl}>
+                <InputLabel>
+                  {t('form.input.textField.site.clients')}
+                  <RequiredAsterik />
+                </InputLabel>
+                <Autocomplete
+                  className={classes.clientPicker}
+                  options={clientOptions}
+                  value={selectedClientOption}
+                  getOptionLabel={(o) =>
+                    `${o?.firstName || ''} ${o?.lastName || ''}`.trim() ||
+                    `${formData?.firstName || ''} ${formData?.lastName || ''}`.trim()
+                  }
+                  isOptionEqualToValue={(o, v) => String(o?.id) === String(v?.id)}
+                  onChange={(_e, option) => handleClientSelect(option)}
+                  renderOption={(props, option) => (
+                    <li {...props} key={option.id}>
+                      <Box className={classes.optionRow}>
+                        <span className={classes.optionName}>
+                          {`${option.firstName || ''} ${option.lastName || ''}`.trim()}
+                        </span>
+                        <span className={classes.optionMeta}>{option.primaryEmail}</span>
+                      </Box>
+                    </li>
+                  )}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      error={!!errorMessages?.clientId}
+                      placeholder={t('form.input.textField.site.placeHolderClients')}
+                      helperText={errorMessages?.clientId || null}
+                    />
+                  )}
+                />
+              </Box>
+            </Box>
+
+            {isClientLinked && (
+              <Box className={classes.infoCard}>
+                <Box className={classes.infoDetailGrid}>
+                  <Box className={classes.readOnlyItem}>
+                    <span className={classes.readOnlyLabel}>
+                      {t('obx.form.input.textField.firstName.label')}
+                    </span>
+                    <span className={classes.readOnlyValue}>{formData?.firstName || '—'}</span>
+                  </Box>
+                  <Box className={classes.readOnlyItem}>
+                    <span className={classes.readOnlyLabel}>
+                      {t('obx.form.input.textField.lastName.label')}
+                    </span>
+                    <span className={classes.readOnlyValue}>{formData?.lastName || '—'}</span>
+                  </Box>
+                  <Box className={classes.readOnlyItem}>
+                    <span className={classes.readOnlyLabel}>
+                      {t('obx.sites.table.listing.columns.company')}
+                    </span>
+                    <span className={classes.readOnlyValue}>{formData?.company || '—'}</span>
+                  </Box>
+                  <Box className={classes.readOnlyItem}>
+                    <span className={classes.readOnlyLabel}>
+                      {t('obx.form.input.textField.primaryEmail.label')}
+                    </span>
+                    <span className={classes.readOnlyValue}>{formData?.primaryEmail || '—'}</span>
+                  </Box>
+                  <Box className={classes.readOnlyItem}>
+                    <span className={classes.readOnlyLabel}>
+                      {t('obx.form.input.textField.phoneNumber.label')}
+                    </span>
+                    <span className={classes.readOnlyValue}>{formData?.phoneNumber || '—'}</span>
+                  </Box>
+                  <Box className={classes.readOnlyItem}>
+                    <span className={classes.readOnlyLabel}>
+                      {t('obx.sites.siteInformation.customerId')}
+                    </span>
+                    <span className={classes.readOnlyValue}>{formData?.customerId || '—'}</span>
+                  </Box>
+                  <Box className={classes.readOnlyItem}>
+                    <span className={classes.readOnlyLabel}>
+                      {t('obx.sites.siteInformation.secondaryEmail')}
+                    </span>
+                    <span className={classes.readOnlyValue}>{formData?.email || '—'}</span>
+                  </Box>
+                  <Box className={classes.readOnlyItem}>
+                    <span className={classes.readOnlyLabel}>
+                      {t('form.input.textField.site.localWorked')}
+                    </span>
+                    <span className={classes.readOnlyValue}>{formData?.localWorked || '—'}</span>
+                  </Box>
+                </Box>
+              </Box>
+            )}
+          </Box>
+
+          {/* Site details — owned by this application (incl. location). */}
+          <Box className={classes.sitesFieldsWrapper}>
+            <Box className={classes.sectionHead}>
+              <Typography variant="subtitle1" className={classes.sitesFieldsTitle}>
+                {t('obx.sites.createSite.siteDetails')}
+              </Typography>
+            </Box>
+
+            <Box className={classes.formBox}>
+              <Box className={classes.flexControl}>
+                <InputLabel>
+                  {`${t('form.input.textField.site.sites')} ${t('form.input.textField.site.name')}`}
+                </InputLabel>
+                <TextField
+                  error={!!errorMessages?.name}
+                  id="outlined-search"
+                  onChange={inputChangedHandler}
+                  name="name"
+                  placeholder={t('form.input.textField.site.placeHolderSites')}
+                  variant="outlined"
+                  value={formData?.name}
+                  fullWidth
+                  type="text"
+                  helperText={!!errorMessages?.name ? errorMessages?.name : null}
+                />
+              </Box>
+
+              <RenderIfHasPermission name={ACL_OBX_SITE_RATE_UPDATE}>
+                <Box className={classes.flexControl}>
+                  <InputLabel className={classes.inputLabel}>
+                    {t('form.input.textField.site.siteRate')}
+                    {franchiseCurrency}
+                    <Tooltip
+                      placement="right"
+                      arrow
+                      title={t('obx.sites.tooltips.siteRateTooltip', {
+                        officers: getLabel('terms', 'officers', t)?.toLowerCase(),
+                      })}
+                    >
+                      <CautionIcon />
+                    </Tooltip>
+                  </InputLabel>
+                  <TextField
+                    error={!!errorMessages?.officerRate}
+                    id="outlined-start-adornment"
+                    className={classes.customInputMessage}
+                    disabled={false}
+                    type="number"
+                    name="officerRate"
+                    onKeyDown={preventNegativeValues}
+                    onChange={inputChangedHandler}
+                    value={formData?.officerRate ?? ''}
+                    placeholder="0"
+                    variant="outlined"
+                    fullWidth
+                    helperText={!!errorMessages?.officerRate ? errorMessages?.officerRate : null}
+                  />
+                </Box>
+              </RenderIfHasPermission>
+            </Box>
+
+            {/** Profile Image */}
+            {formData?.image && Array.isArray(formData?.image) && (
+              <ProfileImageUpload
+                formData={formData}
+                formImageKey="image"
+                multiple={true}
+                updateFormHandler={updateFormHandler}
+                errorMessages={errorMessages}
+                setErrorMessages={setErrorMessages}
+                image={profileImage}
+                setImage={setImage}
+              />
+            )}
+
+            {/* Location header. */}
+            <Typography variant="subtitle2" className={classes.subSectionTitle}>
               {t('form.input.textField.country.header')}
             </Typography>
-            <Box className={classes.formBox}>
-              <Box className={classes.flexControl}>
-                <InputLabel>
-                  {`${t('form.input.textField.country.label')}`} <RequiredAsterik />
-                </InputLabel>
-                <CountrySelectHookComponent />
-              </Box>
-              <Box className={classes.flexControl}>
-                <InputLabel>
-                  {`${t('form.input.textField.address.label')}`}
-                  <RequiredAsterik />
-                </InputLabel>
-                <TextField
-                  error={!!errorMessages?.address}
-                  id="outlined-search"
-                  onChange={inputChangedHandler}
-                  disabled={true}
-                  name="address"
-                  placeholder={t('form.input.textField.address.placeHolder')}
-                  variant="outlined"
-                  value={formData?.address || ''}
-                  fullWidth
-                  type="text"
-                  helperText={!!errorMessages?.address ? errorMessages?.address : null}
-                />
-              </Box>
-            </Box>
-            <Box className={classes.formBox}>
-              <Box className={classes.flexControl}>
-                <InputLabel>{`${t('form.input.textField.address2.label')}`}</InputLabel>
-                <TextField
-                  error={!!errorMessages?.address2}
-                  id="outlined-search"
-                  onChange={inputChangedHandler}
-                  name="address2"
-                  disabled={true}
-                  value={formData?.address2 || ''}
-                  placeholder={t('form.input.textField.address2.placeHolder')}
-                  variant="outlined"
-                  fullWidth
-                  type="text"
-                  helperText={!!errorMessages?.address2 ? errorMessages?.address2 : null}
-                />
-              </Box>
-              <Box className={classes.flexControl}>
-                <InputLabel>
-                  {`${t('form.input.textField.state.label')}`} <RequiredAsterik />
-                </InputLabel>
-                <StateHookComponent />
-              </Box>
-            </Box>
-            <Box className={classNames(classes.formBox, classes.formBoxLast)}>
-              <Box className={classes.flexControl}>
-                <InputLabel>
-                  {`${t(`obx.form.input.textField.${isCountryAustralia ? 'suburb' : 'city'}.label`)}`}{' '}
-                  <RequiredAsterik />
-                </InputLabel>
-                <CityHookComponent />
-              </Box>
 
-              <Box className={classes.flexControl}>
-                <InputLabel>{`${t('form.input.textField.postalCode.label')}`}</InputLabel>
-                <TextField
-                  // error={!!errorMessages?.zipCode}
-                  id="outlined-search"
-                  disabled={true}
-                  onChange={inputChangedHandler}
-                  name="zipCode"
-                  placeholder={t('form.input.textField.postalCode.placeHolder')}
-                  variant="outlined"
-                  value={formData?.zipCode}
-                  fullWidth
-                  type="text"
-                  // helperText={!!errorMessages?.zipCode ? errorMessages?.zipCode : null}
-                />
+            {/* Location details as a flat field grid. Address leads (most
+                important), then zip code, then the finer fields. A reset restores
+                the original address once it's changed via search or the map pin. */}
+            <Box className={classes.infoCard}>
+              <Box className={classes.infoDetailGrid}>
+                <Box className={classes.readOnlyItem}>
+                  <span className={classes.addressLabelRow}>
+                    <span className={classes.readOnlyLabel}>{t('sales.locations.address')}</span>
+                    {isAddressDirty && (
+                      <Button
+                        variant="onlyText"
+                        className={classes.resetAddressBtn}
+                        onClick={handleResetAddress}
+                      >
+                        Reset
+                      </Button>
+                    )}
+                  </span>
+                  <span className={classes.readOnlyValue}>{formData?.address || '—'}</span>
+                </Box>
+                <Box className={classes.readOnlyItem}>
+                  <span className={classes.readOnlyLabel}>
+                    {t('form.input.textField.postalCode.label')}
+                  </span>
+                  <span className={classes.readOnlyValue}>
+                    {locationDetails?.postalCode || '—'}
+                  </span>
+                </Box>
+                <Box className={classes.readOnlyItem}>
+                  <span className={classes.readOnlyLabel}>
+                    {t(`obx.form.input.textField.${isCountryAustralia ? 'suburb' : 'city'}.label`)}
+                  </span>
+                  <span className={classes.readOnlyValue}>{locationDetails?.city || '—'}</span>
+                </Box>
+                <Box className={classes.readOnlyItem}>
+                  <span className={classes.readOnlyLabel}>
+                    {t('obx.sites.siteInformation.region')}
+                  </span>
+                  <span className={classes.readOnlyValue}>{locationDetails?.state || '—'}</span>
+                </Box>
+                <Box className={classes.readOnlyItem}>
+                  <span className={classes.readOnlyLabel}>
+                    {t('obx.form.input.textField.country.label')}
+                  </span>
+                  <span className={classes.readOnlyValue}>{locationDetails?.country || '—'}</span>
+                </Box>
+                <Box className={classes.readOnlyItem}>
+                  <span className={classes.readOnlyLabel}>
+                    {t('form.input.textField.address2.label')}
+                  </span>
+                  <span className={classes.readOnlyValue}>{locationDetails?.address2 || '—'}</span>
+                </Box>
               </Box>
             </Box>
+
+            {/* Address input sits below the country/region card: searching a place
+                refreshes the details above and drops the map pin. Renders its own
+                "Address" label. */}
+            <Box className={classes.addressSearch}>
+              <GoogleMapSearchAddressComponent
+                isLoaded={isLoaded}
+                updateMapValue={updateMapValue}
+                formKey="googleAddress"
+                setAddress={setAddress}
+                address={address}
+                setActiveMarker={setActiveMarker}
+                setSelectedLocation={setSelectedLocation}
+                setCenter={updateCenter}
+                disabled={false}
+              />
+            </Box>
+
+            {/* Map picker sits below the address field so the pin/boundary is
+                fine-tuned in the same place as the written address. */}
+            {parent?.coordinates && parent?.coordinates?.length > 0 && showMap && (
+              <Box className={classes.mapSection}>
+                <MapComponent
+                  siblings={[]}
+                  errorMessages={errorMessages}
+                  setErrorMessages={setErrorMessages}
+                  parentBoundry={parent}
+                  updateFormHandler={updateFormHandler}
+                  setActiveMarker={setActiveMarker}
+                  selectedLocation={selectedLocation}
+                  updateMapValue={updateMapValue}
+                  isSitePinDraggable={true}
+                  createOrUpdate={true}
+                  mapCenter={formData?.mapCenter}
+                  franchiseData={franchiseData || []}
+                  formDataKey={geoFencingPolygonTypeKeys.sites}
+                  actionItem={formData || {}}
+                  actionItemType={actionItemTypeKeys?.site}
+                  isEditingSite={true}
+                />
+              </Box>
+            )}
           </Box>
           <Box className={classes.sitesFieldsWrapper}>
-            <Typography variant="subtitle1" className={classes.sitesFieldsTitle}>
-              {t('form.input.textField.reportsDistribution.header')}
-            </Typography>
+            <Box className={classes.sectionHead}>
+              <Typography variant="subtitle1" className={classes.sitesFieldsTitle}>
+                {t('form.input.textField.reportsDistribution.header')}
+              </Typography>
+            </Box>
             <Box className={classes.formBox}>
               <Box className={classes.flexControl}>
                 <InputLabel>{`${t('form.input.textField.dailySiteSummaryReceivers.label')}`}</InputLabel>
@@ -954,13 +1064,15 @@ const Update = () => {
           {/* geofencingEnabled is the site level geofencing enabled status */}
           {(!isProductionEnvironment || isEUInstance() || formData?.isGeofencingEnabled) && (
             <Box className={classes.sitesFieldsWrapper}>
-              <Typography variant="subtitle1" className={classes.sitesFieldsTitle}>
-                {t('obx.form.input.textField.integrations.header')}
-              </Typography>
+              <Box className={classes.sectionHead}>
+                <Typography variant="subtitle1" className={classes.sitesFieldsTitle}>
+                  {t('obx.form.input.textField.integrations.header')}
+                </Typography>
+              </Box>
               <Box className={classes.grayBackgroundWrapper}>
                 {(!isProductionEnvironment || isEUInstance()) && (
                   <Box className={classes.integrationsCheck}>
-                    <Box>
+                    <Box className={classes.integrationRowText}>
                       <Typography variant="subtitle1">
                         {t('obx.form.input.textField.offlineSyncing.title')}
                       </Typography>
@@ -984,7 +1096,7 @@ const Update = () => {
                 )}
                 {formData?.isGeofencingEnabled && (
                   <Box className={classes.integrationsCheck}>
-                    <Box>
+                    <Box className={classes.integrationRowText}>
                       <Typography variant="subtitle1">
                         {t('obx.form.input.textField.geofencing.title')}
                       </Typography>
@@ -1011,17 +1123,19 @@ const Update = () => {
           )}
 
           <Box className={classes.sitesFieldsWrapper}>
-            <Typography variant="subtitle1" className={classes.sitesFieldsTitle}>
-              {t('obx.form.input.textField.additionalContacts.header')}
-            </Typography>
+            <Box className={classes.sectionHead}>
+              <Typography variant="subtitle1" className={classes.sitesFieldsTitle}>
+                {t('obx.form.input.textField.additionalContacts.header')}
+              </Typography>
+            </Box>
             <Box className={classes.sitesDynamicContent} ref={contactRef}>
-              <EmergencyContactsComponent
+              <ExternalContactsComponent
                 errorMessages={errorMessages}
                 formDataKey="contacts"
                 formData={formData}
                 updateFormHandler={updateFormHandler}
                 setErrorMessages={setErrorMessages}
-                role={true}
+                options={contactOptions}
               />
             </Box>
 
@@ -1037,42 +1151,6 @@ const Update = () => {
             </Box> */}
           </Box>
 
-          <>
-            {parent?.coordinates && parent?.coordinates?.length > 0 && showMap && (
-              <>
-                <GoogleMapSearchAddressComponent
-                  isLoaded={isLoaded}
-                  updateMapValue={updateMapValue}
-                  // errorMessages={errorMessages}
-                  formKey="googleAddress"
-                  setAddress={setAddress}
-                  address={address}
-                  setActiveMarker={setActiveMarker}
-                  setSelectedLocation={setSelectedLocation}
-                  setCenter={updateCenter}
-                  disabled={false}
-                />
-                <MapComponent
-                  siblings={[]}
-                  errorMessages={errorMessages}
-                  setErrorMessages={setErrorMessages}
-                  parentBoundry={parent}
-                  updateFormHandler={updateFormHandler}
-                  setActiveMarker={setActiveMarker}
-                  selectedLocation={selectedLocation}
-                  updateMapValue={updateMapValue}
-                  isSitePinDraggable={true}
-                  createOrUpdate={true}
-                  mapCenter={formData?.mapCenter}
-                  franchiseData={franchiseData || []}
-                  formDataKey={geoFencingPolygonTypeKeys.sites}
-                  actionItem={formData || {}}
-                  actionItemType={actionItemTypeKeys?.site}
-                  isEditingSite={true}
-                />
-              </>
-            )}
-          </>
           <Box className={classes.buttonGroupLast}>
             <Button variant="secondaryGrey" onClick={handleBack}>
               {t('obx.buttons.cancel')}

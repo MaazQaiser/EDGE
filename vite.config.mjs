@@ -116,7 +116,7 @@ export default defineConfig(({ mode }) => {
     cacheDir: 'node_modules/.vite',
 
     server: {
-      port: 3000,
+      port: Number(process.env.PORT) || 3000,
       strictPort: true,
       // Helpful in bigger apps to avoid full reloads on large CSS / i18n change bursts
       watch: {
@@ -125,7 +125,7 @@ export default defineConfig(({ mode }) => {
     },
 
     preview: {
-      port: 3000,
+      port: Number(process.env.PORT) || 3000,
     },
 
     optimizeDeps: {

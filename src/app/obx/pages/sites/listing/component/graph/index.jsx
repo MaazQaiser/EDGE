@@ -100,7 +100,7 @@ const TopGraphComponent = () => {
             <PieChart
               heading={t('obx.sites.graph.sites')}
               colors={sites?.colors}
-              data={sites.data}
+              data={sites?.data}
               stats={sites?.stats}
               toolTipFormatter="{b}: {c}"
               style={{ height: '200px', width: '100%' }}

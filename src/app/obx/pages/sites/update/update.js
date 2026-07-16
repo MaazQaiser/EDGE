@@ -14,7 +14,22 @@ export const useStyles = makeStyles((theme) => ({
     padding: '24px 32px',
     display: 'flex',
     flexDirection: 'column',
-    gap: '24px',
+    gap: '48px',
+  },
+
+  sitesFieldsWrapper: {
+    display: 'flex',
+    flexDirection: 'column',
+    // Neutralise the trailing bottom-margin of a group's last element so the
+    // 48px flex gap is the only spacing between groups (otherwise groups that
+    // end in a formBox/infoCard leak an extra 10–20px).
+    '& > *:last-child': {
+      marginBottom: 0,
+    },
+  },
+
+  sitesDynamicContent: {
+    marginTop: 0,
   },
 
   btnBox: {
@@ -48,6 +63,8 @@ export const useStyles = makeStyles((theme) => ({
     marginBottom: '20px',
   },
 
+  // Location fields share one grid so every field (country, region, city, etc.)
+  // keeps an identical vertical and horizontal rhythm.
   avatarFormImage: {
     width: '50px',
     height: '50px',
@@ -69,6 +86,16 @@ export const useStyles = makeStyles((theme) => ({
     marginBottom: '10px',
   },
 
+  mapSection: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '16px',
+  },
+
+  addressSearch: {
+    marginBottom: '20px',
+  },
+
   buttonGroupLast: {
     display: 'flex',
     gap: '12px',
@@ -79,9 +106,127 @@ export const useStyles = makeStyles((theme) => ({
 
   sitesFieldsTitle: {
     '&.MuiTypography-root': {
-      marginBottom: '20px',
+      marginBottom: 0,
       color: theme.palette.textPrimary,
     },
+  },
+
+  // Unified section header used by every top-level group (Client, Site Details,
+  // Reports Distribution, Integrations, Additional Contacts): the title is
+  // separated from its body by a hairline, so all groups read with the same
+  // separator and spacing.
+  sectionHead: {
+    display: 'flex',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+    gap: '12px',
+    paddingBottom: '12px',
+    marginBottom: '24px',
+    borderBottom: `1px solid ${theme.palette.borderSubtle1}`,
+  },
+
+  subSectionTitle: {
+    '&.MuiTypography-root': {
+      marginTop: '32px',
+      marginBottom: '16px',
+      color: theme.palette.textSecondary1,
+      fontWeight: 600,
+    },
+  },
+
+  clientPicker: {
+    '& .MuiOutlinedInput-root': {
+      background: theme.palette.surfaceWhite,
+    },
+  },
+
+  optionRow: {
+    display: 'flex',
+    flexDirection: 'column',
+  },
+
+  optionName: {
+    fontSize: '14px',
+    fontWeight: 500,
+    color: theme.palette.textPrimary,
+  },
+
+  optionMeta: {
+    fontSize: '12px',
+    color: theme.palette.textSecondary2,
+  },
+
+  readOnlyItem: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '4px',
+    minWidth: 0,
+  },
+
+  readOnlyLabel: {
+    fontSize: '12px',
+    fontWeight: 400,
+    color: theme.palette.textSecondary2,
+  },
+
+  readOnlyValue: {
+    fontSize: '14px',
+    fontWeight: 500,
+    color: theme.palette.textPrimary,
+    wordBreak: 'break-word',
+  },
+
+  // Read-only info card (client + location): a flat grid of labelled fields
+  // inside a subtle panel — no header/monogram hierarchy.
+  infoCard: {
+    background: theme.palette.surfaceGreySubtle,
+    border: `1px solid ${theme.palette.borderSubtle1}`,
+    borderRadius: '12px',
+    overflow: 'hidden',
+    marginBottom: '20px',
+  },
+
+  // The address field carries its reset affordance inline with the label.
+  addressLabelRow: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: '8px',
+  },
+
+  resetAddressBtn: {
+    '&.MuiButtonBase-root': {
+      flexShrink: 0,
+      height: 'auto',
+      minWidth: 'auto',
+      padding: '2px 6px',
+    },
+  },
+
+  infoDetailGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+    columnGap: '40px',
+    rowGap: '16px',
+    padding: '16px 20px',
+    [theme.breakpoints.down('md')]: {
+      gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+    },
+    [theme.breakpoints.down('sm')]: {
+      gridTemplateColumns: '1fr',
+    },
+  },
+
+  clientEmpty: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '24px',
+    borderRadius: '8px',
+    border: `1px dashed ${theme.palette.borderSubtle1}`,
+    textAlign: 'center',
+    color: theme.palette.textSecondary2,
+    fontSize: '13px',
   },
 
   addContacts: {
@@ -212,10 +357,6 @@ export const useStyles = makeStyles((theme) => ({
       fontWeight: 400,
       color: theme.palette.textPrimary,
     },
-  },
-
-  formBoxLast: {
-    marginBottom: 0,
   },
 
   addContactsBoxHeaderTitle: {
@@ -358,11 +499,18 @@ export const useStyles = makeStyles((theme) => ({
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: '24px',
     '&:not(:last-child)': {
       borderBottom: `1px solid ${theme.palette.borderSubtle1}`,
       paddingBottom: '16px',
       marginBottom: '16px',
     },
+  },
+
+  integrationRowText: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '4px',
   },
 
   switchWrapper: {
@@ -379,7 +527,7 @@ export const useStyles = makeStyles((theme) => ({
     backgroundColor: theme.palette.surfaceGreySubtle,
     padding: '16px',
     borderRadius: '8px',
-    marginTop: '16px',
+    marginTop: 0,
     '& .MuiTypography-root.MuiTypography-body3': {
       color: theme.palette.textSecondary2,
       display: 'inline-block',

@@ -54,6 +54,8 @@ const GoogleMapSearchAddressComponent = ({
         id: results.length && results[0].place_id,
         name: selected,
         position: { lat: latLng.lat, lng: latLng.lng },
+        // Consumers can derive country/state/city/postal code from these.
+        addressComponents: results?.[0]?.address_components || [],
       };
       // Handle the selected location data as needed
 
@@ -164,7 +166,7 @@ GoogleMapSearchAddressComponent.propTypes = {
   setAddress: PropTypes.func,
   address: PropTypes.string,
   setActiveMarker: PropTypes.func,
-  collapseSearch: PropTypes.false,
+  collapseSearch: PropTypes.bool,
   setSelectedLocation: PropTypes.func,
   setCenter: PropTypes.func,
   placeHolder: PropTypes.string,

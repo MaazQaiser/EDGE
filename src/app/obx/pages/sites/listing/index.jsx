@@ -10,19 +10,16 @@ import TableImage from 'commonComponents/tableImage';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
-import { Link } from 'react-router-dom';
 import { getSites } from 'services/sites.services';
 import { getZonesListing } from 'services/zone.service';
 import TableSkeleton from 'src/app/components/common/skeletonLoader/tableSkeleton';
 import ChipComponent from 'src/app/homeOffice/pages/franchise/detail/components/chip';
 import TopGraphComponent from 'src/app/obx/pages/sites/listing/component/graph';
-import { ACL_OBX_SITE_CREATE } from 'src/app/router/constant/OBXMODULE';
-import { OBX_CREATE_SITE, OBX_SITES_DETAIL } from 'src/app/router/constant/ROUTE';
+import { OBX_SITES_DETAIL } from 'src/app/router/constant/ROUTE';
 import history from 'src/app/router/utils/history';
-import { AddIcon, DownloadCloud } from 'src/assets/svg';
+import { DownloadCloud } from 'src/assets/svg';
 import { useApiControllers } from 'src/helper/axios';
 import { useTenantLabel } from 'src/helper/utilityHooks';
-import RenderIfHasPermission from 'src/hoc/RenderIfHasPermission';
 import transformArrayForOptions from 'src/utils/array/transformArrayForOptions';
 import { paginationOptions, toastSettings } from 'src/utils/constants';
 import capitalize from 'src/utils/string/capitalize';
@@ -331,7 +328,7 @@ export default function SitesListing() {
     if (column?.id === columnIdsEnum?.supervisors) {
       return (
         <>
-          {row?.supervisors.length ? (
+          {row?.supervisors?.length ? (
             <div className="tableavatar">
               <AvatarGroupImage data={row?.supervisors} />
             </div>
@@ -488,13 +485,6 @@ export default function SitesListing() {
           <Button variant="secondaryGrey" startIcon={<DownloadCloud />} disabled>
             {`${t('links.export')}`}
           </Button>
-          <RenderIfHasPermission name={ACL_OBX_SITE_CREATE}>
-            <>
-              <Link to={`${OBX_CREATE_SITE}`} className={classes.addVehicle}>
-                <AddIcon className={classes.addIcon} /> {`${t('obx.sites.createSite.createSite')}`}
-              </Link>
-            </>
-          </RenderIfHasPermission>
         </Box>
       </Box>
       <Box className={classes.tableWrapper}>

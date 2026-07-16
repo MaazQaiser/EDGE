@@ -1431,6 +1431,8 @@ const MapComponent = (props) => {
           id: Date.now(), // Using timestamp as a unique ID (replace with your logic)
           name: locationName,
           position: { lat: latitude, lng: longitude },
+          // Let consumers refresh derived address fields (country/state/city/postal).
+          addressComponents: result?.address_components || [],
         };
 
         setPolygons((prev) => {
