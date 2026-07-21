@@ -2,6 +2,8 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import {
   Autocomplete,
   Button,
+  Checkbox,
+  FormControlLabel,
   InputLabel,
   Switch,
   TextField,
@@ -101,6 +103,8 @@ const userFormData = {
   image: [],
   dailySiteSummaryReceivers: [],
   incidentReportReceivers: [],
+  dispatchReportReceivers: [],
+  sendDispatchReportImmediately: false,
   isBreakPayable: false,
   geofencingEnabled: false,
   allowOfflineSyncing: false,
@@ -110,6 +114,7 @@ const userFormData = {
 const typesWithMultiComplete = [
   'dailySiteSummaryReceivers',
   'incidentReportReceivers',
+  'dispatchReportReceivers',
   'customerPortalInvitedEmails',
 ];
 
@@ -406,6 +411,7 @@ const Update = () => {
       localWorked: formData?.localWorked,
       dailySiteSummaryReceivers: formData?.dailySiteSummaryReceivers || [],
       incidentReportReceivers: formData?.incidentReportReceivers || [],
+      dispatchReportReceivers: formData?.dispatchReportReceivers || [],
       isBreakPayable: formData.isBreakPayable || false,
       customerPortalInvitedEmails: formData?.customerPortalInvitedEmails || [],
     };
@@ -723,14 +729,14 @@ const Update = () => {
           <Box className={classes.sitesFieldsWrapper}>
             <Box className={classes.sectionHead}>
               <Typography variant="subtitle1" className={classes.sitesFieldsTitle}>
-                {t('form.input.textField.site.clients')}
+                {t('form.input.textField.site.clientDetailsHeader')}
               </Typography>
             </Box>
 
             <Box className={classes.formBox}>
               <Box className={classes.flexControl}>
                 <InputLabel>
-                  {t('form.input.textField.site.clients')}
+                  {t('form.input.textField.site.clientPickerLabel')}
                   <RequiredAsterik />
                 </InputLabel>
                 <Autocomplete
@@ -998,44 +1004,6 @@ const Update = () => {
               </Box>
             )}
           </Box>
-          <Box className={classes.sitesFieldsWrapper}>
-            <Box className={classes.sectionHead}>
-              <Typography variant="subtitle1" className={classes.sitesFieldsTitle}>
-                {t('form.input.textField.reportsDistribution.header')}
-              </Typography>
-            </Box>
-            <Box className={classes.formBox}>
-              <Box className={classes.flexControl}>
-                <InputLabel>{`${t('form.input.textField.dailySiteSummaryReceivers.label')}`}</InputLabel>
-                <AutoCompleteCommon
-                  handleChange={inputChangedHandler}
-                  name="dailySiteSummaryReceivers"
-                  value={formData?.dailySiteSummaryReceivers}
-                  placeholder={t('form.input.textField.dailySiteSummaryReceivers.placeHolder')}
-                  errorMessages={errorMessages}
-                  errorMessage={t('errors.string.email', {
-                    '#label': 'Email',
-                  })}
-                />
-              </Box>
-            </Box>
-            <Box className={classes.formBox}>
-              <Box className={classes.flexControl}>
-                <InputLabel>{`${t('form.input.textField.incidentReportReceivers.label')}`}</InputLabel>
-                <AutoCompleteCommon
-                  handleChange={inputChangedHandler}
-                  name="incidentReportReceivers"
-                  value={formData?.incidentReportReceivers}
-                  placeholder={t('form.input.textField.incidentReportReceivers.placeHolder')}
-                  errorMessages={errorMessages}
-                  errorMessage={t('errors.string.email', {
-                    '#label': 'Email',
-                  })}
-                />
-              </Box>
-            </Box>
-          </Box>
-
           {tenantPermissions?.sites?.edit?.inviteCbxUsers ? (
             <Box className={classes.cbxInviteUsersWrapper}>
               <Typography variant="h4" className={classes.inviteUsersTitle}>
@@ -1060,6 +1028,113 @@ const Update = () => {
             </Box>
           ) : null}
 
+          <Box className={classes.sitesFieldsWrapper}>
+            <Box className={classes.sectionHead}>
+              <Typography variant="subtitle1" className={classes.sitesFieldsTitle}>
+                {t('obx.form.input.textField.additionalContacts.header')}
+              </Typography>
+            </Box>
+            <Box className={classes.sitesDynamicContent} ref={contactRef}>
+              <ExternalContactsComponent
+                errorMessages={errorMessages}
+                formDataKey="contacts"
+                formData={formData}
+                updateFormHandler={updateFormHandler}
+                setErrorMessages={setErrorMessages}
+                options={contactOptions}
+              />
+            </Box>
+
+            {/* <Box ref={contactRef}>
+              <DynamicFormComponent
+                errorMessages={errorMessages}
+                formDataKey="emergencyContacts"
+                formData={formData}
+                updateFormHandler={updateFormHandler}
+                setErrorMessages={setErrorMessages}
+                onlyPhone={false}
+              />
+            </Box> */}
+          </Box>
+
+          {/* Configurations — site-level settings grouped explicitly: report
+              distribution recipients and integration toggles. Sits below the
+              Additional Contacts group as the last content block of the form. */}
+          {/* Reports Distribution — the email recipients each report should be
+              sent to. Top-level section, sits below Additional Contacts. */}
+          <Box className={classes.sitesFieldsWrapper}>
+            <Box className={classes.sectionHead}>
+              <Typography variant="subtitle1" className={classes.sitesFieldsTitle}>
+                {t('form.input.textField.reportsDistribution.header')}
+              </Typography>
+            </Box>
+            <Box className={classes.formBox}>
+              <Box className={classes.flexControl}>
+                <InputLabel>{`${t('form.input.textField.dailySiteSummaryReceivers.label')}`}</InputLabel>
+                <AutoCompleteCommon
+                  handleChange={inputChangedHandler}
+                  name="dailySiteSummaryReceivers"
+                  value={formData?.dailySiteSummaryReceivers || []}
+                  placeholder={t('form.input.textField.dailySiteSummaryReceivers.placeHolder')}
+                  errorMessages={errorMessages}
+                  errorMessage={t('errors.string.email', {
+                    '#label': 'Email',
+                  })}
+                />
+              </Box>
+            </Box>
+            <Box className={classes.formBox}>
+              <Box className={classes.flexControl}>
+                <InputLabel>{`${t('form.input.textField.incidentReportReceivers.label')}`}</InputLabel>
+                <AutoCompleteCommon
+                  handleChange={inputChangedHandler}
+                  name="incidentReportReceivers"
+                  value={formData?.incidentReportReceivers || []}
+                  placeholder={t('form.input.textField.incidentReportReceivers.placeHolder')}
+                  errorMessages={errorMessages}
+                  errorMessage={t('errors.string.email', {
+                    '#label': 'Email',
+                  })}
+                />
+              </Box>
+            </Box>
+            <Box className={classes.dispatchReportField}>
+              <Box className={classes.flexControl}>
+                <InputLabel>{`${t('form.input.textField.dispatchReportReceivers.label')}`}</InputLabel>
+                <AutoCompleteCommon
+                  handleChange={inputChangedHandler}
+                  name="dispatchReportReceivers"
+                  value={formData?.dispatchReportReceivers || []}
+                  placeholder={t('form.input.textField.dispatchReportReceivers.placeHolder')}
+                  errorMessages={errorMessages}
+                  errorMessage={t('errors.string.email', {
+                    '#label': 'Email',
+                  })}
+                />
+                <FormControlLabel
+                  className={classes.sendImmediatelyCheck}
+                  control={
+                    <Checkbox
+                      className={classes.checkBoxCustom}
+                      name="sendDispatchReportImmediately"
+                      checked={!!formData?.sendDispatchReportImmediately}
+                      onChange={(e) =>
+                        inputChangedHandler({
+                          target: {
+                            name: 'sendDispatchReportImmediately',
+                            value: e.target.checked,
+                          },
+                        })
+                      }
+                    />
+                  }
+                  label={t('form.input.textField.dispatchReportReceivers.sendImmediately')}
+                />
+              </Box>
+            </Box>
+          </Box>
+
+          {/* Integrations — its own top-level section. */}
           {/* isGeofencingEnabled is the franchise level geofencing enabled status */}
           {/* geofencingEnabled is the site level geofencing enabled status */}
           {(!isProductionEnvironment || isEUInstance() || formData?.isGeofencingEnabled) && (
@@ -1121,35 +1196,6 @@ const Update = () => {
               </Box>
             </Box>
           )}
-
-          <Box className={classes.sitesFieldsWrapper}>
-            <Box className={classes.sectionHead}>
-              <Typography variant="subtitle1" className={classes.sitesFieldsTitle}>
-                {t('obx.form.input.textField.additionalContacts.header')}
-              </Typography>
-            </Box>
-            <Box className={classes.sitesDynamicContent} ref={contactRef}>
-              <ExternalContactsComponent
-                errorMessages={errorMessages}
-                formDataKey="contacts"
-                formData={formData}
-                updateFormHandler={updateFormHandler}
-                setErrorMessages={setErrorMessages}
-                options={contactOptions}
-              />
-            </Box>
-
-            {/* <Box ref={contactRef}>
-              <DynamicFormComponent
-                errorMessages={errorMessages}
-                formDataKey="emergencyContacts"
-                formData={formData}
-                updateFormHandler={updateFormHandler}
-                setErrorMessages={setErrorMessages}
-                onlyPhone={false}
-              />
-            </Box> */}
-          </Box>
 
           <Box className={classes.buttonGroupLast}>
             <Button variant="secondaryGrey" onClick={handleBack}>

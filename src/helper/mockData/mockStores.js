@@ -101,6 +101,8 @@ const stores = {
         'security@downtownholdings.com',
         'laura.bennett@downtownholdings.com',
       ],
+      dispatchReportReceivers: ['dispatch@downtownholdings.com'],
+      sendDispatchReportImmediately: true,
       customerPortalInvitedEmails: [],
       isGeofencingEnabled: true,
       geofencingEnabled: false,

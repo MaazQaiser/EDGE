@@ -204,11 +204,16 @@
 
         "dailySiteSummaryReceivers": {
           "label": "Daily Site Summary Receivers",
-          "placeHolder": "Type to add more"
+          "placeHolder": "Add the emails that should receive the daily site summary"
         },
         "incidentReportReceivers": {
           "label": "Incident Report Receivers",
-          "placeHolder": "Type to add more"
+          "placeHolder": "Add the emails that should receive incident reports"
+        },
+        "dispatchReportReceivers": {
+          "label": "Dispatch Report Receivers",
+          "placeHolder": "Add the emails that should receive dispatch reports",
+          "sendImmediately": "Send immediately"
         },
         "reportsDistribution": {
           "header": "Reports Distribution",
@@ -313,6 +318,8 @@
           "sitesInfo": "Site’s Info & Contact",
           "name": "Name",
           "clients": "Client",
+          "clientDetailsHeader": "Client Details",
+          "clientPickerLabel": "Select Client",
           "placeHolderClients": "Enter Your Client Name",
           "localWorked": "Local worked (ADP tax code)",
           "siteRate": "Site Rate",

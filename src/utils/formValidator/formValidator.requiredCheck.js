@@ -2532,6 +2532,14 @@ export default async function joiValidate(form, t, field = {}, shouldNotAttachLa
           'string.required': t('errors.string.email'),
         }),
     ),
+    dispatchReportReceivers: Joi.array().items(
+      Joi.string()
+        .email({ tlds: false }) // Valid email format
+        .messages({
+          'string.email': t('errors.string.email'),
+          'string.required': t('errors.string.email'),
+        }),
+    ),
     customerPortalInvitedEmails: Joi.array().items(
       Joi.string()
         .email({ tlds: false }) // Valid email format

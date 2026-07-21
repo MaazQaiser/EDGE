@@ -536,4 +536,26 @@ export const useStyles = makeStyles((theme) => ({
       backgroundColor: theme.palette.surfaceWhite,
     },
   },
+
+  // Dispatch report field carries its "Send immediately" checkbox directly
+  // beneath the input; keep the same bottom rhythm as a formBox.
+  dispatchReportField: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: '32px',
+    marginBottom: '20px',
+  },
+
+  sendImmediatelyCheck: {
+    '&.MuiFormControlLabel-root': {
+      marginLeft: 0,
+      marginTop: '10px',
+      gap: '8px',
+      '& .MuiFormControlLabel-label': {
+        fontSize: '14px',
+        color: theme.palette.textPrimary,
+      },
+    },
+  },
 }));
