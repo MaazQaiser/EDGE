@@ -191,4 +191,13 @@ export const useStyles = makeStyles((theme) => ({
       minWidth: 'auto',
     },
   },
+
+  // Right-side drawer that hosts the Site Information edit form.
+  editDrawerPaper: {
+    '&.MuiDrawer-paper': {
+      width: 'min(880px, 100vw)',
+      maxWidth: '100vw',
+      backgroundColor: theme.palette.surfaceWhite,
+    },
+  },
 }));

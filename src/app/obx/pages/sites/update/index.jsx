@@ -59,6 +59,7 @@ import { formatNumber } from 'src/utils/regexField/regexFiledForm';
 import { toaster } from 'src/utils/toast';
 
 import formValidatorJoi from '../../../../../utils/formValidator/formValidator.requiredCheck';
+import DrawerHeader from '../../../../components/salesComponents/components/drawerHeader';
 import ExternalContactsComponent from '../../../../components/common/externalContacts/index.jsx';
 import MapComponent from '../../../../components/common/geoFencing/index';
 import * as routes from '../../../../router/constant/ROUTE';
@@ -111,6 +112,15 @@ const userFormData = {
   customerPortalInvitedEmails: [],
 };
 
+// Section visibility for the site update form. Only Site Details and the
+// geofencing / Integrations section are shown for now; flip a flag back to
+// `true` to restore a hidden section.
+const SHOW_CLIENT_DETAILS = false;
+const SHOW_ADDITIONAL_CONTACTS = false;
+const SHOW_REPORTS_DISTRIBUTION = false;
+const SHOW_INVITE_CBX_USERS = false;
+const SHOW_INTEGRATIONS = false;
+
 const typesWithMultiComplete = [
   'dailySiteSummaryReceivers',
   'incidentReportReceivers',
@@ -120,9 +130,12 @@ const typesWithMultiComplete = [
 
 const hasInputValue = (value) => value !== '' && value !== null && value !== undefined;
 
-const Update = () => {
+const Update = ({ embedded = false, onClose, siteId: siteIdProp } = {}) => {
   const { t } = useTranslation();
-  const { id: siteId } = useParams();
+  const { id: routeSiteId } = useParams();
+  // When rendered inside a drawer we may be handed the id directly; otherwise
+  // fall back to the route param.
+  const siteId = siteIdProp || routeSiteId;
   const classes = useStyles();
   const contactRef = useRef(null);
   const location = useLocation();
@@ -375,7 +388,9 @@ const Update = () => {
   const handleFormSubmit = async (e) => {
     e.preventDefault();
     // A linked client is required — client identity is sourced externally.
-    if (!formData?.clientId && !formData?.firstName) {
+    // Skip this gate when the Client Details section is hidden, otherwise Save
+    // would block on a field the user can no longer see or edit.
+    if (SHOW_CLIENT_DETAILS && !formData?.clientId && !formData?.firstName) {
       setErrorMessages((prev) => ({
         ...prev,
         clientId: 'Please link a client from the connected application.',
@@ -594,11 +609,16 @@ const Update = () => {
     };
 
     if (isQueryParamPresent('scrollToContacts') && !disabled) {
-      contactRef.current.scrollIntoView({ behavior: 'smooth', inline: 'nearest' });
+      contactRef.current?.scrollIntoView({ behavior: 'smooth', inline: 'nearest' });
     }
   }, [location.search, parent, showMap]);
 
   const handleBack = () => {
+    // In drawer mode there is no page to navigate back to — just close it.
+    if (embedded) {
+      onClose?.();
+      return;
+    }
     /**
      * if user is HO and Url contains franchiseId and timezone
      * then direct the back and cancel to HO site detail
@@ -703,20 +723,29 @@ const Update = () => {
           noValidate
           autoComplete="off"
         >
-          <Box className={classes.btnBox}>
-            <Button variant="tertiaryGrey" onClick={handleBack} startIcon={<ArrowBackIcon />}>
-              {t('obx.buttons.back')}
-            </Button>
+          {/* In drawer mode the app-standard DrawerHeader owns the title + close;
+              the full-page view keeps its own top action bar. */}
+          {embedded ? (
+            <DrawerHeader
+              title={t('obx.sites.siteInformation.title')}
+              handleCloseDrawer={() => onClose?.()}
+            />
+          ) : (
+            <Box className={classes.btnBox}>
+              <Button variant="tertiaryGrey" onClick={handleBack} startIcon={<ArrowBackIcon />}>
+                {t('obx.buttons.back')}
+              </Button>
 
-            <Box className={classes.buttonGroup}>
-              <Button variant="secondaryGrey" onClick={handleBack}>
-                {t('obx.buttons.cancel')}
-              </Button>
-              <Button disabled={disabled || !!!showMap} variant="primary" type="submit">
-                {t('obx.buttons.save')}
-              </Button>
+              <Box className={classes.buttonGroup}>
+                <Button variant="secondaryGrey" onClick={handleBack}>
+                  {t('obx.buttons.cancel')}
+                </Button>
+                <Button disabled={disabled || !!!showMap} variant="primary" type="submit">
+                  {t('obx.buttons.save')}
+                </Button>
+              </Box>
             </Box>
-          </Box>
+          )}
           {!showMap && (
             <Stack sx={{ width: '100%', marginTop: '6px' }} spacing={2}>
               <Alert severity="error">
@@ -726,6 +755,7 @@ const Update = () => {
           )}
           {/* Client — linked from the connected application. Identity fields are
               read-only here; only site-specific fields are editable. */}
+          {SHOW_CLIENT_DETAILS && (
           <Box className={classes.sitesFieldsWrapper}>
             <Box className={classes.sectionHead}>
               <Typography variant="subtitle1" className={classes.sitesFieldsTitle}>
@@ -826,6 +856,7 @@ const Update = () => {
               </Box>
             )}
           </Box>
+          )}
 
           {/* Site details — owned by this application (incl. location). */}
           <Box className={classes.sitesFieldsWrapper}>
@@ -833,6 +864,42 @@ const Update = () => {
               <Typography variant="subtitle1" className={classes.sitesFieldsTitle}>
                 {t('obx.sites.createSite.siteDetails')}
               </Typography>
+            </Box>
+
+            {/* Client picker — linked from the connected application. */}
+            <Box className={classes.formBox}>
+              <Box className={classes.flexControl}>
+                <InputLabel>{t('form.input.textField.site.clientPickerLabel')}</InputLabel>
+                <Autocomplete
+                  className={classes.clientPicker}
+                  options={clientOptions}
+                  value={selectedClientOption}
+                  getOptionLabel={(o) =>
+                    `${o?.firstName || ''} ${o?.lastName || ''}`.trim() ||
+                    `${formData?.firstName || ''} ${formData?.lastName || ''}`.trim()
+                  }
+                  isOptionEqualToValue={(o, v) => String(o?.id) === String(v?.id)}
+                  onChange={(_e, option) => handleClientSelect(option)}
+                  renderOption={(props, option) => (
+                    <li {...props} key={option.id}>
+                      <Box className={classes.optionRow}>
+                        <span className={classes.optionName}>
+                          {`${option.firstName || ''} ${option.lastName || ''}`.trim()}
+                        </span>
+                        <span className={classes.optionMeta}>{option.primaryEmail}</span>
+                      </Box>
+                    </li>
+                  )}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      error={!!errorMessages?.clientId}
+                      placeholder={t('form.input.textField.site.placeHolderClients')}
+                      helperText={errorMessages?.clientId || null}
+                    />
+                  )}
+                />
+              </Box>
             </Box>
 
             <Box className={classes.formBox}>
@@ -904,7 +971,7 @@ const Update = () => {
 
             {/* Location header. */}
             <Typography variant="subtitle2" className={classes.subSectionTitle}>
-              {t('form.input.textField.country.header')}
+              {t('form.input.textField.geoFencing.header')}
             </Typography>
 
             {/* Location details as a flat field grid. Address leads (most
@@ -1004,7 +1071,7 @@ const Update = () => {
               </Box>
             )}
           </Box>
-          {tenantPermissions?.sites?.edit?.inviteCbxUsers ? (
+          {SHOW_INVITE_CBX_USERS && tenantPermissions?.sites?.edit?.inviteCbxUsers ? (
             <Box className={classes.cbxInviteUsersWrapper}>
               <Typography variant="h4" className={classes.inviteUsersTitle}>
                 {t('obx.sites.siteInformation.inviteCbxUsers')}
@@ -1028,6 +1095,7 @@ const Update = () => {
             </Box>
           ) : null}
 
+          {SHOW_ADDITIONAL_CONTACTS && (
           <Box className={classes.sitesFieldsWrapper}>
             <Box className={classes.sectionHead}>
               <Typography variant="subtitle1" className={classes.sitesFieldsTitle}>
@@ -1056,12 +1124,11 @@ const Update = () => {
               />
             </Box> */}
           </Box>
+          )}
 
-          {/* Configurations — site-level settings grouped explicitly: report
-              distribution recipients and integration toggles. Sits below the
-              Additional Contacts group as the last content block of the form. */}
           {/* Reports Distribution — the email recipients each report should be
               sent to. Top-level section, sits below Additional Contacts. */}
+          {SHOW_REPORTS_DISTRIBUTION && (
           <Box className={classes.sitesFieldsWrapper}>
             <Box className={classes.sectionHead}>
               <Typography variant="subtitle1" className={classes.sitesFieldsTitle}>
@@ -1133,11 +1200,13 @@ const Update = () => {
               </Box>
             </Box>
           </Box>
+          )}
 
           {/* Integrations — its own top-level section. */}
           {/* isGeofencingEnabled is the franchise level geofencing enabled status */}
           {/* geofencingEnabled is the site level geofencing enabled status */}
-          {(!isProductionEnvironment || isEUInstance() || formData?.isGeofencingEnabled) && (
+          {SHOW_INTEGRATIONS &&
+            (!isProductionEnvironment || isEUInstance() || formData?.isGeofencingEnabled) && (
             <Box className={classes.sitesFieldsWrapper}>
               <Box className={classes.sectionHead}>
                 <Typography variant="subtitle1" className={classes.sitesFieldsTitle}>

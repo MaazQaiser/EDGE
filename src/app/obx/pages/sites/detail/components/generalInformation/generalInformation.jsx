@@ -1,5 +1,5 @@
 import ErrorOutlineOutlinedIcon from '@mui/icons-material/ErrorOutlineOutlined';
-import { Button, Skeleton, Tooltip } from '@mui/material';
+import { Button, Drawer, Skeleton, Tooltip } from '@mui/material';
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
@@ -15,23 +15,16 @@ import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import InfoCardSkeleton from 'src/app/components/common/skeletonLoader/infoCardSkeleton';
-import { getFranchiseIdWithRoleAndSource } from 'src/app/obx/pages/schedules/helper';
 import { ACL_OBX_SITE_RATE_VIEW, ACL_OBX_SITE_UPDATE } from 'src/app/router/constant/OBXMODULE';
-import history from 'src/app/router/utils/history';
 import { isObjectEmpty } from 'src/helper/utilityFunctions';
 import { useTenantLabel } from 'src/helper/utilityHooks';
 import RenderIfHasPermission from 'src/hoc/RenderIfHasPermission';
 import { useCurrency } from 'src/hooks/useCurrency';
-import {
-  franchiseIdUrlQueryParam,
-  geoFencingPolygonTypeKeys,
-  rolesEnumWithName,
-  timeZoneKeyUrlQueryParam,
-} from 'src/utils/constants';
+import { geoFencingPolygonTypeKeys, rolesEnumWithName } from 'src/utils/constants';
 import { capitalizeFirstLetter } from 'src/utils/string/common';
 
 import * as routes from '../../../../../../router/constant/ROUTE';
-import { OBX_ZONE_SITE_UPDATE } from '../../../../../../router/constant/ROUTE';
+import Update from '../../../update/index';
 import { useStyles } from './generalInfoStyles';
 
 const GeneralInformation = ({ siteData, franchiseData, loading, keyId }) => {
@@ -46,24 +39,11 @@ const GeneralInformation = ({ siteData, franchiseData, loading, keyId }) => {
     coordinates: siteData?.siteArea,
   };
 
-  const searchParams = new URLSearchParams(location.search);
   const { currency: franchiseCurrency } = useCurrency();
 
-  const franchiseIdWithRoleAndSource = getFranchiseIdWithRoleAndSource();
-  const franchiseTimeZoneFromUrl = searchParams.get(timeZoneKeyUrlQueryParam);
-
-  const gotoSiteUpdateForm = (id) => {
-    const sitePath = OBX_ZONE_SITE_UPDATE.replace(':id', id);
-    if (franchiseIdWithRoleAndSource?.role === rolesEnumWithName.home_officer.slug) {
-      const queryParams = new URLSearchParams({
-        [franchiseIdUrlQueryParam]: franchiseIdWithRoleAndSource?.[franchiseIdUrlQueryParam],
-        [timeZoneKeyUrlQueryParam]: franchiseTimeZoneFromUrl,
-      }).toString();
-      history.push(`${sitePath}?${queryParams}`);
-    } else {
-      history.push(sitePath);
-    }
-  };
+  // Edit now opens the Site Information form in a right-side drawer instead of
+  // navigating to a separate page.
+  const [editOpen, setEditOpen] = React.useState(false);
 
   const siteInformation = (
     <>
@@ -98,7 +78,7 @@ const GeneralInformation = ({ siteData, franchiseData, loading, keyId }) => {
                 disableRipple={false}
                 className={classes.cancelIcon}
                 onClick={() => {
-                  gotoSiteUpdateForm(keyId);
+                  setEditOpen(true);
                 }}
               >
                 <EditIcon className={classes.editIcon} />
@@ -347,6 +327,17 @@ const GeneralInformation = ({ siteData, franchiseData, loading, keyId }) => {
             />
           )}
       </Box>
+
+      {/* Site Information edit form, opened in a right-side drawer. The embedded
+          Update form renders its own app-standard header + footer. */}
+      <Drawer
+        anchor="right"
+        open={editOpen}
+        onClose={() => setEditOpen(false)}
+        PaperProps={{ className: classes.editDrawerPaper }}
+      >
+        {editOpen && <Update embedded siteId={keyId} onClose={() => setEditOpen(false)} />}
+      </Drawer>
     </>
   );
 };
