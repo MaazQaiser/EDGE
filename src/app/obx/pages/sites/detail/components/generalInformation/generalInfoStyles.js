@@ -192,6 +192,15 @@ export const useStyles = makeStyles((theme) => ({
     },
   },
 
+  // Read-only location grid shown under the Geo-Fencing heading; matches the
+  // horizontal padding of the heading and map so it aligns with them.
+  geoFencingDetails: {
+    padding: '0 32px 20px',
+    [theme.breakpoints.down('lg')]: {
+      padding: '0 24px 20px',
+    },
+  },
+
   // Right-side drawer that hosts the Site Information edit form.
   editDrawerPaper: {
     '&.MuiDrawer-paper': {

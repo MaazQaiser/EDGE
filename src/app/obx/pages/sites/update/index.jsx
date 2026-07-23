@@ -719,7 +719,7 @@ const Update = ({ embedded = false, onClose, siteId: siteIdProp } = {}) => {
         <Box
           component="form"
           onSubmit={handleFormSubmit}
-          className={classes.mainBoxForm}
+          className={`${classes.mainBoxForm}${embedded ? ` ${classes.mainBoxFormEmbedded}` : ''}`}
           noValidate
           autoComplete="off"
         >
@@ -729,6 +729,7 @@ const Update = ({ embedded = false, onClose, siteId: siteIdProp } = {}) => {
             <DrawerHeader
               title={t('obx.sites.siteInformation.title')}
               handleCloseDrawer={() => onClose?.()}
+              className={classes.embeddedDrawerHeader}
             />
           ) : (
             <Box className={classes.btnBox}>

@@ -17,6 +17,21 @@ export const useStyles = makeStyles((theme) => ({
     gap: '48px',
   },
 
+  // In the drawer the DrawerHeader already provides the top title, so tighten
+  // the top padding and the header→first-section gap.
+  mainBoxFormEmbedded: {
+    paddingTop: '20px',
+    gap: '24px',
+  },
+
+  // Drop the shared DrawerHeader's default bottom margin so it doesn't stack
+  // with the form gap.
+  embeddedDrawerHeader: {
+    '&.MuiBox-root': {
+      marginBottom: 0,
+    },
+  },
+
   sitesFieldsWrapper: {
     display: 'flex',
     flexDirection: 'column',

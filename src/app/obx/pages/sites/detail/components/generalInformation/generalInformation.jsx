@@ -168,22 +168,6 @@ const GeneralInformation = ({ siteData, franchiseData, loading, keyId }) => {
                   </Typography>
                 </RenderIfHasPermission>
               </Box>
-              <Box className={classes.contentDetail}>
-                <Typography variant="body3" className={classes.columnHeading}>
-                  {t('obx.sites.siteInformation.dailySiteSummaryReceivers')}
-                </Typography>
-                <Typography variant="subtitle2" className={classes.columnDetail}>
-                  {siteData?.dailySiteSummaryReceivers?.length || 0}
-                </Typography>
-              </Box>
-              <Box className={classes.contentDetail}>
-                <Typography variant="body3" className={classes.columnHeading}>
-                  {t('obx.sites.siteInformation.incidentReportReceivers')}
-                </Typography>
-                <Typography variant="subtitle2" className={classes.columnDetail}>
-                  {siteData?.incidentReportReceivers?.length || 0}
-                </Typography>
-              </Box>
               {isHomeOfficer && (
                 <Box className={classes.contentDetail}>
                   <Typography variant="body3" className={classes.columnHeading}>
@@ -192,23 +176,6 @@ const GeneralInformation = ({ siteData, franchiseData, loading, keyId }) => {
                   <Typography variant="subtitle2" className={classes.columnDetail}>
                     {siteData?.termsAndConditionsVersion || NA}
                   </Typography>
-                </Box>
-              )}
-              {siteData?.isGeofencingEnabled && (
-                <Box className={classes.contentDetail}>
-                  <Typography variant="body3" className={classes.columnHeading}>
-                    {t('obx.sites.siteInformation.geofencing.title')}
-                  </Typography>
-                  <Chip
-                    label={
-                      siteData?.geofencingEnabled
-                        ? t('obx.form.input.textField.integrations.enabled')
-                        : t('obx.form.input.textField.integrations.disabled')
-                    }
-                    size="small"
-                    color={siteData?.geofencingEnabled ? 'success' : 'error'}
-                    variant="filled-primary"
-                  />
                 </Box>
               )}
             </Box>
@@ -296,6 +263,70 @@ const GeneralInformation = ({ siteData, franchiseData, loading, keyId }) => {
       <Typography variant="subtitle1" className={classes.mapContent}>
         {t('form.input.textField.geoFencing.header')}
       </Typography>
+      {/* Location details captured in the Site Information form, shown read-only
+          above the Geo-Fencing map. */}
+      <Box className={classes.geoFencingDetails}>
+        {loading ? (
+          <Box className={classes.skeletonWrapperCard}>
+            <InfoCardSkeleton noOfRows={3} />
+          </Box>
+        ) : (
+          <Box className={classes.informationCard}>
+          <Box className={classes.mainContent}>
+            <Box className={classes.contentDetail}>
+              <Typography variant="body3" className={classes.columnHeading}>
+                {t('sales.locations.address')}
+              </Typography>
+              <Typography variant="subtitle2" className={classes.columnDetail}>
+                {siteData?.address || NA}
+              </Typography>
+            </Box>
+            <Box className={classes.contentDetail}>
+              <Typography variant="body3" className={classes.columnHeading}>
+                {t('obx.form.input.textField.city.label')}
+              </Typography>
+              <Typography variant="subtitle2" className={classes.columnDetail}>
+                {siteData?.city?.name || NA}
+              </Typography>
+            </Box>
+            <Box className={classes.contentDetail}>
+              <Typography variant="body3" className={classes.columnHeading}>
+                {t('obx.form.input.textField.country.label')}
+              </Typography>
+              <Typography variant="subtitle2" className={classes.columnDetail}>
+                {siteData?.country?.name || NA}
+              </Typography>
+            </Box>
+          </Box>
+          <Box className={classes.mainContent}>
+            <Box className={classes.contentDetail}>
+              <Typography variant="body3" className={classes.columnHeading}>
+                {t('form.input.textField.postalCode.label')}
+              </Typography>
+              <Typography variant="subtitle2" className={classes.columnDetail}>
+                {siteData?.zipCode || siteData?.postalCode || NA}
+              </Typography>
+            </Box>
+            <Box className={classes.contentDetail}>
+              <Typography variant="body3" className={classes.columnHeading}>
+                {t('obx.sites.siteInformation.region')}
+              </Typography>
+              <Typography variant="subtitle2" className={classes.columnDetail}>
+                {siteData?.state?.name || NA}
+              </Typography>
+            </Box>
+            <Box className={classes.contentDetail}>
+              <Typography variant="body3" className={classes.columnHeading}>
+                {t('form.input.textField.address2.label')}
+              </Typography>
+              <Typography variant="subtitle2" className={classes.columnDetail}>
+                {siteData?.address2 || NA}
+              </Typography>
+            </Box>
+          </Box>
+        </Box>
+        )}
+      </Box>
       <Box className={classes.mapSection}>
         {loading && (
           <Box className={classes.mapSkeleton}>
