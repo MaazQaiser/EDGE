@@ -1,522 +1,622 @@
-import dayGridPlugin from '@fullcalendar/daygrid';
-import interactionPlugin from '@fullcalendar/interaction';
-import listPlugin from '@fullcalendar/list';
+import 'temporal-polyfill/global';
+import '@fullcalendar/react/skeleton.css';
+import '@fullcalendar/react/themes/classic/theme.css';
+import '@fullcalendar/react/themes/classic/palette.css';
+
 import FullCalendar from '@fullcalendar/react';
-import resourceTimelinePlugin from '@fullcalendar/resource-timeline';
-import timeGridPlugin from '@fullcalendar/timegrid';
-import {
-  Avatar,
-  Box,
-  Button,
-  Chip,
-  Skeleton,
-  ToggleButton,
-  ToggleButtonGroup,
-  Tooltip,
-  Typography,
-} from '@mui/material';
-import { ReactComponent as CancelIcon } from 'assets/svg/cancelHit.svg?react';
-import { ReactComponent as WarningIcon } from 'assets/svg/warningCalander.svg?react';
+import dayGridPlugin from '@fullcalendar/react/daygrid';
+import interactionPlugin from '@fullcalendar/react/interaction';
+import listPlugin from '@fullcalendar/react/list';
+import fcClass from '@fullcalendar/react/protected-styles';
+import themePlugin from '@fullcalendar/react/themes/classic';
+import timeGridPlugin from '@fullcalendar/react/timegrid';
+import resourceTimelinePlugin from '@fullcalendar/react-scheduler/resource-timeline';
+import { Box, Button, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
 import dayjs from 'dayjs';
 import PropTypes from 'prop-types';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { DUTY_COLORS } from 'src/app/obx/pages/schedules/calendar';
-import MissedHitsDrawer from 'src/app/obx/pages/schedules/components/missedHitsDrawer';
+import { ReactComponent as NoShiftIcon } from 'src/assets/images/no-shift.svg';
+import { ReactComponent as LeftArrow } from 'src/assets/svg/calendar-left.svg';
+import { ReactComponent as RightArrow } from 'src/assets/svg/calendar-right.svg';
+import { ReactComponent as CalenderIcon } from 'src/assets/svg/DedicatedDuty/schedule-calendar.svg';
+import { ReactComponent as ListIcon } from 'src/assets/svg/list.svg';
 import {
-  calendarIndicatorIcons,
-  calendarShiftStatusValues,
-} from 'src/app/obx/pages/schedules/components/scheduleStatusIcons';
-import {
-  dayjsWithTimezone,
-  formatShiftScheduleTimeRange,
-  getCurrentStandardTimeInIsoWrtTimezone,
-} from 'src/app/obx/pages/schedules/helper';
-import { ACL_OBX_SCHEDULES_UPDATE } from 'src/app/router/constant/OBXMODULE';
-import AvatarSchedule from 'src/assets/images/Avatar-schedule.png';
-import { ReactComponent as NoShiftIcon } from 'src/assets/images/no-shift.svg?react';
-import { SplittedCalenderIcon } from 'src/assets/svg';
-import { ReactComponent as UnAssignHit } from 'src/assets/svg/assignHit.svg?react';
-import { ReactComponent as LeftArrow } from 'src/assets/svg/calendar-left.svg?react';
-import { ReactComponent as RightArrow } from 'src/assets/svg/calendar-right.svg?react';
-import { ReactComponent as CarIcon } from 'src/assets/svg/carImage.svg?react';
-import { ReactComponent as AlertIcon } from 'src/assets/svg/DedicatedDuty/alertCircle.svg?react';
-import { ReactComponent as CalenderIcon } from 'src/assets/svg/DedicatedDuty/schedule-calendar.svg?react';
-import { ReactComponent as DispatchIndicator } from 'src/assets/svg/dispatchIndicator.svg?react';
-import { ReactComponent as ListIcon } from 'src/assets/svg/list.svg?react';
-import { ReactComponent as MHitsIcon } from 'src/assets/svg/MHitsIcon.svg?react';
-import { ReactComponent as NotesIcon } from 'src/assets/svg/notesStatus.svg?react';
-import { ReactComponent as RunsheetIcon } from 'src/assets/svg/runsheetHit.svg?react';
-import { ReactComponent as WhiteCarIcon } from 'src/assets/svg/WhiteCarIcon.svg?react';
-import { useTenantLabel } from 'src/helper/utilityHooks';
-import RenderIfHasPermission from 'src/hoc/RenderIfHasPermission';
-import useDateTime from 'src/hooks/useDateTime';
-import userHasPermission from 'src/utils/auth/userHasPermission';
-import {
-  calendarShiftStatusEnum,
   DAY_GRID,
   DEFAULT_CALENDER_VIEW,
-  DRAWER_TYPE,
-  SCHEDULE_DUTIES,
-  ShiftStatus,
+  SCHEDULE_CALENDAR_VIRTUALIZATION,
   TIME_GRID,
 } from 'src/utils/constants/schedules';
-import { capitalizeFirstLetter } from 'src/utils/string/common';
 
-import DutyIndicator from '../../obxComponents/dutyIndicator';
-import SideDrawer from '../sideDrawer';
 import CalendarSkeleton from '../skeletonLoader/calendarSkeleton';
 import { useStyles } from './calendar.styles';
 
-const isShiftCancelled = (shift = {}) => {
-  const normalizedShiftStatus = `${
-    shift?.shiftStatus || shift?.scheduleStatus || ''
-  }`.toLowerCase();
-  const isCancelledByStatus =
-    normalizedShiftStatus === 'cancelled' || normalizedShiftStatus === 'canceled';
-  const isCancelledByFlag =
-    shift?.isCancelled === true || `${shift?.isCancelled}`.toLowerCase() === 'true';
-  return isCancelledByStatus || isCancelledByFlag;
+/** Vertical FC body scrollers (Locations column + day grid). */
+const getVerticalScrollers = (root) => {
+  if (!root) return [];
+  return [...root.querySelectorAll(`.${fcClass.internalScroller}`)].filter((el) => {
+    // Avoid getComputedStyle on every wheel tick — it forces style recalc/layout.
+    // FC body scrollers use overflow via class; scrollability is enough to filter.
+    return el.scrollHeight > el.clientHeight + 1;
+  });
 };
 
+const normalizeWheelDeltaY = (event, pageHeight) => {
+  let deltaY = event.deltaY;
+  if (event.deltaMode === 1) deltaY *= 16;
+  else if (event.deltaMode === 2) deltaY *= pageHeight || 1;
+  return deltaY;
+};
+
+const FULL_CALENDAR_PLUGINS = [
+  themePlugin,
+  dayGridPlugin,
+  timeGridPlugin,
+  listPlugin,
+  interactionPlugin,
+  resourceTimelinePlugin,
+];
+
+// Falls back to FullCalendar's documented non-commercial key so the design
+// demo doesn't show the "invalid license" notice; production sets the real key.
+const SCHEDULER_LICENSE_KEY =
+  process.env.REACT_APP_FULLCALENDAR_LICENSE_KEY || 'CC-Attribution-NonCommercial-NoDerivatives';
+
+/**
+ * Only show the virtual-scroll skeleton if the viewport stays empty this long.
+ * Small scrolls remount within a frame and must not flash a loader.
+ */
+const VIRTUAL_SCROLL_BLANK_DELAY_MS = 120;
+const VIRTUAL_SCROLL_ROW_POLL_MS = 50;
+
+/** True when at least one virtualized row intersects the vertical scroll viewport. */
+const hasVisibleVirtualRows = (root) => {
+  if (!root) return false;
+  const scrollers = [...root.querySelectorAll(`.${fcClass.internalScroller}`)].filter(
+    (el) => el.scrollHeight > el.clientHeight + 1 || el.clientHeight > 0,
+  );
+  if (!scrollers.length) return false;
+
+  const scroller = scrollers.reduce((wider, el) =>
+    el.clientWidth >= wider.clientWidth ? el : wider,
+  );
+  const scrollerRect = scroller.getBoundingClientRect();
+  if (scrollerRect.height < 2) return false;
+
+  return [...scroller.querySelectorAll(`.${fcClass.fillX}`)].some((row) => {
+    const rect = row.getBoundingClientRect();
+    return (
+      rect.height > 0 && rect.bottom > scrollerRect.top + 2 && rect.top < scrollerRect.bottom - 2
+    );
+  });
+};
+
+/**
+ * Domain-agnostic calendar shell.
+ * Consumers pass normalized resources/events and optional render callbacks.
+ */
 const Calendar = ({
-  events,
-  listEvents,
-  weekViewLocations,
-  dayViewDuties,
-  dayViewLocations,
-  setShowDrawer,
+  resources = [],
+  events = [],
   queryParams,
   setQueryParams,
-  loading,
-  missedHitsCount,
-  refreshMissedHitsCount,
+  loading = false,
+  isEmpty = false,
+  skeletonVariant = 'default',
+  toolbarLeftContent,
+  toolbarRightContent,
+  showListSwitch = true,
+  resourceColumnHeader = '',
+  resourceOrder,
+  eventContent,
+  eventDidMount,
+  eventClick,
+  dayHeaderContent,
+  slotHeaderContent,
+  resourceCellContent,
+  resourceCellClass,
+  resourceLaneClass,
+  resourceCellDidMount,
+  resourceCellWillUnmount,
+  resourceLaneDidMount,
+  resourceLaneWillUnmount,
+  weekSlotHeaderContent,
+  resourceColumnsWidth = '15%',
+  // Controlled by REACT_APP_SCHEDULE_CALENDAR_VIRTUALIZATION (true only when set to "true").
+  // When on, paired FC scrollers are mirror-synced on the main thread.
+  virtualization = SCHEDULE_CALENDAR_VIRTUALIZATION,
+  calendarClassName = '',
+  isOverviewSectionsEmptyOnly = false,
+  // Rendered under the FC grid (full width). Used by day view so cards are not
+  // trapped in FC's centered dayHeaderContent shrink-wrap.
+  belowGridContent = null,
 }) => {
   const calendarRef = useRef(null);
+  const calendarContainerRef = useRef(null);
+  const virtualScrollBlankTimerRef = useRef(null);
+  const virtualScrollPollTimerRef = useRef(null);
+  const isVirtualScrollLoadingRef = useRef(false);
+  const [isVirtualScrollLoading, setIsVirtualScrollLoading] = useState(false);
+  // Hide the grid until updateSize runs after data arrives — otherwise the first
+  // paint can show cards with wrong column widths (off the day grid lines).
+  const [isTimelineLaidOut, setIsTimelineLaidOut] = useState(false);
   const classes = useStyles();
-  const { t } = useTranslation();
-  const { is24Hours } = useDateTime();
+  // Pre-revamp behaviour: keep prior events/resources visible under the loading
+  // skeleton so FullCalendar never remounts from a 1×1 hidden host (that caused
+  // 1px day columns / thin-strip flash). Only clear when the loaded result is empty.
+  const displayResources = !loading && isEmpty ? [] : resources;
+  const displayEvents = !loading && isEmpty ? [] : events;
+  const showLoadingOverlay = loading || (!isEmpty && !isTimelineLaidOut);
+  // Fixed-height FC scrollport so the date/slot header stays outside the body
+  // scroller (no sticky-in-outer-scroll stretch). Virtualization also needs this
+  // to measure viewport + scrollTop. Day view with belowGridContent stays auto
+  // so only the date chip is painted and cards scroll in the outer wrapper.
+  /* Month sizes to its content; every other view fills the scrollport.
+     `100%` made the five week-rows stretch to fill 750px, so a cell holding one
+     line of text ("2 Visits") was 150px tall and the month read as a grid that had
+     failed to load. A month cell here is a count, not a stack of cards, so there is
+     nothing for that height to hold. This also lets the `contentHeight: 'auto'` in
+     the `dayGridMonth` view config take effect — FullCalendar ignores it whenever
+     `height` is set. */
+  const isMonthView = queryParams?.selectedView?.type === DAY_GRID.MONTH;
+  const calendarHeight = belowGridContent || isMonthView ? 'auto' : '100%';
+  const resolvedCalendarClassName = [
+    calendarClassName,
+    isOverviewSectionsEmptyOnly ? classes.overviewCalendarSectionsEmpty : '',
+    isMonthView ? classes.monthGridCompact : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
 
-  const showSideDrawerHandler = ({ requiresAttention, id, shiftId, ...rest }) => {
-    // open assign duty side drawer
-    let open = undefined;
-    let activeIndex = 0;
-
-    if (
-      requiresAttention &&
-      [SCHEDULE_DUTIES.DEDICATED, SCHEDULE_DUTIES.EXTRA].includes(rest?.shiftType)
-    ) {
-      if (getCurrentStandardTimeInIsoWrtTimezone() >= rest?.endsAt || rest?.isCancelled) {
-        open = DRAWER_TYPE.DETAIL;
-        activeIndex = 2;
-      } else {
-        if (userHasPermission(ACL_OBX_SCHEDULES_UPDATE)) {
-          open = DRAWER_TYPE.ASSIGN;
-        }
-      }
-    } else {
-      open = DRAWER_TYPE.DETAIL;
+  // Hide until FC finishes column + row sizing after eventContent mounts.
+  // A single updateSize in the same turn is not enough — row heights settle one
+  // paint later, which caused a brief "cards off the grid lines" flash.
+  useLayoutEffect(() => {
+    if (loading) {
+      setIsTimelineLaidOut(false);
+      return undefined;
     }
 
-    setShowDrawer({
-      open: open,
-      data: { id, shiftId, ...rest },
-      activeIndex: activeIndex,
+    if (isEmpty) {
+      setIsTimelineLaidOut(true);
+      return undefined;
+    }
+
+    let cancelled = false;
+    let outerFrame = 0;
+    let innerFrame = 0;
+
+    calendarRef.current?.getApi?.()?.updateSize?.();
+
+    outerFrame = requestAnimationFrame(() => {
+      innerFrame = requestAnimationFrame(() => {
+        if (cancelled) return;
+        calendarRef.current?.getApi?.()?.updateSize?.();
+        setIsTimelineLaidOut(true);
+      });
     });
-  };
 
-  const handleEventClick = (info) => {
-    if (info.view.type === DAY_GRID.MONTH) {
-      const updatedViewType = DAY_GRID.DAY;
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(outerFrame);
+      cancelAnimationFrame(innerFrame);
+    };
+  }, [loading, isEmpty, displayResources, displayEvents]);
 
-      const { current: calendarDom } = calendarRef;
-      const API = calendarDom ? calendarDom.getApi() : null;
-      API && API.changeView(updatedViewType, info.event.start);
+  // Keep column widths in sync when the schedule chrome resizes.
+  useEffect(() => {
+    const containerEl = calendarContainerRef.current;
+    if (!containerEl || typeof ResizeObserver === 'undefined') return undefined;
 
-      const { activeEnd, activeStart, type } = API.view || {};
-      const { windowStart, windowEnd } = getStartEndTimeForView({ activeEnd, activeStart, type });
+    let frameId = null;
+    let lastWidth = containerEl.offsetWidth;
 
-      setQueryParams((prev) => ({
-        ...prev,
-        selectedView: {
-          ...prev.selectedView,
-          type: updatedViewType,
-          windowStart,
-          windowEnd,
-        },
-      }));
+    const observer = new ResizeObserver((entries) => {
+      const width = Math.round(entries[0]?.contentRect?.width ?? 0);
+      if (width === lastWidth) return;
+      lastWidth = width;
 
-      return;
-    }
-    if (info.view.type === DAY_GRID.WEEK) {
-      // for week view
-      let data = info.event._def?.extendedProps || {};
-      data = { ...data, startsAt: data?.startsAt };
-
-      const id = info.event?.id;
-      showSideDrawerHandler({ ...data, id });
-    }
-  };
-
-  const onClickListViewEvent = (data) => {
-    showSideDrawerHandler({ ...data });
-  };
-
-  const dutyColorClass = {
-    [SCHEDULE_DUTIES.DEDICATED]: 'dutyGreen',
-    [SCHEDULE_DUTIES.PATROL]: 'dutyBlue',
-    [SCHEDULE_DUTIES.DISPATCH]: 'dutyPurple',
-    [SCHEDULE_DUTIES.HIT]: 'dutyBlue',
-    [SCHEDULE_DUTIES.EXTRA]: 'dutyYellow',
-  };
-  const isDedicatedCancelledShift = (shift = {}) => {
-    return shift?.shiftType === SCHEDULE_DUTIES.DEDICATED && isShiftCancelled(shift);
-  };
-
-  const eventMounted = (info) => {
-    const { shiftType } = info.event._def?.extendedProps || {};
-    // BEAUTIFY EVENTS
-    const eventClassName = classes[dutyColorClass[shiftType]];
-    info.el.className += ` ${eventClassName}`;
-  };
-
-  // Event Content
-  const eventContent = (info) => {
-    const shift = info.event._def?.extendedProps || {};
-    const { requiresAttention, name, shiftType, unassignedCount } = shift;
-    const currentView = info.view.type;
-    if (currentView === DAY_GRID.MONTH) {
-      return (
-        <>
-          <Box className={`${classes.eventContentMonthAlert}`}>
-            <DutyIndicator color={DUTY_COLORS[shiftType]} label={name} />
-            {requiresAttention && (
-              <ToolTipComponent unassignedCount={unassignedCount} shiftType={shiftType} />
-            )}
-          </Box>
-        </>
-      );
-    }
-
-    if (currentView === DAY_GRID.WEEK) {
-      const { statusIcon, statusValue, eventBgColorClass } = getValuesWrtStatuses({ shift, t });
-      const cancelledDedicatedClass = isDedicatedCancelledShift(shift)
-        ? classes.cancelledDedicatedCard
-        : '';
-
-      const isExtraHit = shiftType === SCHEDULE_DUTIES.HIT && shift?.isExtra;
-
-      const dutyColor = isExtraHit
-        ? dutyColorClass[SCHEDULE_DUTIES.EXTRA]
-        : dutyColorClass[shiftType];
-
-      return (
-        <Box
-          className={`${classes.eventContent} ${classes.eventContentWeek} ${classes[dutyColor]} ${classes[eventBgColorClass]} ${cancelledDedicatedClass}`}
-        >
-          <CalendarCardContent
-            shift={shift}
-            statusIcon={statusIcon}
-            statusValue={statusValue}
-            is24Hours={is24Hours}
-          />
-        </Box>
-      );
-    }
-
-    return <></>;
-  };
-
-  // TimeSlot View
-  const customTimeSlotView = (info) => {
-    const hour = info.date.getHours();
-    const ampm = hour >= 12 ? 'PM' : 'AM';
-    const formattedHour = hour % 12 === 0 ? 12 : hour % 12;
-    return (
-      <Typography variant="subtitle3" className={classes.calendarTimeSlot}>
-        {formattedHour} {ampm}
-      </Typography>
-    );
-  };
-
-  // FullCalendar header view
-  const customHeaderView = (info) => {
-    const date = info.date.getDate();
-    const dayName = info.date.toLocaleString('default', { weekday: 'short' });
-    const dayMonth = info.date.toLocaleString('default', { month: 'short' });
-    const currentView = info.view.type;
-
-    // Get the current date
-    const currentDate = dayjsWithTimezone();
-    const currentDay = currentDate.date();
-    const currentMonth = currentDate.month();
-
-    // Check if the date being rendered is both in the current month and is the current date
-    const isCurrentDate = date === currentDay && info.date.getMonth() === currentMonth;
-    const highlightClass = isCurrentDate ? classes.highlightCurrentDate : '';
-    const highlightClassDay = isCurrentDate ? classes.highlightCurrentDay : '';
-
-    if ([DAY_GRID.WEEK].includes(currentView)) {
-      return (
-        <Box className={classes.calendarHeaderCell}>
-          <Typography variant="subtitle2" className={classes.calendarHeaderCellDay}>
-            {dayName}
-          </Typography>
-          <Typography
-            variant="subtitle2"
-            className={`${classes.calendarHeaderCellDate} ${highlightClass}`}
-          >
-            {date}
-          </Typography>
-        </Box>
-      );
-    }
-
-    if (currentView === DAY_GRID.MONTH) {
-      return (
-        <Box className={classes.calendarHeaderMonthCell}>
-          <Typography variant="subtitle2" className={classes.calendarHeaderMonthCellDate}>
-            {info.text}
-          </Typography>
-        </Box>
-      );
-    }
-
-    if ([DAY_GRID.DAY].includes(currentView)) {
-      const events = dayViewDuties || {};
-      const sortedLocations = [...(dayViewLocations || [])].sort((a, b) => {
-        const idA = a?.id;
-        const idB = b?.id;
-        if (typeof idA === 'number' && typeof idB === 'number') {
-          return idA - idB;
-        }
-        if (typeof idA === 'number' && idB === null) {
-          return -1;
-        }
-        if (idA === null && typeof idB === 'number') {
-          return 1;
-        }
-        return 0;
+      if (frameId) cancelAnimationFrame(frameId);
+      frameId = requestAnimationFrame(() => {
+        calendarRef.current?.getApi?.()?.updateSize?.();
       });
-      const locationOrderMap = sortedLocations.reduce((acc, loc, index) => {
-        acc[loc?.title] = index;
-        return acc;
-      }, {});
-      const sortedEvents = Object.entries(events)?.sort(([locationNameA], [locationNameB]) => {
-        const orderA = locationOrderMap[locationNameA] ?? 999;
-        const orderB = locationOrderMap[locationNameB] ?? 999;
-        return orderA - orderB;
+    });
+    observer.observe(containerEl);
+
+    return () => {
+      if (frameId) cancelAnimationFrame(frameId);
+      observer.disconnect();
+    };
+  }, []);
+
+  // Keep Locations + day grid locked while virtualized. FC's ScrollerSyncer updates
+  // the follower on the main thread after the master may already have painted via
+  // compositor scrolling — fast wheel makes that lag visible. Intercept wheel and
+  // set both scrollTops together before paint.
+  // Skeleton only if the remount gap leaves the viewport blank past a short delay.
+  useEffect(() => {
+    if (!virtualization || loading || isEmpty || !isTimelineLaidOut) {
+      isVirtualScrollLoadingRef.current = false;
+      setIsVirtualScrollLoading(false);
+      return undefined;
+    }
+
+    const container = calendarContainerRef.current;
+    if (!container) return undefined;
+
+    let syncingScroll = false;
+    let cachedScrollers = null;
+    let cachedPrimary = null;
+
+    const refreshScrollerCache = () => {
+      cachedScrollers = getVerticalScrollers(container);
+      cachedPrimary =
+        cachedScrollers.length > 0
+          ? cachedScrollers.reduce((wider, el) =>
+              el.clientWidth >= wider.clientWidth ? el : wider,
+            )
+          : null;
+      return cachedScrollers;
+    };
+
+    const getCachedScrollers = () => {
+      if (
+        !cachedScrollers ||
+        cachedScrollers.some(
+          (scroller) => !scroller.isConnected || scroller.scrollHeight <= scroller.clientHeight + 1,
+        )
+      ) {
+        return refreshScrollerCache();
+      }
+      return cachedScrollers;
+    };
+
+    const clearBlankTimer = () => {
+      if (virtualScrollBlankTimerRef.current) {
+        clearTimeout(virtualScrollBlankTimerRef.current);
+        virtualScrollBlankTimerRef.current = null;
+      }
+    };
+
+    const clearPollTimer = () => {
+      if (virtualScrollPollTimerRef.current) {
+        clearTimeout(virtualScrollPollTimerRef.current);
+        virtualScrollPollTimerRef.current = null;
+      }
+    };
+
+    const hideVirtualScrollLoader = () => {
+      clearBlankTimer();
+      clearPollTimer();
+      if (!isVirtualScrollLoadingRef.current) return;
+      isVirtualScrollLoadingRef.current = false;
+      setIsVirtualScrollLoading(false);
+    };
+
+    const pollUntilRowsVisible = () => {
+      clearPollTimer();
+      virtualScrollPollTimerRef.current = setTimeout(() => {
+        if (hasVisibleVirtualRows(container)) {
+          hideVirtualScrollLoader();
+          return;
+        }
+        pollUntilRowsVisible();
+      }, VIRTUAL_SCROLL_ROW_POLL_MS);
+    };
+
+    const showVirtualScrollLoader = () => {
+      if (isVirtualScrollLoadingRef.current) return;
+      isVirtualScrollLoadingRef.current = true;
+      setIsVirtualScrollLoading(true);
+      pollUntilRowsVisible();
+    };
+
+    // After scroll, wait a beat. Only cover with skeleton if still blank — i.e.
+    // virtualization has not remounted rows yet. Instant remounts never flash.
+    const evaluateVirtualScrollViewport = () => {
+      if (hasVisibleVirtualRows(container)) {
+        hideVirtualScrollLoader();
+        return;
+      }
+
+      if (isVirtualScrollLoadingRef.current || virtualScrollBlankTimerRef.current) return;
+
+      virtualScrollBlankTimerRef.current = setTimeout(() => {
+        virtualScrollBlankTimerRef.current = null;
+        if (!hasVisibleVirtualRows(container)) {
+          showVirtualScrollLoader();
+        }
+      }, VIRTUAL_SCROLL_BLANK_DELAY_MS);
+    };
+
+    const onWheel = (event) => {
+      if (event.ctrlKey) return;
+      if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
+
+      const scrollers = getCachedScrollers();
+      if (scrollers.length < 2) return;
+
+      const overScroller = scrollers.some(
+        (scroller) => scroller === event.target || scroller.contains(event.target),
+      );
+      if (!overScroller) return;
+
+      const primary = cachedPrimary || scrollers[0];
+      const maxScrollTop = primary.scrollHeight - primary.clientHeight;
+      if (maxScrollTop <= 0) return;
+
+      event.preventDefault();
+      const nextTop = Math.max(
+        0,
+        Math.min(
+          maxScrollTop,
+          primary.scrollTop + normalizeWheelDeltaY(event, primary.clientHeight),
+        ),
+      );
+
+      syncingScroll = true;
+      scrollers.forEach((scroller) => {
+        if (scroller.scrollTop !== nextTop) scroller.scrollTop = nextTop;
       });
-      return (
-        <Box>
-          <Box className={`${classes.calendarHeaderCell} ${classes.borderBottom}`}>
-            <Typography variant="subtitle2" className={classes.calendarHeaderCellDay}>
-              {dayName}
-            </Typography>
-            <Typography
-              variant="subtitle2"
-              className={`${classes.calendarHeaderCellDate} ${highlightClass}`}
-            >
-              {date}
-            </Typography>
-          </Box>
-          <Box className={classes.calendarDayCustom}>
-            {sortedEvents?.map(([locationName, shifts], index) => {
-              shifts = shifts || [];
-              return (
-                <Box key={index} className={classes.dayViewBorder}>
-                  <Typography variant="subtitle2" className={classes.dayLocationName}>
-                    {locationName}
-                  </Typography>
-                  <Box className={classes.dayViewWrapper}>
-                    {shifts?.map((shift) => {
-                      const { statusIcon, statusValue, eventBgColorClass } = getValuesWrtStatuses({
-                        shift,
-                        t,
-                      });
-                      const cancelledDedicatedClass = isDedicatedCancelledShift(shift)
-                        ? classes.cancelledDedicatedCard
-                        : '';
-                      return (
-                        <Box
-                          key={shift?.id}
-                          className={`${classes.dayEventContent} ${classes.eventContentWeek} ${classes[dutyColorClass[shift?.shiftType]]} ${classes[eventBgColorClass]} ${cancelledDedicatedClass}`}
-                          onClick={() => onClickListViewEvent(shift)}
-                        >
-                          <CalendarCardContent
-                            shift={shift}
-                            statusIcon={statusIcon}
-                            statusValue={statusValue}
-                            is24Hours={is24Hours}
-                          />
-                        </Box>
-                      );
-                    })}
-                  </Box>
-                </Box>
-              );
-            })}
-          </Box>
-        </Box>
-      );
-    }
+      syncingScroll = false;
+      requestAnimationFrame(evaluateVirtualScrollViewport);
+    };
 
-    if (currentView === TIME_GRID.LIST) {
-      const events = listEvents?.[date];
+    const onScroll = (event) => {
+      if (syncingScroll) return;
+      const scrollers = getCachedScrollers();
+      if (scrollers.length < 2 || !scrollers.includes(event.target)) return;
 
-      return (
-        <Box className={classes.calendarListView}>
-          <Box className={classes.calendarListViewTime}>
-            <Typography
-              variant="subtitle1"
-              className={`${classes.calendarListViewDate} ${highlightClass}`}
-            >
-              {date}
-            </Typography>
-            <Box>
-              <Typography
-                variant="subtitle2"
-                className={`${classes.calendarListViewDay} ${highlightClassDay}`}
-              >
-                {dayMonth}, {dayName}
-              </Typography>
-            </Box>
-          </Box>
+      syncingScroll = true;
+      const { scrollTop } = event.target;
+      scrollers.forEach((scroller) => {
+        if (scroller !== event.target && scroller.scrollTop !== scrollTop) {
+          scroller.scrollTop = scrollTop;
+        }
+      });
+      syncingScroll = false;
+      requestAnimationFrame(evaluateVirtualScrollViewport);
+    };
 
-          <Box className={classes.calendarListViewRight}>
-            {events?.map((event) => (
-              <Box
-                key={event?.id}
-                className={classes.calendarListViewEvent}
-                onClick={() => onClickListViewEvent(event)}
-              >
-                <Box className={classes.calendarListViewEventBody}>
-                  <DutyIndicator
-                    color={DUTY_COLORS[event?.shiftType]}
-                    label={formatShiftScheduleTimeRange(event?.start, event?.end, is24Hours)}
-                    className={classes.calendarListViewDutyTime}
-                  />
-                </Box>
-                <Typography variant="subtitle3" className={classes.calendarListViewDutyName}>
-                  {event?.name}
-                </Typography>
-                {event?.requiresAttention && <ToolTipComponent shiftType={event?.shiftType} />}
-              </Box>
-            ))}
-          </Box>
-        </Box>
-      );
-    }
-  };
+    container.addEventListener('wheel', onWheel, { passive: false, capture: true });
+    container.addEventListener('scroll', onScroll, { passive: true, capture: true });
 
-  const weekViewCustomDaysHeader = (info) => {
-    const date = info.date.getDate();
-    const dayName = info.date.toLocaleString('default', { weekday: 'short' });
+    return () => {
+      container.removeEventListener('wheel', onWheel, { capture: true });
+      container.removeEventListener('scroll', onScroll, { capture: true });
+      clearBlankTimer();
+      clearPollTimer();
+    };
+  }, [virtualization, loading, isEmpty, isTimelineLaidOut, displayResources, displayEvents]);
 
-    // Get the current date
-    const currentDate = dayjsWithTimezone();
-    const currentDay = currentDate.date();
-    const currentMonth = currentDate.month();
+  const handleEventClick = useCallback(
+    (info) => {
+      if (typeof eventClick === 'function') {
+        eventClick(info, calendarRef);
+        return;
+      }
 
-    // Check if the date being rendered is both in the current month and is the current date
-    const isCurrentDate = date === currentDay && info.date.getMonth() === currentMonth;
-    const highlightClass = isCurrentDate ? classes.highlightCurrentDate : '';
+      if (info.view.type === DAY_GRID.MONTH) {
+        const updatedViewType = DAY_GRID.DAY;
+        const API = calendarRef.current?.getApi?.();
+        if (!API) return;
 
-    return (
-      <Box className={classes.calendarHeaderCell}>
-        <Typography variant="subtitle2" className={classes.calendarHeaderCellDay}>
-          {dayName}
-        </Typography>
-        <Typography
-          variant="subtitle2"
-          className={`${classes.calendarHeaderCellDate} ${highlightClass}`}
-        >
-          {date}
-        </Typography>
-      </Box>
-    );
-  };
+        API.changeView(updatedViewType, info.event.start);
+        const { activeEnd, activeStart, type } = API.view || {};
+        const { windowStart, windowEnd } = getStartEndTimeForView({ activeEnd, activeStart, type });
+
+        setQueryParams((prev) => ({
+          ...prev,
+          selectedView: {
+            ...prev.selectedView,
+            type: updatedViewType,
+            windowStart,
+            windowEnd,
+          },
+        }));
+      }
+    },
+    [eventClick, setQueryParams],
+  );
 
   return (
-    <>
-      <Box className={classes.calendar}>
-        <CalendarHeaderToolbar
-          calendarRef={calendarRef}
-          queryParams={queryParams}
-          setQueryParams={setQueryParams}
-          missedHitsCount={missedHitsCount}
-          refreshMissedHitsCount={refreshMissedHitsCount}
-        />
-        {loading && <CalendarSkeleton />}
-
-        <FullCalendar
-          plugins={[
-            dayGridPlugin,
-            timeGridPlugin,
-            listPlugin,
-            interactionPlugin,
-            resourceTimelinePlugin,
-          ]}
-          headerToolbar={false}
-          initialView={DEFAULT_CALENDER_VIEW}
-          events={events}
-          eventDidMount={eventMounted}
-          eventClick={handleEventClick}
-          ref={calendarRef}
-          allDaySlot={false}
-          dayHeaderContent={customHeaderView}
-          eventContent={eventContent}
-          slotLabelContent={customTimeSlotView}
-          noEventsContent={<NoEvent />}
-          resources={weekViewLocations || []}
-          firstDay={6} // Start week on Saturday (6 = Saturday)
-          resourceAreaHeaderContent={''}
-          slotDuration={{ days: 1 }} // Set slot duration to one day to show only dates
-          slotLabelInterval={{ days: 1 }} // Ensure slot labels are shown for each day
-          views={{
-            resourceTimelineWeek: {
-              slotLabelContent: weekViewCustomDaysHeader,
-              resourceAreaWidth: '15%',
-              dragScroll: false,
-            },
-          }}
-        />
+    <Box
+      className={`${classes.calendar} ${virtualization ? classes.calendarVirtualized : ''}${
+        resolvedCalendarClassName ? ` ${resolvedCalendarClassName}` : ''
+      }`}
+      ref={calendarContainerRef}
+    >
+      <CalendarHeaderToolbar
+        calendarRef={calendarRef}
+        queryParams={queryParams}
+        setQueryParams={setQueryParams}
+        toolbarLeftContent={toolbarLeftContent}
+        toolbarRightContent={toolbarRightContent}
+        showListSwitch={showListSwitch}
+      />
+      <Box className={classes.calendarBody}>
+        {showLoadingOverlay && (
+          <Box
+            className={classes.calendarLoadingPlaceholder}
+            data-testid="calendar-loading-placeholder"
+          >
+            <CalendarSkeleton
+              variant={skeletonVariant}
+              windowStart={queryParams?.selectedView?.windowStart}
+              resourceColumnsWidth={resourceColumnsWidth}
+            />
+          </Box>
+        )}
+        {!loading && isEmpty && (
+          <Box
+            className={classes.calendarEmptyPlaceholder}
+            data-testid="calendar-empty-placeholder"
+          >
+            <NoEvent />
+          </Box>
+        )}
+        {virtualization && isVirtualScrollLoading && !showLoadingOverlay && !isEmpty && (
+          <Box
+            className={classes.calendarVirtualScrollOverlay}
+            data-testid="calendar-virtual-scroll-loader"
+          >
+            <CalendarSkeleton
+              variant={skeletonVariant}
+              windowStart={queryParams?.selectedView?.windowStart}
+              resourceColumnsWidth={resourceColumnsWidth}
+            />
+          </Box>
+        )}
+        <Box
+          className={`${classes.calendarGridVisible}${
+            virtualization ? ` ${classes.calendarGridVirtualized}` : ''
+          }${isEmpty && !loading ? ` ${classes.calendarGridEmpty}` : ''}${
+            belowGridContent ? ` ${classes.calendarGridWithBelowContent}` : ''
+          }${showLoadingOverlay ? ` ${classes.calendarGridLoading}` : ''}`}
+          aria-hidden={showLoadingOverlay || undefined}
+        >
+          <FullCalendar
+            plugins={FULL_CALENDAR_PLUGINS}
+            // Restore v6 root class so existing Signal calendar CSS can scope under `.fc`.
+            className="fc"
+            headerToolbar={false}
+            initialView={DEFAULT_CALENDER_VIEW}
+            height={calendarHeight}
+            tableHeaderSticky
+            schedulerLicenseKey={SCHEDULER_LICENSE_KEY}
+            virtualization={virtualization}
+            // Classic theme centers day headers by intrinsic width — breaks day view
+            // when cards lived in dayHeaderContent. Keep start so the date chip is left-aligned.
+            dayHeaderAlign="start"
+            events={displayEvents}
+            eventDidMount={eventDidMount}
+            eventClick={handleEventClick}
+            ref={calendarRef}
+            allDaySlot={false}
+            dayHeaderContent={dayHeaderContent}
+            eventContent={eventContent}
+            slotHeaderContent={slotHeaderContent}
+            noEventsContent={<NoEvent />}
+            resources={displayResources}
+            resourceOrder={resourceOrder}
+            resourceCellContent={resourceCellContent}
+            resourceCellClass={resourceCellClass}
+            resourceCellInnerClass={classes.resourceCellInnerReset}
+            resourceLaneClass={resourceLaneClass}
+            resourceCellDidMount={resourceCellDidMount}
+            resourceCellWillUnmount={resourceCellWillUnmount}
+            resourceLaneDidMount={resourceLaneDidMount}
+            resourceLaneWillUnmount={resourceLaneWillUnmount}
+            resourceColumnDividerClass={classes.resourceTimelineDivider}
+            resourceColumnHeaderInnerClass={classes.resourceColumnHeaderInner}
+            firstDay={6}
+            resourceColumnHeaderContent={resourceColumnHeader}
+            slotDuration={{ days: 1 }}
+            slotHeaderInterval={{ days: 1 }}
+            views={{
+              resourceTimelineWeek: {
+                // Week timeline uses a custom 1px resource↔grid divider; suppress FC's
+                // outer left/right borders. Do NOT set globally — day/month grids need them.
+                borderlessX: true,
+                slotHeaderContent: weekSlotHeaderContent || dayHeaderContent,
+                slotHeaderInnerClass: classes.slotHeaderInnerReset,
+                resourceColumnsWidth,
+                dragScroll: false,
+                slotMinWidth: 1,
+                // Keep Signal event cards flush — classic timeline adds row padding.
+                rowEventInnerClass: classes.rowEventInnerReset,
+                eventOverlap: true,
+              },
+              // Day header is a full-bleed strip (top/bottom rules only) — no side borders.
+              dayGridDay: {
+                borderlessX: true,
+                dayHeaderAlign: 'start',
+              },
+              dayGridMonth: {
+                /* FullCalendar pads every month to six weeks by default. August 2026
+                   needs five, so the grid rendered a whole extra row — Sep 5–11,
+                   empty, ~150px tall, with nothing in it and nothing that could ever
+                   be in it, because it is outside the range that was fetched. It read
+                   as the view failing to load its last week. */
+                fixedWeekCount: false,
+                /* And rows sized themselves to fill the viewport rather than to their
+                   contents, so each one was ~150px of white around a single line of
+                   text. A month cell here holds a count, not a list of cards — let
+                   the rows be as tall as what is in them. */
+                contentHeight: 'auto',
+              },
+            }}
+          />
+          {!loading && isTimelineLaidOut && belowGridContent}
+        </Box>
       </Box>
-    </>
+    </Box>
   );
 };
 
 Calendar.propTypes = {
-  events: PropTypes.object,
-  weekViewLocations: PropTypes.array,
-  listEvents: PropTypes.object,
-  dayViewDuties: PropTypes.object,
-  dayViewLocations: PropTypes.array,
-  setShowDrawer: PropTypes.func,
-  queryParams: PropTypes.func,
+  resources: PropTypes.array,
+  events: PropTypes.oneOfType([PropTypes.array, PropTypes.object]),
+  queryParams: PropTypes.object,
   setQueryParams: PropTypes.func,
   loading: PropTypes.bool,
-  missedHitsCount: PropTypes.number,
-  refreshMissedHitsCount: PropTypes.func,
+  isEmpty: PropTypes.bool,
+  skeletonVariant: PropTypes.string,
+  toolbarLeftContent: PropTypes.node,
+  toolbarRightContent: PropTypes.node,
+  showListSwitch: PropTypes.bool,
+  resourceColumnHeader: PropTypes.string,
+  resourceOrder: PropTypes.string,
+  eventContent: PropTypes.func,
+  eventDidMount: PropTypes.func,
+  eventClick: PropTypes.func,
+  dayHeaderContent: PropTypes.func,
+  slotHeaderContent: PropTypes.func,
+  resourceCellContent: PropTypes.func,
+  resourceCellClass: PropTypes.func,
+  resourceLaneClass: PropTypes.func,
+  resourceCellDidMount: PropTypes.func,
+  resourceCellWillUnmount: PropTypes.func,
+  resourceLaneDidMount: PropTypes.func,
+  resourceLaneWillUnmount: PropTypes.func,
+  weekSlotHeaderContent: PropTypes.func,
+  resourceColumnsWidth: PropTypes.string,
+  virtualization: PropTypes.bool,
+  calendarClassName: PropTypes.string,
+  isOverviewSectionsEmptyOnly: PropTypes.bool,
+  belowGridContent: PropTypes.node,
 };
+
 export default Calendar;
 
-// Custom Header Toolbar
+export const getStartEndTimeForView = ({ activeStart, activeEnd, type }) => {
+  if (type == DAY_GRID.MONTH) {
+    activeEnd?.setDate(activeEnd?.getDate() - 1);
+    return {
+      windowStart: dayjs(activeStart)?.format('YYYY-MM-DD'),
+      windowEnd: dayjs(activeEnd)?.format('YYYY-MM-DD'),
+    };
+  }
+
+  return {
+    windowStart: dayjs(activeStart)?.toISOString(),
+    windowEnd: dayjs(activeEnd)?.toISOString(),
+  };
+};
+
 const CalendarHeaderToolbar = ({
   calendarRef,
   queryParams,
   setQueryParams,
-  missedHitsCount,
-  refreshMissedHitsCount,
+  toolbarLeftContent,
+  toolbarRightContent,
+  showListSwitch = true,
 }) => {
   const { t } = useTranslation();
-  const { getLabel } = useTenantLabel();
   const classes = useStyles();
   const [title, setTitle] = useState('');
-
   const calendarView = queryParams.selectedView?.type;
-  const [missedHitDrawerData, setMissedHitDrawerData] = useState(null);
-  // Custom Header Toolbar Prev/Next Button
+
   const handlePrevNext = (isNext) => () => {
     const calendarGetApi = calendarRef.current.getApi();
     if (isNext) {
@@ -562,24 +662,18 @@ const CalendarHeaderToolbar = ({
     }));
   };
 
-  // Day Title Format
   const dayTitleFormat = (info) => {
     const { view } = info;
     const currentDisplayDate = view.activeStart;
-
     const month = currentDisplayDate.toLocaleString('default', { month: 'long' });
     const day = currentDisplayDate.getDate();
     const year = currentDisplayDate.getFullYear();
-
     return `${month} ${day}, ${year}`;
   };
 
-  // Week Title Format
   const weekTitleFormat = (info) => {
     const { view } = info;
     const currentDisplayDate = view.activeStart;
-
-    // Calculate the start and end dates of the week
     const weekStartDate = new Date(currentDisplayDate);
     const weekEndDate = new Date(currentDisplayDate);
     weekEndDate.setDate(weekEndDate.getDate() + 6);
@@ -596,15 +690,11 @@ const CalendarHeaderToolbar = ({
     return `${startMonth} ${startDay} – ${endMonth} ${endDay}, ${year}`;
   };
 
-  // Month Title Format
   const monthTitleFormat = (info) => {
     const { view } = info;
-
     const currentDisplayDate = view.currentStart;
-
     const month = currentDisplayDate.toLocaleString('default', { month: 'long' });
     const year = currentDisplayDate.getFullYear();
-
     return `${month}, ${year}`;
   };
 
@@ -643,60 +733,80 @@ const CalendarHeaderToolbar = ({
 
   const isCalenderView = [DAY_GRID.DAY, DAY_GRID.WEEK, DAY_GRID.MONTH].includes(calendarView);
 
+  const handleGoToToday = () => {
+    const calendarGetApi = calendarRef.current?.getApi();
+    if (!calendarGetApi) return;
+
+    calendarGetApi.today();
+    const { activeEnd, activeStart, type } = calendarGetApi.view || {};
+    const { windowStart, windowEnd } = getStartEndTimeForView({ activeEnd, activeStart, type });
+
+    setQueryParams((prev) => ({
+      ...prev,
+      selectedView: { ...prev.selectedView, windowStart, windowEnd },
+    }));
+  };
+
+  // "Today" is only meaningful when the visible range does not already contain
+  // it. This is a browser-clock comparison — the schedules-domain timezone
+  // helper does not belong in the shared calendar, and the only consequence of
+  // being off near a period boundary is whether the button reads as disabled.
+  const isViewingToday = (() => {
+    const { windowStart, windowEnd } = queryParams.selectedView || {};
+    if (!windowStart || !windowEnd) return false;
+
+    const now = dayjs();
+    return now.isAfter(dayjs(windowStart)) && now.isBefore(dayjs(windowEnd));
+  })();
+
+  const dateNavigator = (
+    <Box className={classes.calendarHeaderToolbarLeft}>
+      <Button
+        variant="tertiaryGrey"
+        className={classes.calendarHeaderToolbarLeftAction}
+        onClick={handlePrevNext(false)}
+        aria-label={t('obx.schedules.calendar.previousPeriod')}
+      >
+        <LeftArrow />
+      </Button>
+      <Typography className={classes.calendarHeaderToolbarLeftText} variant="subtitle2">
+        {title}
+      </Typography>
+      <Button
+        variant="tertiaryGrey"
+        className={classes.calendarHeaderToolbarLeftAction}
+        onClick={handlePrevNext(true)}
+        aria-label={t('obx.schedules.calendar.nextPeriod')}
+      >
+        <RightArrow />
+      </Button>
+      {/* Without this, returning to the current period meant clicking the arrow
+          once per week navigated away. */}
+      <Button
+        variant="tertiaryGrey"
+        className={classes.calendarHeaderToolbarToday}
+        onClick={handleGoToToday}
+        disabled={isViewingToday}
+      >
+        {t('obx.schedules.calendar.today')}
+      </Button>
+    </Box>
+  );
+
   return (
-    <Box className={classes.calendarHeaderToolbar}>
-      <Box className={classes.calendarHeaderToolbarLeft}>
-        <Button
-          variant="tertiaryGrey"
-          className={classes.calendarHeaderToolbarLeftAction}
-          onClick={handlePrevNext(false)}
-        >
-          <LeftArrow />
-        </Button>
-        <Typography className={classes.calendarHeaderToolbarLeftText} variant="subtitle2">
-          {title}
-        </Typography>
-        <Button
-          variant="tertiaryGrey"
-          className={classes.calendarHeaderToolbarLeftAction}
-          onClick={handlePrevNext(true)}
-        >
-          <RightArrow />
-        </Button>
-      </Box>
+    <Box
+      className={`${classes.calendarHeaderToolbar} ${
+        toolbarLeftContent ? classes.calendarHeaderToolbarWithFilters : ''
+      }`}
+    >
+      {toolbarLeftContent ? (
+        <Box className={classes.calendarHeaderToolbarFilters}>{toolbarLeftContent}</Box>
+      ) : (
+        dateNavigator
+      )}
       <Box className={classes.calendarHeaderToolbarRight}>
-        {missedHitsCount === undefined && (
-          <>
-            <Skeleton variant="rectangular" className={classes.loaderBox} />
-          </>
-        )}
-
-        <RenderIfHasPermission name={ACL_OBX_SCHEDULES_UPDATE}>
-          {!!missedHitsCount && (
-            <Button
-              onClick={() => {
-                setMissedHitDrawerData({
-                  startsAt: queryParams.selectedView.windowStart,
-                  endsAt: queryParams.selectedView.windowEnd,
-                });
-              }}
-              endIcon={<MHitsIcon />}
-              variant="destructiveSecondary"
-              className={classes.missedHitsButton}
-            >
-              {missedHitsCount}{' '}
-              {t('obx.runsheet.missedHits', { hits: getLabel('terms', 'hits', t) })}
-            </Button>
-          )}
-        </RenderIfHasPermission>
-
-        <SideDrawer isOpen={!!missedHitDrawerData} totalWidth={'571px'}>
-          <MissedHitsDrawer
-            missedHitDrawerData={missedHitDrawerData}
-            setMissedHitDrawerData={setMissedHitDrawerData}
-            refreshMissedHitsCount={refreshMissedHitsCount}
-          />
-        </SideDrawer>
+        {toolbarRightContent}
+        {toolbarLeftContent && dateNavigator}
         {calendarView !== TIME_GRID.LIST && (
           <ToggleButtonGroup
             value={calendarView}
@@ -727,27 +837,29 @@ const CalendarHeaderToolbar = ({
           </ToggleButtonGroup>
         )}
 
-        <ToggleButtonGroup
-          value={calendarView}
-          exclusive
-          className={classes.calendarHeaderToolbarSwitch}
-        >
-          <ToggleButton
-            value={DEFAULT_CALENDER_VIEW}
-            className={classes.calendarHeaderToolbarSwitchBtn}
-            onClick={handleChangeCalenderView(DEFAULT_CALENDER_VIEW)}
-            selected={isCalenderView}
+        {showListSwitch && (
+          <ToggleButtonGroup
+            value={calendarView}
+            exclusive
+            className={classes.calendarHeaderToolbarSwitch}
           >
-            <CalenderIcon />
-          </ToggleButton>
-          <ToggleButton
-            value={TIME_GRID.LIST}
-            className={classes.calendarHeaderToolbarSwitchBtn}
-            onClick={handleChangeCalenderView(TIME_GRID.LIST)}
-          >
-            <ListIcon />
-          </ToggleButton>
-        </ToggleButtonGroup>
+            <ToggleButton
+              value={DEFAULT_CALENDER_VIEW}
+              className={classes.calendarHeaderToolbarSwitchBtn}
+              onClick={handleChangeCalenderView(DEFAULT_CALENDER_VIEW)}
+              selected={isCalenderView}
+            >
+              <CalenderIcon />
+            </ToggleButton>
+            <ToggleButton
+              value={TIME_GRID.LIST}
+              className={classes.calendarHeaderToolbarSwitchBtn}
+              onClick={handleChangeCalenderView(TIME_GRID.LIST)}
+            >
+              <ListIcon />
+            </ToggleButton>
+          </ToggleButtonGroup>
+        )}
       </Box>
     </Box>
   );
@@ -755,15 +867,15 @@ const CalendarHeaderToolbar = ({
 
 CalendarHeaderToolbar.propTypes = {
   calendarRef: PropTypes.object,
-  queryParams: PropTypes.func,
+  queryParams: PropTypes.object,
   setQueryParams: PropTypes.func,
-  missedHitsCount: PropTypes.number,
-  refreshMissedHitsCount: PropTypes.func,
+  toolbarLeftContent: PropTypes.node,
+  toolbarRightContent: PropTypes.node,
+  showListSwitch: PropTypes.bool,
 };
-// When there are no events
+
 const NoEvent = () => {
   const { t } = useTranslation();
-
   const classes = useStyles();
 
   return (
@@ -777,396 +889,4 @@ const NoEvent = () => {
       </Typography>
     </Box>
   );
-};
-
-const getStartEndTimeForView = ({ activeStart, activeEnd, type }) => {
-  if (type == DAY_GRID.MONTH) {
-    activeEnd?.setDate(activeEnd?.getDate() - 1);
-    return {
-      windowStart: dayjs(activeStart)?.format('YYYY-MM-DD'),
-      windowEnd: dayjs(activeEnd)?.format('YYYY-MM-DD'),
-    };
-  }
-
-  return {
-    windowStart: dayjs(activeStart)?.toISOString(),
-    windowEnd: dayjs(activeEnd)?.toISOString(),
-  };
-};
-
-const ToolTipComponent = ({ unassignedCount = '', shiftType }) => {
-  const { t } = useTranslation();
-  const { getLabel } = useTenantLabel();
-  const msg = {
-    [SCHEDULE_DUTIES.DEDICATED]: t('obx.schedules.calendar.tooltips.dedicatedAttention', {
-      dedicated: getLabel('terms', 'dedicated', t),
-    }),
-    [SCHEDULE_DUTIES.PATROL]: t('obx.schedules.calendar.tooltips.patrolAttention', {
-      patrol: getLabel('terms', 'patrol', t),
-    }),
-    [SCHEDULE_DUTIES.HIT]: t('obx.schedules.calendar.tooltips.patrolAttention', {
-      patrol: getLabel('terms', 'patrol', t),
-    }),
-    [SCHEDULE_DUTIES.EXTRA]: t('obx.schedules.calendar.tooltips.extraAttention', {
-      extra: getLabel('terms', 'extra', t),
-    }),
-  };
-
-  return (
-    <Tooltip
-      arrow
-      slotProps={{
-        popper: {
-          modifiers: [
-            {
-              name: 'offset',
-              options: {
-                offset: [0, -14],
-              },
-            },
-          ],
-          sx: { cursor: 'pointer' },
-        },
-      }}
-      title={
-        <Box
-          //Don't have option to add class sx is required here
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '4px',
-          }}
-        >
-          <AlertIcon />
-          {unassignedCount} {msg[shiftType]}
-        </Box>
-      }
-      slots={<Box />}
-      placement="bottom"
-    >
-      <AlertIcon />
-    </Tooltip>
-  );
-};
-
-ToolTipComponent.propTypes = {
-  unassignedCount: PropTypes.number,
-  shiftType: PropTypes.string,
-};
-
-const StatusTooltip = ({ title, icon }) => {
-  return (
-    <Tooltip
-      arrow
-      slotProps={{
-        popper: {
-          modifiers: [
-            {
-              name: 'offset',
-              options: {
-                offset: [0, -14],
-              },
-            },
-          ],
-          sx: { cursor: 'pointer' },
-        },
-      }}
-      title={title}
-      placement="bottom"
-    >
-      {icon}
-    </Tooltip>
-  );
-};
-
-StatusTooltip.propTypes = {
-  title: PropTypes.string,
-  icon: PropTypes.node,
-};
-
-const CalendarCardContent = ({ shift, statusIcon, statusValue, is24Hours }) => {
-  const classes = useStyles();
-  const { t } = useTranslation();
-  const isDedicatedCancelledShift =
-    isShiftCancelled(shift) && shift?.shiftType === SCHEDULE_DUTIES.DEDICATED;
-
-  const {
-    name,
-    shiftType,
-    // shiftStatus,
-    site,
-    startsAt,
-    endsAt,
-    officer,
-    vehicle,
-    reassignedOfficer,
-    tour,
-    runsheetName,
-    overTime,
-    hasNotes,
-    missedHits,
-  } = shift || {};
-
-  const eventTime = formatShiftScheduleTimeRange(startsAt, endsAt, is24Hours);
-
-  return (
-    <>
-      {overTime ? (
-        <Box className={classes.warnWrapper}>
-          <WarningIcon />
-          <Typography className={classes.eventSiteNameColor} variant="subtitle4">
-            {t('obx.schedules.calendar.scheduleStatus.overTime')}
-          </Typography>
-        </Box>
-      ) : (
-        ''
-      )}
-
-      <Box className={classes.eventDetailHeaderWrapper}>
-        <Box className={classes.eventDetailHeader}>
-          <Typography className={classes.eventSiteNameColor} variant="subtitle4">
-            {eventTime}
-          </Typography>
-
-          {[SCHEDULE_DUTIES.PATROL].includes(shiftType) && missedHits > 0 && (
-            <Chip
-              className={classes.eventSiteNameColor}
-              size="small"
-              variant="Filled"
-              color="error"
-              label={t('obx.schedules.calendar.hitsMissed', { count: missedHits })}
-            />
-          )}
-          {[SCHEDULE_DUTIES.HIT].includes(shiftType) && (
-            <>
-              <Typography className={classes.eventSiteNameColor} variant="subtitle4">
-                <CarIcon />
-              </Typography>
-              <Typography className={classes.eventSiteNameColor} variant="subtitle4">
-                {name}
-              </Typography>
-            </>
-          )}
-          {[SCHEDULE_DUTIES.DEDICATED, SCHEDULE_DUTIES.EXTRA].includes(shiftType) && (
-            <>
-              <Typography className={classes.eventSiteNameColor} variant="subtitle4">
-                •
-              </Typography>
-              <Typography className={classes.eventSiteNameColor} variant="subtitle4">
-                {name}
-              </Typography>
-
-              {/* <Typography className={classes.eventSiteName} variant="subtitle4">
-                {site?.name}
-              </Typography> */}
-              {/* <Typography className={classes.eventSiteName} variant="subtitle4">
-                    {location?.name}
-                  </Typography> */}
-            </>
-          )}
-        </Box>
-      </Box>
-      {[SCHEDULE_DUTIES.HIT].includes(shiftType) && (
-        <>
-          <Box className={classes.reassignedFooterFlex}>
-            <Box className={classes.reassignedOfficerFlex}>
-              <UnAssignHit />
-            </Box>
-            <Typography className={classes.reassignedName} variant="subtitle4">
-              {tour?.title || t('obx.schedules.calendar.unassigned')}
-            </Typography>
-          </Box>
-          <Box className={`${classes.reassignedFooter} ${classes.newReassignedFooter}`}>
-            <Box className={classes.reassignedFooterFlex}>
-              {/* <Typography className={classes.eventSiteNameColor} variant="subtitle4">< <CarIcon /></Typography> */}
-              <Box className={classes.reassignedOfficerFlex}>
-                <RunsheetIcon />
-              </Box>
-              <Typography className={classes.reassignedName} variant="subtitle4">
-                {runsheetName || t('obx.schedules.calendar.unassigned')}
-              </Typography>
-            </Box>
-            <StatusTooltip
-              {...{
-                title: statusValue,
-                icon: statusIcon,
-              }}
-            />
-          </Box>
-        </>
-      )}
-      {[SCHEDULE_DUTIES.PATROL, SCHEDULE_DUTIES.DISPATCH].includes(shiftType) && (
-        <>
-          <Box className={classes.reassignedFooterFlex}>
-            <Box className={classes.reassignedOfficerFlex}>
-              {shiftType === SCHEDULE_DUTIES.DISPATCH ? <DispatchIndicator /> : <CarIcon />}
-            </Box>
-            <Typography className={classes.reassignedName} variant="subtitle4">
-              {name?.length > 25 ? (
-                <Tooltip arrow title={name}>
-                  {capitalizeFirstLetter(name).substring(0, 25) + '...'}
-                </Tooltip>
-              ) : (
-                capitalizeFirstLetter(name)
-              )}
-            </Typography>
-          </Box>
-          <Box className={`${classes.reassignedFooter} ${classes.newReassignedFooter}`}>
-            <Box className={classes.reassignedFooterFlex}>
-              <Box className={classes.reassignedOfficerFlex}>
-                <Avatar className={classes.eventAvatar} src={officer?.imageUrl || AvatarSchedule} />
-              </Box>
-              <Typography className={classes.reassignedName} variant="subtitle4">
-                {officer?.name || reassignedOfficer?.name || t('obx.schedules.calendar.unassigned')}
-              </Typography>
-            </Box>
-          </Box>
-          <Box className={`${classes.reassignedFooter} ${classes.newReassignedFooter}`}>
-            <Box className={classes.reassignedFooterFlex}>
-              <Box className={classes.reassignedOfficerFlex}>
-                {vehicle?.images?.[0]?.url ? (
-                  <Avatar className={classes.eventAvatar} src={vehicle?.images?.[0]?.url} />
-                ) : (
-                  <Box className={classes.carIcon}>
-                    <WhiteCarIcon />
-                  </Box>
-                )}
-              </Box>
-              <Typography className={classes.reassignedName} variant="subtitle4">
-                {vehicle?.name || t('obx.schedules.calendar.unassigned')}
-              </Typography>
-            </Box>
-            <Box className={classes.reassignedFooter}>
-              {shift?.isSplit && (
-                <Tooltip title={t('obx.schedules.splitShift.splitShift')}>
-                  <Box className={classes.splitShiftIconWrapperInView}>
-                    <SplittedCalenderIcon />
-                  </Box>
-                </Tooltip>
-              )}
-              {!!hasNotes && (
-                <StatusTooltip
-                  {...{
-                    title: t('obx.schedules.calendar.scheduleStatus.noteStatusShow'),
-                    icon: <NotesIcon />,
-                  }}
-                />
-              )}
-              <StatusTooltip
-                {...{
-                  title: statusValue,
-                  icon: statusIcon,
-                }}
-              />
-            </Box>
-          </Box>
-        </>
-      )}
-
-      {[SCHEDULE_DUTIES.DEDICATED, SCHEDULE_DUTIES.EXTRA].includes(shiftType) && (
-        <Box className={classes.reassignedFooterFlex}>
-          <Typography className={classes.eventSiteName} variant="subtitle4">
-            {site?.name}
-          </Typography>
-        </Box>
-      )}
-
-      {[SCHEDULE_DUTIES.DEDICATED, SCHEDULE_DUTIES.EXTRA].includes(shiftType) && (
-        <Box className={`${classes.reassignedFooter} ${classes.newReassignedFooter}`}>
-          <Box
-            className={
-              !reassignedOfficer ? classes.reassignedFooterFlex : classes.reassignedFooterFlexGap
-            }
-          >
-            <Box className={classes.reassignedOfficerFlex}>
-              <Avatar className={classes.eventAvatar} src={officer?.imageUrl || AvatarSchedule} />
-              {reassignedOfficer && (
-                <Avatar
-                  className={classes.eventAvatarReassignedOfficer}
-                  src={reassignedOfficer?.imageUrl || AvatarSchedule}
-                />
-              )}
-            </Box>
-            <Typography className={classes.reassignedName} variant="subtitle4">
-              {officer?.name || reassignedOfficer?.name || t('obx.schedules.calendar.unassigned')}
-            </Typography>
-          </Box>
-          <Box className={classes.notesIconDiv}>
-            {isDedicatedCancelledShift ? (
-              <CancelIcon />
-            ) : (
-              <>
-                {[SCHEDULE_DUTIES.DEDICATED].includes(shiftType) && shift.isSplit && (
-                  <Tooltip title={t('obx.schedules.splitShift.splitShift')}>
-                    <Box className={classes.splitShiftIconWrapperInView}>
-                      <SplittedCalenderIcon />
-                    </Box>
-                  </Tooltip>
-                )}
-                {!!hasNotes && (
-                  <StatusTooltip
-                    {...{
-                      title: t('obx.schedules.calendar.scheduleStatus.noteStatusShow'),
-                      icon: <NotesIcon />,
-                    }}
-                  />
-                )}
-                <StatusTooltip
-                  {...{
-                    title: statusValue,
-                    icon: statusIcon,
-                  }}
-                />
-              </>
-            )}
-          </Box>
-        </Box>
-      )}
-    </>
-  );
-};
-
-CalendarCardContent.propTypes = {
-  shift: PropTypes.object,
-  statusIcon: PropTypes.node,
-  statusValue: PropTypes.string,
-  is24Hours: PropTypes.bool,
-};
-
-const eventBgColorClasses = {
-  [calendarShiftStatusEnum.NOT_STARTED]: 'dutyYellowBg',
-  [calendarShiftStatusEnum.IN_PROGRESS]: 'dutyBlueBg',
-  [calendarShiftStatusEnum.COMPLETED]: 'dutyGreenBg',
-};
-
-const getValuesWrtStatuses = ({ shift, t }) => {
-  const { scheduleStatus, shiftStatus } = shift || {};
-  // shiftType, shiftStatus, startsAt, endsAt, officer, requiresAttention
-  let statusValue = '';
-  let statusIcon = <></>;
-  let eventBgColorClass = '';
-
-  const isInProgressState = [
-    ShiftStatus.SHIFT_STARTED,
-    ShiftStatus.BREAK_STARTED,
-    ShiftStatus.BREAK_ENDED,
-  ].includes(shiftStatus);
-
-  const effectiveScheduleStatus = isInProgressState
-    ? calendarShiftStatusEnum.IN_PROGRESS
-    : scheduleStatus;
-
-  // if ([SCHEDULE_DUTIES.PATROL, SCHEDULE_DUTIES.HIT].includes(shiftType)) {
-  eventBgColorClass = eventBgColorClasses[effectiveScheduleStatus];
-  statusValue = calendarShiftStatusValues(t)?.[effectiveScheduleStatus];
-  statusIcon = calendarIndicatorIcons[effectiveScheduleStatus];
-  // } else {
-  //   // dedicated | extra
-  //   eventBgColorClass = requiresAttention ? 'dutyRedBg' : '';
-  //   statusValue = checkIfShiftNotStartedYet({ shiftStatus, startsAt, endsAt, officer })
-  //     ? t('obx.schedules.calendar.notStartedDuty')
-  //     : '';
-  // }
-
-  return { statusIcon, statusValue, eventBgColorClass };
 };

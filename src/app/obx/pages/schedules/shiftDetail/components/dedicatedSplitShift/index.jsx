@@ -1,7 +1,7 @@
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import { Box, Button, Chip, Divider, IconButton, Tooltip, Typography } from '@mui/material';
-import { ReactComponent as CloseIcon } from 'assets/svg/close.svg?react';
-import { ReactComponent as AlertIcon } from 'assets/svg/info.svg?react';
+import { ReactComponent as CloseIcon } from 'assets/svg/close.svg';
+import { ReactComponent as AlertIcon } from 'assets/svg/info.svg';
 import dayjs from 'dayjs';
 import PropTypes from 'prop-types';
 import { useEffect, useState } from 'react';

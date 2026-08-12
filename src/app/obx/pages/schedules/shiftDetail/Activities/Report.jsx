@@ -1,6 +1,6 @@
 import { Box, Button, Chip, CircularProgress, Tooltip, Typography } from '@mui/material';
-import { ReactComponent as RightArrowIcon } from 'assets/svg/chevron-right.svg?react';
-import { ReactComponent as EditBtnIcon } from 'assets/svg/EditBtnIcon.svg?react';
+import { ReactComponent as RightArrowIcon } from 'assets/svg/chevron-right.svg';
+import { ReactComponent as EditBtnIcon } from 'assets/svg/EditBtnIcon.svg';
 // import LoaderComponent from 'commonComponents/loader';
 import ReportAIModifiedBadge from 'commonComponents/reportAIModifiedBadge';
 import SideDrawer from 'commonComponents/sideDrawer';
@@ -45,23 +45,32 @@ const Report = ({ report, shiftId, type, showDrawerChange, showEdit }) => {
 
   const [showDrawer, setShowDrawer] = useState(false);
   const [loadingReportId, setLoadingReportId] = useState(null);
+  const [pdfError, setPdfError] = useState(false);
 
   const handleCloseDrawer = () => {
     setShowDrawer(false);
     setPdfUrl(null);
     setReset(true);
+    setPdfError(false);
+  };
+
+  const openPdfDrawer = (url) => {
+    setPdfError(false);
+    setPdfUrl(url);
+    setReset(true);
+    setShowDrawer(true);
   };
 
   const fetchActivityReportPdf = async () => {
     const apiController = getNewApiController();
     if (report.status !== enumStatusReport.notSubmitted) {
       if (report?.reportUrl) {
-        window.open(report.reportUrl, '_blank');
+        openPdfDrawer(report.reportUrl);
         return;
       }
 
       if (report?.pdfUrl) {
-        window.open(report.pdfUrl, '_blank');
+        openPdfDrawer(report.pdfUrl);
         return;
       }
 
@@ -88,12 +97,13 @@ const Report = ({ report, shiftId, type, showDrawerChange, showEdit }) => {
           setLoading(false);
           setReset(true);
           setLoadingReportId(null);
-          window.open(response?.data?.url, '_blank');
+          openPdfDrawer(response?.data?.url);
           return;
         }
       } catch (error) {
         if (!apiController.signal.aborted) {
           setLoading(false);
+          setLoadingReportId(null);
           setShowDrawer(false);
           toaster.error({
             text: error?.message,
@@ -258,6 +268,7 @@ const Report = ({ report, shiftId, type, showDrawerChange, showEdit }) => {
               key={pdfUrl}
               loading={reset}
               setLoading={setReset}
+              setError={setPdfError}
               setUrl={setPdfUrl}
               closeDrawer={handleCloseDrawer}
               setDocNums={setDocNums}
@@ -272,7 +283,7 @@ const Report = ({ report, shiftId, type, showDrawerChange, showEdit }) => {
             }}
             variant="secondaryBlue"
             disableRipple
-            disabled={isLoading}
+            disabled={isLoading || pdfError || !pdfUrl}
           >
             {t('buttons.downloadReport')}
           </Button>

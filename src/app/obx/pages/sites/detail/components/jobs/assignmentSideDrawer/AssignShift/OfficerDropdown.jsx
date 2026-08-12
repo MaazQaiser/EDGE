@@ -172,7 +172,7 @@ OfficerDropdown.propTypes = {
   maxWidth: PropTypes.string,
 };
 
-const SelectChip = ({ officerData }) => {
+export const SelectChip = ({ officerData }) => {
   const { t } = useTranslation();
 
   const classes = useStyles();

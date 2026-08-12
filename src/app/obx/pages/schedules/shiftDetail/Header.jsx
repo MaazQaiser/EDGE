@@ -1,11 +1,11 @@
 import { Box, Button, Chip, Skeleton, Typography } from '@mui/material';
 import { makeStyles } from '@mui/styles';
-import { ReactComponent as EditShiftTimeIcon } from 'assets/icons/editPencilIcon.svg?react';
-import { ReactComponent as RestoreShiftIcon } from 'assets/svg/BlueCorssIcon.svg?react';
-import { ReactComponent as ClockBlockIcon } from 'assets/svg/clockBlock.svg?react';
-import { ReactComponent as CloseIcon } from 'assets/svg/close.svg?react';
-import { ReactComponent as EditIcon } from 'assets/svg/editshift.svg?react';
-import { ReactComponent as CancelShiftIcon } from 'assets/svg/red-cross.svg?react';
+import { ReactComponent as EditShiftTimeIcon } from 'assets/icons/editPencilIcon.svg';
+import { ReactComponent as ClockBlockIcon } from 'assets/svg/clockBlock.svg';
+import { ReactComponent as CloseIcon } from 'assets/svg/close.svg';
+import { ReactComponent as EditIcon } from 'assets/svg/editshift.svg';
+import { ReactComponent as CancelShiftIcon } from 'assets/svg/red-cross.svg';
+import { ReactComponent as RestoreShiftIcon } from 'assets/svg/refresh.svg';
 import dayjs from 'dayjs';
 import PropTypes from 'prop-types';
 import { useEffect, useMemo, useState } from 'react';

@@ -1,7 +1,7 @@
 import { Button, Chip, Skeleton, Typography } from '@mui/material';
 import Box from '@mui/material/Box';
-import { ReactComponent as ArrowRightIcon } from 'assets/svg/ArrowRightBlack.svg?react';
-import { ReactComponent as DotIcon } from 'assets/svg/dot.svg?react';
+import { ReactComponent as ArrowRightIcon } from 'assets/svg/ArrowRightBlack.svg';
+import { ReactComponent as DotIcon } from 'assets/svg/dot.svg';
 import PropTypes from 'prop-types';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';

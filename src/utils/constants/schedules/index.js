@@ -14,6 +14,10 @@ export const DAY_GRID = {
 
 export const DEFAULT_CALENDER_VIEW = DAY_GRID.WEEK;
 
+/** FullCalendar row virtualization — enable only when REACT_APP_SCHEDULE_CALENDAR_VIRTUALIZATION=true. */
+export const SCHEDULE_CALENDAR_VIRTUALIZATION =
+  `${process.env.REACT_APP_SCHEDULE_CALENDAR_VIRTUALIZATION}`.toLowerCase() === 'true';
+
 export const SCHEDULE_DUTIES = {
   DEDICATED: 'dedicated',
   PATROL: 'patrol',
@@ -100,23 +104,15 @@ export const SHIFT_ASSIGNMENT_DURATION = {
 };
 
 export const DUTIES_FILTER_DATA = (t, getLabel, services = {}) => {
-  // Get translation strings and replace placeholders
-  const replacePlaceholders = (translationKey) => {
-    const translation = t(translationKey);
-    return translation
-      .replace(/\{\{patrol\}\}/g, getLabel('terms', 'patrol', t))
-      .replace(/\{\{dedicated\}\}/g, getLabel('terms', 'dedicated', t))
-      .replace(/\{\{extra\}\}/g, getLabel('terms', 'extra', t))
-      .replace(/\{\{dispatch\}\}/g, getLabel('terms', 'dispatch', t));
-  };
-
   const filterOptions = [{ value: '', label: t('obx.schedules.filters.duties.all') }];
 
   // Only include PATROL if services.patrol is true
   if (services?.patrol === true) {
     filterOptions.push({
       value: SCHEDULE_DUTIES.PATROL,
-      label: replacePlaceholders('obx.schedules.filters.duties.patrol'),
+      label: t('obx.schedules.filters.duties.patrol', {
+        patrol: getLabel?.('terms', 'patrol', t) || 'Patrol',
+      }),
     });
   }
 
@@ -124,7 +120,9 @@ export const DUTIES_FILTER_DATA = (t, getLabel, services = {}) => {
   if (services?.dedicated === true) {
     filterOptions.push({
       value: SCHEDULE_DUTIES.DEDICATED,
-      label: replacePlaceholders('obx.schedules.filters.duties.dedicated'),
+      label: t('obx.schedules.filters.duties.dedicated', {
+        dedicated: getLabel?.('terms', 'dedicated', t) || 'Dedicated',
+      }),
     });
   }
 
@@ -132,7 +130,9 @@ export const DUTIES_FILTER_DATA = (t, getLabel, services = {}) => {
   if (userHasPermission(ACL_OBX_SITE_EXTRA_JOB_CREATE)) {
     filterOptions.push({
       value: SCHEDULE_DUTIES.EXTRA,
-      label: replacePlaceholders('obx.schedules.filters.duties.extra'),
+      label: t('obx.schedules.filters.duties.extra', {
+        extra: getLabel?.('terms', 'extra', t) || 'Extra',
+      }),
     });
   }
 
@@ -140,9 +140,16 @@ export const DUTIES_FILTER_DATA = (t, getLabel, services = {}) => {
   if (services?.dispatch === true) {
     filterOptions.push({
       value: SCHEDULE_DUTIES.DISPATCH,
-      label: replacePlaceholders('obx.schedules.filters.duties.dispatch'),
+      label: t('obx.schedules.filters.duties.dispatch', {
+        dispatch: getLabel?.('terms', 'dispatch', t) || 'Dispatch',
+      }),
     });
   }
+
+  filterOptions.push({
+    value: 'overtime',
+    label: t('obx.schedules.filters.duties.overtime'),
+  });
 
   return filterOptions;
 };
@@ -184,6 +191,7 @@ export const LogsAction = {
   AD_HOC_PAYROLL: 'adhocPayroll',
   HIT_ADDED: 'hitAdded',
   HIT_REMOVED: 'hitRemoved',
+  DISPATCH_ADDRESS_UPDATED: 'dispatchAddressUpdated',
   HIT_CANCELLED: 'hitCancelled',
   CLOCKED_IN_AGAIN: 'clockedInAgain',
   CHECKPOINT_COMPLETED: 'checkpointCompleted',

@@ -1,0 +1,833 @@
+<meta charset="utf-8">
+<title>FilterGo Visits Scheduler — Discovery</title>
+<style>
+  :root {
+    --ink:        #0F1D17;
+    --ink-2:      #33463D;
+    --slate:      #5C6C63;
+    --rule:       #DCE3DD;
+    --rule-soft:  #EAEFEA;
+    --paper:      #FAFBF9;
+    --card:       #FFFFFF;
+    --green:      #2DA551;
+    --green-deep: #1F7B3C;
+    --green-wash: #EAF6EE;
+    --amber:      #96650F;
+    --amber-wash: #FBF2DF;
+    --clay:       #A63D28;
+    --clay-wash:  #FAECE8;
+
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+
+    --measure: 68ch;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ink:        #E6EDE8;
+      --ink-2:      #B4C3BA;
+      --slate:      #8A9A90;
+      --rule:       #2A3833;
+      --rule-soft:  #1E2A25;
+      --paper:      #0C1310;
+      --card:       #111A16;
+      --green:      #4FC776;
+      --green-deep: #7BD99A;
+      --green-wash: #16281D;
+      --amber:      #D9A441;
+      --amber-wash: #2A2213;
+      --clay:       #E0836C;
+      --clay-wash:  #2C1A15;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ink:        #E6EDE8;
+    --ink-2:      #B4C3BA;
+    --slate:      #8A9A90;
+    --rule:       #2A3833;
+    --rule-soft:  #1E2A25;
+    --paper:      #0C1310;
+    --card:       #111A16;
+    --green:      #4FC776;
+    --green-deep: #7BD99A;
+    --green-wash: #16281D;
+    --amber:      #D9A441;
+    --amber-wash: #2A2213;
+    --clay:       #E0836C;
+    --clay-wash:  #2C1A15;
+  }
+  :root[data-theme="light"] {
+    --ink:        #0F1D17;
+    --ink-2:      #33463D;
+    --slate:      #5C6C63;
+    --rule:       #DCE3DD;
+    --rule-soft:  #EAEFEA;
+    --paper:      #FAFBF9;
+    --card:       #FFFFFF;
+    --green:      #2DA551;
+    --green-deep: #1F7B3C;
+    --green-wash: #EAF6EE;
+    --amber:      #96650F;
+    --amber-wash: #FBF2DF;
+    --clay:       #A63D28;
+    --clay-wash:  #FAECE8;
+  }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 940px;
+    margin: 0 auto;
+    padding: 56px 28px 120px;
+  }
+
+  .prose { max-width: var(--measure); }
+
+  /* ---------- masthead ---------- */
+  .masthead { border-bottom: 2px solid var(--ink); padding-bottom: 22px; margin-bottom: 14px; }
+  .kicker {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--green-deep);
+    margin: 0 0 14px;
+  }
+  h1 {
+    font-family: var(--mono);
+    font-size: clamp(30px, 5vw, 46px);
+    line-height: 1.06;
+    letter-spacing: -0.03em;
+    font-weight: 600;
+    margin: 0 0 16px;
+    text-wrap: balance;
+  }
+  .standfirst {
+    font-size: 18px;
+    line-height: 1.55;
+    color: var(--ink-2);
+    max-width: 60ch;
+    margin: 0;
+  }
+  .meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 22px;
+    font-family: var(--mono);
+    font-size: 11.5px;
+    letter-spacing: 0.05em;
+    color: var(--slate);
+    margin-bottom: 56px;
+  }
+  .meta b { color: var(--ink-2); font-weight: 600; }
+
+  /* ---------- sections ---------- */
+  section { margin-bottom: 60px; }
+  .sec-head {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    border-top: 1px solid var(--rule);
+    padding-top: 14px;
+    margin-bottom: 26px;
+  }
+  .sec-tag {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: var(--slate);
+    white-space: nowrap;
+    padding-top: 6px;
+  }
+  h2 {
+    font-family: var(--mono);
+    font-size: 25px;
+    letter-spacing: -0.02em;
+    font-weight: 600;
+    margin: 0;
+    text-wrap: balance;
+  }
+  h3 {
+    font-family: var(--mono);
+    font-size: 15.5px;
+    letter-spacing: -0.005em;
+    font-weight: 600;
+    margin: 34px 0 10px;
+  }
+  p { margin: 0 0 15px; }
+  a { color: var(--green-deep); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+  a:focus-visible, summary:focus-visible { outline: 2px solid var(--green); outline-offset: 3px; border-radius: 2px; }
+  code {
+    font-family: var(--mono);
+    font-size: 0.87em;
+    background: var(--rule-soft);
+    padding: 0.1em 0.36em;
+    border-radius: 3px;
+    color: var(--ink-2);
+  }
+
+  /* ---------- glossary ---------- */
+  .glossary { display: grid; gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: 4px; overflow: hidden; }
+  .gl-row { display: grid; grid-template-columns: 150px 1fr; gap: 1px; background: var(--rule); }
+  .gl-row > * { background: var(--card); padding: 13px 16px; }
+  .gl-term { font-family: var(--mono); font-size: 13px; font-weight: 600; color: var(--green-deep); }
+  .gl-def { font-size: 14.5px; line-height: 1.55; color: var(--ink-2); }
+  .gl-def em { color: var(--slate); font-style: normal; font-family: var(--mono); font-size: 12px; }
+  @media (max-width: 620px) { .gl-row { grid-template-columns: 1fr; } }
+
+  /* ---------- figures ---------- */
+  figure { margin: 30px 0; }
+  .figbox { border: 1px solid var(--rule); border-radius: 4px; background: var(--card); padding: 22px 20px 14px; overflow-x: auto; }
+  figure svg { display: block; width: 100%; max-width: 100%; height: auto; color: var(--ink-2); min-width: 560px; }
+  figcaption {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    line-height: 1.55;
+    color: var(--slate);
+    margin-top: 12px;
+    padding-left: 2px;
+    max-width: 72ch;
+  }
+
+  /* ---------- surface inventory ---------- */
+  .surfaces { display: grid; gap: 10px; margin: 22px 0; }
+  .surface {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 6px 18px;
+    align-items: start;
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--green);
+    border-radius: 3px;
+    background: var(--card);
+    padding: 13px 16px;
+  }
+  .surface h4 { font-family: var(--mono); font-size: 13.5px; font-weight: 600; margin: 0; letter-spacing: -0.01em; }
+  .surface p { grid-column: 1 / -1; margin: 0; font-size: 14px; line-height: 1.55; color: var(--ink-2); }
+  .path { font-family: var(--mono); font-size: 11px; color: var(--slate); white-space: nowrap; }
+  @media (max-width: 620px) { .surface { grid-template-columns: 1fr; } .path { white-space: normal; } }
+
+  /* ---------- options ---------- */
+  .option {
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    background: var(--card);
+    padding: 18px 20px;
+    margin-bottom: 12px;
+  }
+  .option.lead { border-color: var(--green); box-shadow: inset 3px 0 0 var(--green); }
+  .opt-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+  .opt-head h4 { font-family: var(--mono); font-size: 14.5px; font-weight: 600; margin: 0; }
+  .option p { font-size: 14.5px; margin: 0 0 8px; color: var(--ink-2); }
+  .option p:last-child { margin-bottom: 0; }
+  .tradeoff { font-size: 13.5px; color: var(--slate); }
+  .tradeoff b { font-family: var(--mono); font-size: 11px; letter-spacing: 0.07em; text-transform: uppercase; color: var(--ink-2); }
+
+  .chip {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 10px;
+    white-space: nowrap;
+    font-weight: 600;
+  }
+  .chip.pick  { background: var(--green-wash); color: var(--green-deep); }
+  .chip.warn  { background: var(--amber-wash); color: var(--amber); }
+  .chip.risk  { background: var(--clay-wash);  color: var(--clay); }
+  .chip.neutral { background: var(--rule-soft); color: var(--slate); }
+
+  /* ---------- edge cases ---------- */
+  .edges { display: grid; grid-template-columns: repeat(auto-fill, minmax(268px, 1fr)); gap: 10px; margin-top: 22px; }
+  .edge {
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    background: var(--card);
+    padding: 14px 15px;
+  }
+  .edge-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 7px; }
+  .edge h4 { font-family: var(--mono); font-size: 13px; font-weight: 600; margin: 0; letter-spacing: -0.01em; }
+  .edge p { font-size: 13.5px; line-height: 1.5; margin: 0; color: var(--ink-2); }
+  .edge .ev { display: block; margin-top: 8px; font-family: var(--mono); font-size: 10.5px; color: var(--slate); }
+
+  /* ---------- questions ---------- */
+  .qgroup { border-top: 1px solid var(--rule); padding-top: 16px; margin-top: 22px; }
+  .qgroup > h3 { margin-top: 0; }
+  ol.q { margin: 0; padding-left: 0; list-style: none; counter-reset: q; }
+  ol.q li {
+    counter-increment: q;
+    display: grid;
+    grid-template-columns: 34px 1fr;
+    gap: 12px;
+    padding: 11px 0;
+    border-bottom: 1px solid var(--rule-soft);
+    font-size: 14.5px;
+    line-height: 1.55;
+    color: var(--ink-2);
+  }
+  ol.q li::before {
+    content: "Q" counter(q);
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    color: var(--green-deep);
+    padding-top: 4px;
+    font-weight: 600;
+  }
+  ol.q li b { color: var(--ink); font-weight: 600; }
+
+  .callout {
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--amber);
+    background: var(--amber-wash);
+    border-radius: 3px;
+    padding: 14px 17px;
+    margin: 22px 0;
+    font-size: 14.5px;
+    line-height: 1.55;
+    color: var(--ink-2);
+  }
+  .callout b { font-family: var(--mono); font-size: 11px; letter-spacing: 0.09em; text-transform: uppercase; color: var(--amber); display: block; margin-bottom: 5px; }
+</style>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <p class="kicker">FilterGo · Scheduler · Discovery note</p>
+    <h1>A scheduler view for visits, and merging them into runsheets</h1>
+    <p class="standfirst">
+      Two related pieces of work: make every visit — assigned and unassigned — visible on the
+      schedule, and let a scheduler pull a set of them into one runsheet. This note grounds the
+      domain model from the code, marks where the gap is, and lists what we still have to decide.
+    </p>
+  </header>
+
+  <div class="meta">
+    <span><b>Status</b> pre-requirements</span>
+    <span><b>Source</b> read from the repo, not from docs</span>
+    <span><b>Open questions</b> 14</span>
+  </div>
+
+  <!-- ============ GROUNDING ============ -->
+  <section>
+    <div class="sec-head">
+      <span class="sec-tag">Grounding</span>
+      <h2>The vocabulary, as the code actually uses it</h2>
+    </div>
+
+    <div class="prose">
+      <p>
+        The product uses three overlapping words — hit, visit, runsheet — and they are not
+        synonyms. The distinction matters because the feature sits exactly on the seam between them.
+      </p>
+    </div>
+
+    <div class="glossary">
+      <div class="gl-row">
+        <div class="gl-term">Hit</div>
+        <div class="gl-def">
+          One required service occurrence at one site: a time window plus a weekday.
+          It is the unit of demand. <em>windowStart · windowEnd · dutyDay 0–6 · siteId</em>
+        </div>
+      </div>
+      <div class="gl-row">
+        <div class="gl-term">Visit</div>
+        <div class="gl-def">
+          What a hit is called once it sits inside a runsheet. The runsheet's ordered list is
+          literally <code>visitSet</code>, and a row in it can be a hit, a missed hit, or a
+          dispatch. <em>visitRowIdKey = hitId ?? missedHitId ?? dispatchId</em>
+        </div>
+      </div>
+      <div class="gl-row">
+        <div class="gl-term">Runsheet</div>
+        <div class="gl-def">
+          An ordered route of visits for one weekday, with a start/end location, a break rule,
+          and an assigned officer and vehicle. It is the unit of work. <em>patrolTemplateId</em>
+        </div>
+      </div>
+      <div class="gl-row">
+        <div class="gl-term">Patrol ↔ Filter&nbsp;change</div>
+        <div class="gl-def">
+          The same service. FilterGo's filter-change service is Signal's patrol service; the API
+          says <code>patrol</code> either way and the UI relabels it per tenant.
+        </div>
+      </div>
+      <div class="gl-row">
+        <div class="gl-term">Tour</div>
+        <div class="gl-def">
+          The checklist performed at a hit — checkpoints and a report template. A hit
+          <em>without</em> a tour cannot currently be added to a runsheet.
+        </div>
+      </div>
+    </div>
+
+    <figure>
+      <div class="figbox">
+        <svg viewBox="0 0 860 300" role="img" aria-label="A site's job generates hits; each hit either stays unassigned or is added to a runsheet's visitSet, which is assigned to an officer and executed as a shift.">
+          <defs>
+            <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+            </marker>
+            <marker id="ar-amber" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#96650F"/>
+            </marker>
+            <marker id="ar-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#2DA551"/>
+            </marker>
+          </defs>
+
+          <!-- tier 1 : generation -->
+          <rect x="46" y="38" width="128" height="52" rx="3" fill="none" stroke="currentColor" stroke-width="1.2"/>
+          <text x="110" y="62" text-anchor="middle" font-family="ui-monospace, monospace" font-size="13" font-weight="600" fill="currentColor">Site</text>
+          <text x="110" y="79" text-anchor="middle" font-family="ui-monospace, monospace" font-size="10.5" fill="currentColor" opacity="0.62">location</text>
+
+          <line x1="174" y1="64" x2="228" y2="64" stroke="currentColor" stroke-width="1.2" marker-end="url(#ar)"/>
+          <text x="201" y="55" text-anchor="middle" font-family="ui-monospace, monospace" font-size="10" fill="currentColor" opacity="0.7">defines</text>
+
+          <rect x="230" y="38" width="128" height="52" rx="3" fill="none" stroke="currentColor" stroke-width="1.2"/>
+          <text x="294" y="62" text-anchor="middle" font-family="ui-monospace, monospace" font-size="13" font-weight="600" fill="currentColor">Job</text>
+          <text x="294" y="79" text-anchor="middle" font-family="ui-monospace, monospace" font-size="10.5" fill="currentColor" opacity="0.62">recurring config</text>
+
+          <line x1="358" y1="64" x2="412" y2="64" stroke="currentColor" stroke-width="1.2" marker-end="url(#ar)"/>
+          <text x="385" y="55" text-anchor="middle" font-family="ui-monospace, monospace" font-size="10" fill="currentColor" opacity="0.7">generates</text>
+
+          <rect x="414" y="34" width="150" height="60" rx="3" fill="none" stroke="#2DA551" stroke-width="2"/>
+          <text x="489" y="59" text-anchor="middle" font-family="ui-monospace, monospace" font-size="13.5" font-weight="700" fill="#2DA551">Hit</text>
+          <text x="489" y="77" text-anchor="middle" font-family="ui-monospace, monospace" font-size="10.5" fill="#2DA551" opacity="0.85">window + dutyDay</text>
+
+          <!-- fork -->
+          <path d="M 460 94 L 460 130 L 300 130 L 300 176" fill="none" stroke="#96650F" stroke-width="1.4" stroke-dasharray="5 4" marker-end="url(#ar-amber)"/>
+          <text x="300" y="122" text-anchor="middle" font-family="ui-monospace, monospace" font-size="10" fill="#96650F">not placed</text>
+
+          <path d="M 520 94 L 520 130 L 600 130 L 600 176" fill="none" stroke="#2DA551" stroke-width="1.6" marker-end="url(#ar-green)"/>
+          <text x="612" y="122" text-anchor="start" font-family="ui-monospace, monospace" font-size="10" fill="#2DA551">added to visitSet</text>
+
+          <!-- tier 2 : assignment -->
+          <rect x="206" y="178" width="188" height="52" rx="3" fill="none" stroke="#96650F" stroke-width="1.4" stroke-dasharray="5 4"/>
+          <text x="300" y="202" text-anchor="middle" font-family="ui-monospace, monospace" font-size="13" font-weight="600" fill="#96650F">Unassigned</text>
+          <text x="300" y="219" text-anchor="middle" font-family="ui-monospace, monospace" font-size="10.5" fill="#96650F" opacity="0.85">demand with no route</text>
+
+          <rect x="510" y="178" width="180" height="52" rx="3" fill="none" stroke="currentColor" stroke-width="1.2"/>
+          <text x="600" y="202" text-anchor="middle" font-family="ui-monospace, monospace" font-size="13" font-weight="600" fill="currentColor">Runsheet</text>
+          <text x="600" y="219" text-anchor="middle" font-family="ui-monospace, monospace" font-size="10.5" fill="currentColor" opacity="0.62">ordered visitSet</text>
+
+          <line x1="690" y1="204" x2="738" y2="204" stroke="currentColor" stroke-width="1.2" marker-end="url(#ar)"/>
+          <text x="714" y="195" text-anchor="middle" font-family="ui-monospace, monospace" font-size="10" fill="currentColor" opacity="0.7">assigned</text>
+
+          <rect x="740" y="178" width="86" height="52" rx="3" fill="none" stroke="currentColor" stroke-width="1.2"/>
+          <text x="783" y="202" text-anchor="middle" font-family="ui-monospace, monospace" font-size="13" font-weight="600" fill="currentColor">Shift</text>
+          <text x="783" y="219" text-anchor="middle" font-family="ui-monospace, monospace" font-size="10.5" fill="currentColor" opacity="0.62">officer</text>
+
+          <line x1="206" y1="262" x2="826" y2="262" stroke="currentColor" stroke-width="1" opacity="0.25"/>
+          <text x="206" y="280" text-anchor="start" font-family="ui-monospace, monospace" font-size="10.5" fill="currentColor" opacity="0.62">the feature lives on this row — moving demand left to right</text>
+        </svg>
+      </div>
+      <figcaption>
+        A job generates hits; every hit is either floating or inside exactly one runsheet's
+        visitSet. Both halves of this feature operate on the fork: the scheduler view makes the
+        amber branch visible, and consolidation moves items across it.
+      </figcaption>
+    </figure>
+  </section>
+
+  <!-- ============ TODAY ============ -->
+  <section>
+    <div class="sec-head">
+      <span class="sec-tag">Today</span>
+      <h2>Five places already touch hits, none of them a schedule</h2>
+    </div>
+
+    <div class="prose">
+      <p>
+        The capability is not missing so much as scattered. Each surface below solves one slice,
+        with its own navigation, its own time model, and no shared picture.
+      </p>
+    </div>
+
+    <div class="surfaces">
+      <div class="surface">
+        <h4>Create Runsheet wizard</h4>
+        <span class="path">runSheets/details</span>
+        <p>Three steps — details, select hits, reorder. Hits arrive grouped by site for one time window. This is the existing "consolidate" path, but it always starts from a blank runsheet.</p>
+      </div>
+      <div class="surface">
+        <h4>Assign Hits page</h4>
+        <span class="path">runSheets/assignHits</span>
+        <p>Lists unassigned hits for <em>one weekday at a time</em> and offers a runsheet dropdown per hit. The closest thing to today's answer, and the clearest thing the new view would replace.</p>
+      </div>
+      <div class="surface">
+        <h4>Scheduler → Patrol tab</h4>
+        <span class="path">schedules/calendar</span>
+        <p>A week timeline whose rows are runsheets. A hit is only visible once it is already inside one — unassigned demand is invisible here.</p>
+      </div>
+      <div class="surface">
+        <h4>Missed Hits drawer</h4>
+        <span class="path">schedules/components/missedHitsDrawer</span>
+        <p>A date-ranged list of hits that were missed, with a reassign-into-runsheet flow. Proves the interaction we want already works — just for one narrow status.</p>
+      </div>
+      <div class="surface">
+        <h4>Site → Jobs</h4>
+        <span class="path">sites/detail/components/jobs</span>
+        <p>Assign a single hit to a runsheet from the site's own page. Fine for one site, useless for planning a week across a franchise.</p>
+      </div>
+    </div>
+
+    <div class="callout">
+      <b>The useful surprise</b>
+      The write primitive for consolidation already exists and is already bulk-shaped.
+      <code>addHitToRunsheet</code> takes an array of runsheets, each carrying an array of hits and
+      its recomputed <code>pathData</code>. Merging N visits into one runsheet is one call, not N.
+    </div>
+  </section>
+
+  <!-- ============ GAP ============ -->
+  <section>
+    <div class="sec-head">
+      <span class="sec-tag">The gap</span>
+      <h2>The schedule is drawn at the wrong altitude</h2>
+    </div>
+
+    <div class="prose">
+      <p>
+        The Patrol tab answers "what are my routes doing this week". The question this feature
+        asks is "what work exists this week, and what has nobody picked up" — which the current
+        grid structurally cannot show, because unassigned demand has no runsheet to be a row of.
+      </p>
+    </div>
+
+    <figure>
+      <div class="figbox">
+        <svg viewBox="0 0 860 306" role="img" aria-label="Comparison: today the schedule's rows are runsheets so unassigned hits cannot appear; the proposed view adds an unassigned band and site rows carrying individual visits.">
+          <!-- LEFT : today -->
+          <text x="30" y="22" font-family="ui-monospace, monospace" font-size="11" font-weight="600" fill="currentColor" opacity="0.75">TODAY — rows are runsheets</text>
+
+          <rect x="30" y="36" width="382" height="212" rx="3" fill="none" stroke="currentColor" stroke-width="1.2"/>
+          <line x1="30" y1="66" x2="412" y2="66" stroke="currentColor" stroke-width="1.2"/>
+          <line x1="146" y1="36" x2="146" y2="248" stroke="currentColor" stroke-width="1.2"/>
+          <line x1="235" y1="36" x2="235" y2="248" stroke="currentColor" stroke-width="0.6" opacity="0.4"/>
+          <line x1="324" y1="36" x2="324" y2="248" stroke="currentColor" stroke-width="0.6" opacity="0.4"/>
+          <line x1="146" y1="127" x2="412" y2="127" stroke="currentColor" stroke-width="0.6" opacity="0.4"/>
+          <line x1="146" y1="188" x2="412" y2="188" stroke="currentColor" stroke-width="0.6" opacity="0.4"/>
+
+          <text x="190" y="57" text-anchor="middle" font-family="ui-monospace, monospace" font-size="10.5" fill="currentColor" opacity="0.7">MON</text>
+          <text x="279" y="57" text-anchor="middle" font-family="ui-monospace, monospace" font-size="10.5" fill="currentColor" opacity="0.7">TUE</text>
+          <text x="368" y="57" text-anchor="middle" font-family="ui-monospace, monospace" font-size="10.5" fill="currentColor" opacity="0.7">WED</text>
+
+          <text x="42" y="101" font-family="ui-monospace, monospace" font-size="11" fill="currentColor">Runsheet A</text>
+          <text x="42" y="162" font-family="ui-monospace, monospace" font-size="11" fill="currentColor">Runsheet B</text>
+          <text x="42" y="223" font-family="ui-monospace, monospace" font-size="11" fill="currentColor">Runsheet C</text>
+
+          <rect x="154" y="83" width="72" height="26" rx="3" fill="#2DA551" opacity="0.9"/>
+          <rect x="332" y="83" width="72" height="26" rx="3" fill="#2DA551" opacity="0.9"/>
+          <rect x="243" y="144" width="72" height="26" rx="3" fill="#2DA551" opacity="0.9"/>
+          <rect x="154" y="205" width="72" height="26" rx="3" fill="#2DA551" opacity="0.9"/>
+
+          <text x="221" y="277" text-anchor="middle" font-family="ui-monospace, monospace" font-size="10.5" fill="#96650F">unassigned hits have no row — not rendered at all</text>
+
+          <!-- RIGHT : proposed -->
+          <text x="448" y="22" font-family="ui-monospace, monospace" font-size="11" font-weight="600" fill="#2DA551">PROPOSED — rows carry visits</text>
+
+          <rect x="448" y="36" width="382" height="212" rx="3" fill="none" stroke="currentColor" stroke-width="1.2"/>
+          <line x1="448" y1="66" x2="830" y2="66" stroke="currentColor" stroke-width="1.2"/>
+          <line x1="564" y1="36" x2="564" y2="248" stroke="currentColor" stroke-width="1.2"/>
+          <line x1="653" y1="36" x2="653" y2="248" stroke="currentColor" stroke-width="0.6" opacity="0.4"/>
+          <line x1="742" y1="36" x2="742" y2="248" stroke="currentColor" stroke-width="0.6" opacity="0.4"/>
+
+          <text x="608" y="57" text-anchor="middle" font-family="ui-monospace, monospace" font-size="10.5" fill="currentColor" opacity="0.7">MON</text>
+          <text x="697" y="57" text-anchor="middle" font-family="ui-monospace, monospace" font-size="10.5" fill="currentColor" opacity="0.7">TUE</text>
+          <text x="786" y="57" text-anchor="middle" font-family="ui-monospace, monospace" font-size="10.5" fill="currentColor" opacity="0.7">WED</text>
+
+          <!-- unassigned band -->
+          <rect x="449" y="67" width="380" height="60" fill="#96650F" opacity="0.09"/>
+          <line x1="448" y1="127" x2="830" y2="127" stroke="#96650F" stroke-width="1.4"/>
+          <text x="460" y="93" font-family="ui-monospace, monospace" font-size="11" font-weight="700" fill="#96650F">Unassigned</text>
+          <text x="460" y="110" font-family="ui-monospace, monospace" font-size="10" fill="#96650F" opacity="0.85">12 visits</text>
+
+          <rect x="572" y="78" width="34" height="18" rx="2" fill="#96650F" opacity="0.85"/>
+          <rect x="610" y="78" width="34" height="18" rx="2" fill="#96650F" opacity="0.85"/>
+          <rect x="572" y="100" width="34" height="18" rx="2" fill="#96650F" opacity="0.85"/>
+          <rect x="661" y="78" width="34" height="18" rx="2" fill="#96650F" opacity="0.85"/>
+          <rect x="750" y="78" width="34" height="18" rx="2" fill="#96650F" opacity="0.85"/>
+          <rect x="750" y="100" width="34" height="18" rx="2" fill="#96650F" opacity="0.85"/>
+
+          <line x1="564" y1="188" x2="830" y2="188" stroke="currentColor" stroke-width="0.6" opacity="0.4"/>
+
+          <text x="460" y="162" font-family="ui-monospace, monospace" font-size="11" fill="currentColor">Oak Plaza</text>
+          <text x="460" y="223" font-family="ui-monospace, monospace" font-size="11" fill="currentColor">Mill Road</text>
+
+          <rect x="572" y="147" width="34" height="18" rx="2" fill="#2DA551"/>
+          <rect x="661" y="147" width="34" height="18" rx="2" fill="#2DA551"/>
+          <rect x="699" y="147" width="34" height="18" rx="2" fill="#2DA551"/>
+          <rect x="750" y="208" width="34" height="18" rx="2" fill="#2DA551"/>
+          <rect x="572" y="208" width="34" height="18" rx="2" fill="#2DA551"/>
+
+          <text x="639" y="277" text-anchor="middle" font-family="ui-monospace, monospace" font-size="10.5" fill="#2DA551">every visit is a mark; unassigned gets a pinned band at the top</text>
+        </svg>
+      </div>
+      <figcaption>
+        The change is the row axis, not the calendar. Once a row can be something other than a
+        runsheet, unassigned demand becomes addressable — and selectable, which is what makes the
+        consolidation half possible from the same screen.
+      </figcaption>
+    </figure>
+  </section>
+
+  <!-- ============ PART A ============ -->
+  <section>
+    <div class="sec-head">
+      <span class="sec-tag">Part A</span>
+      <h2>What the visits view groups by</h2>
+    </div>
+
+    <div class="prose">
+      <p>
+        The scheduler already supports swapping the row axis per tab — Dedicated groups by
+        location, Patrol by runsheet, Officer by officer. A visits view is a fourth
+        configuration, not a new engine. The real decision is what the rows are.
+      </p>
+    </div>
+
+    <div class="option lead">
+      <div class="opt-head">
+        <h4>A · Unassigned band pinned above site rows</h4>
+        <span class="chip pick">Recommended start</span>
+      </div>
+      <p>
+        One sticky band at the top holds every unassigned visit for the week; below it, one row
+        per site carrying that site's assigned visits. Answers "what is unclaimed" in the first
+        screenful, which is the stated goal.
+      </p>
+      <p class="tradeoff"><b>Cost</b> &nbsp;Site rows grow long for large franchises; needs the existing virtualization flag and a site filter to stay usable.</p>
+    </div>
+
+    <div class="option">
+      <div class="opt-head">
+        <h4>B · Rows are runsheets, expandable to their visits</h4>
+        <span class="chip neutral">Smallest diff</span>
+      </div>
+      <p>
+        Keep the Patrol tab and let each runsheet row expand into its ordered visits, with the
+        unassigned band added above. Reuses the Overview tab's existing expand/collapse machinery.
+      </p>
+      <p class="tradeoff"><b>Cost</b> &nbsp;Still runsheet-first. A scheduler asking "when is Oak Plaza serviced" has to know which runsheet to open.</p>
+    </div>
+
+    <div class="option">
+      <div class="opt-head">
+        <h4>C · Rows are officers</h4>
+        <span class="chip warn">Wrong altitude</span>
+      </div>
+      <p>
+        Load-balancing view — who is carrying how much. Genuinely useful, but it answers a
+        staffing question, and unassigned visits have no officer to sit under.
+      </p>
+      <p class="tradeoff"><b>Cost</b> &nbsp;Doesn't serve the primary goal; better as a later toggle than the first build.</p>
+    </div>
+
+    <p class="prose" style="margin-top:18px">
+      A and B are not exclusive — the row axis could be a control on one tab. Worth deciding
+      whether that flexibility is v1 or v2.
+    </p>
+  </section>
+
+  <!-- ============ PART B ============ -->
+  <section>
+    <div class="sec-head">
+      <span class="sec-tag">Part B</span>
+      <h2>Merging selected visits into a runsheet</h2>
+    </div>
+
+    <div class="prose">
+      <p>
+        Once visits are marks on a grid, multi-select is natural and the write already exists.
+        Two destinations, and they behave differently enough to be worth separating.
+      </p>
+    </div>
+
+    <div class="option">
+      <div class="opt-head">
+        <h4>Into a new runsheet</h4>
+      </div>
+      <p>
+        Selection becomes the runsheet's <code>visitSet</code>, then the user still has to supply
+        what only a human knows: name, start/end time, start/end location, break rule, officer,
+        vehicle. That is exactly the existing wizard's step 1 and step 3 — so this should
+        <em>hand off</em> to the wizard pre-seeded, not reimplement it.
+      </p>
+    </div>
+
+    <div class="option">
+      <div class="opt-head">
+        <h4>Into an existing runsheet</h4>
+      </div>
+      <p>
+        The lighter and probably more common case: pick a target runsheet, append the visits,
+        recompute the route. This is what <code>addHitToRunsheet</code> already does, and what the
+        missed-hits drawer already does for one hit at a time.
+      </p>
+      <p class="tradeoff"><b>Open</b> &nbsp;Does the route re-optimize automatically, or does the user land in the reorder step to confirm?</p>
+    </div>
+  </section>
+
+  <!-- ============ EDGE CASES ============ -->
+  <section>
+    <div class="sec-head">
+      <span class="sec-tag">Edge cases</span>
+      <h2>Where this gets hard</h2>
+    </div>
+
+    <div class="prose">
+      <p>
+        Grouped roughly by how likely they are to change the design rather than just the code.
+        The ones marked <span class="chip risk" style="display:inline">blocking</span> need an
+        answer before UI work starts.
+      </p>
+    </div>
+
+    <div class="edges">
+      <div class="edge">
+        <div class="edge-top"><h4>Weekday, not date</h4><span class="chip risk">Blocking</span></div>
+        <p>Hits and runsheets are keyed to <code>dutyDay</code> 0–6, and the assign page works one weekday at a time. A week grid implies calendar dates. Are we scheduling a recurring pattern or specific dates?</p>
+        <span class="ev">daysOfWeekWithVal · /unassigned/hits/{day}</span>
+      </div>
+
+      <div class="edge">
+        <div class="edge-top"><h4>Hit with no tour</h4><span class="chip risk">Blocking</span></div>
+        <p>Today a hit without a tour template is refused and the user is pushed into a tour-assignment drawer. In a bulk merge of 20 visits, what happens if three lack tours — block all, skip them, or merge and flag?</p>
+        <span class="ev">NoTourTemplateModal · UnassignedHits.handleAction</span>
+      </div>
+
+      <div class="edge">
+        <div class="edge-top"><h4>Window vs runsheet hours</h4><span class="chip risk">Blocking</span></div>
+        <p>A visit carries its own <code>windowStart/windowEnd</code>; the runsheet has its own start and end. Merging a visit whose window falls outside the runsheet's hours either has to widen the runsheet, warn, or refuse.</p>
+        <span class="ev">getHitsForRunSheet filters by window</span>
+      </div>
+
+      <div class="edge">
+        <div class="edge-top"><h4>Drive time and feasibility</h4><span class="chip warn">Design</span></div>
+        <p>Nothing stops a user selecting visits 60 miles apart. The route service returns <code>pathData</code> and an estimated time — do we surface projected overrun before committing the merge?</p>
+        <span class="ev">getRunsheetsPath · estimatedTime</span>
+      </div>
+
+      <div class="edge">
+        <div class="edge-top"><h4>Moving an assigned visit</h4><span class="chip warn">Design</span></div>
+        <p>Merging a visit that already belongs to runsheet A into runsheet B is a remove-then-add across two routes. Both need reordering, and A may become empty.</p>
+        <span class="ev">removedHits · isVisitsUpdated</span>
+      </div>
+
+      <div class="edge">
+        <div class="edge-top"><h4>Mixed row types</h4><span class="chip warn">Design</span></div>
+        <p>A <code>visitSet</code> row can be a hit, a missed hit, or a dispatch. Does the new view show all three, and can all three be merged the same way?</p>
+        <span class="ev">visitRowIdKey</span>
+      </div>
+
+      <div class="edge">
+        <div class="edge-top"><h4>In-flight runsheets</h4><span class="chip warn">Design</span></div>
+        <p>A runsheet that has started, is mid-break, or is completed. Adding to a live route is very different from planning next week's.</p>
+        <span class="ev">ShiftStatus · shiftStarted</span>
+      </div>
+
+      <div class="edge">
+        <div class="edge-top"><h4>Cancelled and missed</h4><span class="chip neutral">Rules</span></div>
+        <p>Hit-specific statuses <code>missed</code>, <code>cancelled</code>, <code>incomplete</code> already exist. Missed has its own reassign path today — does it fold into this one or stay separate?</p>
+        <span class="ev">calendarShiftStatusEnum</span>
+      </div>
+
+      <div class="edge">
+        <div class="edge-top"><h4>Break rules</h4><span class="chip neutral">Rules</span></div>
+        <p>Runsheets carry a break rule and a payable flag. Growing a route past a threshold may change which break rule applies.</p>
+        <span class="ev">breakRule · isBreakPayable</span>
+      </div>
+
+      <div class="edge">
+        <div class="edge-top"><h4>Split runsheets</h4><span class="chip neutral">Rules</span></div>
+        <p>A runsheet can be split across officers, and <code>Splitted</code> is a first-class status. Merging into one half of a split needs defined behaviour.</p>
+        <span class="ev">splitRunSheet</span>
+      </div>
+
+      <div class="edge">
+        <div class="edge-top"><h4>DST and timezone</h4><span class="chip neutral">Known pain</span></div>
+        <p>The codebase already carries DST-specific helpers, which says this has bitten before. A week grid spanning a DST boundary will expose it again.</p>
+        <span class="ev">getCurrentTimeWithDisabledDlsInIso</span>
+      </div>
+
+      <div class="edge">
+        <div class="edge-top"><h4>Scale</h4><span class="chip neutral">Perf</span></div>
+        <p>Visits are an order of magnitude more numerous than runsheets. Row virtualization exists but is behind an env flag, and the unassigned endpoint is one-day-at-a-time.</p>
+        <span class="ev">SCHEDULE_CALENDAR_VIRTUALIZATION</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ QUESTIONS ============ -->
+  <section>
+    <div class="sec-head">
+      <span class="sec-tag">To resolve</span>
+      <h2>Open questions</h2>
+    </div>
+
+    <div class="qgroup">
+      <h3>Scope and shape</h3>
+      <ol class="q">
+        <li><b>Who is this for?</b> A dispatcher planning next week, or a supervisor reacting today? The first wants density and bulk actions; the second wants status and exceptions.</li>
+        <li><b>Is this FilterGo-only, or does Signal get it too?</b> The code path is shared — <code>patrol</code> either way — so a Signal-visible feature costs little extra but changes the labelling work.</li>
+        <li><b>New tab, or a mode on the existing Patrol tab?</b> Affects whether the header tab list becomes tenant-conditional.</li>
+        <li><b>Recurring pattern or dated occurrences?</b> The single biggest fork. Everything downstream — grid, merge, conflict rules — depends on it.</li>
+      </ol>
+    </div>
+
+    <div class="qgroup">
+      <h3>The merge interaction</h3>
+      <ol class="q" start="5">
+        <li><b>How are visits selected?</b> Checkboxes, marquee drag on the grid, or a side basket that accumulates across days.</li>
+        <li><b>Can a selection span multiple days?</b> If a runsheet is one weekday, a cross-day selection has to either split into several runsheets or be refused.</li>
+        <li><b>Is drag-and-drop of a visit onto a runsheet row in scope,</b> or is merge always an explicit action?</li>
+        <li><b>After merging, where does the user land?</b> Back on the grid, or in the reorder step to confirm the route.</li>
+        <li><b>Is unmerge / eject in scope for v1?</b></li>
+      </ol>
+    </div>
+
+    <div class="qgroup">
+      <h3>Rules we need from ops</h3>
+      <ol class="q" start="10">
+        <li><b>What makes a merge invalid</b> versus merely warned? Distance, duration, window conflict, missing tour, officer hours.</li>
+        <li><b>Is there a cap</b> on visits per runsheet, or on route duration?</li>
+        <li><b>Who is allowed to do this?</b> There is an existing ACL pattern; we need the permission for bulk assignment.</li>
+        <li><b>Does the officer get notified</b> when visits are added to a route they already own?</li>
+        <li><b>What must be audited?</b> <code>hitAdded</code> / <code>hitRemoved</code> log actions exist — is a bulk merge one log entry or many?</li>
+      </ol>
+    </div>
+  </section>
+
+  <section style="margin-bottom:0">
+    <div class="sec-head">
+      <span class="sec-tag">Next</span>
+      <h2>Suggested order</h2>
+    </div>
+    <div class="prose">
+      <p>
+        Settle Q4 first — recurring versus dated decides the data contract and most of the edge
+        cases. Then agree the row axis from Part A, since that is what the backend needs to know
+        to shape the grid response. The merge interaction can be designed in parallel once the
+        blocking three edge cases have rules attached.
+      </p>
+      <p>
+        Worth confirming with someone who has run the operation: whether schedulers actually think
+        in "unclaimed work this week", or whether they think per-site and the unassigned band is
+        the wrong hero.
+      </p>
+    </div>
+  </section>
+
+</div>

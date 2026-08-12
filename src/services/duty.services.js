@@ -43,6 +43,24 @@ export const allDutyData = async (queryParams, config = {}) => {
   }
 };
 
+/** Overview coverage + top-row KPIs (unfiltered week scope). */
+export const getDutySummaryStats = async (queryParams, config = {}) => {
+  try {
+    const query = queryString.stringify(queryParams, {
+      arrayFormat: 'bracket',
+      skipEmptyString: true,
+      skipNull: true,
+    });
+
+    return await getHttpRequest(
+      `${dutyServiceEndPoint}/shiftActivityLog/schedule/stats?${query}`,
+      config,
+    );
+  } catch (e) {
+    return throwAPIError(e);
+  }
+};
+
 // Get All Duties for List View
 export const allListDutyData = async (queryParams, config = {}) => {
   try {
@@ -94,7 +112,7 @@ export async function getActiveAndInActiveOfficers({ shiftId, queryParams, confi
 export async function getReportTemplatesList(siteId) {
   try {
     return await getHttpRequest(
-      `${templateServiceEndPoint}/templates?templateable_type=${TEMPLATE_TYPES['Tour Reports']}&siteId=${siteId}`,
+      `${templateServiceEndPoint}/templates?templateable_type=${TEMPLATE_TYPES['Tour Reports']}&siteId=${siteId}&level=site`,
     );
   } catch (e) {
     return throwAPIError(e);

@@ -1890,29 +1890,45 @@ export const formatLabel = (value = '') => {
 export const DEMO_TENANT_KEY = 'demoTenant';
 
 export const DEMO_TENANT_OPTIONS = [
-  { value: 'filter-go.com', label: 'Filter Go' },
-  { value: 'teamsignal.com', label: 'Signal' },
+  { value: 'filter-go.com', label: 'Filter Go', shortLabel: 'FG' },
+  { value: 'teamsignal.com', label: 'Signal', shortLabel: 'S' },
 ];
 
 export const isLocalDemo = () => process.env.REACT_APP_NODE_ENV === 'localhost';
 
+/**
+ * Switches the demo tenant and reloads.
+ *
+ * tenantInfo is deliberately left intact. It holds two different kinds of data:
+ * branding (name, colours, logos, auth0) which belongs to the tenant, and the
+ * signed-in user's tenantConfiguration (services, permissions, properties) which
+ * does not. Clearing the whole object to refresh branding also discarded the
+ * configuration, leaving the schedule with no services and therefore no tabs or
+ * grid rows. mergeTenantBranding already overwrites every branding field from the
+ * new tenant on the next load, and the theme reads the tenant straight from
+ * localStorage, so nothing stale survives the switch.
+ */
 export const setDemoTenant = (tenant) => {
   if (!isLocalDemo()) return;
   localStorage.setItem(DEMO_TENANT_KEY, tenant);
+
+  // Labels genuinely are tenant vocabulary, so they must be dropped and refetched.
+  // This is a targeted clear — unlike tenantInfo, which is left alone above.
   try {
     const persistRoot = localStorage.getItem('persist:root');
     if (persistRoot) {
       const parsed = JSON.parse(persistRoot);
-      if (parsed.auth) {
-        const auth = JSON.parse(parsed.auth);
-        auth.tenantInfo = {};
-        parsed.auth = JSON.stringify(auth);
+      if (parsed.tenantConfigs) {
+        const tenantConfigs = JSON.parse(parsed.tenantConfigs);
+        delete tenantConfigs.labels;
+        parsed.tenantConfigs = JSON.stringify(tenantConfigs);
         localStorage.setItem('persist:root', JSON.stringify(parsed));
       }
     }
   } catch {
-    // ignore corrupt persist payload
+    // A corrupt persist payload just means labels refetch on next login.
   }
+
   window.location.reload();
 };
 
@@ -1928,6 +1944,23 @@ export const mainDomain = () => {
   return hostname;
 };
 
+/**
+ * Which services the tenant sells.
+ *
+ * In the demo the tenant can be switched without signing in again, so whatever
+ * services were captured at login belong to the previous tenant and the tenant
+ * definition has to win. In a real deployment the API's tenantConfiguration is
+ * authoritative, with the tenant definition as a fallback — note an empty object
+ * is truthy, so it has to be treated as absent rather than as a valid answer.
+ */
+const resolveTenantServices = (tenantConfiguration, branding) => {
+  if (isLocalDemo()) return branding.services || {};
+
+  return isObjectEmpty(tenantConfiguration.services)
+    ? branding.services || {}
+    : tenantConfiguration.services;
+};
+
 export const mergeTenantBranding = (tenantConfiguration = {}) => {
   const branding = MULTI_TENANT_AUTH[mainDomain()] || {};
 
@@ -1935,6 +1968,7 @@ export const mergeTenantBranding = (tenantConfiguration = {}) => {
     permissions: tenantConfiguration.permissions,
     properties: tenantConfiguration.properties,
     ...branding,
+    services: resolveTenantServices(tenantConfiguration, branding),
     images: {
       logo1: branding.images?.logo1 || branding.logo,
       logoShort: branding.images?.logoShort || branding.logoShort || branding.logo,
@@ -1965,7 +1999,6 @@ export const getSupportRegionFromMainDomain = async () => {
 };
 
 export const calculateGrandAmount = (totalAmount, discount = 0, taxAmount = 0) => {
-  console.log('totalAmount', totalAmount, 'discount', discount, 'taxAmount', taxAmount);
   return Math.max(
     0,
     parseFloat(totalAmount || 0) - parseFloat(discount || 0) + parseFloat(taxAmount || 0),

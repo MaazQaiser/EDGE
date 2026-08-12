@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ACL_OBX_SCHEDULES_UPDATE } from 'src/app/router/constant/OBXMODULE';
 import { AddIcon } from 'src/assets/svg';
-import { ReactComponent as NotesEmptyIcon } from 'src/assets/svg/nonotes.svg?react';
+import { ReactComponent as NotesEmptyIcon } from 'src/assets/svg/nonotes.svg';
 import RenderIfHasPermission from 'src/hoc/RenderIfHasPermission';
 
 import CreateNotesModal from '../createNotesModal';

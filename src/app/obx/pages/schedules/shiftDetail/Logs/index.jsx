@@ -1,5 +1,5 @@
 import { Avatar, Box, Typography } from '@mui/material';
-import { ReactComponent as DotIcon } from 'assets/svg/dot.svg?react';
+import { ReactComponent as DotIcon } from 'assets/svg/dot.svg';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import PropTypes from 'prop-types';
@@ -122,6 +122,12 @@ const LogItem = ({ log, shiftType, name }) => {
       : '';
 
   const vehicleName = log?.vehicle?.name || t('obx.schedules.dutyDetail.logs.defaultVehicleName');
+
+  const getDispatchAddress = () => {
+    if (!log?.description) return '';
+    const parts = log.description.split('|');
+    return (parts[1] || parts[0]).trim();
+  };
   const hitCancelledSiteName = log?.site?.name;
   const hitCancelledActionBy = log?.officer?.name
     ? t('obx.schedules.dutyDetail.logs.actions.hitCancelledActionBy', {
@@ -277,6 +283,12 @@ const LogItem = ({ log, shiftType, name }) => {
       name: officerName,
       hit: getLabel('terms', 'hit', t),
     }),
+    [LogsAction.DISPATCH_ADDRESS_UPDATED]: t(
+      'obx.schedules.dutyDetail.logs.actions.dispatchAddressUpdated',
+      {
+        name: officerName,
+      },
+    ),
     [LogsAction.HIT_CANCELLED]: t('obx.schedules.dutyDetail.logs.actions.hitCancelled', {
       site: hitCancelledSiteName,
       hit: getLabel('terms', 'hit', t),
@@ -372,13 +384,21 @@ const LogItem = ({ log, shiftType, name }) => {
             By {log?.actionBy?.name}
           </Typography>
         ) : null}
+        {log?.action === LogsAction.DISPATCH_ADDRESS_UPDATED && (
+          <Typography variant="body3" className={classes.logTimeName}>
+            {t('obx.schedules.dutyDetail.logs.actions.dispatchAddressUpdatedDescription', {
+              address: getDispatchAddress(),
+            })}
+          </Typography>
+        )}
         {log?.reassignInfo?.length ? (
           <Typography variant="body3" className={classes.logTimeName}>
             {log?.reassignInfo?.map((a, index) => {
               return (
                 <>
                   {a?.siteName} <DotIcon className={classes.dot} /> {getLabel('terms', 'hit', t)}(s){' '}
-                  {a?.hitCount} {log?.reassignInfo?.length - 1 == index ? '' : ','}
+                  {a?.hitCount}
+                  {log?.reassignInfo?.length - 1 === index ? '' : ', '}
                 </>
               );
             })}
@@ -387,16 +407,22 @@ const LogItem = ({ log, shiftType, name }) => {
         {log?.hitAddedTo && (
           <Typography variant="body3" className={classes.logTimeName}>
             {t('obx.schedules.dutyDetail.logs.actions.hitAddedTo', {
-              name: `${replaceTermsWithLabels(log?.hitAddedTo)} - ${dayjsWithStandardOffset(log?.time).format('ddd')}`,
+              name: `${replaceTermsWithLabels(log?.hitAddedTo)} - ${dayjsWithStandardOffset(
+                log?.time,
+              ).format('ddd')}`,
               hit: getLabel('terms', 'hit', t),
+              interpolation: { escapeValue: false },
             })}
           </Typography>
         )}
         {log?.hitAddedFrom && (
           <Typography variant="body3" className={classes.logTimeName}>
             {t('obx.schedules.dutyDetail.logs.actions.hitAddedFrom', {
-              name: `${replaceTermsWithLabels(log?.hitAddedFrom)} - ${dayjsWithStandardOffset(log?.time).format('ddd')}`,
+              name: `${replaceTermsWithLabels(log?.hitAddedFrom)} - ${dayjsWithStandardOffset(
+                log?.time,
+              ).format('ddd')}`,
               hit: getLabel('terms', 'hit', t),
+              interpolation: { escapeValue: false },
             })}
           </Typography>
         )}

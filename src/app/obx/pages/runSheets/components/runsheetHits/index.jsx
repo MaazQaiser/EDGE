@@ -14,7 +14,13 @@ import { DRAWER_TYPE } from 'src/utils/constants/schedules';
 import { ScheduleStatusChips } from '../../../schedules/components/scheduleStatusChips';
 import PatrolAssignTour from '../../../sites/detail/components/jobs/PatrolAssignTour';
 import { useStyles } from './runsheetHits.style';
-const RunsheetHits = ({ hitDetails, refetchData = () => {}, fetchingHitLoading, hitStatus }) => {
+const RunsheetHits = ({
+  hitDetails,
+  refetchData = () => {},
+  fetchingHitLoading,
+  hitStatus,
+  readOnly = false,
+}) => {
   const classes = useStyles();
   const { t } = useTranslation();
   const [showDrawer, setShowDrawer] = useState({
@@ -71,7 +77,7 @@ const RunsheetHits = ({ hitDetails, refetchData = () => {}, fetchingHitLoading, 
                   {t('obx.runsheet.checkpoints')}
                 </Typography>
                 <Typography variant="subtitle2" className={classes.hitItemSubTitle}>
-                  {hitDetails?.tour?.checkpoints.length || 0}
+                  {hitDetails?.tour?.checkpoints?.length || 0}
                 </Typography>
               </Box>
             )}
@@ -118,8 +124,12 @@ const RunsheetHits = ({ hitDetails, refetchData = () => {}, fetchingHitLoading, 
               </Box>
             </Box>
           )}
-          {/* //patrol setup ? */}
-          {!hitDetails?.tour && (
+          {/* //patrol setup ?
+              Suppressed when the caller says the visit is read-only — a completed,
+              cancelled or past-dated visit must not be offered a primary action
+              directly under a notice saying it cannot be changed. Defaults to
+              false, so the runsheet screens are unaffected. */}
+          {!hitDetails?.tour && !readOnly && (
             <Box className={classes.patrolSetupWrapper}>
               <Typography variant="body3" className={classes.patrolSetupText}>
                 {t('obx.runsheet.noReportsText')}
@@ -174,6 +184,7 @@ RunsheetHits.propTypes = {
   refetchData: PropTypes.func,
   fetchingHitLoading: PropTypes.bool,
   hitStatus: PropTypes.string,
+  readOnly: PropTypes.bool,
 };
 
 RunsheetHits.defaultProps = {
@@ -181,6 +192,7 @@ RunsheetHits.defaultProps = {
   refetchData: () => {},
   fetchingHitLoading: true,
   hitStatus: '',
+  readOnly: false,
 };
 
 export default RunsheetHits;
@@ -200,12 +212,17 @@ const CheckPoints = ({ checkpoints = [] }) => {
                   {index + 1}
                 </Typography>
               </Box>
+              {/* The place leads, the reader type follows. It used to be the other
+                  way round — "NFC" in bold over a muted "Roof Plant Room — AHU-1"
+                  — which made every checkpoint in a list look the same and buried
+                  the only line that says where the technician has to walk. The
+                  device type is how the checkpoint is read, not what it is. */}
               <Box>
                 <Typography variant="subtitle2" className={classes.hitItemSubTitle}>
-                  {formatDeviceTypeName(checkpoint?.type || checkpoint?.checkpointType) || NA}
+                  {checkpoint?.location?.locationName || NA}
                 </Typography>
                 <Typography variant="body3" className={classes.hitItemTitle}>
-                  {checkpoint?.location?.locationName || NA}
+                  {formatDeviceTypeName(checkpoint?.type || checkpoint?.checkpointType) || NA}
                 </Typography>
               </Box>
             </Box>

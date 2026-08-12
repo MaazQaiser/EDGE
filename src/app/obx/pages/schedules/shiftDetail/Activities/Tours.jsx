@@ -1,6 +1,6 @@
 import { Box, Chip, CircularProgress, Typography } from '@mui/material';
-import { ReactComponent as RightArrowIcon } from 'assets/svg/chevron-right.svg?react';
-import { ReactComponent as EditBtnIcon } from 'assets/svg/EditBtnIcon.svg?react';
+import { ReactComponent as RightArrowIcon } from 'assets/svg/chevron-right.svg';
+import { ReactComponent as EditBtnIcon } from 'assets/svg/EditBtnIcon.svg';
 import ReportAIModifiedBadge from 'commonComponents/reportAIModifiedBadge';
 import PropTypes from 'prop-types';
 import { useState } from 'react';

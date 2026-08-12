@@ -1,7 +1,7 @@
 import { Avatar, InputLabel, Skeleton, Typography } from '@mui/material';
 import Box from '@mui/material/Box';
 import { useJsApiLoader } from '@react-google-maps/api';
-import { ReactComponent as DotIcon } from 'assets/svg/dot.svg?react';
+import { ReactComponent as DotIcon } from 'assets/svg/dot.svg';
 import dayjs from 'dayjs';
 import PropTypes from 'prop-types';
 import * as React from 'react';
@@ -14,7 +14,7 @@ import DateRangePickerWithButtons from 'src/app/components/common/RangeDatepicke
 import SearchComponent from 'src/app/components/common/search';
 import SweetAlertModal from 'src/app/components/common/sweetAlertModal';
 import { DisplayDateTimeRange } from 'src/app/components/obxComponents/ShiftVisitsStatus';
-import { ReactComponent as WarningIcon } from 'src/assets/svg/warning.svg?react';
+import { ReactComponent as WarningIcon } from 'src/assets/svg/warning.svg';
 import { useApiControllers } from 'src/helper/axios';
 import {
   calculateAndDisplayRouteUtils,

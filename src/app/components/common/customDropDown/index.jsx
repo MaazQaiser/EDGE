@@ -94,6 +94,7 @@ const CustomDropDown = React.forwardRef(
       zIndexValue,
       enableLowerCase,
       showLabelTooltip,
+      labelMaxLength = 20,
       // onCloseCleanup = () => {},
     },
     ref,
@@ -672,12 +673,12 @@ const CustomDropDown = React.forwardRef(
                     {showLabelTooltip ? (
                       <Tooltip title={selectLabel}>
                         <Typography variant="subtitle2" className={classNames(selectedOptionClass)}>
-                          {truncateLabel(selectLabel, 20)}
+                          {truncateLabel(selectLabel, labelMaxLength)}
                         </Typography>
                       </Tooltip>
                     ) : (
                       <Typography variant="subtitle2" className={classNames(selectedOptionClass)}>
-                        {truncateLabel(selectLabel, 20)}
+                        {truncateLabel(selectLabel, labelMaxLength)}
                       </Typography>
                     )}
                   </>
@@ -844,6 +845,9 @@ CustomDropDown.propTypes = {
   maxWidth: PropTypes.string,
   enableLowerCase: PropTypes.bool,
   showLabelTooltip: PropTypes.bool,
+  /** Characters kept in the selected-value label. Widen it when the control is
+   *  wider than the default; the cap is a text cap, not a layout one. */
+  labelMaxLength: PropTypes.number,
 };
 
 CustomDropDown.defaultProps = {
@@ -872,7 +876,7 @@ CustomDropDown.defaultProps = {
   additionalOption: null,
   overrideOption: null,
   isLoading: false,
-  zIndexValue: '10000',
+  zIndexValue: 10000,
   fetchOptions: () => {},
   enableFetchOptions: false,
   enableLowerCase: false,

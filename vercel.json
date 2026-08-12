@@ -2,5 +2,11 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "buildCommand": "vite build",
   "outputDirectory": "build",
+  "build": {
+    "env": {
+      "REACT_APP_NODE_ENV": "localhost",
+      "REACT_APP_TENANT": "teamsignal.com"
+    }
+  },
   "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
 }

@@ -1,5 +1,5 @@
 import { Box, Button, TextField, Typography } from '@mui/material';
-import { ReactComponent as RejectLeaveIcon } from 'assets/svg/modal-cancel.svg?react';
+import { ReactComponent as RejectLeaveIcon } from 'assets/svg/modal-cancel.svg';
 import ModalComponent from 'commonComponents/modal';
 import PropTypes from 'prop-types';
 import React from 'react';

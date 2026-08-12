@@ -9,7 +9,7 @@ import SweetAlertModal from 'src/app/components/common/sweetAlertModal';
 import HitReassignmentDrawer from 'src/app/obx/pages/schedules/components/hitReassignmentDrawer';
 import ReassignHitDrawerContent from 'src/app/obx/pages/schedules/components/reassignHitDrawerContent';
 import { ACL_OBX_SCHEDULES_UPDATE } from 'src/app/router/constant/OBXMODULE';
-import { ReactComponent as WarningIcon } from 'src/assets/svg/warning.svg?react';
+import { ReactComponent as WarningIcon } from 'src/assets/svg/warning.svg';
 import { useTenantLabel } from 'src/helper/utilityHooks';
 import RenderIfHasPermission from 'src/hoc/RenderIfHasPermission';
 import {
@@ -56,6 +56,15 @@ const RunsheetDetail = lazy(() => import('./RunsheetDetail'));
 const useStyles = makeStyles((theme) => ({
   dutyDetailTabFirst: {
     padding: '24px',
+  },
+  /* The visit drawer's own sections already carry `20px 24px` of their own — see
+     `VisitAssignment.wrapper` and `runsheetHits.hitCardWrapper` — so this panel's
+     24px was doubling it and the visit drawer's content sat 48px from the edge
+     while the runsheet drawer, whose body brings no padding of its own, sat at 24.
+     Side by side the visit drawer looked narrower than it is. Flush here; the
+     children provide the inset. */
+  dutyDetailTabFirstFlush: {
+    padding: 0,
   },
   dutyDetail: {
     display: 'flex',
@@ -178,6 +187,34 @@ CustomTabPanel.propTypes = {
   children: PropTypes.node,
   index: PropTypes.number.isRequired,
   value: PropTypes.number.isRequired,
+};
+
+/**
+ * Drawer title from a primary name plus optional context.
+ *
+ * Route names are usually derived from their site ("Downtown Plaza Route"), so
+ * appending the site unconditionally produced titles like
+ * "Downtown Plaza Route - Downtown Plaza". The suffix is only added when it
+ * actually says something new.
+ */
+const composeDrawerTitle = (name, context) => {
+  const primary = `${name || ''}`.trim();
+  const suffix = `${context || ''}`.trim();
+
+  if (!primary) return suffix;
+  if (!suffix) return primary;
+
+  // The containment test has to run both ways. It only guarded
+  // "Downtown Plaza Route - Downtown Plaza"; the visit drawer leads with the site
+  // and appends the route, which is the mirror case and produced
+  // "Alderwood Business Park - Alderwood Business Park Route" — the same name
+  // twice, over two lines. Keep the shorter, which is the one that identifies.
+  const a = primary.toLowerCase();
+  const b = suffix.toLowerCase();
+  if (a.includes(b)) return primary;
+  if (b.includes(a)) return primary;
+
+  return `${primary} - ${suffix}`;
 };
 
 const getShiftDetailTabs = (t, shiftType) => {
@@ -651,9 +688,7 @@ const DutyDetail = ({
                 shiftData={shiftData}
                 closeDrawer={closeDrawer}
                 shiftType={shiftType}
-                headerTitle={
-                  shiftData?.name + (shiftData?.site?.name ? ` - ${shiftData?.site?.name}` : '')
-                }
+                headerTitle={composeDrawerTitle(shiftData?.name, shiftData?.site?.name)}
                 editButtons={
                   <RenderIfHasPermission name={ACL_OBX_SCHEDULES_UPDATE}>
                     <>
@@ -685,9 +720,7 @@ const DutyDetail = ({
                 loading={loading}
                 shiftData={shiftData}
                 closeDrawer={closeDrawer}
-                headerTitle={
-                  shiftData?.name + (shiftData?.runsheetName ? ` - ${shiftData?.runsheetName}` : '')
-                }
+                headerTitle={composeDrawerTitle(shiftData?.name, shiftData?.runsheetName)}
                 editButtons={
                   <RenderIfHasPermission name={ACL_OBX_SCHEDULES_UPDATE}>
                     <HitHeaderEditButtons
@@ -731,7 +764,11 @@ const DutyDetail = ({
                 </Tabs>
 
                 <CustomTabPanel value={value} index={0}>
-                  <Box className={classes.dutyDetailTabFirst}>
+                  <Box
+                    className={`${classes.dutyDetailTabFirst} ${
+                      shiftType === SCHEDULE_DUTIES.HIT ? classes.dutyDetailTabFirstFlush : ''
+                    }`}
+                  >
                     {shiftType === SCHEDULE_DUTIES.HIT ? (
                       <Box>
                         <Suspense fallback={null}>
@@ -739,6 +776,21 @@ const DutyDetail = ({
                             {...{
                               loading,
                               shiftData,
+                              // Unassigned demand is the reason this drawer gets
+                              // opened from the visits grid, so the fix is one
+                              // click away rather than buried in the kebab.
+                              onAssignToRoute: () => setIsReassignHit(true),
+                              // A visit with no tour cannot be routed at all, so
+                              // the drawer offers the tour first instead of an
+                              // action the backend would reject.
+                              onAssignTour: changeOnlyDrawerType(DRAWER_TYPE.TOUR_ASSIGNMENT),
+                              /* The dropdown proposes; the existing reassign flow
+                                 commits. That flow owns the part that cannot be
+                                 duplicated inline — it recalculates the route's
+                                 polyline through the Maps API before writing, so a
+                                 second write path here would produce a runsheet
+                                 with a stale route. */
+                              onChangeRunsheet: () => setIsReassignHit(true),
                               callbackUponAssignment: () => {
                                 getHitDetail(shiftId);
                                 getAllDuties();

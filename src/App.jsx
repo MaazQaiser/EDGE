@@ -19,13 +19,18 @@ import TenantThemeProvider from 'src/app/components/common/tenantThemeProvider';
 import history from 'src/app/router/utils/history';
 import { generateAzureStorageBlobToken, isAzureTokenExpired } from 'src/helper/utilityFunctions';
 import { setAccessControlPermissions, setSaasToken } from 'src/redux/store/slices/auth';
-import { setTenantLabels } from 'src/redux/store/slices/tenantConfigs';
+import { setTenantLabels, TENANT_LABELS_VERSION } from 'src/redux/store/slices/tenantConfigs';
 import { appInsightUserAgent, enumUserRolesTokenApi } from 'src/utils/constants';
 
 import NoServer from './app/public/pages/noServer';
 import getRouteConfigs from './app/router/config/base.route';
 import generateRoutesFromConfig from './app/router/utils/generateRoutesFromConfig';
-import { isLocalDemo, isObjectEmpty, mergeTenantBranding } from './helper/utilityFunctions';
+import {
+  isLocalDemo,
+  isObjectEmpty,
+  mainDomain,
+  mergeTenantBranding,
+} from './helper/utilityFunctions';
 import store, { persistor } from './redux/store/index';
 import { setTenantInfo } from './redux/store/slices/auth';
 
@@ -88,6 +93,8 @@ const Main = () => {
   const dispatch = useDispatch();
   const tenantInfo = useSelector((state) => state.auth.tenantInfo);
   const tenantLabels = useSelector((state) => state.tenantConfigs?.labels);
+  const tenantLabelsTenant = useSelector((state) => state.tenantConfigs?.tenant);
+  const tenantLabelsVersion = useSelector((state) => state.tenantConfigs?.version);
 
   useEffect(() => {
     i18n.changeLanguage(currentLanguage?.code);
@@ -102,15 +109,26 @@ const Main = () => {
   }, []);
 
   useEffect(() => {
-    if (!accessToken || tenantLabels) return;
+    if (!accessToken) return;
+
+    // Labels are persisted, so also refetch when the cached copy belongs to a
+    // different tenant than the active one, or predates the current payload
+    // shape. Without the first the demo tenant switch kept the previous
+    // tenant's vocabulary; without the second a cache written before a category
+    // was added keeps rendering that category as an empty string.
+    const activeTenant = mainDomain();
+    const isStale =
+      Boolean(tenantLabels) &&
+      (tenantLabelsTenant !== activeTenant || tenantLabelsVersion !== TENANT_LABELS_VERSION);
+    if (tenantLabels && !isStale) return;
 
     (async () => {
       const labels = await fetchTenantLabelsCall();
       if (labels?.labels && Object.keys(labels.labels).length > 0) {
-        dispatch(setTenantLabels(labels));
+        dispatch(setTenantLabels({ ...labels, tenant: activeTenant }));
       }
     })();
-  }, [accessToken, tenantLabels, dispatch]);
+  }, [accessToken, tenantLabels, tenantLabelsTenant, tenantLabelsVersion, dispatch]);
 
   useEffect(() => {
     i18n.changeLanguage(currentLanguage?.code);

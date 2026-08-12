@@ -22,6 +22,7 @@ import {
   getDaysWrtTimezoneAsPerStandardTime,
   getEmbededDateAndTimeWRTStandardOffset,
   getFranchiseIdWithRoleAndSource,
+  getHoursDiff24HourFormat,
   getOffsetWithStandardTime,
   getTimezone,
   utcDayjsWithTimezone,
@@ -51,6 +52,7 @@ import {
   toastSettings,
 } from 'src/utils/constants';
 import formValidatorJoi from 'src/utils/formValidator/formValidator.requiredCheck';
+import { truncateToDecimalPlaces } from 'src/utils/regexField/regexFiledForm';
 import { toaster } from 'src/utils/toast';
 
 import { useStyles } from '../createExtraDuty.styles';
@@ -224,6 +226,68 @@ const CreateExtraDuty = () => {
     return daysArr;
   };
 
+  const getNumberValue = (value) => {
+    const number = Number(value);
+    return Number.isFinite(number) ? number : 0;
+  };
+
+  const getCalculatedNumber = (value) => {
+    const number = getNumberValue(value);
+    return Number(Number.isInteger(number) ? number : truncateToDecimalPlaces(number, 2));
+  };
+
+  const getSelectedDateOccurrences = (dateRange = [], selectedDays = []) => {
+    const [startDate, endDate] = dateRange;
+
+    if (!startDate || !endDate || !selectedDays?.length) {
+      return 0;
+    }
+
+    const start = dayjs(startDate).startOf('day');
+    const end = dayjs(endDate).startOf('day');
+
+    if (!start.isValid() || !end.isValid() || end.isBefore(start, 'day')) {
+      return 0;
+    }
+
+    const selectedDayValues = new Set(selectedDays.map(Number));
+    let currentDate = start;
+    let count = 0;
+
+    while (currentDate.isSame(end, 'day') || currentDate.isBefore(end, 'day')) {
+      if (selectedDayValues.has(currentDate.day())) {
+        count += 1;
+      }
+      currentDate = currentDate.add(1, 'day');
+    }
+
+    return count;
+  };
+
+  const getExtraDutyHoursPerWeek = (duty) => {
+    if (!duty?.startsAt || !duty?.endsAt) {
+      return 0;
+    }
+
+    const durationHours = getHoursDiff24HourFormat(duty.startsAt, duty.endsAt);
+    const selectedJobDays = new Set((duty?.dutyDays || []).map(Number)).size;
+
+    return getCalculatedNumber(durationHours * selectedJobDays);
+  };
+
+  const getExtraHitVisitsPerWeek = (service) => {
+    const selectedDayOccurrences = getSelectedDateOccurrences(
+      service?.dateRange,
+      service?.visitDays,
+    );
+    const visitsPerWeek = (service?.visits || []).reduce(
+      (total, visit) => total + getNumberValue(visit?.visitsPerDay) * selectedDayOccurrences,
+      0,
+    );
+
+    return getCalculatedNumber(visitsPerWeek);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -247,6 +311,7 @@ const CreateExtraDuty = () => {
                 duty?.endsAt && dayjs(duty.endsAt).isValid()
                   ? dayjs(duty.endsAt).toDate()
                   : duty?.endsAt || null,
+              hoursPerWeek: getExtraDutyHoursPerWeek(duty),
               ...(duty?.fuelSurchargeEnabled && {
                 fuelSurchargeEnabled: true,
                 fuelSurchargeType: duty.fuelSurchargeType ?? '',
@@ -261,6 +326,7 @@ const CreateExtraDuty = () => {
               pricePerVisit: service?.pricePerVisit || null,
               dateRange: service.dateRange || [],
               visitDays: service.visitDays || [],
+              visitsPerWeek: getExtraHitVisitsPerWeek(service),
               ...(service?.fuelSurchargeEnabled && {
                 fuelSurchargeEnabled: true,
                 fuelSurchargeType: service.fuelSurchargeType ?? '',
@@ -268,16 +334,10 @@ const CreateExtraDuty = () => {
               }),
               visits:
                 service.visits?.map((visit) => ({
-                  visitType: visit?.visitType || null,
+                  visitType: visitTypes.RANDOM,
                   visitsPerDay: visit.visitsPerDay || null,
-                  ...(visit?.visitType === visitTypes.RANDOM
-                    ? {
-                        startTime: visit?.startTime ? visit?.startTime?.toISOString() : null,
-                        endTime: visit?.endTime ? visit?.endTime?.toISOString() : null,
-                      }
-                    : {
-                        visitTime: visit?.visitTime ? visit?.visitTime?.toISOString() : null,
-                      }),
+                  startTime: visit?.startTime ? visit?.startTime?.toISOString() : null,
+                  endTime: visit?.endTime ? visit?.endTime?.toISOString() : null,
                 })) || [],
             })),
           }
@@ -337,24 +397,22 @@ const CreateExtraDuty = () => {
 
           const currentVisit = currentService?.visits[k];
 
-          if (currentVisit?.visitType === visitTypes.RANDOM) {
-            const currentVisitStartTime = currentVisit?.startTime?.format('HH:mm');
-            const currentVisitEndTime = currentVisit?.endTime?.format('HH:mm');
+          const currentVisitStartTime = currentVisit?.startTime?.format('HH:mm');
+          const currentVisitEndTime = currentVisit?.endTime?.format('HH:mm');
 
-            if (
-              serviceStartDate === serviceEndDate &&
-              currentVisitStartTime === currentVisitEndTime
-            ) {
-              const key = `visits,${k},endTime`;
+          if (
+            serviceStartDate === serviceEndDate &&
+            currentVisitStartTime === currentVisitEndTime
+          ) {
+            const key = `visits,${k},endTime`;
 
-              const errorKey = getErrorKey(key, 'extraHitServices', i);
-              setErrorMessages((prev) => ({
-                ...prev,
-                [errorKey]: t('obx.schedules.visitStartEndDateSame'),
-              }));
-              servicesWithErrors[i] = true;
-              errorCount++;
-            }
+            const errorKey = getErrorKey(key, 'extraHitServices', i);
+            setErrorMessages((prev) => ({
+              ...prev,
+              [errorKey]: t('obx.schedules.visitStartEndDateSame'),
+            }));
+            servicesWithErrors[i] = true;
+            errorCount++;
           }
         }
       }
@@ -452,6 +510,7 @@ const CreateExtraDuty = () => {
       loadManagement: item.loadManagement || false,
       visitManagement: item.visitManagement || false,
       dutyDays: getDaysWrtTimezoneAsPerStandardTime(startsAt, item.dutyDays, true),
+      hoursPerWeek: getExtraDutyHoursPerWeek(item),
       instructions: convertDataToHtml(instructions),
       contractName: formData.contract?.title,
       contractStatus: formData.contract?.status,
@@ -478,8 +537,8 @@ const CreateExtraDuty = () => {
 
         // Get start and end time for each visit
         const times = service.visits.map((v) => ({
-          start: dayjs(v.visitType === visitTypes.FIXED ? v.visitTime : v.startTime),
-          end: dayjs(v.visitType === visitTypes.FIXED ? v.visitTime : v.endTime),
+          start: dayjs(v.startTime),
+          end: dayjs(v.endTime),
         }));
 
         // Get minimum start time and maximum end time
@@ -502,6 +561,7 @@ const CreateExtraDuty = () => {
           isExtra: true,
           startsAt: startDateTime,
           endsAt: endDateTime,
+          visitsPerWeek: getExtraHitVisitsPerWeek(service),
           visitSet: service.visits.map((visit) => mapVisit(visit, service)),
           instructions: convertDataToHtml(instructions),
           contractStatus: formData.contract?.status,
@@ -526,9 +586,8 @@ const CreateExtraDuty = () => {
     let endDate = service?.dateRange?.[1];
 
     // Get initial start and end time
-    const initialStartTime =
-      visit.visitType === visitTypes.FIXED ? visit.visitTime : visit.startTime;
-    let initialEndTime = visit.visitType === visitTypes.FIXED ? visit.visitTime : visit.endTime;
+    const initialStartTime = visit.startTime;
+    let initialEndTime = visit.endTime;
 
     // If end time is before start time, append 1 day to end date
     if (
@@ -564,15 +623,11 @@ const CreateExtraDuty = () => {
       visitDays: dutyDaysBetweenIsoDates,
       startsAt: startDateTime,
       startDateTime,
-      visitType: visit.visitType,
+      visitType: visitTypes.RANDOM,
       hits: visit.visitsPerDay,
       perDayVisits: visit.visitsPerDay,
-      ...(visit.visitType === visitTypes.RANDOM
-        ? {
-            endsAt: endDateTime,
-            endDateTime,
-          }
-        : {}),
+      endsAt: endDateTime,
+      endDateTime,
     };
   };
 

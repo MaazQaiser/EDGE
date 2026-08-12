@@ -41,6 +41,8 @@ export const OBX_SCHEDULES_CREATE_EXTRA_DUTY = `${APP}${OBX}/${scheduleModule}/c
 export const OBX_RUNSHEET = `${APP}${OBX}/runsheet`;
 export const OBX_RUNSHEET_CREATE = `${OBX_RUNSHEET}/createRunsheet`;
 export const OBX_ASSIGN_HITS = `${OBX_RUNSHEET}/assignHits`;
+export const OBX_BUILD_ROUTE = `${OBX_RUNSHEET}/buildRoute`;
+export const OBX_OPTIMIZE_ROUTE = `${OBX_RUNSHEET}/optimize`;
 export const OBX_HITS_DETAILS = `${OBX_RUNSHEET}/details/:id`;
 export const OBX_EDIT_RUNSHEET = `${OBX_RUNSHEET}/details/:id/editRunsheet`;
 

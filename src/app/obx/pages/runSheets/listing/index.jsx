@@ -17,7 +17,13 @@ import DirectionsMap from 'src/app/components/common/directionsMap';
 import SearchComponent from 'src/app/components/common/search';
 import SweetAlertModal from 'src/app/components/common/sweetAlertModal';
 import { ACL_OBX_RUNSHEET_CREATE } from 'src/app/router/constant/OBXMODULE';
-import { OBX_ASSIGN_HITS, OBX_RUNSHEET, OBX_RUNSHEET_CREATE } from 'src/app/router/constant/ROUTE';
+import {
+  OBX_ASSIGN_HITS,
+  OBX_BUILD_ROUTE,
+  OBX_OPTIMIZE_ROUTE,
+  OBX_RUNSHEET,
+  OBX_RUNSHEET_CREATE,
+} from 'src/app/router/constant/ROUTE';
 import history from 'src/app/router/utils/history';
 // import { _DownloadCloud, AddIcon } from 'src/assets/svg';
 import { ReactComponent as CalenderIcon } from 'src/assets/svg/calendar.svg?react';
@@ -322,6 +328,26 @@ const RunSheets = () => {
                 >
                   Export
                 </Button> */}
+                <RenderIfHasPermission name={ACL_OBX_RUNSHEET_CREATE}>
+                  <Button
+                    variant="secondaryGrey"
+                    onClick={() => {
+                      history.push(OBX_BUILD_ROUTE);
+                    }}
+                  >
+                    {t('obx.runsheet.buildRoute.title')}
+                  </Button>
+                </RenderIfHasPermission>
+                <RenderIfHasPermission name={ACL_OBX_RUNSHEET_CREATE}>
+                  <Button
+                    variant="secondaryGrey"
+                    onClick={() => {
+                      history.push(OBX_OPTIMIZE_ROUTE);
+                    }}
+                  >
+                    {t('obx.runsheet.optimize.entryAction')}
+                  </Button>
+                </RenderIfHasPermission>
                 <RenderIfHasPermission name={ACL_OBX_RUNSHEET_CREATE}>
                   <Button
                     variant="primary"

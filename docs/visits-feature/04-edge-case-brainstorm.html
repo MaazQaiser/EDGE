@@ -1,0 +1,394 @@
+<meta charset="utf-8">
+<title>Edge Cases — Solutions Brainstorm</title>
+<style>
+  :root {
+    --ink:#0F1D17; --ink-2:#33463D; --slate:#5C6C63;
+    --rule:#DCE3DD; --rule-soft:#EAEFEA;
+    --paper:#FAFBF9; --card:#FFFFFF;
+    --green:#2DA551; --green-deep:#1F7B3C; --green-wash:#EAF6EE;
+    --amber:#96650F; --amber-wash:#FBF2DF;
+    --clay:#A63D28;  --clay-wash:#FAECE8;
+    --blue:#1F5F8B;  --blue-wash:#E7F0F6;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --measure: 68ch;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ink:#E6EDE8; --ink-2:#B4C3BA; --slate:#8A9A90;
+      --rule:#2A3833; --rule-soft:#1E2A25;
+      --paper:#0C1310; --card:#111A16;
+      --green:#4FC776; --green-deep:#7BD99A; --green-wash:#16281D;
+      --amber:#D9A441; --amber-wash:#2A2213;
+      --clay:#E0836C;  --clay-wash:#2C1A15;
+      --blue:#7FB4D6;  --blue-wash:#14222C;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ink:#E6EDE8; --ink-2:#B4C3BA; --slate:#8A9A90;
+    --rule:#2A3833; --rule-soft:#1E2A25;
+    --paper:#0C1310; --card:#111A16;
+    --green:#4FC776; --green-deep:#7BD99A; --green-wash:#16281D;
+    --amber:#D9A441; --amber-wash:#2A2213;
+    --clay:#E0836C;  --clay-wash:#2C1A15;
+    --blue:#7FB4D6;  --blue-wash:#14222C;
+  }
+  :root[data-theme="light"] {
+    --ink:#0F1D17; --ink-2:#33463D; --slate:#5C6C63;
+    --rule:#DCE3DD; --rule-soft:#EAEFEA;
+    --paper:#FAFBF9; --card:#FFFFFF;
+    --green:#2DA551; --green-deep:#1F7B3C; --green-wash:#EAF6EE;
+    --amber:#96650F; --amber-wash:#FBF2DF;
+    --clay:#A63D28;  --clay-wash:#FAECE8;
+    --blue:#1F5F8B;  --blue-wash:#E7F0F6;
+  }
+
+  body { margin:0; background:var(--paper); color:var(--ink); font-family:var(--sans); font-size:16px; line-height:1.6; -webkit-font-smoothing:antialiased; }
+  .wrap { max-width:940px; margin:0 auto; padding:56px 28px 120px; }
+  .prose { max-width:var(--measure); }
+
+  .masthead { border-bottom:2px solid var(--ink); padding-bottom:22px; margin-bottom:14px; }
+  .kicker { font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--green-deep); margin:0 0 14px; }
+  h1 { font-family:var(--mono); font-size:clamp(29px,4.8vw,44px); line-height:1.07; letter-spacing:-.03em; font-weight:600; margin:0 0 16px; text-wrap:balance; }
+  .standfirst { font-size:18px; line-height:1.55; color:var(--ink-2); max-width:60ch; margin:0; }
+  .meta { display:flex; flex-wrap:wrap; gap:8px 22px; font-family:var(--mono); font-size:11.5px; letter-spacing:.05em; color:var(--slate); margin-bottom:52px; }
+  .meta b { color:var(--ink-2); font-weight:600; }
+
+  section { margin-bottom:62px; }
+  .sec-head { border-top:1px solid var(--rule); padding-top:14px; margin-bottom:22px; }
+  .sec-num { font-family:var(--mono); font-size:10.5px; letter-spacing:.13em; text-transform:uppercase; color:var(--slate); display:block; margin-bottom:7px; }
+  h2 { font-family:var(--mono); font-size:25px; letter-spacing:-.02em; font-weight:600; margin:0; text-wrap:balance; }
+  h3 { font-family:var(--mono); font-size:14.5px; font-weight:600; margin:30px 0 10px; letter-spacing:-.005em; }
+  p { margin:0 0 15px; }
+  code { font-family:var(--mono); font-size:.87em; background:var(--rule-soft); padding:.1em .36em; border-radius:3px; color:var(--ink-2); }
+
+  .problem { border-left:3px solid var(--clay); background:var(--clay-wash); border:1px solid var(--rule); border-left-width:3px; border-radius:3px; padding:15px 18px; margin:0 0 24px; }
+  .problem b { font-family:var(--mono); font-size:10.5px; letter-spacing:.09em; text-transform:uppercase; color:var(--clay); display:block; margin-bottom:6px; }
+  .problem p { margin:0; font-size:14.5px; line-height:1.55; color:var(--ink-2); }
+  .problem p + p { margin-top:9px; }
+
+  .opts { display:grid; gap:10px; margin:18px 0; }
+  .opt { border:1px solid var(--rule); border-radius:4px; background:var(--card); padding:15px 18px; }
+  .opt.pick { border-color:var(--green); box-shadow:inset 3px 0 0 var(--green); }
+  .opt-head { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:7px; }
+  .opt-head h4 { font-family:var(--mono); font-size:14px; font-weight:600; margin:0; }
+  .opt p { font-size:14.5px; margin:0 0 7px; color:var(--ink-2); }
+  .opt p:last-child { margin-bottom:0; }
+  .verdict { font-size:13.5px; color:var(--slate); }
+  .verdict b { font-family:var(--mono); font-size:10px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-2); }
+
+  .chip { font-family:var(--mono); font-size:9.5px; letter-spacing:.09em; text-transform:uppercase; padding:3px 8px; border-radius:10px; font-weight:600; white-space:nowrap; }
+  .chip.pick { background:var(--green-wash); color:var(--green-deep); }
+  .chip.no   { background:var(--clay-wash); color:var(--clay); }
+  .chip.mby  { background:var(--amber-wash); color:var(--amber); }
+
+  figure { margin:28px 0; }
+  .figbox { border:1px solid var(--rule); border-radius:4px; background:var(--card); padding:20px 18px 12px; overflow-x:auto; }
+  figure svg { display:block; width:100%; max-width:100%; height:auto; color:var(--ink-2); min-width:600px; }
+  figcaption { font-family:var(--mono); font-size:11.5px; line-height:1.55; color:var(--slate); margin-top:12px; max-width:72ch; }
+
+  .rec { border:1px solid var(--rule); border-left:3px solid var(--green); background:var(--green-wash); border-radius:3px; padding:15px 18px; margin-top:20px; }
+  .rec b { font-family:var(--mono); font-size:10.5px; letter-spacing:.09em; text-transform:uppercase; color:var(--green-deep); display:block; margin-bottom:6px; }
+  .rec p { margin:0; font-size:14.5px; line-height:1.55; color:var(--ink-2); }
+
+  ul.tight { margin:0 0 15px; padding-left:20px; }
+  ul.tight li { margin-bottom:7px; color:var(--ink-2); font-size:14.5px; line-height:1.55; }
+  ul.tight li b { color:var(--ink); }
+
+  .quick { display:grid; gap:1px; background:var(--rule); border:1px solid var(--rule); border-radius:4px; overflow:hidden; }
+  .quick-row { display:grid; grid-template-columns:1fr 1.35fr; gap:1px; background:var(--rule); }
+  .quick-row > * { background:var(--card); padding:13px 15px; font-size:14px; line-height:1.5; }
+  .quick-row.head > * { background:var(--rule-soft); font-family:var(--mono); font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--slate); }
+  .quick-q { font-weight:600; color:var(--ink); }
+  .quick-a { color:var(--ink-2); }
+  @media (max-width:640px){ .quick-row{ grid-template-columns:1fr; } }
+</style>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <p class="kicker">FilterGo · Visits · Solutions brainstorm</p>
+    <h1>The edge cases that still need answers</h1>
+    <p class="standfirst">
+      Options and a recommendation for each of the unresolved cases — contract compliance when
+      visits move, where a route begins and ends, and four smaller ones that follow from letting
+      visits float between days.
+    </p>
+  </header>
+
+  <div class="meta">
+    <span><b>6 cases</b></span>
+    <span><b>Each with a recommendation</b></span>
+    <span><b>Follows</b> design rev 2</span>
+  </div>
+
+  <!-- ========== 1. CONTRACT ========== -->
+  <section>
+    <div class="sec-head">
+      <span class="sec-num">Case one · the hard one</span>
+      <h2>Contract compliance when visits move</h2>
+    </div>
+
+    <div class="problem">
+      <b>Three different failures wearing one coat</b>
+      <p><strong>Drift.</strong> A site contracted for a change every 30 days gets each visit nudged a few days later. No single move looks wrong, but the gap creeps past 30 and stays there.</p>
+      <p><strong>Early replacement.</strong> Pulling a visit forward by two weeks throws away two weeks of filter life. That's money on the floor, and it's the failure nobody thinks to guard against.</p>
+      <p><strong>Period count.</strong> Move a visit from 1 Sept to 30 Aug and August now has two visits for that site, September none. If billing counts visits per month, both months are wrong.</p>
+    </div>
+
+    <p class="prose">
+      These pull in opposite directions, which is what makes a single threshold useless. The
+      framing that resolves it: a visit isn't due on a <em>date</em>, it's due within a
+      <em>window</em> — too early wastes filter life, too late breaches the contract.
+    </p>
+
+    <figure>
+      <div class="figbox">
+        <svg viewBox="0 0 860 214" role="img" aria-label="A timeline from the last completed visit showing an early zone that wastes filter life, a green ideal window, and a late zone that breaches the contract; a visit being pulled forward lands in the early zone.">
+          <defs>
+            <marker id="bm" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#96650F"/>
+            </marker>
+          </defs>
+
+          <!-- axis -->
+          <line x1="60" y1="120" x2="800" y2="120" stroke="currentColor" stroke-width="1.4"/>
+
+          <!-- last visit -->
+          <circle cx="90" cy="120" r="6" fill="currentColor"/>
+          <text x="90" y="146" text-anchor="middle" font-family="ui-monospace, monospace" font-size="10" fill="currentColor">last done</text>
+          <text x="90" y="160" text-anchor="middle" font-family="ui-monospace, monospace" font-size="9.5" fill="currentColor" opacity="0.6">1 Aug</text>
+
+          <!-- early zone -->
+          <rect x="90" y="98" width="330" height="22" fill="#96650F" opacity="0.13"/>
+          <text x="255" y="113" text-anchor="middle" font-family="ui-monospace, monospace" font-size="10" fill="#96650F" font-weight="600">too early — filter life wasted</text>
+
+          <!-- ideal window -->
+          <rect x="420" y="94" width="200" height="30" fill="#2DA551" opacity="0.2"/>
+          <rect x="420" y="94" width="200" height="30" fill="none" stroke="#2DA551" stroke-width="1.6"/>
+          <text x="520" y="113" text-anchor="middle" font-family="ui-monospace, monospace" font-size="10.5" fill="#1F7B3C" font-weight="700">service window</text>
+          <text x="420" y="146" text-anchor="middle" font-family="ui-monospace, monospace" font-size="9.5" fill="#1F7B3C">26 Aug</text>
+          <text x="620" y="146" text-anchor="middle" font-family="ui-monospace, monospace" font-size="9.5" fill="#1F7B3C">31 Aug</text>
+
+          <!-- late zone -->
+          <rect x="620" y="98" width="180" height="22" fill="#A63D28" opacity="0.14"/>
+          <text x="710" y="113" text-anchor="middle" font-family="ui-monospace, monospace" font-size="10" fill="#A63D28" font-weight="600">breaches contract</text>
+
+          <!-- contracted interval bracket -->
+          <line x1="90" y1="72" x2="620" y2="72" stroke="currentColor" stroke-width="1" opacity="0.5"/>
+          <line x1="90" y1="66" x2="90" y2="78" stroke="currentColor" stroke-width="1" opacity="0.5"/>
+          <line x1="620" y1="66" x2="620" y2="78" stroke="currentColor" stroke-width="1" opacity="0.5"/>
+          <text x="355" y="62" text-anchor="middle" font-family="ui-monospace, monospace" font-size="10" fill="currentColor" opacity="0.65">contracted interval · 30 days</text>
+
+          <!-- scheduled visit -->
+          <circle cx="560" cy="120" r="7" fill="#2DA551"/>
+          <text x="560" y="180" text-anchor="middle" font-family="ui-monospace, monospace" font-size="9.5" fill="#1F7B3C">scheduled 29 Aug</text>
+
+          <!-- pull forward -->
+          <path d="M 552 134 L 320 134" fill="none" stroke="#96650F" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#bm)"/>
+          <circle cx="312" cy="120" r="7" fill="none" stroke="#96650F" stroke-width="2"/>
+          <text x="312" y="180" text-anchor="middle" font-family="ui-monospace, monospace" font-size="9.5" fill="#96650F">pulled to 18 Aug</text>
+          <text x="312" y="194" text-anchor="middle" font-family="ui-monospace, monospace" font-size="9" fill="#96650F" opacity="0.85">11 days of life discarded</text>
+        </svg>
+      </div>
+      <figcaption>
+        Framing the due date as a window makes both failure modes one check. The warning the user
+        sees isn't "you moved it" — it's how far outside the window the move lands.
+      </figcaption>
+    </figure>
+
+    <h3>Options</h3>
+
+    <div class="opts">
+      <div class="opt pick">
+        <div class="opt-head"><h4>A · Service window per visit, plus a period anchor</h4><span class="chip pick">Recommended</span></div>
+        <p>Derive an earliest-useful and latest-compliant date for each visit from the site's contracted interval and its last completed visit. Show the window on every candidate; warn with a specific number of days when a move lands outside it.</p>
+        <p>Separately, tag each visit with the billing period it belongs to. Moving inside the period is silent; moving across a boundary warns that the period's count changes.</p>
+        <p class="verdict"><b>Why</b> &nbsp;Catches all three failures with one concept, and the window is genuinely useful information even when nobody is moving anything.</p>
+      </div>
+
+      <div class="opt">
+        <div class="opt-head"><h4>B · Interval guard only</h4><span class="chip mby">Partial</span></div>
+        <p>Warn only when the gap since the last visit would exceed the contracted interval.</p>
+        <p class="verdict"><b>Why not</b> &nbsp;Silent on early replacement and on period counts. Cheapest to build, and a reasonable v1 if the window data isn't there yet.</p>
+      </div>
+
+      <div class="opt">
+        <div class="opt-head"><h4>C · Cascade the recurrence</h4><span class="chip no">Reject</span></div>
+        <p>Moving a visit shifts every subsequent one to preserve the interval.</p>
+        <p class="verdict"><b>Why not</b> &nbsp;A single tap to fit today's route silently rewrites months of schedule. Violates the principle that a route change is an occurrence-level act.</p>
+      </div>
+
+      <div class="opt">
+        <div class="opt-head"><h4>D · Compliance ledger, no gating</h4><span class="chip mby">Complement</span></div>
+        <p>Allow everything, track per-site compliance, surface it on the site page and in a report.</p>
+        <p class="verdict"><b>Why not alone</b> &nbsp;Finds out after the fact. Good <em>alongside</em> A — the warning prevents, the ledger proves.</p>
+      </div>
+    </div>
+
+    <div class="rec">
+      <b>Recommendation</b>
+      <p>Ship A with D as the audit surface. Both warn, neither blocks — consistent with the day being flexible. The one prerequisite is knowing whether the contracted interval is stored per site; if it isn't, B is the fallback until it is.</p>
+    </div>
+  </section>
+
+  <!-- ========== 2. START / END ========== -->
+  <section>
+    <div class="sec-head">
+      <span class="sec-num">Case two</span>
+      <h2>Where the route begins, and where it ends</h2>
+    </div>
+
+    <p class="prose">
+      You've settled the start: current position, or an address typed in. The consequence is that
+      the model can no longer store one <code>startEndLocation</code> for both ends — and the end
+      matters more than it looks, because the drive home comes out of the eight hours.
+    </p>
+
+    <h3>Start</h3>
+    <ul class="tight">
+      <li><b>Current position</b> — the default whenever the route is live. Requires a recent fix; fall back to the last known stop if the device hasn't reported.</li>
+      <li><b>Saved location</b> — depot or home. The default when planning a future day, since "current position" is meaningless for next Tuesday.</li>
+      <li><b>Typed address</b> — for "I'm starting from my mum's tomorrow." Needs geocoding, which the map integration already has.</li>
+    </ul>
+
+    <h3>End</h3>
+    <div class="opts">
+      <div class="opt pick">
+        <div class="opt-head"><h4>Offer all three, default to round trip</h4><span class="chip pick">Recommended</span></div>
+        <p><b>Return to start</b> — the classic round trip, and what the current single-field model implies. The return leg counts against the budget.</p>
+        <p><b>End at last visit</b> — an open route. Optimises differently: the solver is free to finish far from home, which often fits noticeably more work into a day.</p>
+        <p><b>Typed address</b> — end somewhere specific.</p>
+        <p class="verdict"><b>Why it matters</b> &nbsp;Open versus round trip can swing the achievable visit count by one or two. Making it a visible toggle turns a hidden assumption into a lever the user can pull.</p>
+      </div>
+    </div>
+
+    <div class="rec">
+      <b>Recommendation</b>
+      <p>Show start and end as two controls directly above the capacity meter, so the effect of switching to an open route is visible as the bar shortening. Default: start = current position when live, depot when planning; end = return to start.</p>
+    </div>
+  </section>
+
+  <!-- ========== 3. TIME WINDOWS ========== -->
+  <section>
+    <div class="sec-head">
+      <span class="sec-num">Case three</span>
+      <h2>Site access windows versus pure speed optimisation</h2>
+    </div>
+
+    <div class="problem">
+      <b>The optimiser can produce an impossible route</b>
+      <p>Every visit already carries a <code>windowStart</code> and <code>windowEnd</code>. If those are real site access constraints — a shop that only allows service before opening, a plant with a maintenance slot — then "fastest route" and "valid route" are different problems. A pure shortest-path solver will happily schedule the 7am-only site at 3pm.</p>
+    </div>
+
+    <div class="opts">
+      <div class="opt">
+        <div class="opt-head"><h4>Treat windows as soft</h4><span class="chip mby">Interim</span></div>
+        <p>Optimise for speed, then flag any stop whose arrival falls outside its window.</p>
+        <p class="verdict"><b>Trade</b> &nbsp;Simple, and honest about what it can't do. The user manually reorders to fix violations, which erodes trust in the optimiser.</p>
+      </div>
+      <div class="opt pick">
+        <div class="opt-head"><h4>Treat windows as hard constraints in the solve</h4><span class="chip pick">Recommended</span></div>
+        <p>Make it a routing problem with time windows rather than a plain travelling-salesman one — the standard formulation every commercial routing product uses.</p>
+        <p class="verdict"><b>Trade</b> &nbsp;Meaningfully harder, and occasionally there's no valid ordering at all, which needs its own message. But an optimiser that produces impossible routes gets switched off.</p>
+      </div>
+    </div>
+
+    <div class="rec">
+      <b>Recommendation</b>
+      <p>Hard constraints — but first confirm what those windows actually mean. If they're merely the nominal service time rather than a real access restriction, this whole case collapses and soft flagging is plenty. Worth one question to ops before any solver work.</p>
+    </div>
+  </section>
+
+  <!-- ========== 4-6 SMALLER ========== -->
+  <section>
+    <div class="sec-head">
+      <span class="sec-num">Cases four to six</span>
+      <h2>The smaller ones</h2>
+    </div>
+
+    <h3>Does the van have the filters?</h3>
+    <p class="prose">
+      Clubbing eight visits into a day is pointless if the van carries stock for four. The
+      supplies forecast already computes filter quantities for a set of visits over a window, and
+      returns <code>{ name, quantity }</code> pairs — so the route builder can show the implied
+      load without new backend work.
+    </p>
+    <div class="rec">
+      <b>Recommendation</b>
+      <p>A collapsed "van load" panel next to the capacity meter, listing filter types and counts for the current selection. Warn on nothing initially — we don't model van stock — but seeing "14 × HEPA-12" before committing is most of the value, and it makes any future stock check a small addition.</p>
+    </div>
+
+    <h3>What happens to a runsheet you emptied?</h3>
+    <p class="prose">
+      Pull all of Wednesday's visits into today and Wednesday's runsheet has no stops left.
+    </p>
+    <div class="opts">
+      <div class="opt pick">
+        <div class="opt-head"><h4>Leave it, flag it empty, offer to delete</h4><span class="chip pick">Recommended</span></div>
+        <p>Auto-deleting destroys a configured route — its hours, start location and break rule — that the user may want next week. Since a runsheet is a recurring template, deleting it removes future weeks too.</p>
+        <p class="verdict"><b>Note</b> &nbsp;This is the clearest case where template-versus-occurrence bites: the occurrence is empty, the template isn't dead.</p>
+      </div>
+    </div>
+
+    <h3>Two visits at the same site on different days</h3>
+    <p class="prose">
+      Clubbing them means one trip serving both. Almost certainly desirable — it's exactly the
+      saving the feature exists to find — but they stay two visit records with two service
+      confirmations, and the route should show them as one stop with two jobs rather than two
+      stops at the same coordinates.
+    </p>
+    <div class="rec">
+      <b>Recommendation</b>
+      <p>Collapse same-site visits into a single map pin and a single row with a "2 jobs" badge; count travel once and service time twice. Actively suggest this pairing when it appears — it's free efficiency and the user may not spot it.</p>
+    </div>
+  </section>
+
+  <!-- QUICK ANSWERS -->
+  <section style="margin-bottom:0">
+    <div class="sec-head">
+      <span class="sec-num">Recap</span>
+      <h2>What each case resolves to</h2>
+    </div>
+
+    <div class="quick">
+      <div class="quick-row head"><div>Case</div><div>Resolution</div></div>
+      <div class="quick-row">
+        <div class="quick-q">Contract compliance</div>
+        <div class="quick-a">Service window per visit (earliest useful → latest compliant) plus a billing-period tag. Warn with days, never block. Compliance ledger as the audit trail.</div>
+      </div>
+      <div class="quick-row">
+        <div class="quick-q">Route start</div>
+        <div class="quick-a">Current position when live, depot when planning, typed address always available.</div>
+      </div>
+      <div class="quick-row">
+        <div class="quick-q">Route end</div>
+        <div class="quick-a">Return to start by default; open route and custom address offered as visible toggles, because the return leg costs budget.</div>
+      </div>
+      <div class="quick-row">
+        <div class="quick-q">Access windows</div>
+        <div class="quick-a">Hard constraints in the solver — after confirming the existing windows really are access restrictions and not just nominal times.</div>
+      </div>
+      <div class="quick-row">
+        <div class="quick-q">Filter stock</div>
+        <div class="quick-a">Show the implied van load from the existing supplies forecast. Informational in v1.</div>
+      </div>
+      <div class="quick-row">
+        <div class="quick-q">Emptied runsheet</div>
+        <div class="quick-a">Keep the template, mark the occurrence empty, offer deletion explicitly.</div>
+      </div>
+      <div class="quick-row">
+        <div class="quick-q">Same site twice</div>
+        <div class="quick-a">One stop, two jobs. Suggest the pairing proactively.</div>
+      </div>
+    </div>
+
+    <p class="prose" style="margin-top:22px">
+      Two things gate the first and third cases respectively: whether the <b>contracted interval
+      is stored per site</b>, and whether a visit's <b>time window is a real access
+      restriction</b>. Both are single questions to ops, and both change how much work the
+      recommendation is.
+    </p>
+  </section>
+
+</div>

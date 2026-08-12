@@ -100,6 +100,31 @@ const filterGoMocks = {
     },
     dashboardStats: { totalSites: 8, activeOfficers: 16 },
   },
+  /**
+   * On-screen vocabulary. Filter Go runs filter replacement on the patrol model,
+   * so the API still says "patrol" while the interface never does. A visit is the
+   * unit of work — what Signal calls a hit.
+   */
+  terms: {
+    patrol: 'Filter Replacement Service',
+    runsheets: 'Runsheets',
+    runsheet: 'Runsheet',
+    hits: 'Visits',
+    hit: 'Visit',
+    // The work template attached to a visit — the on-site checklist that produces
+    // the submitted report. Signal calls it a tour (a patrol route of
+    // checkpoints); for filter replacement it is a service checklist.
+    tour: 'Service Checklist',
+    tours: 'Service Checklists',
+    officers: 'Technicians',
+    officer: 'Technician',
+    supervisor: 'Supervisor',
+    sites: 'Sites',
+    zones: 'Zones',
+    users: 'Users',
+    vehicles: 'Vehicles',
+    dashboard: 'Dashboard',
+  },
 };
 
 const signalMocks = {
@@ -200,6 +225,26 @@ const signalMocks = {
       stats: { total: 100 },
     },
     dashboardStats: { totalSites: 12, activeOfficers: 24 },
+  },
+  terms: {
+    dedicated: 'Dedicated',
+    patrol: 'Patrol',
+    dispatch: 'Dispatch',
+    runsheets: 'Runsheets',
+    runsheet: 'Runsheet',
+    hits: 'Hits',
+    hit: 'Hit',
+    tour: 'Tour',
+    tours: 'Tours',
+    officers: 'Officers',
+    officer: 'Officer',
+    supervisor: 'Supervisor',
+    extra: 'Extra',
+    sites: 'Sites',
+    zones: 'Zones',
+    users: 'Users',
+    vehicles: 'Vehicles',
+    dashboard: 'Dashboard',
   },
 };
 
