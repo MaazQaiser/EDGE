@@ -1,0 +1,9 @@
+import { SCHEDULE_DUTIES } from 'src/utils/constants/schedules';
+
+export const DUTY_COLORS = {
+  [SCHEDULE_DUTIES.DEDICATED]: '#31a150',
+  [SCHEDULE_DUTIES.EXTRA]: '#FFAC0D',
+  [SCHEDULE_DUTIES.PATROL]: '#146dff',
+  [SCHEDULE_DUTIES.HIT]: '#146dff',
+  [SCHEDULE_DUTIES.DISPATCH]: '#9747FF',
+};

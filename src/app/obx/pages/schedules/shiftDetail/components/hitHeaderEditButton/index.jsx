@@ -1,6 +1,6 @@
 import { Box, Typography } from '@mui/material';
 import { makeStyles } from '@mui/styles';
-import { ReactComponent as WarningIcon } from 'assets/svg/warning.svg?react';
+import { ReactComponent as WarningIcon } from 'assets/svg/warning.svg';
 import PropTypes from 'prop-types';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';

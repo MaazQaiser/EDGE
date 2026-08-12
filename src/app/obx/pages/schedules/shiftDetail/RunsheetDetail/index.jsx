@@ -17,17 +17,17 @@ import { toggleAutoCheckoutStatus } from 'services/runsheet.services';
 import DirectionsMap from 'src/app/components/common/directionsMap';
 import ShiftVisitsStatus from 'src/app/components/obxComponents/ShiftVisitsStatus';
 import { ACL_OBX_SCHEDULES_UPDATE } from 'src/app/router/constant/OBXMODULE';
-import { ReactComponent as AddedHitIcon } from 'src/assets/svg/AddedHitIcon.svg?react';
-import { ReactComponent as AssignCarIcon } from 'src/assets/svg/AssignCarIcon.svg?react';
-import { ReactComponent as RunsheetVehicle } from 'src/assets/svg/bluecar.svg?react';
-import { ReactComponent as CheckoutShiftIcon } from 'src/assets/svg/CheckoutShiftIcon.svg?react';
-import { ReactComponent as CoveredRunsheetHit } from 'src/assets/svg/CoveredRunsheetHit.svg?react';
-import { ReactComponent as EditIcon } from 'src/assets/svg/edit-icon.svg?react';
-import { ReactComponent as ExistingHitIcon } from 'src/assets/svg/ExistingHitIcon.svg?react';
-import { ReactComponent as FranchiseIcon } from 'src/assets/svg/FranchiseIconFooter.svg?react';
-import { ReactComponent as RunsheetIcon } from 'src/assets/svg/RunsheetIcon.svg?react';
-import { ReactComponent as StartingPointIcon } from 'src/assets/svg/StartingPointIcon.svg?react';
-import { ReactComponent as UnassignedOfficerIcon } from 'src/assets/svg/UnassignedOfficerIcon.svg?react';
+import { ReactComponent as AddedHitIcon } from 'src/assets/svg/AddedHitIcon.svg';
+import { ReactComponent as AssignCarIcon } from 'src/assets/svg/AssignCarIcon.svg';
+import { ReactComponent as RunsheetVehicle } from 'src/assets/svg/bluecar.svg';
+import { ReactComponent as CheckoutShiftIcon } from 'src/assets/svg/CheckoutShiftIcon.svg';
+import { ReactComponent as CoveredRunsheetHit } from 'src/assets/svg/CoveredRunsheetHit.svg';
+import { ReactComponent as EditIcon } from 'src/assets/svg/edit-icon.svg';
+import { ReactComponent as ExistingHitIcon } from 'src/assets/svg/ExistingHitIcon.svg';
+import { ReactComponent as FranchiseIcon } from 'src/assets/svg/FranchiseIconFooter.svg';
+import { ReactComponent as RunsheetIcon } from 'src/assets/svg/RunsheetIcon.svg';
+import { ReactComponent as StartingPointIcon } from 'src/assets/svg/StartingPointIcon.svg';
+import { ReactComponent as UnassignedOfficerIcon } from 'src/assets/svg/UnassignedOfficerIcon.svg';
 import {
   convertRunSheetMinutesToHoursAndMinutes,
   isObjectEmpty,
@@ -116,7 +116,13 @@ const RunsheetDetail = ({
       : shiftData?.runsheetDetails?.hits;
   }, [shiftData?.runsheetDetails?.hits]);
 
-  const totalDistance = getDistanceValue(shiftData?.pathData?.[0]?.totalDistance);
+  // getDistanceValue returns NaN for a missing total — render 0 rather than "NaN Mi".
+  const toDistance = (value) => {
+    const converted = getDistanceValue(value);
+    return Number.isFinite(Number(converted)) ? converted : 0;
+  };
+
+  const totalDistance = toDistance(shiftData?.pathData?.[0]?.totalDistance);
 
   let converedDistance = shiftData?.runsheetDetails?.hits?.reduce((acc, obj) => {
     const foundHit = shiftData?.pathData?.find(
@@ -165,7 +171,7 @@ const RunsheetDetail = ({
               <Skeleton variant="rectangular" className={classes.fieldSkelton} />
             ) : (
               <Typography variant="subtitle2" className={classes.hitItemSubTitle}>
-                {shiftData?.visitedHit + ' / ' + shiftData?.totalHits}
+                {`${shiftData?.visitedHit ?? 0} / ${shiftData?.totalHits ?? 0}`}
               </Typography>
             )}
           </Box>
@@ -279,7 +285,7 @@ const RunsheetDetail = ({
               <Skeleton variant="rectangular" className={classes.fieldSkelton} />
             ) : (
               <Typography variant="subtitle2" className={classes.hitItemSubTitle}>
-                {`${converedDistance ? getDistanceValue(converedDistance) : 0} / ${totalDistance} `}
+                {`${converedDistance ? toDistance(converedDistance) : 0} / ${totalDistance} `}
                 {getDistanceShortUnit()}
               </Typography>
             )}
@@ -356,6 +362,12 @@ const RunsheetMap = ({ runsheetDetails, visitedPoints, finalVisitSet }) => {
   const classes = useStyles();
   const { t } = useTranslation();
   const { getLabel } = useTenantLabel();
+
+  // Without a Maps key the embed renders a tall grey panel with a Google error
+  // dialog over it, and the legend below then explains symbols nobody can see.
+  // Drop the whole block instead of shipping dead space.
+  const hasMapsKey = Boolean(process.env.REACT_APP_GOOGLE_MAPS_API_KEY);
+  if (!hasMapsKey) return null;
 
   return (
     <Box>

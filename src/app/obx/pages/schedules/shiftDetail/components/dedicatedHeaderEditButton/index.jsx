@@ -1,8 +1,8 @@
 import { Box, Typography } from '@mui/material';
-import { ReactComponent as EditIcon } from 'assets/icons/editPencilIcon.svg?react';
-import { ReactComponent as DedicatedSplitshift } from 'assets/svg/dedicatedsplitshift.svg?react';
-import { ReactComponent as CancelShiftIcon } from 'assets/svg/red-cross.svg?react';
-import { ReactComponent as RestoreShiftIcon } from 'assets/svg/refresh.svg?react';
+import { ReactComponent as EditIcon } from 'assets/icons/editPencilIcon.svg';
+import { ReactComponent as DedicatedSplitshift } from 'assets/svg/dedicatedsplitshift.svg';
+import { ReactComponent as CancelShiftIcon } from 'assets/svg/red-cross.svg';
+import { ReactComponent as RestoreShiftIcon } from 'assets/svg/refresh.svg';
 import PopoverButton from 'commonComponents/popoverButton';
 import PropTypes from 'prop-types';
 import queryString from 'query-string';

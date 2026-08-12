@@ -77,8 +77,25 @@ export const useStyles = makeStyles((theme) => ({
     },
   },
 
+  /* Instructions sat 24px in from their own heading, and from every other
+     section in the drawer, with nothing in the gap to justify the step. The
+     injected HTML also brings its own paragraph margins.
+
+     It also inherited the document's 16px body size, which made the site note the
+     largest text in the drawer — larger than the runsheet, the technician and the
+     visit type above it. Instructions are supporting detail, so they sit at the
+     same 14px as every other value here. */
   instructionTextStyle: {
-    padding: '0px 24px',
+    padding: 0,
+    fontSize: '14px',
+    lineHeight: '20px',
+    color: theme.palette.textPrimary,
+    '& p': {
+      margin: 0,
+    },
+    '& p + p': {
+      marginTop: '8px',
+    },
   },
   accessText: {
     '&.MuiTypography-root ': {

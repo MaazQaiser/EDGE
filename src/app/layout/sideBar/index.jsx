@@ -717,23 +717,34 @@ const Sidebar = ({
               isCollapsed && classes.sidebarFooterExpanded,
               classes.sidebarFooterRelease,
               !isCollapsed && classes.sidebarFooterCompressed,
+              isLocalDemo() && classes.sidebarFooterSticky,
             )}
           >
-            {isLocalDemo() && shouldShowExpanded && (
-              <Box className={classes.demoTenantSwitcher}>
+            {isLocalDemo() && (
+              <Box
+                className={classNames(
+                  classes.demoTenantSwitcher,
+                  !shouldShowExpanded && classes.demoTenantSwitcherCompact,
+                )}
+              >
                 {DEMO_TENANT_OPTIONS.map((option) => (
-                  <Button
+                  <Tooltip
                     key={option.value}
-                    size="small"
-                    variant={activeDemoTenant === option.value ? 'contained' : 'outlined'}
-                    onClick={() => {
-                      if (activeDemoTenant !== option.value) {
-                        setDemoTenant(option.value);
-                      }
-                    }}
+                    title={shouldShowExpanded ? '' : `Switch to ${option.label}`}
+                    placement="right"
                   >
-                    {option.label}
-                  </Button>
+                    <Button
+                      size="small"
+                      variant={activeDemoTenant === option.value ? 'contained' : 'outlined'}
+                      onClick={() => {
+                        if (activeDemoTenant !== option.value) {
+                          setDemoTenant(option.value);
+                        }
+                      }}
+                    >
+                      {shouldShowExpanded ? option.label : option.shortLabel}
+                    </Button>
+                  </Tooltip>
                 ))}
               </Box>
             )}

@@ -1,6 +1,6 @@
 import { Box, Button, Typography } from '@mui/material';
-import { ReactComponent as PlusIcon } from 'assets/svg/addIconBlue.svg?react';
-import { ReactComponent as DeleteIcon } from 'assets/svg/delete-modal.svg?react';
+import { ReactComponent as PlusIcon } from 'assets/svg/addIconBlue.svg';
+import { ReactComponent as DeleteIcon } from 'assets/svg/delete-modal.svg';
 import dayjs from 'dayjs';
 import PropTypes from 'prop-types';
 import { useState } from 'react';

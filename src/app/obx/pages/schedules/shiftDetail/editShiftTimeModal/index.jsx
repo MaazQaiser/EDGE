@@ -12,8 +12,8 @@ import {
   isMoreThan24HoursApart,
 } from 'src/app/obx/pages/schedules/helper';
 import { AlertIcon } from 'src/assets/svg';
-import { ReactComponent as AlertJobIcon } from 'src/assets/svg/AlertJobIcon.svg?react';
-import { ReactComponent as BlueEditPencilIcon } from 'src/assets/svg/edit-bg.svg?react';
+import { ReactComponent as AlertJobIcon } from 'src/assets/svg/AlertJobIcon.svg';
+import { ReactComponent as BlueEditPencilIcon } from 'src/assets/svg/edit-bg.svg';
 import { isObjectEmpty } from 'src/helper/utilityFunctions';
 import useDateTime from 'src/hooks/useDateTime';
 import { updateShiftTimeDedicated } from 'src/services/duty.services';

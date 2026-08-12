@@ -1,0 +1,596 @@
+<meta charset="utf-8">
+<title>Route Optimization & Harmonization — Design</title>
+<style>
+  :root {
+    --ink:#0F1D17; --ink-2:#33463D; --slate:#5C6C63;
+    --rule:#DCE3DD; --rule-soft:#EAEFEA;
+    --paper:#FAFBF9; --card:#FFFFFF;
+    --green:#2DA551; --green-deep:#1F7B3C; --green-wash:#EAF6EE;
+    --amber:#96650F; --amber-wash:#FBF2DF;
+    --clay:#A63D28;  --clay-wash:#FAECE8;
+    --blue:#1F5F8B;  --blue-wash:#E7F0F6;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --measure: 68ch;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ink:#E6EDE8; --ink-2:#B4C3BA; --slate:#8A9A90;
+      --rule:#2A3833; --rule-soft:#1E2A25;
+      --paper:#0C1310; --card:#111A16;
+      --green:#4FC776; --green-deep:#7BD99A; --green-wash:#16281D;
+      --amber:#D9A441; --amber-wash:#2A2213;
+      --clay:#E0836C;  --clay-wash:#2C1A15;
+      --blue:#7FB4D6;  --blue-wash:#14222C;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ink:#E6EDE8; --ink-2:#B4C3BA; --slate:#8A9A90;
+    --rule:#2A3833; --rule-soft:#1E2A25;
+    --paper:#0C1310; --card:#111A16;
+    --green:#4FC776; --green-deep:#7BD99A; --green-wash:#16281D;
+    --amber:#D9A441; --amber-wash:#2A2213;
+    --clay:#E0836C;  --clay-wash:#2C1A15;
+    --blue:#7FB4D6;  --blue-wash:#14222C;
+  }
+  :root[data-theme="light"] {
+    --ink:#0F1D17; --ink-2:#33463D; --slate:#5C6C63;
+    --rule:#DCE3DD; --rule-soft:#EAEFEA;
+    --paper:#FAFBF9; --card:#FFFFFF;
+    --green:#2DA551; --green-deep:#1F7B3C; --green-wash:#EAF6EE;
+    --amber:#96650F; --amber-wash:#FBF2DF;
+    --clay:#A63D28;  --clay-wash:#FAECE8;
+    --blue:#1F5F8B;  --blue-wash:#E7F0F6;
+  }
+
+  body { margin:0; background:var(--paper); color:var(--ink); font-family:var(--sans); font-size:16px; line-height:1.6; -webkit-font-smoothing:antialiased; }
+  .wrap { max-width:940px; margin:0 auto; padding:56px 28px 120px; }
+  .prose { max-width:var(--measure); }
+
+  .masthead { border-bottom:2px solid var(--ink); padding-bottom:22px; margin-bottom:14px; }
+  .kicker { font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--green-deep); margin:0 0 14px; }
+  h1 { font-family:var(--mono); font-size:clamp(29px,4.8vw,44px); line-height:1.07; letter-spacing:-.03em; font-weight:600; margin:0 0 16px; text-wrap:balance; }
+  .standfirst { font-size:18px; line-height:1.55; color:var(--ink-2); max-width:60ch; margin:0; }
+  .meta { display:flex; flex-wrap:wrap; gap:8px 22px; font-family:var(--mono); font-size:11.5px; letter-spacing:.05em; color:var(--slate); margin-bottom:52px; }
+  .meta b { color:var(--ink-2); font-weight:600; }
+
+  section { margin-bottom:58px; }
+  .sec-head { display:flex; align-items:baseline; gap:14px; border-top:1px solid var(--rule); padding-top:14px; margin-bottom:24px; }
+  .sec-tag { font-family:var(--mono); font-size:10.5px; letter-spacing:.13em; text-transform:uppercase; color:var(--slate); white-space:nowrap; padding-top:6px; }
+  h2 { font-family:var(--mono); font-size:25px; letter-spacing:-.02em; font-weight:600; margin:0; text-wrap:balance; }
+  h3 { font-family:var(--mono); font-size:15px; font-weight:600; margin:30px 0 10px; letter-spacing:-.005em; }
+  p { margin:0 0 15px; }
+  code { font-family:var(--mono); font-size:.87em; background:var(--rule-soft); padding:.1em .36em; border-radius:3px; color:var(--ink-2); }
+
+  figure { margin:28px 0; }
+  .figbox { border:1px solid var(--rule); border-radius:4px; background:var(--card); padding:20px 18px 12px; overflow-x:auto; }
+  figure svg { display:block; width:100%; max-width:100%; height:auto; color:var(--ink-2); min-width:620px; }
+  figcaption { font-family:var(--mono); font-size:11.5px; line-height:1.55; color:var(--slate); margin-top:12px; max-width:72ch; }
+
+  .tbl { width:100%; border-collapse:collapse; font-size:14px; }
+  .tbl th, .tbl td { text-align:left; padding:11px 13px; border-bottom:1px solid var(--rule-soft); vertical-align:top; line-height:1.5; }
+  .tbl th { font-family:var(--mono); font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--slate); border-bottom:1px solid var(--rule); }
+  .tbl td:first-child { color:var(--ink); font-weight:600; }
+  .tbl td { color:var(--ink-2); }
+  .tablewrap { overflow-x:auto; border:1px solid var(--rule); border-radius:4px; background:var(--card); padding:4px 14px 8px; margin-top:10px; }
+
+  .chip { font-family:var(--mono); font-size:9.5px; letter-spacing:.09em; text-transform:uppercase; padding:3px 8px; border-radius:10px; font-weight:600; white-space:nowrap; display:inline-block; }
+  .chip.hard { background:var(--clay-wash); color:var(--clay); }
+  .chip.soft { background:var(--amber-wash); color:var(--amber); }
+  .chip.ok   { background:var(--green-wash); color:var(--green-deep); }
+
+  .scopes { display:grid; gap:10px; margin-top:18px; }
+  .scope { border:1px solid var(--rule); border-radius:4px; background:var(--card); padding:15px 18px; border-left:3px solid var(--green); }
+  .scope.mid { border-left-color:var(--amber); }
+  .scope.wide { border-left-color:var(--clay); }
+  .scope-head { display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; margin-bottom:6px; }
+  .scope-head h4 { font-family:var(--mono); font-size:14px; font-weight:600; margin:0; }
+  .scope-head .lvl { font-family:var(--mono); font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--slate); }
+  .scope p { font-size:14.5px; margin:0 0 6px; color:var(--ink-2); }
+  .scope p:last-child { margin-bottom:0; }
+  .scope .risk { font-size:13.5px; color:var(--slate); }
+  .scope .risk b { font-family:var(--mono); font-size:10px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-2); }
+
+  ul.tight { margin:0 0 15px; padding-left:20px; }
+  ul.tight li { margin-bottom:8px; color:var(--ink-2); font-size:14.5px; line-height:1.55; }
+  ul.tight li b { color:var(--ink); }
+
+  .callout { border:1px solid var(--rule); border-left:3px solid var(--clay); background:var(--clay-wash); border-radius:3px; padding:15px 18px; margin:24px 0; font-size:14.5px; line-height:1.55; color:var(--ink-2); }
+  .callout b.lbl { font-family:var(--mono); font-size:10.5px; letter-spacing:.09em; text-transform:uppercase; color:var(--clay); display:block; margin-bottom:6px; }
+  .callout.good { border-left-color:var(--green); background:var(--green-wash); }
+  .callout.good b.lbl { color:var(--green-deep); }
+  .callout.note { border-left-color:var(--blue); background:var(--blue-wash); }
+  .callout.note b.lbl { color:var(--blue); }
+
+  ol.q { margin:0; padding-left:0; list-style:none; counter-reset:q; }
+  ol.q li { counter-increment:q; display:grid; grid-template-columns:34px 1fr; gap:12px; padding:12px 0; border-bottom:1px solid var(--rule-soft); font-size:14.5px; line-height:1.55; color:var(--ink-2); }
+  ol.q li::before { content:"Q" counter(q); font-family:var(--mono); font-size:11px; color:var(--green-deep); padding-top:4px; font-weight:600; }
+  ol.q li b { color:var(--ink); font-weight:600; }
+
+  .stages { display:grid; gap:1px; background:var(--rule); border:1px solid var(--rule); border-radius:4px; overflow:hidden; margin-top:12px; }
+  .stage-row { display:grid; grid-template-columns:92px 1fr 1.1fr; gap:1px; background:var(--rule); }
+  .stage-row > * { background:var(--card); padding:12px 14px; font-size:14px; line-height:1.5; }
+  .stage-row.head > * { background:var(--rule-soft); font-family:var(--mono); font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--slate); }
+  .stage-n { font-family:var(--mono); font-size:11.5px; font-weight:600; color:var(--green-deep); }
+  .stage-w { font-weight:600; color:var(--ink); }
+  .stage-d { color:var(--ink-2); }
+  @media (max-width:680px){ .stage-row{ grid-template-columns:70px 1fr; } .stage-d{ grid-column:2/3; padding-top:0; } }
+</style>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <p class="kicker">FilterGo · Visits · Design spec</p>
+    <h1>Route optimization and harmonization</h1>
+    <p class="standfirst">
+      Two problems that get confused with each other. Optimization orders the stops
+      inside one route. Harmonization decides which route a visit belongs to in the
+      first place — and it is where nearly all the saved time actually is.
+    </p>
+  </header>
+
+  <div class="meta">
+    <span><b>Three scopes</b> sequence · day · week</span>
+    <span><b>Never auto-applies</b></span>
+    <span><b>Follows</b> the clubbing design</span>
+  </div>
+
+  <!-- ===== 1. TWO PROBLEMS ===== -->
+  <section>
+    <div class="sec-head">
+      <span class="sec-tag">Framing</span>
+      <h2>Sequencing is the small half</h2>
+    </div>
+
+    <div class="prose">
+      <p>
+        Reordering eight stops that are already on Tuesday's route might save twenty
+        minutes. Noticing that four of Tuesday's stops are clustered around Wednesday's
+        patch — and swapping them — saves hours. The second is the prize, and it is the
+        automated form of the clubbing the planner does by hand.
+      </p>
+      <p>
+        They need separating because they carry completely different risk. Reordering
+        touches nothing a customer sees. Moving a visit to another day changes when
+        someone's filters get replaced.
+      </p>
+    </div>
+
+    <figure>
+      <div class="figbox">
+        <svg viewBox="0 0 860 330" role="img" aria-label="Two panels of the same eight sites. On the left, two routes criss-cross each other and total four hours twenty of driving. On the right, the same sites split into two geographic clusters totalling two hours thirty-five.">
+          <defs>
+            <marker id="ra" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#2DA551"/>
+            </marker>
+            <marker id="rb" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#96650F"/>
+            </marker>
+          </defs>
+
+          <text x="30" y="24" font-family="ui-monospace, monospace" font-size="11" font-weight="700" fill="currentColor" opacity="0.75">BEFORE — routes overlap</text>
+          <rect x="30" y="36" width="380" height="230" rx="4" fill="none" stroke="currentColor" stroke-width="1.2"/>
+          <rect x="31" y="37" width="378" height="228" fill="currentColor" opacity="0.03"/>
+
+          <polyline points="70,90 250,110 100,200 300,180" fill="none" stroke="#2DA551" stroke-width="2" marker-end="url(#ra)"/>
+          <polyline points="150,80 330,120 60,160 280,230" fill="none" stroke="#96650F" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#rb)"/>
+
+          <circle cx="70" cy="90" r="6" fill="#2DA551"/>
+          <circle cx="250" cy="110" r="6" fill="#2DA551"/>
+          <circle cx="100" cy="200" r="6" fill="#2DA551"/>
+          <circle cx="300" cy="180" r="6" fill="#2DA551"/>
+          <circle cx="150" cy="80" r="6" fill="#96650F"/>
+          <circle cx="330" cy="120" r="6" fill="#96650F"/>
+          <circle cx="60" cy="160" r="6" fill="#96650F"/>
+          <circle cx="280" cy="230" r="6" fill="#96650F"/>
+
+          <text x="46" y="256" font-family="ui-monospace, monospace" font-size="11" font-weight="700" fill="currentColor">4h 20m driving</text>
+
+          <text x="450" y="24" font-family="ui-monospace, monospace" font-size="11" font-weight="700" fill="#2DA551">AFTER — clustered by geography</text>
+          <rect x="450" y="36" width="380" height="230" rx="4" fill="none" stroke="currentColor" stroke-width="1.2"/>
+          <rect x="451" y="37" width="378" height="228" fill="currentColor" opacity="0.03"/>
+
+          <polyline points="490,90 570,80 480,160 520,200" fill="none" stroke="#2DA551" stroke-width="2" marker-end="url(#ra)"/>
+          <polyline points="670,110 750,120 720,180 700,230" fill="none" stroke="#96650F" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#rb)"/>
+
+          <circle cx="490" cy="90" r="6" fill="#2DA551"/>
+          <circle cx="570" cy="80" r="6" fill="#2DA551"/>
+          <circle cx="480" cy="160" r="6" fill="#2DA551"/>
+          <circle cx="520" cy="200" r="6" fill="#2DA551"/>
+          <circle cx="670" cy="110" r="6" fill="#96650F"/>
+          <circle cx="750" cy="120" r="6" fill="#96650F"/>
+          <circle cx="720" cy="180" r="6" fill="#96650F"/>
+          <circle cx="700" cy="230" r="6" fill="#96650F"/>
+
+          <text x="466" y="256" font-family="ui-monospace, monospace" font-size="11" font-weight="700" fill="#2DA551">2h 35m driving · 1h 45m saved</text>
+
+          <line x1="30" y1="288" x2="830" y2="288" stroke="currentColor" stroke-width="1" opacity="0.22"/>
+          <text x="30" y="308" font-family="ui-monospace, monospace" font-size="10.5" fill="currentColor" opacity="0.65">same eight sites, same two days — only which day each visit sits on has changed</text>
+        </svg>
+      </div>
+      <figcaption>
+        No visit was added or dropped and no route was resequenced. The entire saving
+        comes from reassigning visits between two days — which is why harmonization,
+        not sequencing, is the feature worth building.
+      </figcaption>
+    </figure>
+  </section>
+
+  <!-- ===== 2. SCOPES ===== -->
+  <section>
+    <div class="sec-head">
+      <span class="sec-tag">Scopes</span>
+      <h2>Three levels, ascending risk</h2>
+    </div>
+
+    <p class="prose">
+      Each is a separate action with its own button, its own blast radius, and its own
+      confirmation. They ship in this order.
+    </p>
+
+    <div class="scopes">
+      <div class="scope">
+        <div class="scope-head"><h4>Sequence</h4><span class="lvl">Level 1 · one route</span></div>
+        <p>Reorder the stops within a single route. Nothing changes day, nothing changes route. Purely "drive these in a better order".</p>
+        <p class="risk"><b>Risk</b> &nbsp;Near zero. Nobody outside the van is affected. Safe to offer as a one-tap action, and safe to run on a live route.</p>
+      </div>
+
+      <div class="scope mid">
+        <div class="scope-head"><h4>Rebalance the day</h4><span class="lvl">Level 2 · routes on one day</span></div>
+        <p>Move visits between routes that already run on the same day, then resequence each. Changes who does a visit and when in the day, but not which date.</p>
+        <p class="risk"><b>Risk</b> &nbsp;Moderate. Arrival times shift, so any customer expecting a morning slot is affected. No contract implications.</p>
+      </div>
+
+      <div class="scope wide">
+        <div class="scope-head"><h4>Harmonize the week</h4><span class="lvl">Level 3 · across days</span></div>
+        <p>Reassign visits between days to cluster them geographically, then rebalance and resequence. This is the figure above, and where the real saving lives.</p>
+        <p class="risk"><b>Risk</b> &nbsp;High. Every moved visit changes date, which touches the service window and the billing period, and may need the customer told. Must never run unattended.</p>
+      </div>
+    </div>
+
+    <div class="callout note">
+      <b class="lbl">Why separate buttons rather than one clever one</b>
+      A single "optimize" action that sometimes reorders and sometimes silently moves a
+      visit to Thursday is impossible to trust. The user should always know the blast
+      radius before they press, and the wording should say it: <em>Reorder stops</em>,
+      <em>Rebalance Tuesday</em>, <em>Harmonize this week</em>.
+    </div>
+  </section>
+
+  <!-- ===== 3. OBJECTIVE ===== -->
+  <section>
+    <div class="sec-head">
+      <span class="sec-tag">Objective</span>
+      <h2>What "better" means</h2>
+    </div>
+
+    <p class="prose">
+      Optimizers need a single number to minimize, but the business has several goals
+      that trade against each other. Rather than exposing weight sliders nobody can
+      reason about, offer three named intents that set the weights internally.
+    </p>
+
+    <div class="tablewrap">
+      <table class="tbl">
+        <thead><tr><th>Mode</th><th>Minimizes</th><th>Use when</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>Tightest routes</td>
+            <td>Total driving time. The default, and what "fastest and most efficient" means.</td>
+            <td>Normal planning. Fuel and hours are the cost being cut.</td>
+          </tr>
+          <tr>
+            <td>Even days</td>
+            <td>Variance in day length across the week, subject to a driving-time ceiling.</td>
+            <td>When one day is a 9-hour slog and another is half empty.</td>
+          </tr>
+          <tr>
+            <td>Catch up</td>
+            <td>Total lateness — days past each visit's compliant date, weighted by how late.</td>
+            <td>After a bad week, when overdue visits matter more than fuel.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="prose" style="margin-top:18px">
+      All three run the same solver against the same constraints; only the cost weights
+      differ. Showing the resulting trade explicitly — "2h 10m less driving, but Thursday
+      grows to 8h 40m" — is more useful than letting someone tune a slider blind.
+    </p>
+  </section>
+
+  <!-- ===== 4. CONSTRAINTS ===== -->
+  <section>
+    <div class="sec-head">
+      <span class="sec-tag">Constraints</span>
+      <h2>What the solver may never do</h2>
+    </div>
+
+    <p class="prose">
+      Hard constraints make a solution invalid. Soft ones cost points but are allowed —
+      the difference matters, because over-constraining produces "no solution found",
+      which is the worst possible answer to give a planner.
+    </p>
+
+    <div class="tablewrap">
+      <table class="tbl">
+        <thead><tr><th>Constraint</th><th></th><th>Behaviour</th></tr></thead>
+        <tbody>
+          <tr><td>Site access window</td><td><span class="chip hard">Hard</span></td><td>Arrival must fall inside it. A route that reaches a 7am-only site at 3pm is not a worse solution, it is not a solution.</td></tr>
+          <tr><td>Locked stop</td><td><span class="chip hard">Hard</span></td><td>A stop the planner pinned to a position, a day, or a route. Never moved. This is the escape hatch that makes the whole feature usable.</td></tr>
+          <tr><td>Completed or in-progress stop</td><td><span class="chip hard">Hard</span></td><td>Frozen. Only the remaining tail of a live route is solvable.</td></tr>
+          <tr><td>Latest compliant date</td><td><span class="chip hard">Hard</span></td><td>A visit may never be pushed past the date its contract requires. Pulling it earlier is allowed but costed.</td></tr>
+          <tr><td>Eight-hour man-day</td><td><span class="chip soft">Soft</span></td><td>Heavily penalised, not forbidden. A ten-minute overrun that saves an hour elsewhere is a trade a human should get to see.</td></tr>
+          <tr><td>Early replacement</td><td><span class="chip soft">Soft</span></td><td>Costed per day of filter life discarded, so the solver only pulls a visit forward when the driving saved is worth it.</td></tr>
+          <tr><td>Billing period boundary</td><td><span class="chip soft">Soft</span></td><td>Penalised, because moving a visit across a month changes that month's count.</td></tr>
+          <tr><td>Same-site clustering</td><td><span class="chip ok">Free</span></td><td>Two visits at one site collapse to a single stop before solving. Travel is paid once.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout">
+      <b class="lbl">Infeasibility is a UI problem, not just a solver one</b>
+      With hard windows it is entirely possible that no valid arrangement exists. "No
+      solution found" is useless. The solver should instead return the best
+      constraint-violating arrangement it found <em>plus the specific constraint it had
+      to break</em> — "Harbour Way cannot be reached inside its 07:00–09:00 window from
+      any position in this route" — so the planner can unlock something and retry.
+    </div>
+  </section>
+
+  <!-- ===== 5. TRAVEL MODEL ===== -->
+  <section>
+    <div class="sec-head">
+      <span class="sec-tag">Inputs</span>
+      <h2>The travel matrix is the expensive part</h2>
+    </div>
+
+    <p class="prose">
+      Every optimizer needs the time between each pair of stops. That is where the cost
+      and the latency are, and it is worth designing before the solver.
+    </p>
+
+    <ul class="tight">
+      <li><b>It grows quadratically.</b> Fifty stops is 2,450 ordered pairs. A week across several routes gets there quickly, and matrix APIs bill per element.</li>
+      <li><b>But site pairs barely change.</b> The drive from Oak Plaza to Mill Road is the same next week. Cache by site pair with a long expiry and only pay for pairs never seen before — the marginal cost of re-optimizing an existing week approaches zero.</li>
+      <li><b>The depot and "current position" are the exception.</b> Current position is different on every request and cannot be cached, so treat it as one extra row rather than a full rebuild.</li>
+      <li><b>Straight-line distance is a fallback, not a model.</b> The demo uses haversine over an average speed, which is fine for a preview and wrong near water or motorways — exactly the geography where routing matters most.</li>
+      <li><b>Traffic is a decision, not a detail.</b> Time-of-day-aware durations make routes more accurate and the matrix far less cacheable. Recommend starting with free-flow durations plus a margin, and revisiting once the feature has users.</li>
+    </ul>
+
+    <div class="callout note">
+      <b class="lbl">Existing constraint worth knowing</b>
+      Route geometry is currently fetched client-side through Google Directions with
+      waypoint chunking, because Directions caps waypoints per request. That is fine for
+      drawing a line on a map but is the wrong place to solve from — the solver needs a
+      matrix, not a polyline, and it should not run in the browser.
+    </div>
+  </section>
+
+  <!-- ===== 6. WHERE IT RUNS ===== -->
+  <section>
+    <div class="sec-head">
+      <span class="sec-tag">Execution</span>
+      <h2>Two engines, deliberately</h2>
+    </div>
+
+    <div class="tablewrap">
+      <table class="tbl">
+        <thead><tr><th></th><th>Client heuristic</th><th>Server solver</th></tr></thead>
+        <tbody>
+          <tr><td>Purpose</td><td>Instant feedback while selecting visits</td><td>The answer that gets committed</td></tr>
+          <tr><td>Method</td><td>Nearest neighbour over cached straight-line estimates</td><td>Proper vehicle-routing solve with time windows</td></tr>
+          <tr><td>Latency</td><td>Under a frame, runs on every click</td><td>Seconds for a day, longer for a week</td></tr>
+          <tr><td>Accuracy</td><td>Indicative — good enough to show the capacity meter moving</td><td>Committed times shown to customers</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="prose" style="margin-top:18px">
+      The two must never disagree visibly. The client estimate drives the live meter
+      while the planner is choosing; the moment they ask to optimize, the server answer
+      replaces it and the meter re-renders from the real numbers. Any figure a customer
+      might be told comes from the server.
+    </p>
+
+    <h3>Synchronous or not</h3>
+    <ul class="tight">
+      <li><b>Sequence</b> — synchronous. A handful of stops solves fast enough to feel instant.</li>
+      <li><b>Rebalance a day</b> — synchronous with a progress state. Seconds, not minutes.</li>
+      <li><b>Harmonize a week</b> — asynchronous job. The planner starts it, keeps working, and gets a proposal when it lands. A week-scale solve is not something to hold a spinner over.</li>
+    </ul>
+  </section>
+
+  <!-- ===== 7. THE LOOP ===== -->
+  <section>
+    <div class="sec-head">
+      <span class="sec-tag">Interaction</span>
+      <h2>Propose, diff, accept — never apply</h2>
+    </div>
+
+    <p class="prose">
+      The single most important rule. An optimizer that rewrites a plan the moment it is
+      invoked will be switched off after the first time it moves something the planner
+      had a reason for.
+    </p>
+
+    <figure>
+      <div class="figbox">
+        <svg viewBox="0 0 860 250" role="img" aria-label="Flow: the planner invokes a scope, the solver returns a proposal, a diff shows every change with its reason, and the planner accepts all, accepts some, or discards — with locks feeding back into a re-solve.">
+          <defs>
+            <marker id="fa2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+            </marker>
+            <marker id="fa2g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#2DA551"/>
+            </marker>
+            <marker id="fa2a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#96650F"/>
+            </marker>
+          </defs>
+
+          <rect x="24" y="70" width="130" height="52" rx="3" fill="none" stroke="currentColor" stroke-width="1.2"/>
+          <text x="89" y="92" text-anchor="middle" font-family="ui-monospace, monospace" font-size="11.5" font-weight="600" fill="currentColor">Choose scope</text>
+          <text x="89" y="108" text-anchor="middle" font-family="ui-monospace, monospace" font-size="9.5" fill="currentColor" opacity="0.62">and mode</text>
+
+          <line x1="154" y1="96" x2="196" y2="96" stroke="currentColor" stroke-width="1.2" marker-end="url(#fa2)"/>
+
+          <rect x="198" y="70" width="130" height="52" rx="3" fill="none" stroke="currentColor" stroke-width="1.2"/>
+          <text x="263" y="92" text-anchor="middle" font-family="ui-monospace, monospace" font-size="11.5" font-weight="600" fill="currentColor">Solve</text>
+          <text x="263" y="108" text-anchor="middle" font-family="ui-monospace, monospace" font-size="9.5" fill="currentColor" opacity="0.62">locks respected</text>
+
+          <line x1="328" y1="96" x2="370" y2="96" stroke="currentColor" stroke-width="1.2" marker-end="url(#fa2)"/>
+
+          <rect x="372" y="62" width="150" height="68" rx="3" fill="none" stroke="#2DA551" stroke-width="2"/>
+          <text x="447" y="86" text-anchor="middle" font-family="ui-monospace, monospace" font-size="11.5" font-weight="700" fill="#2DA551">Proposal</text>
+          <text x="447" y="102" text-anchor="middle" font-family="ui-monospace, monospace" font-size="9.5" fill="#2DA551" opacity="0.85">every change,</text>
+          <text x="447" y="115" text-anchor="middle" font-family="ui-monospace, monospace" font-size="9.5" fill="#2DA551" opacity="0.85">every reason</text>
+
+          <path d="M 522 82 L 566 82" fill="none" stroke="#2DA551" stroke-width="1.5" marker-end="url(#fa2g)"/>
+          <rect x="568" y="58" width="126" height="46" rx="3" fill="none" stroke="#2DA551" stroke-width="1.4"/>
+          <text x="631" y="78" text-anchor="middle" font-family="ui-monospace, monospace" font-size="10.5" font-weight="600" fill="#2DA551">Accept all</text>
+          <text x="631" y="93" text-anchor="middle" font-family="ui-monospace, monospace" font-size="9" fill="#2DA551" opacity="0.8">or accept some</text>
+
+          <path d="M 522 112 L 566 112" fill="none" stroke="#96650F" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#fa2a)"/>
+          <rect x="568" y="120" width="126" height="46" rx="3" fill="none" stroke="#96650F" stroke-width="1.4" stroke-dasharray="5 4"/>
+          <text x="631" y="140" text-anchor="middle" font-family="ui-monospace, monospace" font-size="10.5" font-weight="600" fill="#96650F">Lock and retry</text>
+          <text x="631" y="155" text-anchor="middle" font-family="ui-monospace, monospace" font-size="9" fill="#96650F" opacity="0.85">pin what must not move</text>
+
+          <path d="M 568 143 L 500 143 L 263 143 L 263 126" fill="none" stroke="#96650F" stroke-width="1.4" stroke-dasharray="5 4" marker-end="url(#fa2a)"/>
+
+          <path d="M 694 81 L 742 81" fill="none" stroke="#2DA551" stroke-width="1.5" marker-end="url(#fa2g)"/>
+          <rect x="744" y="58" width="92" height="46" rx="3" fill="#2DA551"/>
+          <text x="790" y="78" text-anchor="middle" font-family="ui-monospace, monospace" font-size="10.5" font-weight="700" fill="#FFFFFF">Commit</text>
+          <text x="790" y="93" text-anchor="middle" font-family="ui-monospace, monospace" font-size="9" fill="#FFFFFF" opacity="0.9">one transaction</text>
+
+          <line x1="24" y1="196" x2="836" y2="196" stroke="currentColor" stroke-width="1" opacity="0.22"/>
+          <text x="24" y="216" font-family="ui-monospace, monospace" font-size="10.5" fill="currentColor" opacity="0.65">nothing is written until commit — the plan on screen stays the plan until the planner says otherwise</text>
+          <text x="24" y="234" font-family="ui-monospace, monospace" font-size="10.5" fill="#96650F">locking is the pressure valve: it turns "the optimizer is wrong" into "the optimizer now knows better"</text>
+        </svg>
+      </div>
+      <figcaption>
+        Locking is what converts disagreement into input. Without it the only response to
+        a bad suggestion is to discard the whole proposal, which is how these features
+        end up unused.
+      </figcaption>
+    </figure>
+
+    <h3>What the diff has to show</h3>
+    <ul class="tight">
+      <li><b>The headline trade</b> — "1h 45m less driving. 3 visits move day. Thursday grows by 40m."</li>
+      <li><b>Per change, the reason</b> — "Kiln Lane moved Wed → Tue: 22m closer to the rest of Tuesday's cluster, still inside its service window."</li>
+      <li><b>What got worse</b> — stated as plainly as what got better. A proposal that only lists wins reads like a sales pitch and gets distrusted.</li>
+      <li><b>Anything needing a customer told</b> — collected into one list, so notifying is a single reviewed action rather than a side effect.</li>
+    </ul>
+  </section>
+
+  <!-- ===== 8. STABILITY ===== -->
+  <section>
+    <div class="sec-head">
+      <span class="sec-tag">Trust</span>
+      <h2>The churn problem</h2>
+    </div>
+
+    <div class="prose">
+      <p>
+        Routing solutions are unstable. Add one visit and the optimal ordering can change
+        almost everywhere, because a tiny cost improvement is still an improvement.
+        Mathematically correct, and it makes the product feel random — the planner
+        re-runs it, the whole week rearranges, and they stop believing any of it.
+      </p>
+      <p>
+        Three mechanisms, all of which cost a little optimality and buy a lot of trust:
+      </p>
+    </div>
+
+    <ul class="tight">
+      <li><b>Bias toward the current plan.</b> Add a small cost to every change from the existing arrangement, so the solver only moves something when the gain clearly outweighs the disruption.</li>
+      <li><b>Suppress trivial proposals.</b> Below a threshold — say fifteen minutes or three percent — report "already close to optimal" rather than offering a reshuffle nobody wants.</li>
+      <li><b>Deterministic tie-breaking.</b> Identical input must give identical output. Break ties on a stable key such as site id, never on iteration order, so re-running never produces a different-but-equal answer.</li>
+    </ul>
+
+    <div class="callout good">
+      <b class="lbl">The test that matters</b>
+      Run the optimizer twice on an unchanged week. If it proposes anything at all the
+      second time, the feature is not ready — it means the first answer was arbitrary,
+      and users will notice long before they can articulate why they distrust it.
+    </div>
+  </section>
+
+  <!-- ===== 9. LIVE ===== -->
+  <section>
+    <div class="sec-head">
+      <span class="sec-tag">Live routes</span>
+      <h2>Re-optimizing a day in progress</h2>
+    </div>
+
+    <p class="prose">
+      The clubbing design already establishes that a live route is a valid target. The
+      same rules govern re-optimization, and one more besides.
+    </p>
+
+    <ul class="tight">
+      <li><b>Solve only the tail.</b> Completed and in-progress stops are fixed; the remaining stops are the problem to solve.</li>
+      <li><b>Anchor on the actual position,</b> not the depot. Optimizing from the morning start point produces an order the driver has already invalidated.</li>
+      <li><b>Budget from elapsed time.</b> Four hours already spent means four hours less to allocate, regardless of what was planned.</li>
+      <li><b>Do not resequence what the driver can see.</b> If the next stop is already on their device and they are driving to it, reordering it out from under them is worse than a suboptimal route. Treat the next stop as locked unless they explicitly release it.</li>
+    </ul>
+  </section>
+
+  <!-- ===== 10. ROLLOUT ===== -->
+  <section>
+    <div class="sec-head">
+      <span class="sec-tag">Rollout</span>
+      <h2>Staging so it can be trusted incrementally</h2>
+    </div>
+
+    <div class="stages">
+      <div class="stage-row head"><div>Stage</div><div>What ships</div><div>What it proves</div></div>
+      <div class="stage-row">
+        <div class="stage-n">One</div>
+        <div class="stage-w">Sequence a single route</div>
+        <div class="stage-d">The travel matrix, the caching, and the propose-diff-accept loop — on the scope where a wrong answer costs nothing.</div>
+      </div>
+      <div class="stage-row">
+        <div class="stage-n">Two</div>
+        <div class="stage-w">Locking and the diff view</div>
+        <div class="stage-d">That planners can disagree productively. Until locking exists, wider scopes should not ship.</div>
+      </div>
+      <div class="stage-row">
+        <div class="stage-n">Three</div>
+        <div class="stage-w">Rebalance one day</div>
+        <div class="stage-d">Multi-route assignment, still inside a single date, so no service window or billing period moves.</div>
+      </div>
+      <div class="stage-row">
+        <div class="stage-n">Four</div>
+        <div class="stage-w">Harmonize the week</div>
+        <div class="stage-d">The real prize — and the first stage where compliance windows, customer notification and asynchronous solving all matter at once.</div>
+      </div>
+      <div class="stage-row">
+        <div class="stage-n">Five</div>
+        <div class="stage-w">Suggested harmonization</div>
+        <div class="stage-d">Proactive: "Tuesday and Wednesday overlap heavily — 1h 45m available." Only worth doing once the manual path is trusted.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 11. OPEN ===== -->
+  <section style="margin-bottom:0">
+    <div class="sec-head">
+      <span class="sec-tag">Open</span>
+      <h2>Questions this raises</h2>
+    </div>
+
+    <ol class="q">
+      <li><b>Is there an existing routing engine to build on?</b> There is a routing service endpoint in the codebase already. Whether it can do a constrained multi-stop solve or only returns geometry decides whether this is integration or a new component.</li>
+      <li><b>Buy or build the solver?</b> Mature open-source routing libraries handle time windows and capacity properly. Writing one is rarely the right call, but it does mean a service to host.</li>
+      <li><b>What is the realistic problem size?</b> Ten stops a day is a different engineering problem from two hundred. This is the same volume question the clubbing design left open, and it now determines the architecture rather than just the UI.</li>
+      <li><b>Are site access windows real?</b> Still the pivotal unknown. If they are genuine restrictions this is routing with time windows; if they are nominal service times it is far simpler.</li>
+      <li><b>How accurate must arrival times be</b> if customers are told them? That decides traffic-aware routing, which in turn largely decides the matrix caching strategy.</li>
+      <li><b>Should harmonization ever run unattended</b> — a weekly proposal waiting on Monday morning — or only on demand? Unattended is powerful and needs the trust mechanisms to be proven first.</li>
+      <li><b>Who is accountable when an optimized route fails?</b> If a technician runs late because the plan was tight, the audit trail needs to show the route was machine-proposed and human-accepted.</li>
+    </ol>
+  </section>
+
+</div>

@@ -1,0 +1,287 @@
+<meta charset="utf-8">
+<title>Discovery Questions — Visits &amp; Runsheet Clubbing</title>
+<style>
+  :root {
+    --ink:#0F1D17; --ink-2:#33463D; --slate:#5C6C63;
+    --rule:#DCE3DD; --rule-soft:#EAEFEA;
+    --paper:#FAFBF9; --card:#FFFFFF;
+    --green:#2DA551; --green-deep:#1F7B3C; --green-wash:#EAF6EE;
+    --amber:#96650F; --amber-wash:#FBF2DF;
+    --clay:#A63D28;  --clay-wash:#FAECE8;
+    --blue:#1F5F8B;  --blue-wash:#E7F0F6;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --measure: 68ch;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ink:#E6EDE8; --ink-2:#B4C3BA; --slate:#8A9A90;
+      --rule:#2A3833; --rule-soft:#1E2A25;
+      --paper:#0C1310; --card:#111A16;
+      --green:#4FC776; --green-deep:#7BD99A; --green-wash:#16281D;
+      --amber:#D9A441; --amber-wash:#2A2213;
+      --clay:#E0836C;  --clay-wash:#2C1A15;
+      --blue:#7FB4D6;  --blue-wash:#14222C;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ink:#E6EDE8; --ink-2:#B4C3BA; --slate:#8A9A90;
+    --rule:#2A3833; --rule-soft:#1E2A25;
+    --paper:#0C1310; --card:#111A16;
+    --green:#4FC776; --green-deep:#7BD99A; --green-wash:#16281D;
+    --amber:#D9A441; --amber-wash:#2A2213;
+    --clay:#E0836C;  --clay-wash:#2C1A15;
+    --blue:#7FB4D6;  --blue-wash:#14222C;
+  }
+  :root[data-theme="light"] {
+    --ink:#0F1D17; --ink-2:#33463D; --slate:#5C6C63;
+    --rule:#DCE3DD; --rule-soft:#EAEFEA;
+    --paper:#FAFBF9; --card:#FFFFFF;
+    --green:#2DA551; --green-deep:#1F7B3C; --green-wash:#EAF6EE;
+    --amber:#96650F; --amber-wash:#FBF2DF;
+    --clay:#A63D28;  --clay-wash:#FAECE8;
+    --blue:#1F5F8B;  --blue-wash:#E7F0F6;
+  }
+
+  body { margin:0; background:var(--paper); color:var(--ink); font-family:var(--sans); font-size:16px; line-height:1.6; -webkit-font-smoothing:antialiased; }
+  .wrap { max-width:900px; margin:0 auto; padding:56px 28px 120px; }
+  .prose { max-width:var(--measure); }
+
+  .masthead { border-bottom:2px solid var(--ink); padding-bottom:22px; margin-bottom:14px; }
+  .kicker { font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--green-deep); margin:0 0 14px; }
+  h1 { font-family:var(--mono); font-size:clamp(28px,4.6vw,42px); line-height:1.07; letter-spacing:-.03em; font-weight:600; margin:0 0 16px; text-wrap:balance; }
+  .standfirst { font-size:17.5px; line-height:1.55; color:var(--ink-2); max-width:60ch; margin:0; }
+  .meta { display:flex; flex-wrap:wrap; gap:8px 22px; font-family:var(--mono); font-size:11.5px; letter-spacing:.05em; color:var(--slate); margin-bottom:44px; }
+  .meta b { color:var(--ink-2); font-weight:600; }
+
+  /* audience banner */
+  .audience { border-top:2px solid var(--ink); padding-top:16px; margin:56px 0 8px; }
+  .audience:first-of-type { margin-top:40px; }
+  .aud-label { font-family:var(--mono); font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--slate); margin:0 0 6px; }
+  .audience h2 { font-family:var(--mono); font-size:27px; letter-spacing:-.025em; font-weight:600; margin:0 0 8px; }
+  .audience p { font-size:15px; color:var(--ink-2); max-width:62ch; margin:0; }
+
+  h3 { font-family:var(--mono); font-size:14px; font-weight:600; letter-spacing:.02em; text-transform:uppercase; color:var(--slate); margin:38px 0 4px; padding-bottom:7px; border-bottom:1px solid var(--rule); }
+
+  /* question list */
+  ol.qs { list-style:none; margin:0; padding:0; counter-reset:none; }
+  ol.qs li { display:grid; grid-template-columns:38px 1fr auto; gap:4px 13px; padding:14px 0; border-bottom:1px solid var(--rule-soft); align-items:start; }
+  .qn { font-family:var(--mono); font-size:11px; font-weight:600; color:var(--green-deep); padding-top:3px; letter-spacing:.03em; }
+  .qt { font-size:15.5px; line-height:1.5; color:var(--ink); font-weight:500; }
+  .qwhy { grid-column:2/4; font-size:13.5px; line-height:1.5; color:var(--slate); }
+  .qwhy b { font-family:var(--mono); font-size:10px; letter-spacing:.09em; text-transform:uppercase; color:var(--ink-2); font-weight:600; }
+  .qwhy code { font-family:var(--mono); font-size:11.5px; background:var(--rule-soft); padding:.08em .34em; border-radius:3px; color:var(--ink-2); }
+  @media (max-width:640px){ ol.qs li{ grid-template-columns:30px 1fr; } .prio{ grid-column:2/3; justify-self:start; margin-top:4px; } .qwhy{ grid-column:2/3; } }
+
+  .prio { font-family:var(--mono); font-size:9px; letter-spacing:.09em; text-transform:uppercase; font-weight:700; padding:3px 7px; border-radius:9px; white-space:nowrap; }
+  .prio.block { background:var(--clay-wash); color:var(--clay); }
+  .prio.soon  { background:var(--amber-wash); color:var(--amber); }
+  .prio.later { background:var(--rule-soft); color:var(--slate); }
+
+  /* assumptions box */
+  .assump { border:1px solid var(--rule); border-left:3px solid var(--blue); background:var(--blue-wash); border-radius:3px; padding:18px 20px; margin:28px 0; }
+  .assump h4 { font-family:var(--mono); font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--blue); margin:0 0 10px; }
+  .assump ul { margin:0; padding-left:18px; }
+  .assump li { font-size:14px; line-height:1.55; color:var(--ink-2); margin-bottom:6px; }
+  .assump li b { color:var(--ink); font-weight:600; }
+  .assump p { font-size:13.5px; color:var(--slate); margin:11px 0 0; }
+
+  .callout { border:1px solid var(--rule); border-left:3px solid var(--clay); background:var(--clay-wash); border-radius:3px; padding:14px 17px; margin:24px 0; font-size:14.5px; line-height:1.55; color:var(--ink-2); }
+  .callout b { font-family:var(--mono); font-size:10.5px; letter-spacing:.09em; text-transform:uppercase; color:var(--clay); display:block; margin-bottom:5px; }
+
+  .legend { display:flex; flex-wrap:wrap; gap:16px; font-size:13px; color:var(--slate); margin:22px 0 8px; align-items:center; }
+  code { font-family:var(--mono); font-size:.87em; background:var(--rule-soft); padding:.1em .36em; border-radius:3px; color:var(--ink-2); }
+</style>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <p class="kicker">FilterGo · Scheduler · Discovery</p>
+    <h1>Questions to take into the room</h1>
+    <p class="standfirst">
+      Everything the code couldn't answer about visits, runsheets, and clubbing them together —
+      split by who can actually answer it. Anything already settled by reading the repo has been
+      left out.
+    </p>
+  </header>
+
+  <div class="meta">
+    <span><b>49 questions</b></span>
+    <span><b>14 blocking</b></span>
+    <span><b>24 delivery lead · 25 devs</b></span>
+  </div>
+
+  <div class="legend">
+    <span class="prio block">Blocking</span><span>answer before build starts</span>
+    <span class="prio soon">Soon</span><span>needed during build</span>
+    <span class="prio later">Later</span><span>can follow</span>
+  </div>
+
+  <div class="assump">
+    <h4>Start here — assumptions we've locked, please challenge them</h4>
+    <ul>
+      <li><b>A runsheet is a weekday-recurring template</b>, not a dated object. Read from <code>POST /shiftassignment/patrol/template</code>.</li>
+      <li><b>A hit's weekday is fixed</b> by its site's job. So clubbing only ever groups hits already on that day.</li>
+      <li><b>Tour-less visits are skipped</b>, not blocked — the rest of the batch still merges.</li>
+      <li><b>No cap</b> on visits per runsheet; projected duration is the only constraint.</li>
+      <li><b>Split runsheets can't be a merge target</b> in v1.</li>
+      <li><b>Adding to a live/started runsheet</b> is currently assumed out of scope.</li>
+    </ul>
+    <p>If any of these is wrong, it changes the design rather than just the code — worth five minutes at the top of the meeting.</p>
+  </div>
+
+  <!-- ============== DELIVERY LEAD ============== -->
+  <div class="audience">
+    <p class="aud-label">Audience one</p>
+    <h2>Delivery lead, product &amp; ops</h2>
+    <p>Business intent, contractual constraints, and the operational rules no amount of code reading will reveal.</p>
+  </div>
+
+  <h3>Scope &amp; value</h3>
+  <ol class="qs">
+    <li><span class="qn">DL-01</span><span class="qt">Who is the primary user — a dispatcher planning next week, or a supervisor reacting to today?</span><span class="prio block">Blocking</span>
+      <span class="qwhy">Planning wants density and bulk actions; reacting wants status and exceptions. It changes the default view, the sort order, and whether live runsheets must be editable.</span></li>
+    <li><span class="qn">DL-02</span><span class="qt">What do schedulers do today instead? Spreadsheet, memory, or the existing Assign Hits page?</span><span class="prio soon">Soon</span>
+      <span class="qwhy">If there's a spreadsheet in the loop, its columns are the real requirements doc.</span></li>
+    <li><span class="qn">DL-03</span><span class="qt">How many unassigned visits actually pile up in a typical week, and at the worst site?</span><span class="prio soon">Soon</span>
+      <span class="qwhy">Decides whether this is a 20-row list or a 2,000-row virtualized grid. Currently guessed.</span></li>
+    <li><span class="qn">DL-04</span><span class="qt">Is this FilterGo-only, or does Signal get it too?</span><span class="prio block">Blocking</span>
+      <span class="qwhy">The code path is shared — the API says <code>patrol</code> for both — so Signal exposure is nearly free, but it changes labelling, QA scope, and rollout.</span></li>
+    <li><span class="qn">DL-05</span><span class="qt">What does success look like in numbers — fewer unassigned visits, less planning time, better route density?</span><span class="prio soon">Soon</span>
+      <span class="qwhy">Determines what we instrument. Right now nothing measures this.</span></li>
+    <li><span class="qn">DL-06</span><span class="qt">Is a specific customer or deadline driving this?</span><span class="prio soon">Soon</span>
+      <span class="qwhy">A named customer usually carries the real edge cases with them.</span></li>
+  </ol>
+
+  <h3>Service cadence &amp; contracts</h3>
+  <ol class="qs">
+    <li><span class="qn">DL-07</span><span class="qt">Is a site's visit frequency contractual, or an internal planning choice?</span><span class="prio block">Blocking</span>
+      <span class="qwhy">The whole design assumes it's contractual and therefore untouchable by a scheduler. If it's soft, cross-day clubbing becomes the more valuable feature.</span></li>
+    <li><span class="qn">DL-08</span><span class="qt">Can a visit ever legitimately move to a different weekday? Who authorises it?</span><span class="prio block">Blocking</span>
+      <span class="qwhy">This is the single assumption most likely to be wrong. Directly validates or kills decision D1.</span></li>
+    <li><span class="qn">DL-09</span><span class="qt">Is there a tolerance around the scheduled day — can a Monday filter change happen Tuesday without breaching anything?</span><span class="prio soon">Soon</span>
+      <span class="qwhy">A ±1 day tolerance would let us suggest clubbing opportunities across adjacent days without a contract change.</span></li>
+    <li><span class="qn">DL-10</span><span class="qt">Who owns changing a site's service cadence today, and through what screen?</span><span class="prio later">Later</span>
+      <span class="qwhy">If clubbing surfaces "this would be better on Tuesday", we need somewhere to send the user.</span></li>
+  </ol>
+
+  <h3>Operational rules</h3>
+  <ol class="qs">
+    <li><span class="qn">DL-11</span><span class="qt">Is there a maximum number of visits per runsheet, or a maximum route duration?</span><span class="prio block">Blocking</span>
+      <span class="qwhy">We've assumed no cap and used projected duration as the only limit. A real cap becomes a hard validation rule.</span></li>
+    <li><span class="qn">DL-12</span><span class="qt">What's the acceptable drive time or distance between consecutive visits?</span><span class="prio soon">Soon</span>
+      <span class="qwhy">Nothing currently stops someone clubbing visits 60 miles apart. Needs a warn threshold at minimum.</span></li>
+    <li><span class="qn">DL-13</span><span class="qt">What should happen when the target runsheet has been split across officers?</span><span class="prio block">Blocking</span>
+      <span class="qwhy">Which half does a new visit join? We've blocked split runsheets as targets purely because the rule is undefined.</span></li>
+    <li><span class="qn">DL-14</span><span class="qt">Is pushing a route past its scheduled end time acceptable, does it need approval, or is it forbidden?</span><span class="prio soon">Soon</span>
+      <span class="qwhy">Decides whether overrun is a warning the user can click through or a hard block.</span></li>
+    <li><span class="qn">DL-15</span><span class="qt">If a route grows past a break-rule threshold, who adjusts the break rule — the system or a human?</span><span class="prio soon">Soon</span>
+      <span class="qwhy">Runsheets carry <code>breakRule</code> and a payable flag. We currently warn and change nothing.</span></li>
+    <li><span class="qn">DL-16</span><span class="qt">Can visits be added to a runsheet whose shift has already started today?</span><span class="prio soon">Soon</span>
+      <span class="qwhy">Editing a recurring template mid-execution is very different from planning next week. See also DEV-04.</span></li>
+    <li><span class="qn">DL-17</span><span class="qt">When a visit already sits on another runsheet, is moving it a normal action or an exception?</span><span class="prio soon">Soon</span>
+      <span class="qwhy">Changes whether "move" is a first-class button or something behind a confirmation.</span></li>
+    <li><span class="qn">DL-18</span><span class="qt">Should missed visits appear in the same clubbing flow, or stay in their own drawer?</span><span class="prio later">Later</span>
+      <span class="qwhy">Missed hits are a separate entity with their own reassign path that already works.</span></li>
+  </ol>
+
+  <h3>Governance</h3>
+  <ol class="qs">
+    <li><span class="qn">DL-19</span><span class="qt">Which roles may bulk-assign visits? Same people who can edit a runsheet today?</span><span class="prio soon">Soon</span>
+      <span class="qwhy">We've assumed <code>runsheets.update</code> and <code>runsheets.create</code> are sufficient.</span></li>
+    <li><span class="qn">DL-20</span><span class="qt">Does the assigned officer get notified when visits are added to a route they already own?</span><span class="prio soon">Soon</span>
+      <span class="qwhy">Especially if the route is for tomorrow. No notification is currently designed.</span></li>
+    <li><span class="qn">DL-21</span><span class="qt">Does a merge ever need approval, or is the scheduler's word final?</span><span class="prio later">Later</span>
+      <span class="qwhy">An approval step would change this from one action into a workflow.</span></li>
+    <li><span class="qn">DL-22</span><span class="qt">What has to be auditable — who clubbed what, when, and why?</span><span class="prio later">Later</span>
+      <span class="qwhy"><code>hitAdded</code> / <code>hitRemoved</code> log actions exist. Question is whether a bulk merge is one entry or many.</span></li>
+  </ol>
+
+  <h3>Language</h3>
+  <ol class="qs">
+    <li><span class="qn">DL-23</span><span class="qt">What does FilterGo actually call these on screen — visit, hit, runsheet, route, filter change?</span><span class="prio block">Blocking</span>
+      <span class="qwhy">The demo's tenant labels are Signal-only; there are no FilterGo term overrides in the codebase at all. Every string in this feature depends on the answer.</span></li>
+    <li><span class="qn">DL-24</span><span class="qt">Who maintains tenant labels, and are they per-customer or per-brand?</span><span class="prio soon">Soon</span>
+      <span class="qwhy">Labels come from an API at runtime, so someone somewhere is authoring them.</span></li>
+  </ol>
+
+  <!-- ============== DEVS ============== -->
+  <div class="audience">
+    <p class="aud-label">Audience two</p>
+    <h2>Devs &amp; backend</h2>
+    <p>Model semantics, transactional behaviour, and the reasons behind constraints the frontend currently just obeys.</p>
+  </div>
+
+  <h3>Data model &amp; lifecycle</h3>
+  <ol class="qs">
+    <li><span class="qn">DEV-01</span><span class="qt">Confirm: a runsheet is a weekly-recurring template keyed to one <code>dutyDay</code>, correct?</span><span class="prio block">Blocking</span>
+      <span class="qwhy">Inferred from the <code>/template</code> endpoint and day-of-week listing. Everything downstream rests on it.</span></li>
+    <li><span class="qn">DEV-02</span><span class="qt">Is a hit a materialised row, or computed on the fly from the site's job config?</span><span class="prio block">Blocking</span>
+      <span class="qwhy">Determines whether we can attach state to a hit, and whether hit IDs are stable across weeks.</span></li>
+    <li><span class="qn">DEV-03</span><span class="qt">How far ahead are hits generated? Is there a rolling horizon?</span><span class="prio soon">Soon</span>
+      <span class="qwhy">Sets how far forward the planning screen can usefully look.</span></li>
+    <li><span class="qn">DEV-04</span><span class="qt">If I add a visit to a Monday runsheet template, does <em>this</em> Monday get it, or only future Mondays?</span><span class="prio block">Blocking</span>
+      <span class="qwhy">The biggest unknown in the whole design. It decides whether the UI must expose a "from when" choice, as the dedicated-shift flow does with <code>todayOnly</code> / <code>todayOnwards</code>.</span></li>
+    <li><span class="qn">DEV-05</span><span class="qt">When does a template become an instance — what creates a <code>shiftActivityLog</code>, and when?</span><span class="prio soon">Soon</span>
+      <span class="qwhy">We need to know which layer the merge writes to and what the user sees afterwards.</span></li>
+    <li><span class="qn">DEV-06</span><span class="qt">What's the difference between <code>hitUtcDay</code> and <code>dutyDay</code>?</span><span class="prio soon">Soon</span>
+      <span class="qwhy">Both appear in payloads. A franchise near a timezone boundary could see them disagree.</span></li>
+    <li><span class="qn">DEV-07</span><span class="qt">What's the lifecycle of a missed hit — is <code>missedHitId</code> a different entity or the same hit in another state?</span><span class="prio later">Later</span>
+      <span class="qwhy"><code>visitRowIdKey</code> treats hit, missed hit, and dispatch as interchangeable row identities.</span></li>
+    <li><span class="qn">DEV-08</span><span class="qt">Can one hit belong to more than one runsheet?</span><span class="prio soon">Soon</span>
+      <span class="qwhy">If the model permits it, "move" and "add" need different handling and duplicates become possible.</span></li>
+  </ol>
+
+  <h3>API behaviour</h3>
+  <ol class="qs">
+    <li><span class="qn">DEV-09</span><span class="qt">Is <code>addHitToRunsheet</code> transactional across the array, or does it apply partially?</span><span class="prio block">Blocking</span>
+      <span class="qwhy">Decides whether a failed 20-visit merge leaves the user with 14 assigned and no way to tell.</span></li>
+    <li><span class="qn">DEV-10</span><span class="qt">What does it validate server-side — window overlap, duplicates, day mismatch, tour presence?</span><span class="prio block">Blocking</span>
+      <span class="qwhy">Tells us which rules the client must enforce and which are already guaranteed.</span></li>
+    <li><span class="qn">DEV-11</span><span class="qt">What does it return on rejection — a per-hit error shape, or a single message?</span><span class="prio soon">Soon</span>
+      <span class="qwhy">A single string can't drive a per-visit error state in the confirmation UI.</span></li>
+    <li><span class="qn">DEV-12</span><span class="qt">Can we add a bulk eligibility endpoint taking <code>hitIds[]</code> + <code>dutyDay</code>?</span><span class="prio soon">Soon</span>
+      <span class="qwhy">Today's <code>findRunsheet/{hitId}/{day}</code> is per-hit — a 20-visit selection means 20 round trips plus client-side intersection.</span></li>
+    <li><span class="qn">DEV-13</span><span class="qt">Can the unassigned-hits endpoint take a date range instead of a single weekday?</span><span class="prio soon">Soon</span>
+      <span class="qwhy"><code>/shift/patrol/unassigned/hits/{day}</code> is one day. A week view needs a range or seven calls.</span></li>
+    <li><span class="qn">DEV-14</span><span class="qt">Who owns route optimisation — does the server reorder, or must the client send an ordered <code>pathData</code>?</span><span class="prio block">Blocking</span>
+      <span class="qwhy">Determines whether the confirmation step shows a server-computed order or one we calculate.</span></li>
+    <li><span class="qn">DEV-15</span><span class="qt">What happens if <code>pathData</code> is inconsistent with the <code>hits</code> array in the same payload?</span><span class="prio soon">Soon</span>
+      <span class="qwhy">The two are sent together and could drift, especially with concurrent editors.</span></li>
+    <li><span class="qn">DEV-16</span><span class="qt">Is there optimistic locking on a runsheet? What if two schedulers merge into the same one at once?</span><span class="prio soon">Soon</span>
+      <span class="qwhy">Two clients each sending a full <code>pathData</code> will silently clobber each other.</span></li>
+  </ol>
+
+  <h3>Existing constraints</h3>
+  <ol class="qs">
+    <li><span class="qn">DEV-17</span><span class="qt">Why must a hit have a tour before joining a runsheet — is that a backend rule or just a UI convention?</span><span class="prio block">Blocking</span>
+      <span class="qwhy">The frontend refuses it client-side. If the backend accepts it, our exclusion rule may be unnecessarily strict.</span></li>
+    <li><span class="qn">DEV-18</span><span class="qt">What's the difference between <code>addHit</code> and <code>addHitToRunsheet</code>? Both exist in different services.</span><span class="prio soon">Soon</span>
+      <span class="qwhy">We need to know which is canonical for this feature.</span></li>
+    <li><span class="qn">DEV-19</span><span class="qt">What is <code>extraRunsheet</code>? It maps to <code>SCHEDULE_DUTIES.HIT</code> in the calendar adapter.</span><span class="prio later">Later</span>
+      <span class="qwhy">It appears to be the one place a hit is already a first-class calendar event — possibly a precedent to build on.</span></li>
+    <li><span class="qn">DEV-20</span><span class="qt">Why does <code>editPatrolHit</code> accept full ISO datetimes when the UI only exposes time-of-day?</span><span class="prio soon">Soon</span>
+      <span class="qwhy">If the backend accepts a date change, cross-day moves may already be possible — which would reopen DL-08.</span></li>
+    <li><span class="qn">DEV-21</span><span class="qt">Is the Overview tab's "patrolVisitsCompleted" KPI counting hits? Where does it come from?</span><span class="prio later">Later</span>
+      <span class="qwhy">Suggests a visit-level aggregate already exists server-side that we might reuse.</span></li>
+  </ol>
+
+  <h3>Non-functional</h3>
+  <ol class="qs">
+    <li><span class="qn">DEV-22</span><span class="qt">What's the realistic and worst-case unassigned-hit volume per day for a large franchise?</span><span class="prio soon">Soon</span>
+      <span class="qwhy">Pairs with DL-03 — product's guess and the database's answer often differ.</span></li>
+    <li><span class="qn">DEV-23</span><span class="qt">Why is <code>SCHEDULE_CALENDAR_VIRTUALIZATION</code> behind an env flag? Is it production-ready?</span><span class="prio soon">Soon</span>
+      <span class="qwhy">If visits become rows, we will need it on.</span></li>
+    <li><span class="qn">DEV-24</span><span class="qt">What DST problems have already bitten here?</span><span class="prio soon">Soon</span>
+      <span class="qwhy">The codebase carries <code>getCurrentTimeWithDisabledDlsInIso</code> and <code>dayjsWithStandardOffset</code>, which says this has history worth hearing before we repeat it.</span></li>
+    <li><span class="qn">DEV-25</span><span class="qt">Is there a test or demo tenant with realistic FilterGo data we can build against?</span><span class="prio soon">Soon</span>
+      <span class="qwhy">The local demo's mock labels are Signal-only, so FilterGo terminology can't currently be exercised.</span></li>
+  </ol>
+
+  <div class="callout">
+    <b>Ask these two first</b>
+    <strong>DL-08</strong> (can a visit move weekday) and <strong>DEV-04</strong> (does a template edit hit this week or only future weeks). Everything else is detail;
+    those two can each invalidate the design rather than adjust it.
+  </div>
+
+</div>

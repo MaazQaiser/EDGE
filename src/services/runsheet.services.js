@@ -29,6 +29,34 @@ export const getHitsForRunSheet = async (payload) => {
   }
 };
 
+export const getShiftHitsForecast = async (payload, config = {}) => {
+  try {
+    const query = queryString.stringify(payload, {
+      arrayFormat: 'bracket',
+      skipEmptyString: true,
+      skipNull: true,
+    });
+    return (
+      await getHttpRequest(`${schedulingServiceEndPoint}/shift/hits/forecast?${query}`, config)
+    )?.data;
+  } catch (e) {
+    return throwAPIError(e);
+  }
+};
+
+export const getSuppliesForecastPdf = async (payload) => {
+  try {
+    const query = queryString.stringify(payload, {
+      arrayFormat: 'bracket',
+      skipEmptyString: true,
+      skipNull: true,
+    });
+    return await getHttpRequest(`${schedulingServiceEndPoint}/pdf?${query}`);
+  } catch (e) {
+    return throwAPIError(e);
+  }
+};
+
 export const getRunSheetsByDaysListing = async (payload) => {
   try {
     const query = queryString.stringify(payload, {

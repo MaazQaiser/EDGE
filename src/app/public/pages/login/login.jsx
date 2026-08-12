@@ -462,7 +462,8 @@ export default function Login() {
 
         const labels = await fetchTenantLabelsCall();
         if (labels && Object.keys(labels).length > 0) {
-          dispatch(setTenantLabels(labels));
+          // Stamp the tenant so a later switch can detect a stale label cache.
+          dispatch(setTenantLabels({ ...labels, tenant: mainDomain() }));
         }
 
         if (

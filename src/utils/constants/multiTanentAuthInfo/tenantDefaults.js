@@ -1,11 +1,40 @@
+import filterGoLogoShort from 'src/assets/images/filterGoLogoShort.svg';
+import signalLogoShort from 'src/assets/images/signalLogoShort.svg';
+import signalLogoFull from 'src/assets/images/signlaLogoFull.svg';
+
 import { FilterGoLoader } from './tenantLoaders/filterGoLoader';
 import { SignalLoader } from './tenantLoaders/signalLoader';
-import signalLogoFull from 'src/assets/images/signlaLogoFull.svg';
-import signalLogoShort from 'src/assets/images/signalLogoShort.svg';
+
+/**
+ * Which services a tenant sells. These drive the schedule tabs, overview
+ * sections, legend indicators and footer stats — a service that is off shows
+ * nowhere in the scheduler.
+ *
+ * They also act as the fallback when no tenantConfiguration is present, which
+ * mergeTenantBranding relies on. Without them the schedule resolves to no tabs
+ * and no grid sections and renders empty.
+ */
+const SIGNAL_SERVICES = {
+  patrol: true,
+  dedicated: true,
+  dispatch: true,
+  extra: true,
+  runsheets: true,
+};
+
+/** Filter Go sells one service: filter replacement, which runs on the patrol model. */
+const FILTER_GO_SERVICES = {
+  patrol: true,
+  dedicated: false,
+  dispatch: false,
+  extra: false,
+  runsheets: true,
+};
 
 const signalInformation = {
   name: 'Signal',
   brandColor: '#146DFF',
+  services: SIGNAL_SERVICES,
   logo: signalLogoFull,
   logoShort: signalLogoShort,
   images: {
@@ -40,11 +69,12 @@ export default {
   'filter-go.com': {
     name: 'Filter Go',
     brandColor: '#2DA551',
+    services: FILTER_GO_SERVICES,
     logo: 'https://signalassets.blob.core.windows.net/filtergo/filter-go-logo.png',
-    logoShort: 'https://signalassets.blob.core.windows.net/filtergo/filter-go-logo.png',
+    logoShort: filterGoLogoShort,
     images: {
       logo1: 'https://signalassets.blob.core.windows.net/filtergo/filter-go-logo.png',
-      logoShort: 'https://signalassets.blob.core.windows.net/filtergo/filter-go-logo.png',
+      logoShort: filterGoLogoShort,
     },
     loader: FilterGoLoader,
     showFaq: false,

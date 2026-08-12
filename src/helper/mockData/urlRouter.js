@@ -5,6 +5,16 @@ import { duties, dutiesMonth, shiftDetailMock } from 'src/stubbedData/mocks/duty
 import { locationsData } from 'src/stubbedData/mocks/locations.mock';
 import { payrollListMock } from 'src/stubbedData/mocks/payroll.mock';
 import { runsheetDetail, runsheets } from 'src/stubbedData/mocks/runsheetList.mock';
+import {
+  buildMissedHits,
+  buildMissedHitsCount,
+  buildRunsheetShiftDetail,
+  buildScheduleAggregate,
+  buildScheduleStats,
+  buildScheduleSummary,
+  buildVisitDetail,
+} from 'src/stubbedData/mocks/schedule.mock';
+import { MULTI_TENANT_AUTH } from 'src/utils/constants/multiTanentAuthInfo';
 
 import { mainDomain } from '../utilityFunctions';
 import { getExternalClients, getExternalContacts } from './externalDirectoryMock';
@@ -162,11 +172,45 @@ export function resolveMockResponse(method, url, body = null) {
   if (pathOnly.includes('/vehicles/list') || pathOnly.includes('/vehicles'))
     return listResponse('vehicles', getStore('vehicles'), query);
 
+  // Revamped (grid-v2) schedule calendar endpoints — match the specific paths
+  // before the generic /shiftActivityLog handlers below.
+  if (pathOnly.includes('/shiftActivityLog/schedule/stats'))
+    return mockSuccess('Schedule stats fetched', buildScheduleStats(query));
+  if (pathOnly.includes('/shiftActivityLog/aggregate'))
+    return mockSuccess(
+      'Monthly schedule fetched',
+      buildScheduleAggregate(query, {
+        services: MULTI_TENANT_AUTH[mainDomain()]?.services || {},
+      }),
+    );
+  if (pathOnly.toLowerCase().includes('/missedhits/count'))
+    return mockSuccess('Missed hits count fetched', buildMissedHitsCount());
+  // Must stay ahead of the generic /shiftActivityLog handler below, which would
+  // otherwise answer with an object the drawer cannot iterate.
+  if (pathOnly.toLowerCase().includes('/missedhits'))
+    return mockSuccess('Missed hits fetched', buildMissedHits(query));
+  // Side-drawer detail. Both must precede the generic /shift/ and /runsheet
+  // handlers further down, which answered with list shapes the drawers cannot
+  // read — leaving them with no title, no stops and "Undefined" totals.
+  if (matchPath(pathOnly, '/shift/patrol/hit/:hitId'))
+    return mockSuccess(
+      'Visit fetched',
+      buildVisitDetail(matchPath(pathOnly, '/shift/patrol/hit/:hitId').hitId, query),
+    );
+  if (matchPath(pathOnly, '/shiftassignment/runsheet/:runsheetId'))
+    return mockSuccess(
+      'Runsheet shift fetched',
+      buildRunsheetShiftDetail(
+        matchPath(pathOnly, '/shiftassignment/runsheet/:runsheetId').runsheetId,
+        query,
+      ),
+    );
+
   if (
     (pathOnly.includes('/shiftActivityLog/summary') || pathOnly.includes('/shift/list')) &&
     !pathOnly.includes('/foDashboard/')
   )
-    return mockSuccess('Duties fetched', { duties });
+    return mockSuccess('Duties fetched', buildScheduleSummary(query));
   if (pathOnly.includes('/shiftActivityLog/monthly') || pathOnly.includes('/shift/month'))
     return mockSuccess('Monthly duties fetched', { duties: dutiesMonth });
   if (

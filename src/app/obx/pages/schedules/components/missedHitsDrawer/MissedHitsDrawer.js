@@ -167,6 +167,14 @@ export const useStyles = makeStyles((theme) => ({
     gap: '8px',
   },
 
+  emptyState: {
+    '&.MuiTypography-root': {
+      color: theme.palette.textSecondary,
+      padding: '16px 12px',
+      textAlign: 'center',
+    },
+  },
+
   reassignHitTitle: {
     '&.MuiTypography-root': {
       color: theme.palette.textPrimary,

@@ -9,7 +9,7 @@ import { useTranslation } from 'react-i18next';
 import DateRangePickerWithButtons from 'src/app/components/common/RangeDatepicker';
 import { DisplayDateTimeRange } from 'src/app/components/obxComponents/ShiftVisitsStatus';
 import { Clossicon } from 'src/assets/svg';
-import { ReactComponent as HitDetailIcon } from 'src/assets/svg/runsheet-icon.svg?react';
+import { ReactComponent as HitDetailIcon } from 'src/assets/svg/runsheet-icon.svg';
 import { useApiControllers } from 'src/helper/axios';
 import { useTenantLabel } from 'src/helper/utilityHooks';
 import { getMissedHits } from 'src/services/duty.services';
@@ -19,6 +19,19 @@ import { toaster } from 'src/utils/toast';
 import { getCurrentTimeWithDisabledDlsInIso } from '../../helper';
 import ReassignHitDrawerContent from '../reassignHitDrawerContent';
 import { useStyles } from './MissedHitsDrawer';
+
+/**
+ * The endpoint has shipped both a bare array and an envelope over time. Anything
+ * else (an unexpected object) previously reached `.map` and blanked the app, so
+ * normalise here and let the empty state handle the rest.
+ */
+const toMissedHitsArray = (payload) => {
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.missedHits)) return payload.missedHits;
+  if (Array.isArray(payload?.hits)) return payload.hits;
+  if (Array.isArray(payload?.data)) return payload.data;
+  return [];
+};
 
 const MissedHitsDrawer = ({
   missedHitDrawerData,
@@ -59,7 +72,7 @@ const MissedHitsDrawer = ({
         endsAt: getCurrentTimeWithDisabledDlsInIso(dayjs(endsAt).endOf('day')),
         config,
       });
-      setMissedHitsList(response?.data || []);
+      setMissedHitsList(toMissedHitsArray(response?.data));
     } catch (err) {
       if (!apiController.signal.aborted) {
         setMissedHitsList(null);
@@ -155,6 +168,11 @@ const MissedHitsDrawer = ({
                     <Skeleton variant="rectangular" />
                     <Skeleton variant="rectangular" />
                   </Box>
+                )}
+                {Array.isArray(missedHitsList) && missedHitsList.length === 0 && (
+                  <Typography variant="body3" className={classes.emptyState}>
+                    {t('obx.runsheet.noMissedHits', { hits: getLabel('terms', 'hits', t) })}
+                  </Typography>
                 )}
                 {missedHitsList?.map((missedHit) => {
                   return (

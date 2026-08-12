@@ -93,6 +93,18 @@ const AssignHits = lazy(
 );
 const AssignHitsWithSuspense = withSuspense(AssignHits);
 
+//  Run Sheet Module build route — club visits into one day
+const BuildRoute = lazy(
+  () => import(/* webpackChunkName: "Runsheets" */ '../../obx/pages/runSheets/buildRoute/index'),
+);
+const BuildRouteWithSuspense = withSuspense(BuildRoute);
+
+//  Run Sheet Module route optimization — propose, diff, accept
+const OptimizeRoute = lazy(
+  () => import(/* webpackChunkName: "Runsheets" */ '../../obx/pages/runSheets/optimizeRoute/index'),
+);
+const OptimizeRouteWithSuspense = withSuspense(OptimizeRoute);
+
 //  Run Sheet Module
 const RunsheetCreate = lazy(
   () => import(/* webpackChunkName: "Schedules" */ '../../obx/pages/runSheets/details/index'),
@@ -1063,6 +1075,26 @@ const route = (franchiseId) => {
       path: routes.OBX_ASSIGN_HITS,
       exact: true,
       element: <AssignHitsWithSuspense />,
+    },
+    {
+      // Club visits from any day into a single runsheet
+      path: routes.OBX_BUILD_ROUTE,
+      exact: true,
+      element: <BuildRouteWithSuspense />,
+      meta: {
+        title: 'Build route',
+        requiresAuth: true,
+      },
+    },
+    {
+      // Review a proposed reordering before any of it is written
+      path: routes.OBX_OPTIMIZE_ROUTE,
+      exact: true,
+      element: <OptimizeRouteWithSuspense />,
+      meta: {
+        title: 'Optimize routes',
+        requiresAuth: true,
+      },
     },
     // {
     //   // create site

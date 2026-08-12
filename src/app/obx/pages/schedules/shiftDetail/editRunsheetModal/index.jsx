@@ -11,8 +11,8 @@ import {
   isEarlierThan,
   isMoreThan24HoursApart,
 } from 'src/app/obx/pages/schedules/helper';
-import { ReactComponent as AlertJobIcon } from 'src/assets/svg/AlertJobIcon.svg?react';
-import { ReactComponent as BlueEditPencilIcon } from 'src/assets/svg/edit-bg.svg?react';
+import { ReactComponent as AlertJobIcon } from 'src/assets/svg/AlertJobIcon.svg';
+import { ReactComponent as BlueEditPencilIcon } from 'src/assets/svg/edit-bg.svg';
 import { useTenantLabel } from 'src/helper/utilityHooks';
 import { updateOngoingPatrolShiftTime } from 'src/services/runsheet.services';
 import { toastSettings } from 'src/utils/constants';

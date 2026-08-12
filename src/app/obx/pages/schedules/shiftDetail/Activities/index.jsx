@@ -9,7 +9,7 @@ import { updateReportStatus } from 'services/reports.services';
 import ShiftVisitsStatus from 'src/app/components/obxComponents/ShiftVisitsStatus';
 import RejectReportModal from 'src/app/obx/pages/schedules/shiftDetail/Activities/RejectReportModal';
 import { HO_SITES_DETAIL, OBX_SITES } from 'src/app/router/constant/ROUTE';
-import { ReactComponent as CheckIcon } from 'src/assets/svg/check.svg?react';
+import { ReactComponent as CheckIcon } from 'src/assets/svg/check.svg';
 import { isObjectEmpty } from 'src/helper/utilityFunctions';
 import { useTenantLabel } from 'src/helper/utilityHooks';
 import { fetchShiftActivitiesById } from 'src/services/duty.services';

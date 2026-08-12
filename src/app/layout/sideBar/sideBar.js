@@ -130,6 +130,17 @@ export const useStyles = makeStyles((theme) => ({
   sidebarFooterExpanded: {
     justifyContent: 'flex-start',
   },
+  /** Demo builds only: pin the footer so the tenant switcher stays reachable
+   *  without scrolling past the full nav list. */
+  sidebarFooterSticky: {
+    position: 'sticky',
+    bottom: 0,
+    paddingTop: theme.spacing(1.5),
+    paddingBottom: `max(${theme.spacing(1)}px, env(safe-area-inset-bottom, 0px))`,
+    backgroundColor: '#262527',
+    boxShadow: '0 -6px 14px rgba(0, 0, 0, 0.35)',
+    zIndex: 4,
+  },
   /** Keeps release + badge inside narrow / tablet sidebars (avoids iPad clip from overflow) */
   sidebarFooterRelease: {
     overflow: 'visible',
@@ -152,6 +163,23 @@ export const useStyles = makeStyles((theme) => ({
       padding: '6px 8px',
       fontSize: 11,
       lineHeight: '14px',
+      textTransform: 'none',
+    },
+  },
+  /** Collapsed rail: shrink switcher to small square initial-buttons.
+   *  Doubled class beats the later sidebarFooterCompressed button override. */
+  demoTenantSwitcherCompact: {
+    alignItems: 'center',
+    padding: 0,
+    '& .MuiButton-root.MuiButton-root': {
+      width: 36,
+      minWidth: 36,
+      maxWidth: 36,
+      height: 28,
+      padding: '4px 0',
+      fontSize: 10,
+      fontWeight: 700,
+      lineHeight: '12px',
       textTransform: 'none',
     },
   },

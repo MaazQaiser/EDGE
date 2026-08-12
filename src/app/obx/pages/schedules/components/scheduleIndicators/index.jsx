@@ -9,7 +9,7 @@ import { useTenantLabel } from 'src/helper/utilityHooks';
 import userHasPermission from 'src/utils/auth/userHasPermission';
 import { SCHEDULE_DUTIES } from 'src/utils/constants/schedules';
 
-import { DUTY_COLORS } from '../../calendar';
+import { DUTY_COLORS } from '../../helper/scheduleColors';
 
 const useStyles = makeStyles((theme) => ({
   scheduleCalendarIndicators: {
@@ -41,7 +41,7 @@ const ScheduleIndicators = () => {
           label={getLabel('terms', 'patrol', t)}
         ></DutyIndicator>
       ) : null}
-      {userHasPermission(ACL_OBX_SITE_EXTRA_JOB_VIEW) ? (
+      {services?.extra === true && userHasPermission(ACL_OBX_SITE_EXTRA_JOB_VIEW) ? (
         <DutyIndicator
           color={DUTY_COLORS[SCHEDULE_DUTIES.EXTRA]}
           label={getLabel('terms', 'extra', t)}
