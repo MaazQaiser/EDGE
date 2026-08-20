@@ -122,8 +122,15 @@ const filterGoMocks = {
     // checkpoints); for filter replacement it is a service checklist.
     tour: 'Service Checklist',
     tours: 'Service Checklists',
-    officers: 'Technicians',
-    officer: 'Technician',
+    /* The person doing the work. **Installer**, not Technician — the trade word the
+       franchise uses for whoever turns up and changes the filter. The API key stays
+       `officer` (Signal's word, and the payload's) and every screen reads it through
+       `getLabel('terms', 'officer')`, so this is the only place the word is written.
+       `roles.officer` in `getMockTenantLabels` derives from here, which is why the
+       runsheet drawer follows without a second edit. Bump `TENANT_LABELS_VERSION`
+       when this changes or existing sessions keep the cached vocabulary (§7.2). */
+    officers: 'Installers',
+    officer: 'Installer',
     supervisor: 'Supervisor',
     sites: 'Sites',
     zones: 'Zones',

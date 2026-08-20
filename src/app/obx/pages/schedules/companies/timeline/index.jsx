@@ -14,22 +14,9 @@ import { calendarShiftStatusEnum } from 'src/utils/constants/schedules';
 import CompaniesFilters from '../CompaniesFilters';
 import { COMPANIES_VIEW, isExecutionGrain } from '../companiesViewRange';
 import CompaniesViewSwitch from '../CompaniesViewSwitch';
-import { narrowCompanies } from '../companyVisitFilters';
+import { narrowCompanies, visitsInDateOrder } from '../companyVisitFilters';
+import { visitCardClassFor } from '../visitCardClass';
 import { useStyles } from './companiesTimeline.styles';
-
-/**
- * A visit's card treatment comes from the calendar's own status vocabulary, so a
- * visit reads the same here as it does on the week grid.
- */
-const STATUS_CARD_CLASS = {
-  [calendarShiftStatusEnum.COMPLETED]: 'visitCardCompleted',
-  [calendarShiftStatusEnum.IN_PROGRESS]: 'visitCardLive',
-  [calendarShiftStatusEnum.SHIFT_STARTED]: 'visitCardLive',
-  [calendarShiftStatusEnum.MISSED]: 'visitCardMissed',
-  [calendarShiftStatusEnum.CANCELLED]: 'visitCardCancelled',
-  [calendarShiftStatusEnum.UNASSIGNED]: 'visitCardUnassigned',
-  [calendarShiftStatusEnum.NOT_STARTED]: 'visitCardScheduled',
-};
 
 /**
  * Why the screen is blank, in the grain's own terms.
@@ -43,13 +30,6 @@ const EMPTY_BODY_KEY = {
   [COMPANIES_VIEW.DAY]: 'emptyDay',
   [COMPANIES_VIEW.WEEK]: 'emptyWeek',
 };
-
-/** Every visit a location is due in the window, in the order they happen. */
-const visitsForSite = (site = {}) =>
-  (site.months || [])
-    .flat()
-    .filter(Boolean)
-    .sort((left, right) => (left.date < right.date ? -1 : left.date > right.date ? 1 : 0));
 
 /**
  * Companies as a list of stacked visits — **the tab's Day, Week and Month**.
@@ -127,7 +107,7 @@ const CompaniesTimeline = ({
       visits: companies.reduce(
         (sum, company) =>
           sum +
-          (company.sites || []).reduce((inner, site) => inner + visitsForSite(site).length, 0),
+          (company.sites || []).reduce((inner, site) => inner + visitsInDateOrder(site).length, 0),
         0,
       ),
     }),
@@ -147,7 +127,7 @@ const CompaniesTimeline = ({
     const isOpenable = Boolean(visit.id);
     const cardClasses = [
       classes.visitCard,
-      classes[STATUS_CARD_CLASS[visit.status]] || classes.visitCardScheduled,
+      classes[visitCardClassFor(visit)],
       isOpenable ? classes.visitCardClickable : '',
     ]
       .filter(Boolean)
@@ -294,7 +274,7 @@ const CompaniesTimeline = ({
                 {isCollapsed
                   ? null
                   : sites.map((site) => {
-                      const visits = visitsForSite(site);
+                      const visits = visitsInDateOrder(site);
 
                       return (
                         <Box className={classes.locationRow} key={site.id}>

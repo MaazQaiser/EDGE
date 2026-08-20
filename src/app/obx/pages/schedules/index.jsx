@@ -26,6 +26,26 @@ import {
 import { mapFooterStatsToScheduleStatsFooter } from './helper/scheduleResponseAdapter';
 import { useCanViewSummaryStats } from './hooks/useCanViewSummaryStats';
 
+/**
+ * Whether the design-variation switches are on screen.
+ *
+ * **Off, so the scheduler can be screenshotted.** `VisitVariantSwitch` and
+ * `SchedulerLayoutSwitch` are review controls — they exist to compare two drawings of a
+ * visit card and two shapes of the scheduler while a decision is still open — and they
+ * float over the bottom right corner of the grid, which is exactly where they land in
+ * every screenshot of it. Nothing about them is for an end user.
+ *
+ * A flag rather than a deletion, because the decisions they serve are not settled yet and
+ * both controls are new. Flip this to `true` to get them back; nothing else has to change.
+ *
+ * **Hiding them does not change what is drawn.** Both values are persisted and read
+ * independently of the switches (`readSchedulerLayout`, and the visit-card variant beside
+ * it), so the grid keeps whichever variation was last chosen — the switches are only the
+ * way to change it, not the reason it is what it is. Worth knowing if the screenshots come
+ * out in an unexpected variant: set it here, or flip the flag, pick, and flip it back.
+ */
+const SHOW_VARIATION_SWITCHES = false;
+
 // Keep paddingBottom equal to footer height so the absolute footer covers it (no white gap).
 // Bump calendar chrome by the same delta so the grid ends flush above the footer.
 const FOOTER_LAYOUT = {
@@ -132,11 +152,19 @@ const DEFAULT_LEGEND_STATUSES = [
  *
  * Day and month carry no status counts, so this list is the only thing on those
  * views that says what the grid's colours mean. It used to be
- * `DEFAULT_LEGEND_STATUSES`, which is the **shift** vocabulary: it omits Missed
- * and Cancelled — both hit-specific statuses (`calendarShiftStatusEnum`) — so the
- * visits grid drew red and grey cards, and the drawer named those states in full,
- * while the legend underneath admitted to neither. A legend that describes fewer
- * colours than the grid draws is the failure `visitCardInk` calls out.
+ * `DEFAULT_LEGEND_STATUSES`, which is the **shift** vocabulary: it omits Missed —
+ * a hit-specific status (`calendarShiftStatusEnum`) — so the visits grid drew red
+ * cards, and the drawer named that state in full, while the legend underneath
+ * admitted to neither. A legend that describes fewer colours than the grid draws
+ * is the failure `visitCardInk` calls out.
+ *
+ * The inverse failure is why **Cancelled is not here**, reversing half of D28,
+ * which mandated it: a cancelled visit is no longer drawn on any of these views
+ * unless the planner picks Cancelled in the status dropdown
+ * (`dropCancelledEvents` / `dropCancelledGroups`). A key naming a colour the grid
+ * never paints describes nothing — and on the footer that does carry counts it
+ * was worse than nothing, since the number beside it made the total overshoot the
+ * cards on screen.
  *
  * Kept as its own list rather than added to the shift one, for the same reason
  * the stats footer keeps `VISITS_STATUS_STATS` apart from `STATUS_STATS`: the
@@ -144,7 +172,7 @@ const DEFAULT_LEGEND_STATUSES = [
  * entry there would be a mark those grids never make.
  *
  * Split shift is deliberately absent — a shift concept, permanently 0 for visits,
- * which is exactly why the footer swaps it out for these two. Incomplete likewise:
+ * which is exactly why the footer swaps it out for Missed. Incomplete likewise:
  * no visit state resolves to it (`VISIT_STATE_STATUS`). Order matches
  * `VISITS_STATUS_STATS` so both legend paths read the same, whichever footer the
  * view happens to be showing.
@@ -155,7 +183,6 @@ const VISITS_LEGEND_STATUSES = [
   calendarShiftStatusEnum.NOT_STARTED,
   calendarShiftStatusEnum.UNASSIGNED,
   calendarShiftStatusEnum.MISSED,
-  calendarShiftStatusEnum.CANCELLED,
 ];
 
 export default function Schedules({ selectedSite, officerId, className }) {
@@ -322,7 +349,7 @@ export default function Schedules({ selectedSite, officerId, className }) {
           of. Anchored above the footer from the same layout constant the footer's own
           height comes from, so it cannot drift onto the legend when the footer
           changes height between views. */}
-      {!isEmbeddedSchedule ? (
+      {SHOW_VARIATION_SWITCHES && !isEmbeddedSchedule ? (
         <Box
           className={classes.visitVariantFloating}
           style={{ bottom: `calc(${footerLayout.paddingBottom} + 16px)` }}

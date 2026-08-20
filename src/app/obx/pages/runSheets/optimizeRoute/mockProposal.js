@@ -194,7 +194,7 @@ export const MOCK_HELD = [
     by: null,
     at: null,
     /* A lock the planner did not set, so it has to explain itself. */
-    reason: 'Already sent to the technician’s device',
+    reason: 'Already sent to the installer’s device',
   },
 ];
 

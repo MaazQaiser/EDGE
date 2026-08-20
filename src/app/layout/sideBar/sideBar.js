@@ -1,5 +1,7 @@
 import { makeStyles } from '@mui/styles';
 
+import { SIDEBAR_TRANSITION_MS, SIDEBAR_Z_INDEX } from './sidebarChrome';
+
 /** iPad / tablet landscape-portrait (not phone ≤786, not large desktop) */
 const tabletMediaQuery = '@media (min-width: 787px) and (max-width: 1024px)';
 
@@ -10,8 +12,10 @@ export const useStyles = makeStyles((theme) => ({
     position: 'fixed',
     left: 0,
     top: 0,
-    zIndex: 999,
-    transition: 'all 0.35s',
+    zIndex: SIDEBAR_Z_INDEX,
+    /* Same 0.35s as before, said once: surfaces that have to move with this edge follow it
+       by sampling frames, and they size their sampling window from the same number. */
+    transition: `all ${SIDEBAR_TRANSITION_MS}ms`,
     [theme.breakpoints.down(786)]: {
       transform: 'translateX(-100%)',
     },
@@ -55,10 +59,42 @@ export const useStyles = makeStyles((theme) => ({
     transform: 'translate(-50%, -50%) rotate(180deg)',
   },
 
+  /**
+   * The nav column, and the one element in the sidebar that actually scrolls.
+   *
+   * **Its scrollbar is hidden, not its overflow.** `overflowY: auto` stays — the nav
+   * still scrolls, by wheel, trackpad, touch and keyboard — and only the bar itself
+   * is taken off the paint. That distinction matters: `overflow: hidden` here would
+   * strand every item below the fold on a short viewport, which is the failure mode
+   * this rule is one keystroke away from.
+   *
+   * Three declarations because no single one covers the field: `::-webkit-scrollbar`
+   * for Chrome, Edge and Safari, `scrollbarWidth` for Firefox, and
+   * `msOverflowStyle` for the legacy Edge/IE engines. Any one alone leaves the bar
+   * showing on some viewer's browser.
+   *
+   * It has to be stated here at all because `global.scss` paints one: its `*` block
+   * gives every scrollable descendant an 8px track with a grey thumb, and against
+   * this column's near-black `#262527` that thumb is the brightest thing in the
+   * sidebar. A class beats that global's specificity, so this overrides it without
+   * `!important`.
+   *
+   * (`global.scss` also carries two copies of a `.sidebarsection` rule that hides a
+   * scrollbar — dead: nothing in the app uses that class, and both copies put
+   * `scrollbar-width`/`-ms-overflow-style` *inside* the `::-webkit-scrollbar` block,
+   * where neither does anything. Left alone rather than trusted.)
+   */
   sidebarWrapper: {
     backgroundColor: '#262527',
     overflowX: 'hidden',
     overflowY: 'auto',
+    scrollbarWidth: 'none',
+    msOverflowStyle: 'none',
+    '&::-webkit-scrollbar': {
+      display: 'none',
+      width: 0,
+      height: 0,
+    },
     WebkitOverflowScrolling: 'touch',
     maxHeight: '100vh',
     minHeight: '100vh',
@@ -309,8 +345,14 @@ export const useStyles = makeStyles((theme) => ({
     maxHeight: 24,
     minHeight: 24,
   },
+  /* Sized by bounds, not by a fixed width: the collapsed rail has to hold either a
+     square glyph (Signal, 42×24) or a wordmark (Filter Go, 119×36, which has no icon
+     form). 52 is the rail's full content width — 76 less its 8px side padding. */
   signalLogoShortIcon: {
-    width: 41,
+    width: 'auto',
+    height: 'auto',
+    maxWidth: 52,
+    maxHeight: 24,
   },
   tabsSidebar: {
     '&.MuiTabs-root': {

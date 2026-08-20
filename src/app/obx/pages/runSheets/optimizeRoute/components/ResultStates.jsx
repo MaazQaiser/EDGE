@@ -3,6 +3,7 @@ import classNames from 'classnames';
 import PropTypes from 'prop-types';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useTenantLabel } from 'src/helper/utilityHooks';
 
 import { useStyles } from '../optimizeRoute.styles';
 
@@ -161,6 +162,7 @@ const UNDO_WINDOW_SECONDS = 5 * 60;
 export const CommittedState = ({ count, notified, onUndo, onDone }) => {
   const classes = useStyles();
   const { t } = useTranslation();
+  const { getLabel } = useTenantLabel();
   const tt = (key, options) => t(`obx.runsheet.optimize.${key}`, options);
 
   const [secondsLeft, setSecondsLeft] = useState(UNDO_WINDOW_SECONDS);
@@ -184,8 +186,14 @@ export const CommittedState = ({ count, notified, onUndo, onDone }) => {
     >
       <Typography className={classes.stateTitle}>{tt('committedTitle', { count })}</Typography>
       <Typography className={classes.stateBody}>
+        {/* The undo window closes when the round reaches the person driving it, so
+            the copy has to name that person in the tenant's own word — it read
+            "a technician's device" for every tenant, which is Filter Go's trade
+            term printed on Signal's screens as well. `committedBodyClosed` says
+            nothing about a device, so only the open form interpolates it. */}
         {tt(secondsLeft > 0 ? 'committedBody' : 'committedBodyClosed', {
           emailed: tt('committedEmailed', { count: notified }),
+          officer: getLabel('terms', 'officer', t) || 'officer',
         })}
       </Typography>
       <Box className={classes.stateActions}>

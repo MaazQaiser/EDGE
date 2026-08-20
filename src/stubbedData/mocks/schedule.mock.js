@@ -55,6 +55,16 @@ const routeForSite = (site = {}) => {
   return { id: 700 + index, name: ROUTE_NAMES[index] };
 };
 
+/**
+ * The **variety** a shift row wants, not the status it gets — see `shiftStatusFor`,
+ * which is what `makeShift` actually calls.
+ *
+ * Read straight, this cycle is date-blind: `statusIndex` counts shifts as they are
+ * generated, so a week three weeks out came back "4 Completed, 4 In Progress" in its
+ * footer counts and in the status filter. Kept as the source of *spread* — four
+ * distinct readings across a row, and which rows are unassigned — with the date now
+ * deciding what each one is allowed to mean.
+ */
 const STATUS_CYCLE = [
   'completed',
   'inProgress',
@@ -158,9 +168,11 @@ const shiftRegistry = new Map();
 
 const makeShift = (view, site, officer, base, dayOffset, windowIndex, statusIndex) => {
   const win = SHIFT_WINDOWS[windowIndex % SHIFT_WINDOWS.length];
-  const status = STATUS_CYCLE[statusIndex % STATUS_CYCLE.length];
-  const isUnassigned = status === 'unassigned';
   const startsAt = isoAt(base, dayOffset, win.startHour);
+  /* Date first, then status: what this shift is allowed to say depends on the day it
+     lands on. See `shiftStatusFor`. */
+  const status = shiftStatusFor(dayIndexOfIso(startsAt), statusIndex);
+  const isUnassigned = status === 'unassigned';
   const endsAt = isoAt(base, dayOffset, win.endHour);
   const id = ++shiftSeq;
   const name = `${win.label} ${view === 'patrol' ? 'Patrol' : 'Guard'}`;
@@ -315,10 +327,10 @@ const VISIT_WINDOWS = [
  *   future  → not started. Nothing ahead of now can have happened.
  */
 const routedVisitStatus = (dayIndex, statusIndex) => {
-  const todayIndex = toDayIndex(new Date());
+  const today = todayIndex();
 
-  if (dayIndex < todayIndex) return statusIndex % 4 === 3 ? 'missed' : 'completed';
-  if (dayIndex === todayIndex) return statusIndex % 2 === 0 ? 'inProgress' : 'notStarted';
+  if (dayIndex < today) return statusIndex % 4 === 3 ? 'missed' : 'completed';
+  if (dayIndex === today) return statusIndex % 2 === 0 ? 'inProgress' : 'notStarted';
   return 'notStarted';
 };
 
@@ -441,7 +453,74 @@ const MS_PER_DAY = 86400000;
 
 const toDayIndex = (date) => Math.round((date.getTime() - CADENCE_EPOCH) / MS_PER_DAY);
 
+/**
+ * Today's day index — the one thing `toDayIndex(new Date())` could not answer.
+ *
+ * Every other date this mock indexes is a UTC midnight (`Date.UTC(y, m, d)`), so
+ * `Math.round` was exact for them. `new Date()` carries a time of day, and rounding
+ * a fraction of a day sends **every clock reading past 12:00 UTC to tomorrow**: at
+ * 14:09 UTC on 20 Aug the "today" index was the 21st, so a visit dated today was
+ * generated as *past* (completed, or missed) and tomorrow's visit was generated as
+ * the one in progress. Both are states the date forbids, and they appeared for
+ * twelve hours of every day — which is why they read as intermittent.
+ *
+ * `Math.floor` off a UTC-midnight epoch is the calendar day count outright. UTC
+ * rather than local because that is the frame the whole file already works in: date
+ * keys are built with `Date.UTC` and visit windows are 13:00–22:00 UTC, which is one
+ * working day in US Central, the franchise clock these visits are drawn on.
+ */
+const todayIndex = () => Math.floor((Date.now() - CADENCE_EPOCH) / MS_PER_DAY);
+
 const dayIndexToDate = (dayIndex) => new Date(CADENCE_EPOCH + dayIndex * MS_PER_DAY);
+
+/**
+ * A **shift's** status, gated by its date — the dedicated and patrol tabs' answer to
+ * what `resolveVisitStatus` does for visits.
+ *
+ * Those two tabs do not go through `resolveVisitStatus` at all: their rows come from
+ * `makeShift`, which read `STATUS_CYCLE` positionally and so reported shifts
+ * *completed* and *in progress* on any week the planner paged forward to. It did not
+ * paint a status icon — `makeShift` sets only `status`, and the card reads
+ * `shiftStatus || scheduleStatus` — so it surfaced instead in the footer's legend
+ * counts and in the status filter, which is why it outlived the visit-side fix.
+ *
+ * The three readings, and why each is the only honest one:
+ *
+ * - **Past** — `completed`. Not `missed`: a shift has no missed state on this
+ *   surface (the status filter has no row for it, see the note in
+ *   `companies/companyVisitFilters.js`), which is exactly the difference between a
+ *   shift and a visit and must not be blurred by making the mock emit one.
+ * - **Today** — whatever the cycle picked. Every reading is legitimate on the day
+ *   itself: the morning patrol is done, the evening one is running, the night one has
+ *   not started. This is what keeps the *default* week — the one the scheduler opens
+ *   on — showing the full mix the legend describes.
+ * - **Future** — `notStarted`.
+ *
+ * `unassigned` passes through on any date, and deliberately. It is a fact about the
+ * roster rather than about the clock — nobody was put on this shift — and a past one
+ * stays unassigned rather than becoming completed, the same call D11 makes for
+ * unrouted visits in `docs/visits-feature/06-visits-scheduler-edge-cases.md`.
+ */
+const shiftStatusFor = (dayIndex, statusIndex) => {
+  const planned = STATUS_CYCLE[statusIndex % STATUS_CYCLE.length];
+  if (planned === 'unassigned') return 'unassigned';
+
+  const today = todayIndex();
+  if (dayIndex < today) return 'completed';
+  if (dayIndex > today) return 'notStarted';
+  return planned;
+};
+
+/**
+ * The day index of an ISO stamp, from its **date part only**.
+ *
+ * `toDayIndex(new Date(iso))` would carry the stamp's time of day into a `Math.round`
+ * and land on tomorrow for any shift starting at 13:00Z or later — the same
+ * off-by-half-a-day that `todayIndex` exists to avoid. Slicing to `YYYY-MM-DD` and
+ * reading it as UTC midnight makes the comparison a whole-day one on both sides.
+ */
+const dayIndexOfIso = (iso) =>
+  Math.floor((Date.parse(`${`${iso}`.slice(0, 10)}T00:00:00.000Z`) - CADENCE_EPOCH) / MS_PER_DAY);
 
 /**
  * The same-day pair: one customer, two of its sites, one day.
@@ -479,44 +558,99 @@ const SAME_DAY_PAIR = [
 ];
 
 /**
- * Anchored on **today**, and repeating every 28 days from it.
+ * The visit that demonstrates **In Progress** — the one state the book could not
+ * reach on its own.
  *
- * A hand-picked date is the one thing that cannot work here. The case has to be in
+ * `resolveVisitStatus` allows in-progress on exactly one date, today, and rightly:
+ * a route is either running now or it is not, so the blue treatment is a today-only
+ * reading and putting it on any other day is one of the date violations this file
+ * spent a session removing. But *allowed on today* is not *present on today*. Only
+ * sites whose cadence happens to land on today produce a card there at all, the
+ * status then depends on that visit's own seed parity, and across a full year of
+ * generated visits the count of in-progress ones was **zero** — the `#EFF8FF` wash,
+ * its legend row and its footer count were undrawable, which is exactly the failure
+ * `planVisitState`'s own docstring says the demo must not have.
+ *
+ * So it is forced, on the same anchor as the pair above, and forced on *today only*
+ * in effect: the 28-day repeats resolve through `routedVisitStatus` like any other
+ * routed visit (Completed behind us, Not Started ahead), because in-progress is not
+ * a state a past or future date may hold.
+ *
+ * The choices, and why:
+ *
+ * - **`plan: 'routed'`, not `insertedAfterStart`.** Both reach in-progress on today,
+ *   but the insert plan also sets `addedAfterRouteStart`, which draws the D3 insert
+ *   treatment on the card. That would leave the blue wash demonstrable only on a card
+ *   carrying a second, louder mark — two treatments on the one card meant to verify
+ *   one. `routed` with an even `statusIndex` reaches it down the ordinary path, the
+ *   same one every real routed visit takes. (The insert treatment is still unreachable
+ *   in the demo for the same reason in-progress was; that is a separate forced visit,
+ *   not a rider on this one.)
+ * - **`statusIndex: 0`.** Even, so `routedVisitStatus` reads today as In Progress; and
+ *   `0 % 4 !== 3`, so the repeats behind us are Completed rather than Missed — a site
+ *   whose route ran is not a site that was missed.
+ * - **Ormesby Business Village**, on a 60-day interval whose own cadence comes nowhere
+ *   near today. Its row is otherwise empty in the current week, so the blue card is the
+ *   only thing in it and a reviewer cannot fail to find it; and it belongs to Beaumont
+ *   Group rather than to Elmsworth Trust, which keeps the pair's lane a pair. Today
+ *   already carries Kelvin Court as Not Started, so the two treatments the request
+ *   compares sit in the same day column without crowding one row.
+ * - **Midday**, against the pair's Morning and Afternoon: three distinct windows on
+ *   one date, and a route still out at midday is the plainest reading of a route
+ *   under way.
+ */
+const TODAY_IN_PROGRESS = {
+  siteName: 'Ormesby Business Village',
+  windowIndex: 1,
+  statusIndex: 0,
+  plan: 'routed',
+};
+
+/**
+ * The forced visits, all anchored on **today** and repeating every 28 days from it.
+ *
+ * A hand-picked date is the one thing that cannot work here. The cases have to be in
  * the week the reviewer lands on, and that week is the one containing today — the
  * same argument `GROUP_ROUND_ANCHOR` makes for a cadence over a date, taken one step
- * further, because a 28-day round is only in *some* weeks and this case has to be in
- * *this* one. Today is in the current month too, so the month view draws the pair as
- * two chips on one day without any further arrangement.
+ * further, because a 28-day round is only in *some* weeks and these cases have to be
+ * in *this* one. Today is in the current month too, so the month view draws the pair
+ * as two chips on one day without any further arrangement.
  *
- * 28 days is a whole number of weeks, so the repeats keep the pair's weekday when a
- * planner pages a month back or forward, and the whole thing costs the book two extra
- * visits a month — a week still holds 8-12 visits, which is the density this mock is
- * built around.
+ * 28 days is a whole number of weeks, so the repeats keep their weekday when a
+ * planner pages a month back or forward, and the whole thing costs the book three
+ * extra visits a month — a week still holds 8-12 visits, which is the density this
+ * mock is built around.
+ *
+ * One list, one anchor and one lookup for all three deliberately: a second way to pin
+ * a visit to a date is a second thing to keep in step with `isSiteDueOn`,
+ * `visitRecipeFor` and the four surfaces that read them.
  *
  * `new Date()` is read here the way `routedVisitStatus` already reads it. Nothing is
- * random: within a session every fetch of a given week returns the same two visits
- * with the same ids, because `visitIdFor` derives identity from site and date. The
- * book does shift by a day when the day shifts, which is already true of every status
+ * random: within a session every fetch of a given week returns the same visits with
+ * the same ids, because `visitIdFor` derives identity from site and date. The book
+ * does shift by a day when the day shifts, which is already true of every status
  * in it.
  */
-const SAME_DAY_PAIR_INTERVAL_DAYS = 28;
+const FORCED_VISITS = [...SAME_DAY_PAIR, TODAY_IN_PROGRESS];
 
-const SAME_DAY_PAIR_BY_SITE_NAME = new Map(SAME_DAY_PAIR.map((entry) => [entry.siteName, entry]));
+const FORCED_VISIT_INTERVAL_DAYS = 28;
 
-/** The pair entry for this site on this day, or `null` when it is an ordinary visit. */
-const sameDayPairVisitFor = (site = {}, dayIndex) => {
-  const entry = SAME_DAY_PAIR_BY_SITE_NAME.get(site.name);
+const FORCED_VISIT_BY_SITE_NAME = new Map(FORCED_VISITS.map((entry) => [entry.siteName, entry]));
+
+/** The forced entry for this site on this day, or `null` when it is an ordinary visit. */
+const forcedVisitFor = (site = {}, dayIndex) => {
+  const entry = FORCED_VISIT_BY_SITE_NAME.get(site.name);
   if (!entry) return null;
 
-  const offset = dayIndex - toDayIndex(new Date());
-  return offset % SAME_DAY_PAIR_INTERVAL_DAYS === 0 ? entry : null;
+  const offset = dayIndex - todayIndex();
+  return offset % FORCED_VISIT_INTERVAL_DAYS === 0 ? entry : null;
 };
 
 /** True when `site` is due on the given absolute day index. */
 const isSiteDueOn = (site, dayIndex) => {
-  // The forced pair is due on its own anchor *as well as* on its cadence, so the
-  // two sites' 60-day rhythm — and the interval their rows report — is untouched.
-  if (sameDayPairVisitFor(site, dayIndex)) return true;
+  // A forced visit is due on its own anchor *as well as* on its cadence, so the
+  // sites' own rhythm — and the interval their rows report — is untouched.
+  if (forcedVisitFor(site, dayIndex)) return true;
   if (!site.intervalDays) return false;
   const offset = dayIndex - site.anchor;
   return offset % site.intervalDays === 0;
@@ -572,7 +706,18 @@ const visitCountsForDay = (dayIndex) => {
 
   VISIT_SITES.forEach((site) => {
     if (!isSiteDueOn(site, dayIndex)) return;
-    const { plan } = visitRecipeFor(site, dayIndex);
+    const { plan, statusIndex } = visitRecipeFor(site, dayIndex);
+    /* **Cancelled is not counted.** The aggregate month is a tally per day — no
+       per-visit records at all, not even an id — so it is the one surface a client
+       cannot correct after the fact: every other view drops cancelled cards on
+       arrival (`scheduleResponseAdapter.dropCancelledEvents`), and a count has
+       nothing to drop. A called-off visit counted here made the month cell claim
+       work that will not happen, with no card anywhere to trace it to.
+
+       Asked through `resolveVisitStatus` rather than by testing `plan` directly,
+       which is this file's rule for anything that needs to know a visit's status —
+       the pill and the grid disagreeing about `missed` is what established it. */
+    if (resolveVisitStatus(plan, dayIndex, statusIndex) === 'cancelled') return;
     if (plan === 'unassigned' || plan === 'blockedNoTour') unassignedCount += 1;
     else assignedCount += 1;
   });
@@ -608,13 +753,13 @@ const planVisitState = (sequence) => {
  *
  * One function, because four surfaces used to derive these three values
  * independently from the same seed — the week grid, the month aggregate's counts, the
- * missed-visits list and the company matrix — and `SAME_DAY_PAIR` overrides all
- * three. A surface still deriving them from the bare seed would draw the forced pair
+ * missed-visits list and the company matrix — and `FORCED_VISITS` overrides all
+ * three. A surface still deriving them from the bare seed would draw a forced visit
  * in a different state, or in a different window, than the card the reviewer clicked.
  */
 const visitRecipeFor = (site, dayIndex) => {
   const seed = Math.abs(site.id * 31 + dayIndex);
-  const forced = sameDayPairVisitFor(site, dayIndex);
+  const forced = forcedVisitFor(site, dayIndex);
 
   return {
     seed,
@@ -635,17 +780,38 @@ const visitRecipeFor = (site, dayIndex) => {
  * the same function the grid asked.
  */
 const resolveVisitStatus = (plan, dayIndex, statusIndex) => {
+  /* Cancelled is the one plan that is genuinely date-free: a visit can be called
+     off months ahead, and the record still says cancelled once its date has gone. */
   if (plan === 'cancelled') return 'cancelled';
-  if (plan === 'missed') return 'missed';
 
-  // Blocked visits have no tour, so nothing has ever picked them up; the two
-  // unrouted plans are the two rows of the pinned band.
+  /* **Missed is a past state**, and the plan alone cannot assert it. `planVisitState`
+     picks the plan off a seed with no idea what date it lands on, so an unqualified
+     `return 'missed'` here marked visits missed *up to eleven months into the
+     future* — the Companies year matrix drew rows reading `Sep notStarted · Nov
+     missed`, which is not a service history any book can produce. The plan still
+     decides *that* this occurrence demonstrates the missed treatment; the date
+     decides whether it is allowed to yet, and a plan whose date has not come falls
+     through to the ordinary routed reading (`notStarted`, or in progress today). */
+  if (plan === 'missed') {
+    if (dayIndex < todayIndex()) return 'missed';
+    return routedVisitStatus(dayIndex, statusIndex);
+  }
+
+  /* Blocked visits have no tour, so nothing has ever picked them up; the two
+     unrouted plans are the two rows of the pinned band.
+
+     Deliberately not date-gated, and **not** folded into `missed` once the date has
+     passed — that is D11 in `docs/visits-feature/06-visits-scheduler-edge-cases.md`.
+     A past visit that was never on a route failed earlier and differently from a
+     route that was planned and not run, and it belongs in the band that counts
+     unrouted demand. `resolveVisitState` client-side makes the same call, so a
+     record honest about being unrouted keeps reading that way on every surface. */
   if (plan === 'unassigned' || plan === 'blockedNoTour') return 'unassigned';
 
   /* An insert mid-route only exists while a route is running, so it is a *today*
      state. Forcing `inProgress` on any day the plan happened to land on put routes
      "in progress" three weeks out and three weeks back. */
-  if (plan === 'insertedAfterStart' && dayIndex === toDayIndex(new Date())) return 'inProgress';
+  if (plan === 'insertedAfterStart' && dayIndex === todayIndex()) return 'inProgress';
 
   return routedVisitStatus(dayIndex, statusIndex);
 };
@@ -693,7 +859,7 @@ const makeVisit = ({
   const filterCount = filterCountFor(site);
 
   const assigned = plan !== 'unassigned' && plan !== 'blockedNoTour';
-  const insertedNow = plan === 'insertedAfterStart' && dayIndex === toDayIndex(new Date());
+  const insertedNow = plan === 'insertedAfterStart' && dayIndex === todayIndex();
 
   const status = resolveVisitStatus(plan, dayIndex, statusIndex);
 

@@ -327,11 +327,12 @@ export const isVisitsSubject = ({ tabConfig, isCompanyGrouping = false } = {}) =
  * turns one question into a different one is worse than a missing control.
  *
  * A grouping, not a tab, so this cannot be a flag on `SCHEDULE_TAB_CONFIGS.overview`
- * — the routes grouping shares that config and still needs all three, as do the
- * dedicated and patrol tabs and the multi-service overview. The caller hands the
- * result to the filter row only; the fetch keeps reading the real config, and drops
- * the same three dimensions from the query so none of them can narrow the payload
- * with no dropdown left to clear it.
+ * — the dedicated and patrol tabs and the multi-service overview share that config
+ * and still need all three, and the routes grouping keeps the technician dropdown
+ * (see `withRouteGroupingFilters`). The caller hands the result to the filter row
+ * only; the fetch keeps reading the real config, and drops the same three
+ * dimensions from the query so none of them can narrow the payload with no dropdown
+ * left to clear it.
  */
 export const withCompanyGroupingFilters = (tabConfig) => ({
   ...tabConfig,
@@ -340,6 +341,47 @@ export const withCompanyGroupingFilters = (tabConfig) => ({
     showShiftType: false,
     showLocation: false,
     showOfficer: false,
+  },
+});
+
+/**
+ * The main tab's config as the **routes grouping** needs its filter row — the
+ * sibling of `withCompanyGroupingFilters`, and it drops two of the same three.
+ *
+ * `Locations` goes because on this tenant it is a level that does not exist as a
+ * question. A route's rows are routes and its cards are visits, and a visit is one
+ * service occurrence at one *site*; the location dimension below the site is a
+ * dedicated-guarding idea (a post, a patrol point) that the visits book never
+ * populates, so the dropdown offered a list the grid could not be narrowed by.
+ * Note the week view was its only surface anyway — day and month already hide it,
+ * because their fetches drop `locationId` — so this closes the one reading that
+ * still showed a control the planner had nothing to do with.
+ *
+ * `All Jobs` goes for the reason the company grouping drops it, one step stronger:
+ * the tenant that gets the grouping switch is single-service by definition
+ * (`canGroupMainViewByCompany`), so *every* card on the tab is the same job type and
+ * the dropdown's only two meaningful positions are "all" and "all". With the company
+ * grouping already dropping it, this makes the job filter absent from **both**
+ * readings of that tab — all three views — which is the honest end state: a question
+ * with one answer is not a filter.
+ *
+ * The `showOfficer` dropdown **stays** — the row of installers, in this tenant's
+ * words. It is the one of the three that still narrows the right thing here: the
+ * rows are routes, a route has one person on it, and picking one selects routes
+ * rather than emptying them. Unchanged on week; day and month drop it in the fetch
+ * and hide it for the same reason they drop `Locations`.
+ *
+ * Derived per grouping for the same reason as its sibling — the main tab's config is
+ * shared with tabs that ask all three questions — and the fetch drops `shiftType`
+ * and `locationId` alongside it, so neither can keep narrowing the payload once its
+ * control is gone.
+ */
+export const withRouteGroupingFilters = (tabConfig) => ({
+  ...tabConfig,
+  filters: {
+    ...tabConfig?.filters,
+    showShiftType: false,
+    showLocation: false,
   },
 });
 

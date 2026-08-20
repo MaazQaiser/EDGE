@@ -6,7 +6,6 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import CustomDropDown from 'src/app/components/common/customDropDown';
 import DateRangePicker from 'src/app/components/common/RangeDatepicker';
-import SearchComponent from 'src/app/components/common/search';
 import { ReactComponent as LeftArrow } from 'src/assets/svg/calendar-left.svg';
 import { ReactComponent as RightArrow } from 'src/assets/svg/calendar-right.svg';
 import { useTenantLabel } from 'src/helper/utilityHooks';
@@ -42,18 +41,6 @@ const useStyles = makeStyles((theme) => ({
   },
 
   spacer: { flex: 1 },
-
-  /* The search box. Width-capped rather than flexed: this row already has a
-     `spacer` doing the pushing, and a search that grew to fill it would make the
-     three dropdowns beside it look like an afterthought clinging to the left edge.
-     220px fits a company name, which is the longest thing anyone types here. */
-  search: {
-    flex: '0 0 auto',
-    width: '220px',
-    '& .MuiInputBase-root': {
-      height: '32px',
-    },
-  },
 
   /* Borderless dropdowns: `label: value ▾`, the shape every filter on the week
      grid takes. Copied in behaviour, not in code, because the scheduler's version
@@ -165,11 +152,44 @@ const useStyles = makeStyles((theme) => ({
     },
   },
 
+  /**
+   * The separator **inside** the date navigator, between the arrows and Today.
+   *
+   * Stays short, and is the one separator on this row that does: it sits inside a
+   * 32px bordered shell whose own controls are 28px, so a full-height rule would
+   * meet that shell's top and bottom border and read as a seam splitting the pill in
+   * two rather than as a gap between two of its buttons. 20px is the 28px buttons'
+   * measure, not the row's.
+   */
   dateNavigatorDivider: {
     width: '1px',
     height: '20px',
     flex: '0 0 auto',
     margin: '0 2px',
+    background: theme.palette.borderSubtle1,
+  },
+
+  /**
+   * The separator **between clusters** of the toolbar itself.
+   *
+   * **28px, the height of the controls it separates** — the three dropdowns and
+   * Clear all all run at 28, as do the arrows and Today inside the date navigator.
+   * It was 32 first, on the reasoning that 32 is what every segmented pill in this
+   * app stands at (`calendarHeaderToolbarToggle` and the two switches copied from
+   * it), so a separator should match them. That was measuring against the wrong
+   * thing: the pills are not in this row — the only 32px box here is the date
+   * navigator's *shell*, and a rule matching the shell overshot every control it
+   * actually sits between and read as the tallest mark in the row. Reported directly
+   * as longer than the toggles, which it was.
+   *
+   * Stated as its own class rather than reusing `dateNavigatorDivider` because the
+   * two answer different questions — that one is a gap *inside* a control, this one a
+   * gap *between* clusters — even now that the numbers are close.
+   */
+  toolbarDivider: {
+    width: '1px',
+    height: '28px',
+    flex: '0 0 auto',
     background: theme.palette.borderSubtle1,
   },
 
@@ -232,7 +252,14 @@ const useStyles = makeStyles((theme) => ({
  * `companiesViewRange` rather than being spelled out here, so the pill can never
  * name a period the arrows do not step through.
  */
-const CompaniesFilters = ({ scope, onChange, companies = [], view, viewSwitch = null }) => {
+const CompaniesFilters = ({
+  scope,
+  onChange,
+  companies = [],
+  view,
+  viewSwitch = null,
+  filterAction = null,
+}) => {
   const classes = useStyles();
   const { t } = useTranslation();
   const { getLabel } = useTenantLabel();
@@ -299,12 +326,32 @@ const CompaniesFilters = ({ scope, onChange, companies = [], view, viewSwitch = 
      values, which a `Date` does not have (§7.52). */
   const selectedDates = useMemo(() => [dayjs(scope.from), dayjs(scope.to)], [scope.from, scope.to]);
 
+  /**
+   * A picked range, committed **in date order whichever order it was clicked**.
+   *
+   * `dates[0]` used to be trusted as the start. Every consumer downstream then
+   * assumes `from <= to`: `narrowCompanies` keeps a visit when
+   * `date >= from && date <= to`, so a reversed pair silently matches *nothing* and
+   * the tab reads "No companies have visits in this period" for a period that is
+   * full of them. The date pill hides the same fault on the Year grain, because
+   * `MMM 'YY – MMM 'YY` prints no day: `26 Aug → 17 Aug` and `17 Aug → 26 Aug` are
+   * the same label, so the control cannot show which way round it went.
+   *
+   * Sorting here rather than asking the picker to guarantee it: this is the boundary
+   * where a pair of dates becomes *the scope*, and the scope's invariant is its own
+   * to hold. One comparison, and the two clicks mean the same window in either
+   * order — which is also what a planner means by them.
+   */
   const handleRangeChange = (dates = []) => {
-    const [start, end] = dates;
-    if (!start || !end) return;
+    const [first, second] = dates;
+    if (!first || !second) return;
 
-    const from = dayjs(start).format('YYYY-MM-DD');
-    const to = dayjs(end).format('YYYY-MM-DD');
+    const a = dayjs(first);
+    const b = dayjs(second);
+    const [start, end] = a.isAfter(b) ? [b, a] : [a, b];
+
+    const from = start.format('YYYY-MM-DD');
+    const to = end.format('YYYY-MM-DD');
     // The picker fires on mount with the range it was given; comparing formatted
     // strings makes that a no-op instead of a refetch.
     if (from === scope.from && to === scope.to) return;
@@ -371,27 +418,18 @@ const CompaniesFilters = ({ scope, onChange, companies = [], view, viewSwitch = 
 
   return (
     <Box className={classes.toolbar}>
-      {/* **The search had no input.** `scope.query` was already plumbed end to end —
-          `defaultCompanyScope` seeds it, `narrowCompanies` matches it against company
-          *and* location names, and Clear all resets it — but nothing on screen ever
-          set it, so the whole path was unreachable. This is that missing control, not
-          a new capability.
+      {/* **No search box here.** This row had one, added because `scope.query` was
+          wired end to end with nothing on screen setting it — and it was the wrong
+          answer to that. Both dropdowns below are `searchable`, so a planner hunting
+          for a company or a building already types into the control that then *shows
+          them what they picked*; a second field doing the same narrowing invisibly,
+          with an empty state of its own, made two ways to ask one question with no
+          way to see which was in force. Asked for directly.
 
-          Leads the row because it is the widest net: the dropdowns narrow to things
-          you can already name, and this is how you find the one you cannot. Uses the
-          scheduler's own `SearchComponent`, which debounces internally, so a keystroke
-          does not re-narrow the book. */}
-      <SearchComponent
-        name="companySearch"
-        className={classes.search}
-        placeholder={t('form.input.textField.search.placeHolder')}
-        /* `onSearch` is wired straight to the input's `onChange`, so it hands back the
-           **event**, not the string — read the value off the target. Passing the
-           argument through directly put an event object into `scope.query`, and the
-           empty-state dutifully reported "no company or site matches [object Object]". */
-        onSearch={(event) => onChange({ query: event?.target?.value ?? '' })}
-      />
-
+          The `query` path is left standing — `narrowCompanies` matches it against
+          company and location names, `defaultCompanyScope` seeds it, Clear all resets
+          it — so nothing downstream had to be unpicked and a caller arriving
+          pre-searched still works. Nothing in the UI sets it today. */}
       <CustomDropDown
         name="company"
         label={t('obx.schedules.calendar.companies.companyColumn')}
@@ -469,6 +507,21 @@ const CompaniesFilters = ({ scope, onChange, companies = [], view, viewSwitch = 
         </Button>
       ) : null}
 
+      {/* Whatever the mounted view wants to put beside its filters — today the year
+          matrix's collapse button, and nothing at all on the grouped list, which has
+          no month axis to fold.
+
+          Separated by a rule, because it is not one of them: everything to its left
+          narrows *which* rows are on screen and this changes how they are drawn.
+          Rendered together with its separator, so a view that threads in nothing does
+          not leave a rule with nothing on the far side of it. */}
+      {filterAction ? (
+        <>
+          <Box className={classes.toolbarDivider} aria-hidden />
+          {filterAction}
+        </>
+      ) : null}
+
       <Box className={classes.spacer} />
 
       {/* The scheduler's own date navigator, adapted from a FullCalendar-bound
@@ -544,8 +597,14 @@ CompaniesFilters.propTypes = {
   companies: PropTypes.array,
   /** The active grain — decides the pill's wording, the arrows' unit and Today. */
   view: PropTypes.oneOf(Object.values(COMPANIES_VIEW)).isRequired,
-  /** The Day/Week/Month/Year switch, rendered at the trailing end of this row. */
+  /** The grain switch, rendered at the trailing end of this row beside the date. */
   viewSwitch: PropTypes.node,
+  /**
+   * One control belonging to the mounted view, rendered after the filters behind a
+   * separator — the year matrix's collapse button. Omitted, neither it nor its
+   * separator is drawn.
+   */
+  filterAction: PropTypes.node,
 };
 
 export default CompaniesFilters;

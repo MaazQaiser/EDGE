@@ -62,7 +62,64 @@ const useStyles = makeStyles((theme) => ({
       filter: 'grayscale(1)',
     },
   },
+
+  /**
+   * The Missed mark, lightened so it is not the same mark as Unassigned.
+   *
+   * `MissedIcon.svg` and `UnassignedIcon.svg` both paint their glyph on a
+   * full-strength `#E43F32`, and at 16px both read as one thing: a red disc. The
+   * key could not tell the two states apart, which is the same failure the
+   * cancelled mark above had, in a different colour.
+   *
+   * **Missed is the one that lightens.** Its card carries a red tint — `#FEE4E2`
+   * (`MISSED` in `helper/visitCardInk.js`, `visitFillMissed` in the grid) — while
+   * an unassigned card is deliberately untinted grey with the red living on its
+   * badge, so full red is exactly what that mark should keep.
+   *
+   * Applied **here, at the legend's call site, not in the asset**, for the reason
+   * `cancelledMark` states: `MissedIcon` is shared with the grid's card badges
+   * (`calendarIndicatorIcons` below) and the visit drawer's status chip, where
+   * full red is intended.
+   *
+   * `opacity(0.55)` rather than `grayscale` — the ask is a lighter *red*, not a
+   * grey — and rather than a `brightness`/`saturate` chain, because those are
+   * multiplicative: lifting `#E43F32`'s green (63) and blue (50) far enough to
+   * read as light red drives its red (228) past 255, and the clip swings the hue
+   * to orange. Blending toward the near-white footer is the operation that
+   * actually produces a tint of the same hue. It also avoids overriding the fill,
+   * which would mean selecting on hex literals a re-export could silently
+   * invalidate.
+   *
+   * **`0.55` is not a taste call — it is the value at which the mark states the
+   * card's own colour.** Composited over this footer (white, `0.96` over a white
+   * page), the icon's own light-red ring `#FECDCA` lands on `#FEE4E2` exactly:
+   * the missed card's wash, character for character. The disc `#E43F32` lands on
+   * `#F0958E`, which is what makes the mark read light red and no longer read as
+   * Unassigned's full-strength disc beside it.
+   *
+   * The cost, stated plainly: the disc sits at 2.2:1 against the footer and the
+   * white glyph at 2.1:1 against the disc, both down from 4.2:1 and 3.8:1 at full
+   * strength. That is inherent — a light red on near-white cannot be a
+   * high-contrast mark — and it is why the treatment is confined to a key whose
+   * every mark is captioned. Anything that has to carry the state on its own (the
+   * card badge, the drawer's chip) keeps the asset at full strength.
+   */
+  missedMark: {
+    '& svg': {
+      filter: 'opacity(0.55)',
+    },
+  },
 }));
+
+/**
+ * The two marks whose asset is right for a card badge and wrong for this key.
+ * Both treatments are the call site's, never the svg's — see the classes above.
+ */
+const markClassFor = (classes, status) => {
+  if (status === calendarShiftStatusEnum.CANCELLED) return classes.cancelledMark;
+  if (status === calendarShiftStatusEnum.MISSED) return classes.missedMark;
+  return undefined;
+};
 
 export const calendarIndicatorIcons = {
   [calendarShiftStatusEnum.UNASSIGNED]: <UnassignedIcon />,
@@ -103,9 +160,7 @@ const ScheduleStatusIcons = ({ statuses }) => {
             startIcon={calendarIndicatorIcons[status]}
             variant="onlyText"
             key={index}
-            className={
-              status === calendarShiftStatusEnum.CANCELLED ? classes.cancelledMark : undefined
-            }
+            className={markClassFor(classes, status)}
           >
             {calendarShiftStatusValues(t)?.[status]}
           </Button>

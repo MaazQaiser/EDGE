@@ -167,7 +167,7 @@ describe('formatRangeLabel', () => {
      and the grid it narrows must not say a month two ways. */
   it('keeps the year label the tab has always had', () => {
     expect(formatRangeLabel(COMPANIES_VIEW.YEAR, { from: '2026-08-01', to: '2027-07-31' })).toBe(
-      "Aug '26 – Jul '27",
+      'Aug 2026 – Jul 2027',
     );
   });
 });

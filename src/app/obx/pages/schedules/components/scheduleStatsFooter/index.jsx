@@ -5,7 +5,6 @@ import PropTypes from 'prop-types';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { DispatchIcon, Runsheet, SplittedCalenderIcon } from 'src/assets/svg';
-import { ReactComponent as CancelledIcon } from 'src/assets/svg/CancelledIcon.svg';
 import { ReactComponent as CompletedIcon } from 'src/assets/svg/CompletedIcon.svg';
 import { ReactComponent as InProgressIcon } from 'src/assets/svg/InProgressIcon.svg';
 import { ReactComponent as MissedIcon } from 'src/assets/svg/MissedIcon.svg';
@@ -47,7 +46,6 @@ const STATUS_FILTER_VALUES = {
   notStarted: 'notStarted',
   unassigned: 'requiresAttention',
   missed: 'missed',
-  cancelled: 'cancelled',
 };
 
 const STATUS_STATS = [
@@ -62,10 +60,20 @@ const STATUS_STATS = [
  * Visits count differently from shifts.
  *
  * `split` is a shift concept and always read 0 here. Meanwhile the grid drew
- * missed and cancelled visits that no footer number accounted for, so the counts
- * did not sum to the visits on screen — the footer said 34 of 42. Swapping split
- * for missed and cancelled makes the footer add up and makes both states
- * filterable, which is how a planner finds them.
+ * missed visits that no footer number accounted for, so the counts did not sum to
+ * the visits on screen — the footer said 34 of 42. Swapping split for missed makes
+ * the footer add up and makes that state filterable, which is how a planner finds
+ * it.
+ *
+ * **Cancelled is deliberately not here**, and this reverses half of D28 (which
+ * mandated it): cancelled visits are no longer drawn on any of these surfaces
+ * unless the planner asks the status dropdown for them
+ * (`dropCancelledEvents` / `dropCancelledGroups`, applied where `calendar/index.jsx`
+ * commits every fetch to state). A count for cards the grid does not draw is the
+ * *cause* of the mismatch this list exists to fix, not a cure for it — with the
+ * entry present the August month footer summed to 42 against 38 cards, the gap
+ * being exactly its own 4. Cancelled stays reachable through the dropdown, which
+ * is also the only state in which a count for it would describe the screen.
  *
  * Reached through `resolveScheduleFooterVariant`, not through a tab id: the
  * retired Visits tab used to be the only route in, which left the main tab's
@@ -80,18 +88,18 @@ const VISITS_STATUS_STATS = [
     id: 'missed',
     icon: MissedIcon,
     labelKey: 'obx.schedules.calendar.scheduleStatus.missed',
-  },
-  {
-    id: 'cancelled',
-    icon: CancelledIcon,
-    labelKey: 'obx.schedules.calendar.scheduleStatus.cancelled',
-    /* The cancelled card is flat grey (`visitFillCancelled`) and this icon is a
-       red disc, so the legend contradicted the grid. Greyed at the call site
-       rather than in the asset — `CancelledIcon.svg` is shared with the grid's
-       card badges and the visit drawer's status chip, where red is intended.
-       See `cancelledMark` in `scheduleStatusIcons` for the full reasoning; the
-       two legend paths have to agree, so they use the same treatment. */
-    mutedMark: true,
+    /* Missed and Unassigned were the same mark: both svgs paint a full-strength
+       `#E43F32` disc at 16px, so the key could not tell the two states apart.
+       Missed is the one that lightens, because its card is the one that carries a
+       tint — `#FEE4E2` (`MISSED` in `helper/visitCardInk.js`, `visitFillMissed` in
+       the grid) — while an unassigned card is deliberately untinted grey with the
+       red living on its badge, so full red is what that mark should keep.
+       Lightened at the call site rather than in the asset for the same reason the
+       cancelled mark was greyed at its own: `MissedIcon.svg` is shared with the
+       card badge and the drawer's status chip, where full red is intended. See
+       `missedMark` in `scheduleStatusIcons` for the arithmetic; the two legend
+       paths have to agree, so they use the same treatment. */
+    lightMark: true,
   },
 ];
 
@@ -201,8 +209,8 @@ const getFooterPresentation = (t, getLabel, services = {}, shiftTypes = {}) => {
       /* The KPI row is the *week's* facts — coverage, hours, routes completed —
          not the shift vocabulary's, so it survives the switch to this variant.
          Without it, correcting the status row (swapping the permanently-zero
-         `Split` for the Missed and Cancelled the grid actually draws) would have
-         silently cost the company grouping its coverage ring and top row, which
+         `Split` for the Missed count the grid actually earns) would have silently
+         cost the company grouping its coverage ring and top row, which
          is a trade nobody asked for. Rendered only when the payload carries an
          `overview` block, so the month — which has no KPI call — still collapses
          to the short footer. */
@@ -434,12 +442,14 @@ const useStyles = makeStyles((theme) => ({
       flex: '0 0 auto',
     },
   },
-  /* A status whose card carries no colour of its own — see `mutedMark`. Scoped to
-     the one entry that asks for it rather than applied to `statusItem`, so the
-     four coloured marks beside it are untouched. */
-  statusMarkMuted: {
+  /* A status whose mark has to read lighter than the asset paints it — see
+     `lightMark`. Scoped to the one entry that asks for it rather than applied to
+     `statusItem`, so the coloured marks beside it are untouched. Same value and
+     same reasoning as `missedMark` in `scheduleStatusIcons`; the two legend paths
+     have to agree. */
+  statusMarkLight: {
     '& svg': {
-      filter: 'grayscale(1)',
+      filter: 'opacity(0.55)',
     },
   },
   // The status counts are the most natural drill-down on the page, so where a
@@ -644,8 +654,8 @@ const ScheduleStatsFooter = ({
    * It used to test `variant === OVERVIEW`. That made the tall footer the private
    * property of one variant, and the moment the company grouping started reporting
    * itself as `VISITS` — which it must, so the status row stops counting a
-   * permanently-zero `Split` and starts counting Missed and Cancelled — the week
-   * would have lost its coverage ring as a side effect of a status-row fix.
+   * permanently-zero `Split` and starts counting Missed — the week would have lost
+   * its coverage ring as a side effect of a status-row fix.
    */
   const hasKpiMetrics = Boolean(data?.metrics?.length);
   const isOverview = hasKpiMetrics && canViewSummaryStats;
@@ -780,7 +790,7 @@ const LegendRow = ({
 
           const filterValue = STATUS_FILTER_VALUES[item.id];
           const isInteractive = Boolean(filterValue) && typeof onStatusSelect === 'function';
-          const markClass = item.mutedMark ? classes.statusMarkMuted : '';
+          const markClass = item.lightMark ? classes.statusMarkLight : '';
 
           if (!isInteractive) {
             return (

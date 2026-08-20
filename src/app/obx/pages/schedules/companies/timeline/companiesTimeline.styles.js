@@ -311,6 +311,32 @@ export const useStyles = makeStyles((theme) => {
      Straight from `helper/visitCardInk`, so a state means on this card exactly what
      it means on the week grid's. `visitCardScheduled` carries no fill of its own —
      the amber comes from the shared `notStarted` treatment applied alongside it. */
+
+    /**
+     * **Upcoming: no wash at all.** Scheduled, not today, nothing to flag.
+     *
+     * This is where the great majority of a twelve-month view's cards now land, and
+     * that is the point — yellow used to cover them all and so marked nothing (see
+     * `visitCardClassFor`). A state worth noticing gets a colour; ordinary future work
+     * gets the absence of one, which is what makes the coloured cards legible again.
+     *
+     * White rather than the card's base `surfaceGreySubtle`, because that grey is
+     * already spoken for: it is `UNASSIGNED`'s fill, and an unfilled upcoming chip
+     * sharing it would make "no route" and "nothing to report" the same mark.
+     *
+     * The hairline is an **inset shadow, not a border**. Two reasons. A white chip on
+     * a white row has no edge without one, and it needs an edge — it is still a chip,
+     * and a strip of packed dates has to read as separate cards. And every filled
+     * treatment here carries no border, so a real border on this one variant would
+     * spend a pixel of the shared `padding: 3px 8px` and sit a hair smaller than its
+     * neighbours; an inset shadow paints inside the box and costs no layout. The
+     * ink file's "no border of any style" rule is about *duty accents on filled
+     * cards* — this is the unfilled case it never had to describe.
+     */
+    visitCardUpcoming: {
+      background: theme.palette.surfaceGreySubtle,
+    },
+
     visitCardCompleted: FILLS[calendarShiftStatusEnum.COMPLETED],
     visitCardLive: FILLS[calendarShiftStatusEnum.IN_PROGRESS],
     visitCardMissed: FILLS[calendarShiftStatusEnum.MISSED],

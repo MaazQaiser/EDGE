@@ -529,6 +529,8 @@
         "extraAttention": "{{extra}} Job needs attention"
       },
       "jobsRequireAttention": "{{count}} shifts require assignment",
+      "windowTotal": "{{count}} {{hits}} on the dates shown",
+      "routeVisitCount": "{{count}} {{hits}} on this {{runsheet}} on this day",
       "showOnlyRequiresAttention": "Show only shifts that require assignment",
       "showAllShifts": "Clear the filter and show all shifts",
       "today": "Today",
@@ -608,6 +610,7 @@
       },
       "companies": {
         "companyColumn": "Company",
+        "visitsColumn": "Visits",
         "openCompany": "Open {{company}}'s schedule",
         "filters": {
           "allCompanies": "All companies",
@@ -617,8 +620,9 @@
         "footer": "{{companies}} {{companyWord}} · {{count}} {{sites}}",
         "companySingular": "company",
         "companyPlural": "companies",
-        "visitOn": "{{date}} · {{status}}",
-        "legendScheduled": "Scheduled",
+        "legendUpcoming": "Upcoming",
+        "legendDueToday": "Due today",
+        "legendInProgress": "In progress",
         "legendCompleted": "Completed",
         "legendMissed": "Missed",
         "legendUnassigned": "No route",
@@ -637,6 +641,15 @@
           "weekHint": "One week of visits, grouped by company and location",
           "monthHint": "One month, with every location listed whether or not it is due",
           "yearHint": "Twelve months at a glance — one row per location, one column per month"
+        },
+        "density": {
+          "collapse": "Collapse",
+          "expand": "Expand",
+          "collapseHint": "Hide the month columns and pack each row’s visits together",
+          "expandHint": "Show a column for every month again"
+        },
+        "visitTooltip": {
+          "noRoute": "Not on a {{runsheet}}"
         }
       },
       "noEvents": {
@@ -1295,7 +1308,7 @@
       "failedRetry": "Try again",
       "committedTitle": "{{count}} change applied",
       "committedTitle_other": "{{count}} changes applied",
-      "committedBody": "{{emailed}}. You can undo for the next five minutes, or until a technician's device picks it up.",
+      "committedBody": "{{emailed}}. You can undo for the next five minutes, or until the {{officer}}'s device picks it up.",
       "undo": "Undo",
       "backToRunsheets": "Back to runsheets",
       "groupRoutes": "{{count}} route",

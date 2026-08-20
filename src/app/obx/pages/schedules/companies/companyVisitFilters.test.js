@@ -158,3 +158,78 @@ describe('narrowCompanies — window beside the other cuts', () => {
     expect(companies.map((company) => company.name)).toEqual(['Acme']);
   });
 });
+
+describe('narrowCompanies — cancelled visits', () => {
+  /* A quarterly location with one of its four called off, plus a neighbour whose
+     only visit was cancelled — the row that must not silently vanish. */
+  const withCancelled = () => [
+    {
+      customerId: 'CUST-9',
+      name: 'Vector',
+      totalVisits: 3,
+      sites: [
+        {
+          id: 9,
+          name: 'Vector Depot',
+          intervalMonths: 1,
+          months: [
+            [
+              visit('2026-08-05', calendarShiftStatusEnum.COMPLETED),
+              visit('2026-08-19', calendarShiftStatusEnum.CANCELLED),
+            ],
+            [visit('2026-09-04')],
+          ],
+        },
+        {
+          id: 10,
+          name: 'Vector Yard',
+          intervalMonths: 3,
+          months: [[visit('2026-08-11', calendarShiftStatusEnum.CANCELLED)], []],
+        },
+      ],
+    },
+  ];
+
+  it('hides them when no status is chosen', () => {
+    const [vector] = narrowCompanies(withCancelled(), {});
+
+    expect(datesIn(vector.sites[0])).toEqual(['2026-08-05', '2026-09-04']);
+    /* The cancelled-only location keeps its row, emptied — the same rule every other
+       quiet row follows on a planning grain. */
+    expect(datesIn(vector.sites[1])).toEqual([]);
+    /* And the header count describes what is on screen, not what arrived. */
+    expect(vector.totalVisits).toBe(2);
+  });
+
+  it('hides them when a different status is chosen', () => {
+    const [vector] = narrowCompanies(withCancelled(), {
+      status: calendarShiftStatusEnum.COMPLETED,
+    });
+
+    expect(datesIn(vector.sites[0])).toEqual(['2026-08-05']);
+  });
+
+  it('shows them, and only them, when Cancelled is chosen', () => {
+    const [vector] = narrowCompanies(withCancelled(), {
+      status: calendarShiftStatusEnum.CANCELLED,
+    });
+
+    expect(datesIn(vector.sites[0])).toEqual(['2026-08-19']);
+    expect(datesIn(vector.sites[1])).toEqual(['2026-08-11']);
+  });
+
+  it('keeps the buckets positional while hiding them', () => {
+    const [vector] = narrowCompanies(withCancelled(), {});
+
+    /* The matrix indexes these against the payload's month columns, so emptying a
+       bucket must never shorten the array. */
+    expect(vector.sites[0].months).toHaveLength(2);
+    expect(vector.sites[0].months[0]).toHaveLength(1);
+  });
+
+  it('lets a cancelled-only location go quiet on an execution grain', () => {
+    const [vector] = narrowCompanies(withCancelled(), { dropQuiet: true });
+
+    expect(vector.sites.map((site) => site.name)).toEqual(['Vector Depot']);
+  });
+});

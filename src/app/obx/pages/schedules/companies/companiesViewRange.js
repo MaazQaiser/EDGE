@@ -206,9 +206,21 @@ export const isViewingCurrentPeriod = (view, scope = {}) => {
  * `17 Aug 2026 – 23 Aug 2026`, which is two thirds redundant and still has to fit
  * a 148px pill.
  *
- * Year keeps `MMM 'YY – MMM 'YY` — the same label it has always had, and the same
- * format its own column headers use, so the pill and the grid it narrows cannot
- * disagree about how to say a month.
+ * Year prints its years **in full**, and that is the one rule worth stating here:
+ * *a two-digit year is only safe next to a day.*
+ *
+ * It used to read `Aug '26 – Jul '27`, matching its own column headers. Reported as a
+ * data bug — "the filter is after Aug 26, why do I see visits from the 22nd and the
+ * 17th" — because with no day in the label, `'26` sits exactly where a day-of-month
+ * would and reads as *August 26th* rather than *August 2026*. The window was correct
+ * the whole time; the label was describing it in a form that cannot be read only one
+ * way. An apostrophe is not enough signal to carry that distinction on a control
+ * whose neighbours are a date picker and a pair of day-stepping arrows.
+ *
+ * The visit cards keep `D MMM 'YY` — they lead with a day, so the slot is already
+ * taken and `'26` can only be a year. Same reasoning, opposite conclusion: it is the
+ * *absence* of the day that makes the short form ambiguous, not the short form
+ * itself. The column headers, which also print no day, changed with this.
  */
 export const formatRangeLabel = (view, scope = {}) => {
   const from = dayjs(scope.from);
@@ -233,7 +245,7 @@ export const formatRangeLabel = (view, scope = {}) => {
 
     case COMPANIES_VIEW.YEAR:
     default:
-      return `${from.format("MMM 'YY")} – ${to.format("MMM 'YY")}`;
+      return `${from.format('MMM YYYY')} – ${to.format('MMM YYYY')}`;
   }
 };
 

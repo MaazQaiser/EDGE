@@ -1,5 +1,9 @@
 import fcClass from '@fullcalendar/react/protected-styles';
 import { makeStyles } from '@mui/styles';
+import {
+  statusFillInProgressRule,
+  visitFillInProgressRule,
+} from 'src/app/components/common/calendar/calendarStatusWash';
 
 /**
  * The wash behind today's column.
@@ -407,11 +411,19 @@ export const useStyles = makeStyles((theme) => ({
     alignItems: 'center',
     gap: '6px',
   },
-  /* The status mark, in the bottom-right corner where every other card on this
+  /* The status mark, in the trailing corner where every other card on this
      calendar carries it. The icons are drawn at 20px intrinsic and the shift
      card's 16px footer row squeezes them to 14; a visit card had no such row, so
      the same icon rendered at 20px in the header and pushed the card 8px taller
-     than its neighbours. The size is stated here rather than inherited. */
+     than its neighbours. The size is stated here rather than inherited.
+
+     Its one caller is the **month chip**, which draws it for the unrouted state
+     only (`VisitMonthChipContent`). 14px rather than the 11px the month's
+     aggregate cell squeezes the same glyph to, because this is the *card's*
+     status mark and the chip's whole aim is that a visit look like itself in the
+     week and the month alike. It fits the chip's 16px line box, so nothing grows.
+     `marginLeft` is not here — where the mark sits is the container's business,
+     and `visitMonthChip` states it. */
   visitStatusIcon: {
     display: 'flex',
     alignItems: 'center',
@@ -541,11 +553,11 @@ export const useStyles = makeStyles((theme) => ({
   },
 
   /* On a route that has left. Semantic blue rather than `dutyBlueBg` — see the
-     tenant note above. */
-  visitFillInProgress: {
-    background: '#EFF8FF !important',
-    borderLeft: 'none !important',
-  },
+     tenant note above. The declaration comes from `calendarStatusWash.js`, which is
+     now the single statement of this wash: the shift/V2 card's
+     `statusFillInProgress` below and the Companies views' `visitCardFills` read the
+     same value, so the three surfaces cannot drift to three blues. */
+  visitFillInProgress: visitFillInProgressRule,
 
   /* Done, and the quietest card on the grid: it needs no action, so it should
      not compete with the ones that do. `surfaceSuccessSubtle` is the same fill a
@@ -1191,11 +1203,20 @@ export const useStyles = makeStyles((theme) => ({
      thin left-line-only treatment this chip carried for a while. A line reads
      at the scale of one card read in isolation; scanned down a column of many
      it took a second look to register as "amber" at all, where a filled block
-     of colour reads at a glance without one. There is no separate status glyph
-     any more either — the fill carries the whole signal now, so this chip has
-     no `visitMonthChipStatus`/`visitMonthChipNoPlan` machinery left to draw one
-     (that pair still exists on the week card, which has the width to show a
-     glyph *and* a wash without one competing with the other).
+     of colour reads at a glance without one. The *leading* status glyph went with
+     that change — the fill carries the signal for every state that has one, so
+     this chip has no `visitMonthChipStatus`/`visitMonthChipNoPlan` machinery left
+     (that pair still exists on the week card, which has the width to show a glyph
+     *and* a wash without one competing with the other).
+
+     **One state has no fill, and it is the one that most needs reading.**
+     `visitFillUnrouted` is `surfaceGreySubtle` and deliberately untinted, so a
+     visit nobody has routed is a plain grey chip — the same plain grey as a status
+     with no wash at all. For that state only, the chip takes the card's own status
+     mark (`visitStatusIcon`) at its trailing edge; `marginLeft: auto` puts it
+     there rather than immediately after a short site name, so a column of chips
+     has the mark in one place to scan down. The predicate lives with the mark, in
+     `VisitMonthChipContent`.
 
      No duty-coloured accent either, and for the same underlying reason `dutyBlue`
      was already dropped at the call site: every chip in this cell is a HIT, so a
@@ -1232,6 +1253,13 @@ export const useStyles = makeStyles((theme) => ({
     borderRadius: '4px',
     cursor: 'pointer',
     overflow: 'hidden',
+    /* Both names are `flex: '0 1 auto'` — they shrink but never grow — so without
+       this the mark would sit tucked against a short site name instead of at the
+       chip's edge. Stated on the container, so `visitStatusIcon` keeps stating
+       only the mark's own size and nothing about where it is used. */
+    '& $visitStatusIcon': {
+      marginLeft: 'auto',
+    },
   },
   /* The chip's subject: whose site this is. Dark and legible like the week card's
      own site line, but `fontWeight: 500` rather than that card's 600 — prominent
@@ -1309,12 +1337,12 @@ export const useStyles = makeStyles((theme) => ({
   visitMonthChipTip: {
     display: 'flex',
     flexDirection: 'column',
-    // One uniform 4px between every row — lead, site, window·route, officer,
-    // status — rather than the 2px gap plus a second, selective 2px
-    // `marginTop` on just the last two rows this started as. Both read the
-    // same on screen, but one rule is easier to trust than two that have to
-    // agree, and this tip has grown to five rows since that pairing was
-    // written for three.
+    // One uniform 4px between every row — lead, site, route, officer — rather
+    // than the 2px gap plus a second, selective 2px `marginTop` on just the last
+    // two rows this started as. Both read the same on screen, but one rule is
+    // easier to trust than two that have to agree, and the row count has both
+    // grown and shrunk since that pairing was written for three (the status row
+    // has since gone, for restating the card it hovers over).
     gap: '4px',
     padding: '1px 0',
   },
@@ -1344,16 +1372,11 @@ export const useStyles = makeStyles((theme) => ({
       lineHeight: '16px',
     },
   },
-  visitMonthChipTipStatus: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '5px',
-    '& svg': {
-      width: '12px',
-      height: '12px',
-      flexShrink: 0,
-    },
-  },
+  /* `visitMonthChipTipStatus` was here, for a `Missed` / `Completed` row that
+     closed the hover card. Removed with the row rather than left behind: the card
+     it hovers over already carries the status as its fill and its badge, and the
+     footer legend names every mark, so the line restated the surface it was
+     covering. The state is still spoken in the event's `aria-label`. */
   visitMonthChipTipOfficer: {
     display: 'flex',
     alignItems: 'center',
@@ -2991,6 +3014,25 @@ export const useStyles = makeStyles((theme) => ({
     gap: '4px !important',
   },
 
+  /* The route card's own shell, on the routes reading of the main service tab.
+     Layered over `eventContent`/`eventContentWeek` with `!important` for the reason
+     `visitCardShell` needs it: those two set `padding` and `gap` unconditionally for
+     every duty card on this calendar, and this applies to one reading's cards only.
+
+     **Asked for: more height.** The card had been compressed the other way — three
+     lines to two — when the vehicle came off. It is three again (time, officer,
+     count + marks), and the two lines added to the shell here are what stops the
+     third row reading as a crowded afterthought: 6px of vertical padding instead of
+     4, and a 4px gap between rows instead of 2, the same air the visit card was given
+     when its text grew. Horizontal padding is left at 6px — a route card's officer
+     name is the longest string on this grid and the day column is narrow, so the
+     visit card's 12px would buy whitespace at the cost of the one line that needs
+     the width. */
+  patrolRouteCardShell: {
+    padding: '6px !important',
+    gap: '4px !important',
+  },
+
   eventContentView: {
     backgroundColor: theme.palette.surfaceWhite,
     padding: '2px',
@@ -3040,9 +3082,28 @@ export const useStyles = makeStyles((theme) => ({
   dutyGreenBg: {
     backgroundColor: `${theme.palette.surfaceSuccessSubtle} !important`,
   },
+  /**
+   * **Nothing maps here any more, deliberately.**
+   *
+   * `dutyBlueBg` is named for a colour and defined as the tenant brand, and those
+   * two disagree: `surfaceBrandSubtle` is `#E5F6FF` (blue) on Signal and `#E8F7ED`
+   * (pale green) on Filter Go. It was the in-progress wash, which is how a live
+   * route came to render green there while the status badge on the same card
+   * rendered blue. In progress now takes `statusFillInProgress` below.
+   *
+   * Kept rather than deleted only because it is a *named colour* in a palette whose
+   * siblings are still in use (`dutyYellowBg`, `dutyGreenBg`; `dutyRedBg` is
+   * likewise unreferenced). If you reach for it, reach for `surfaceBrandSubtle`
+   * instead and mean the brand — a status must never be washed with it.
+   */
   dutyBlueBg: {
     backgroundColor: `${theme.palette.surfaceBrandSubtle} !important`,
   },
+
+  /* A shift or V2 visit card that has begun. The semantic blue, not the brand — see
+     `calendarStatusWash.js`, and `visitFillInProgress` above, which is the same wash
+     for the card that draws no duty accent. */
+  statusFillInProgress: statusFillInProgressRule,
 
   dutyRedBg: {
     backgroundColor: `${theme.palette.surfaceAlertSubtle} !important`,
@@ -3646,6 +3707,47 @@ export const useStyles = makeStyles((theme) => ({
       maxWidth: '100%',
     },
   },
+
+  /* How many visits a route card is carrying — the mark, then the figure, in the
+     slot the vehicle line used to hold. See `PatrolCardBody` for the card's shapes.
+
+     **A glyph and a number, no noun.** The word was asked to come off, so legibility
+     rests on the mark: `hits-runsheet.svg`, the same one the Runsheets listing puts
+     beside `N Hits`, whose own `#6A6A70` is already the muted grey this wants — no
+     recolouring, and nothing here competes with the one red count D29 allows the
+     schedule chrome. The figure keeps the tabular treatment both totals above use, so
+     a column of counts stays in line.
+
+     `flexShrink: 0` because there is nothing here worth clipping: two glyph-widths
+     and a digit or two. */
+  patrolVisitCount: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '4px',
+    flexShrink: 0,
+    minWidth: 0,
+  },
+  /* 12px, down from the asset's native 14: it sits in a 16px row beside 10px text,
+     and the marks it shares that row with are 10-12px glyphs. */
+  patrolVisitCountIcon: {
+    display: 'flex',
+    alignItems: 'center',
+    flexShrink: 0,
+    '& svg': {
+      width: '12px !important',
+      height: '12px !important',
+    },
+  },
+  patrolVisitCountValue: {
+    '&.MuiTypography-root': {
+      color: theme.palette.textPrimary,
+      fontSize: '11px',
+      fontWeight: 700,
+      lineHeight: '14px',
+      fontVariantNumeric: 'tabular-nums',
+    },
+  },
+
   notesIconDiv: {
     display: 'flex',
     gap: '0px',

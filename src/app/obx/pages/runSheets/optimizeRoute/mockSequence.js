@@ -2,7 +2,7 @@
  * Demo fixture for the smallest scope: reordering the stops inside one route.
  *
  * This is the live-route case, so most of the interest is in what *can't* move.
- * Completed and in-progress stops are frozen, and the stop the technician has
+ * Completed and in-progress stops are frozen, and the stop the installer has
  * already been sent is locked by the system rather than by the planner — which
  * is why it has to explain itself.
  */
@@ -80,7 +80,7 @@ export const SEQUENCE_STOPS = [
     was: 4,
     arrival: '13:10',
     /* A lock the planner did not set — so the tooltip has to say why, not just that. */
-    lockReason: 'Already sent to the technician’s device',
+    lockReason: 'Already sent to the installer’s device',
   },
 ];
 

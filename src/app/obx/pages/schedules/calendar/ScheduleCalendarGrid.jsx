@@ -10,15 +10,22 @@ import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import Calendar, { getStartEndTimeForView } from 'src/app/components/common/calendar';
 import { useStyles } from 'src/app/components/common/calendar/calendar.styles';
+import {
+  EVENT_BG_COLOR_CLASSES,
+  visitWashClassFor,
+} from 'src/app/components/common/calendar/calendarStatusWash';
 import DutyIndicator from 'src/app/components/obxComponents/dutyIndicator';
 import CalendarOfficerAssignPopover from 'src/app/obx/pages/schedules/calendar/CalendarOfficerAssignPopover';
 import LegacyCalendarCardContent from 'src/app/obx/pages/schedules/calendar/LegacyCalendarCardContent';
+import PatrolCardBody from 'src/app/obx/pages/schedules/calendar/PatrolCardBody';
 import VisitCardContentV2 from 'src/app/obx/pages/schedules/calendar/VisitCardContentV2';
+import VisitMonthChipContent from 'src/app/obx/pages/schedules/calendar/VisitMonthChipContent';
 import {
   calendarIndicatorIcons,
   calendarShiftStatusValues,
 } from 'src/app/obx/pages/schedules/components/scheduleStatusIcons';
 import {
+  canGroupMainViewByCompany,
   getScheduleTabConfig,
   MAIN_VIEW_GROUPING,
   resolveResourceAreaHeader,
@@ -29,6 +36,7 @@ import {
   VISIT_VIEW_VARIANT,
 } from 'src/app/obx/pages/schedules/config/visitViewVariant';
 import {
+  dayjsWithStandardOffset,
   dayjsWithTimezone,
   formatShiftScheduleTimeRange,
   getCurrentStandardTimeInIsoWrtTimezone,
@@ -54,14 +62,11 @@ import { ReactComponent as UnAssignHit } from 'src/assets/svg/assignHit.svg';
 import { ReactComponent as CalendarIcon } from 'src/assets/svg/calendar.svg';
 import { ReactComponent as CarIcon } from 'src/assets/svg/carImage.svg';
 import { ReactComponent as AlertIcon } from 'src/assets/svg/DedicatedDuty/alertCircle.svg';
-import { ReactComponent as DispatchIndicator } from 'src/assets/svg/dispatchIndicator.svg';
 import { ReactComponent as NotesIcon } from 'src/assets/svg/notesStatus.svg';
 import { ReactComponent as AccessTimeIcon } from 'src/assets/svg/officerOrangeIcon.svg';
 import { ReactComponent as RunsheetIcon } from 'src/assets/svg/runsheetHit.svg';
 import { ReactComponent as UnassignedOfficerIcon } from 'src/assets/svg/unassigned-officer.svg';
-import { ReactComponent as UnassignedVehicleIcon } from 'src/assets/svg/unassigned-vehicle.svg';
 import { ReactComponent as UnassignedIcon } from 'src/assets/svg/UnassignedIcon.svg';
-import { ReactComponent as WhiteCarIcon } from 'src/assets/svg/WhiteCarIcon.svg';
 import { useTenantLabel } from 'src/helper/utilityHooks';
 import useDateTime from 'src/hooks/useDateTime';
 import userHasPermission from 'src/utils/auth/userHasPermission';
@@ -74,8 +79,9 @@ import {
   ShiftStatus,
   TIME_GRID,
 } from 'src/utils/constants/schedules';
-import { capitalizeFirstLetter } from 'src/utils/string/common';
 
+import { getRouteVisitCount } from './routeVisitCount';
+import { resolveScheduleWindowTerm } from './scheduleWindowTotal';
 import { APPLY_PHASE } from './useApplyMotion';
 
 const DUTY_COLOR_CLASS = {
@@ -86,10 +92,18 @@ const DUTY_COLOR_CLASS = {
   [SCHEDULE_DUTIES.EXTRA]: 'dutyYellow',
 };
 
-const EVENT_BG_COLOR_CLASSES = {
-  [calendarShiftStatusEnum.NOT_STARTED]: 'dutyYellowBg',
-  [calendarShiftStatusEnum.IN_PROGRESS]: 'dutyBlueBg',
-  [calendarShiftStatusEnum.COMPLETED]: 'dutyGreenBg',
+/**
+ * Is this card sitting in **today's** column?
+ *
+ * Both sides go through `dayjsWithStandardOffset` — the same franchise offset the grid
+ * places its cards with — so this cannot disagree with the column the card is drawn
+ * in. Comparing against browser-local time instead would, for any viewer a few hours
+ * from the franchise, wash the wrong column's cards.
+ */
+const isVisitOnToday = (shift = {}) => {
+  const start = shift.startsAt || shift.start;
+  if (!start) return false;
+  return dayjsWithStandardOffset(start).isSame(dayjsWithStandardOffset(), 'day');
 };
 
 const isShiftCancelled = (shift = {}) => {
@@ -591,12 +605,17 @@ const ScheduleCalendarGrid = ({
   toolbarRightContent = null,
   toolbarTrailingContent = null,
   visitCardVariant = DEFAULT_VISIT_VIEW_VARIANT,
+  routeVisitCounts = null,
 }) => {
   const classes = useStyles();
   const theme = useTheme();
   const { t } = useTranslation();
   const { getLabel } = useTenantLabel();
   const shiftTypes = useSelector((state) => state.tenantConfigs?.labels?.shift_types || {});
+  /* Selected without a `|| {}` fallback on purpose: this is only ever read through
+     `canGroupMainViewByCompany` below, and a fresh empty object per render would
+     make every store tick a new reference on the biggest component on the page. */
+  const tenantServices = useSelector((state) => state.auth.tenantInfo?.services);
   const { is24Hours } = useDateTime();
   const [overviewExpandedSections, setOverviewExpandedSections] = useState(
     INITIAL_OVERVIEW_EXPANDED_SECTIONS,
@@ -604,6 +623,22 @@ const ScheduleCalendarGrid = ({
   const officerAssignPopoverRef = useRef(null);
 
   const scheduleTabConfig = getScheduleTabConfig(activeScheduleTab);
+  /**
+   * The **routes reading of the main service tab** — the same predicate
+   * `calendar/index.jsx` calls `isRouteGrouping`, and narrowed the same way.
+   *
+   * `visitGrouping` falls back to `ROUTES` on every surface that cannot group by
+   * company at all, so the enum alone is true on the patrol and dedicated tabs, the
+   * multi-service overview and both embeds. `canGroupMainViewByCompany` is what
+   * narrows it to the one tab this is a statement about — and those other surfaces
+   * are exactly the ones that must keep their vehicle line.
+   *
+   * Derived here rather than threaded down as a prop: this file already holds every
+   * input, and no caller has to know the card changed shape.
+   */
+  const isRouteGrouping =
+    visitGrouping === MAIN_VIEW_GROUPING.ROUTES &&
+    canGroupMainViewByCompany({ services: tenantServices || {}, tabConfig: scheduleTabConfig });
   /* Which of the two candidate visit cards to draw. Read once here so the week and
      day paths cannot drift apart — they have picked their card independently before
      (§ the legacy/visit/shift ladder in both), and a variant that applied to one
@@ -982,6 +1017,43 @@ const ScheduleCalendarGrid = ({
   // The visits tab styles its cards and month cells itself, in every view.
   const isVisitsView = scheduleTabConfig?.id === 'visits';
 
+  /**
+   * One route card's visit count, and the sentence its tooltip says.
+   *
+   * Two scalar props rather than one object so `CalendarCardContent`'s `memo` still
+   * works — a fresh object per render would defeat it on every card of every grid.
+   *
+   * The gate is `isRouteGrouping` *and* a count map: the first is the only reading
+   * whose cards are routes, and the second is `null` on any window with no visit
+   * list to count from (`buildRouteVisitCounts`). Returning nothing rather than
+   * `visitCount: null` keeps the props off every other card entirely.
+   *
+   * The card face carries no noun, so the tooltip is where the word lives, and it
+   * takes it from `resolveScheduleWindowTerm` — the one resolution of the tenant's
+   * visits term in this chrome, shared with the header total on the other reading.
+   * It also names the **scope**, because a count on a card in a day column could
+   * otherwise be read as the route's whole week, and a planner who reads it that way
+   * finds it disagreeing with every other card on the row.
+   */
+  const routeVisitCountProps = useCallback(
+    (shift) => {
+      if (!isRouteGrouping) return {};
+
+      const count = getRouteVisitCount(routeVisitCounts, shift);
+      if (count == null) return {};
+
+      return {
+        visitCount: count,
+        visitCountTitle: t('obx.schedules.calendar.routeVisitCount', {
+          count,
+          hits: resolveScheduleWindowTerm({ count, getLabel, t }),
+          runsheet: getLabel('terms', 'runsheet', t),
+        }),
+      };
+    },
+    [isRouteGrouping, routeVisitCounts, getLabel, t],
+  );
+
   const eventContent = useCallback(
     (info) => {
       // FullCalendar stores `id` on the event, not in extendedProps — merge it back.
@@ -1005,14 +1077,17 @@ const ScheduleCalendarGrid = ({
            views. FullCalendar's own `dayMaxEvents` (3, set on the month view's
            config) supplies the "+N more".
 
-           **Fill, not a glyph.** The state used to be carried by a leading status
-           icon plus a wash — belt and braces, because the wash alone once made
-           every state read as a colour with no name (a visit nobody had routed
-           came out as the same plain grey a low-priority state would). The icon
-           is gone now and the fill is the only signal; nothing here draws a
-           second, redundant mark for it. The tooltip still names the status in
-           words for anyone who needs the exact one, the same way it still carries
-           the window and the route.
+           **Fill, and one glyph.** The state used to be carried by a *leading*
+           status icon plus a wash on every chip — belt and braces, and the icon
+           was dropped so the fill could carry it alone. That holds for every
+           state with a fill, and fails for the one without: `visitFillUnrouted`
+           is untinted on purpose (*"unassigned is not a status the schedule
+           tints"*), so a visit nobody has routed came out as the same plain grey
+           a status with no wash does. So the status badge is back for that state
+           only, trailing rather than leading — see `VisitMonthChipContent`, which
+           owns both the mark and the test for it. Every other state is still the
+           fill alone. The hover card no longer names any of them: it carries what
+           the chip left out, and the status was the one thing it did not.
 
            **Company · site, not the window and not the filter count.** The chip
            used to show the visit's time, then the site and how many filters that
@@ -1029,7 +1104,7 @@ const ScheduleCalendarGrid = ({
         if (isCompanyGrouping && shift.shiftType === SCHEDULE_DUTIES.HIT) {
           const chipSite = shift.site?.name || shift.siteName || '';
           const chipCompany = resolveVisitCompanyName(shift);
-          const { statusIcon, statusValue } = getVisitStatusValues({ shift, t });
+          const { statusIcon } = getVisitStatusValues({ shift, t });
 
           return (
             <VisitMonthChipTooltip
@@ -1037,35 +1112,22 @@ const ScheduleCalendarGrid = ({
               company={chipCompany}
               site={chipSite}
               route={shift.runsheetName || t('obx.schedules.calendar.unassigned')}
-              statusIcon={statusIcon}
-              statusValue={statusValue}
               officer={shift.officer}
               reassignedOfficer={shift.reassignedOfficer}
             >
+              {/* The shell stays here — it carries the wash, and it is the element
+                  `Tooltip` clones its ref onto, which a memo'd component cannot
+                  hold. Only the contents moved out. */}
               <Box
                 className={`${classes.visitMonthChip} ${getVisitStateCardClass(classes, shift)}`}
               >
-                {chipCompany ? (
-                  <Typography component="span" className={classes.visitMonthChipCompany}>
-                    {chipCompany}
-                  </Typography>
-                ) : null}
-                {/* Only when there is something on both sides of it — a visit
-                    whose company did not resolve must not draw a leading dot. */}
-                {chipCompany && chipSite ? (
-                  <Typography
-                    component="span"
-                    className={classes.visitMonthChipSeparator}
-                    aria-hidden="true"
-                  >
-                    ·
-                  </Typography>
-                ) : null}
-                {chipSite ? (
-                  <Typography component="span" className={classes.visitMonthChipSite}>
-                    {chipSite}
-                  </Typography>
-                ) : null}
+                <VisitMonthChipContent
+                  classes={classes}
+                  shift={shift}
+                  company={chipCompany}
+                  site={chipSite}
+                  statusIcon={statusIcon}
+                />
               </Box>
             </VisitMonthChipTooltip>
           );
@@ -1155,8 +1217,6 @@ const ScheduleCalendarGrid = ({
               company={resolveVisitCompanyName(shift)}
               site={shift.site?.name || shift.siteName || ''}
               route={shift.runsheetName || t('obx.schedules.calendar.unassigned')}
-              statusIcon={visitStatus.statusIcon}
-              statusValue={visitStatus.statusValue}
               officer={shift.officer}
               reassignedOfficer={shift.reassignedOfficer}
             >
@@ -1200,14 +1260,38 @@ const ScheduleCalendarGrid = ({
 
         return (
           <Box
-            className={`${classes.eventContent} ${classes.eventContentWeek} ${classes[dutyColor]} ${classes[eventBgColorClass]} ${cancelledDedicatedClass}`}
+            /* `patrolRouteCardShell` only on the routes reading, and only there: it
+               is the extra height that reading's card was asked for, and no other
+               surface's cards changed shape. */
+            className={`${classes.eventContent} ${classes.eventContentWeek} ${
+              classes[dutyColor]
+            } ${classes[eventBgColorClass]} ${cancelledDedicatedClass} ${
+              isRouteGrouping && !useLegacyCard ? classes.patrolRouteCardShell : ''
+            }`}
           >
             <CardContent
               shift={shift}
               statusIcon={statusIcon}
               statusValue={statusValue}
               is24Hours={is24Hours}
-              {...(useLegacyCard ? {} : { onOfficerAssignClick: handleOfficerAssignClick })}
+              {...(useLegacyCard
+                ? {}
+                : {
+                    onOfficerAssignClick: handleOfficerAssignClick,
+                    /* The one surface that drops the vehicle line. Week only —
+                       the day view's card is the expanded reading of the same
+                       shift (it is the only one that also names the route), and
+                       it is not the grid this brief is about. */
+                    showVehicle: !isRouteGrouping,
+                    /* …and the one surface that counts the run's visits, for the
+                       same reason: only here is the card a route. Resolved per
+                       card rather than threaded down already-resolved, because
+                       the term follows the *count* (`hit`/`hits`) and only this
+                       loop knows it. `routeVisitCountFor` answers `null` off
+                       this reading and whenever the window has no visit list, so
+                       nothing below has to repeat the gate. */
+                    ...routeVisitCountProps(shift),
+                  })}
             />
           </Box>
         );
@@ -1220,10 +1304,12 @@ const ScheduleCalendarGrid = ({
       handleOfficerAssignClick,
       isDedicatedCancelledShift,
       is24Hours,
+      isRouteGrouping,
       isVisitsWeekView,
       isVisitsView,
       isCompanyGrouping,
       getLabel,
+      routeVisitCountProps,
       scheduleTabConfig?.isLegacyEmbeddedView,
       isVisitCardV2,
       selectionMode,
@@ -1490,8 +1576,6 @@ const ScheduleCalendarGrid = ({
                       company={resolveVisitCompanyName(shift)}
                       site={shift.site?.name || shift.siteName || ''}
                       route={shift.runsheetName || t('obx.schedules.calendar.unassigned')}
-                      statusIcon={visitStatus?.statusIcon}
-                      statusValue={visitStatus?.statusValue}
                       officer={shift.officer}
                       reassignedOfficer={shift.reassignedOfficer}
                     >
@@ -2102,6 +2186,13 @@ ScheduleCalendarGrid.propTypes = {
   toolbarTrailingContent: PropTypes.node,
   /** Which candidate visit card to draw — see `config/visitViewVariant`. */
   visitCardVariant: PropTypes.oneOf(Object.values(VISIT_VIEW_VARIANT)),
+  /**
+   * Visits per route per day for the window on screen — `buildRouteVisitCounts`'s
+   * map, or `null` when this window has no visit list to count from (which is what
+   * keeps a route card from printing a confident `0`). Built by the page rather than
+   * here because the list it counts is the page's: the grid never fetches it.
+   */
+  routeVisitCounts: PropTypes.instanceOf(Map),
   /** `useApplyMotion`'s state — the two-beat sequence after Apply. */
   applyMotion: PropTypes.object,
   events: PropTypes.oneOfType([PropTypes.array, PropTypes.object]),
@@ -2214,18 +2305,24 @@ StatusTooltip.propTypes = {
  * cannot carry two proper nouns without truncating the more specific of them.
  * Company here, site on the chip, and both are readable.
  *
- * The route and the state follow, because the two questions this grid is scanned
- * for are "whose is this" and "has anyone got it". `resolveVisitCompanyName`
+ * The route and the technician follow, because the questions this grid is scanned
+ * for are "whose is this" and "who has got it". `resolveVisitCompanyName`
  * explains what happens when the payload does not name a customer: the site
  * moves up and leads instead, rather than leaving an empty first line.
+ *
+ * **The state is not in here.** A `Missed` / `Completed` row used to close the card,
+ * and it was the one line restating something the surface it hovers over already
+ * says: every card carries the status as its own fill and its own badge, and the
+ * footer legend names every mark. A hover card is for what the card had to leave
+ * out — a line that repeats the card teaches a planner to stop reading the rest.
+ * The state is still spoken, in the event's `aria-label` (`buildEventAccessibleName`),
+ * which is where it was never redundant.
  */
 const VisitMonthChipTooltip = ({
   classes,
   company,
   site,
   route,
-  statusIcon,
-  statusValue,
   officer,
   reassignedOfficer,
   children,
@@ -2267,11 +2364,12 @@ const VisitMonthChipTooltip = ({
           <Typography component="span" className={classes.visitMonthChipTipLine}>
             {t('obx.schedules.calendar.visits.tooltipRoute', { route })}
           </Typography>
-          {/* Who's on it sits beside the state, not folded into the text lines
-              above — an avatar needs its own row to stay legible at this size.
-              Its name takes the tip's brighter, near-full-white tier rather
-              than the muted one every other line here uses: who is coming is
-              as load-bearing a fact as where and when, not a footnote to them. */}
+          {/* Who's on it gets its own row rather than being folded into the text
+              lines above — an avatar needs one to stay legible at this size. Its
+              name takes the tip's brighter, near-full-white tier rather than the
+              muted one every other line here uses: who is coming is as
+              load-bearing a fact as where and when, not a footnote to them. It is
+              also the card's last row now that the status has gone. */}
           <Box className={classes.visitMonthChipTipOfficer}>
             <Avatar
               className={classes.visitMonthChipTipAvatar}
@@ -2282,14 +2380,6 @@ const VisitMonthChipTooltip = ({
               {officerName}
             </Typography>
           </Box>
-          {statusValue ? (
-            <Box className={classes.visitMonthChipTipStatus}>
-              {statusIcon}
-              <Typography component="span" className={classes.visitMonthChipTipLine}>
-                {statusValue}
-              </Typography>
-            </Box>
-          ) : null}
         </Box>
       }
     >
@@ -2303,8 +2393,6 @@ VisitMonthChipTooltip.propTypes = {
   company: PropTypes.string,
   site: PropTypes.string,
   route: PropTypes.string,
-  statusIcon: PropTypes.node,
-  statusValue: PropTypes.string,
   officer: PropTypes.object,
   reassignedOfficer: PropTypes.object,
   children: PropTypes.node,
@@ -2348,19 +2436,28 @@ export const getVisitStateCardClass = (classes, shift) => {
  * V2's wash: **the site scheduler's own**, from `EVENT_BG_COLOR_CLASSES`.
  *
  * V2 is asked to match the individual site scheduler's card exactly, and that card
- * takes its fill from the duty palette — `dutyYellowBg` not started, `dutyBlueBg` in
- * progress, `dutyGreenBg` completed — not from the `visitFill*` literals V1 uses. So
- * this is deliberately the *other* vocabulary, and two consequences come with it and
- * are not bugs to be fixed behind the user's back:
+ * takes its fill from the duty palette — `dutyYellowBg` not started, `dutyGreenBg`
+ * completed — not from the `visitFill*` literals V1 uses. So this is deliberately the
+ * *other* vocabulary, with one exception and one consequence:
  *
- * - **`dutyBlueBg` is `surfaceBrandSubtle`, i.e. the tenant brand** (`#E8F7ED`, a pale
- *   green, on Filter Go). An in-progress V2 card is therefore green here. That is
- *   [4.12](docs) / D9's complaint, and it is also precisely what the reference screen
- *   renders on this tenant — matching it exactly means inheriting it. V1 remains the
- *   variant that does not.
+ * - **In progress is no longer the brand.** It mapped to `dutyBlueBg`, i.e.
+ *   `surfaceBrandSubtle`, which is `#E8F7ED` — a pale *green* — on Filter Go, so a
+ *   route that had left rendered green while the status badge on the same card
+ *   rendered `#146DFF` blue: one card stating one state in two colours (case 4.12 /
+ *   D9, *one owner per pixel*). Matching the reference exactly meant inheriting that,
+ *   and it was inherited knowingly — until it was seen on screen with real
+ *   in-progress data, and asked for directly. It now takes `statusFillInProgress`,
+ *   the semantic `#EFF8FF` V1 and the Companies views already used, so all three
+ *   surfaces state one blue (`calendarStatusWash.js`). This is the single place V2
+ *   departs from the reference's palette, and it departs from a value the reference
+ *   only renders as green on this tenant.
  * - **Only three statuses have a fill.** Unassigned, missed and cancelled fall through
  *   to `eventContent`'s plain grey, exactly as they do on the reference, so on V2 those
- *   three are told apart by the card's status badge rather than by its colour.
+ *   three are told apart by the card's status badge rather than by its colour. Note
+ *   what that means beside the change above: in-progress is now the *only* tinted
+ *   state a V2 card can show besides not-started and completed, and its tint is
+ *   lighter than V1's missed wash (`#FEE4E2`), so the new blue reads quieter than
+ *   missed rather than louder.
  *
  * The *status* is resolved through `visitState` rather than read off `scheduleStatus`,
  * which is the one thing not copied: the badge already resolves that way (D11 — a
@@ -2369,7 +2466,8 @@ export const getVisitStateCardClass = (classes, shift) => {
  * disagree. Same vocabulary as the reference, same answer as the badge beside it.
  */
 export const getVisitLegacyBgClass = (classes, shift) =>
-  classes[EVENT_BG_COLOR_CLASSES[VISIT_STATE_STATUS[resolveVisitState(shift)]]] || '';
+  classes[visitWashClassFor(VISIT_STATE_STATUS[resolveVisitState(shift)], isVisitOnToday(shift))] ||
+  '';
 
 /**
  * The status mark a visit card shows, resolved from its *state* rather than from
@@ -2561,7 +2659,17 @@ VisitCardContent.propTypes = {
 };
 
 const CalendarCardContent = memo(
-  ({ shift, statusIcon, statusValue, is24Hours, onOfficerAssignClick, showContextualDetails }) => {
+  ({
+    shift,
+    statusIcon,
+    statusValue,
+    is24Hours,
+    onOfficerAssignClick,
+    showContextualDetails,
+    showVehicle = true,
+    visitCount = null,
+    visitCountTitle = '',
+  }) => {
     const classes = useStyles();
     const { t } = useTranslation();
     const isDedicatedCancelledShift =
@@ -2576,7 +2684,6 @@ const CalendarCardContent = memo(
       startsAt,
       endsAt,
       officer,
-      vehicle,
       reassignedOfficer,
       tour,
       runsheetName,
@@ -2598,15 +2705,7 @@ const CalendarCardContent = memo(
        a person without a picture, which is a different thing from nobody. */
     const officerName = officer?.name || reassignedOfficer?.name;
     const isOfficerUnassigned = !officerName;
-    // Same derivation, same reason: one expression the icon and the label both read,
-    // so an unassigned vehicle cannot draw a car next to the word "Unassigned".
-    const vehicleName = vehicle?.name;
     const resolvedSiteName = site?.name || siteName;
-    const patrolOrDispatchName = name || runsheetName;
-    const truncatedPatrolOrDispatchName =
-      patrolOrDispatchName?.length > 25
-        ? `${capitalizeFirstLetter(patrolOrDispatchName).substring(0, 25)}...`
-        : capitalizeFirstLetter(patrolOrDispatchName || '');
 
     const handleOfficerClick = (event) => {
       if (!canAssignOfficer || !onOfficerAssignClick) return;
@@ -2628,6 +2727,10 @@ const CalendarCardContent = memo(
           },
         }
       : {};
+
+    const isPatrolOrDispatch = [SCHEDULE_DUTIES.PATROL, SCHEDULE_DUTIES.DISPATCH].includes(
+      shiftType,
+    );
 
     return (
       <>
@@ -2702,113 +2805,19 @@ const CalendarCardContent = memo(
           </>
         )}
 
-        {[SCHEDULE_DUTIES.PATROL, SCHEDULE_DUTIES.DISPATCH].includes(shiftType) && (
-          <>
-            {showContextualDetails ? (
-              <Box className={classes.reassignedFooterFlex}>
-                <Box className={classes.reassignedOfficerFlex}>
-                  {shiftType === SCHEDULE_DUTIES.DISPATCH ? <DispatchIndicator /> : <CarIcon />}
-                </Box>
-                <Typography className={classes.reassignedName} variant="subtitle4">
-                  {patrolOrDispatchName?.length > 25 ? (
-                    <Tooltip arrow title={patrolOrDispatchName}>
-                      <span>{truncatedPatrolOrDispatchName}</span>
-                    </Tooltip>
-                  ) : (
-                    truncatedPatrolOrDispatchName || t('obx.schedules.calendar.unassigned')
-                  )}
-                </Typography>
-              </Box>
-            ) : null}
-            {/* The empty slot now draws `unassigned-officer.svg` instead of drawing
-                nothing — but the click target does not follow it back onto the
-                icon. When a real officer is assigned, `officerClickProps` sits on
-                just the avatar's own box (a deliberately narrow re-assign target).
-                An unassigned row has no name to anchor a target that tightly, and
-                shrinking the shortcut down to a 16px glyph the moment the slot
-                empties would make it harder to claim an unassigned shift, not
-                easier — so the trigger keeps its wider home on the whole row.
-                Because the icon is a child of this row, clicking it still reaches
-                the handler via normal bubbling; nothing about restoring the icon
-                required moving the trigger back onto it. */}
-            <Box
-              className={`${classes.reassignedFooterFlex} ${
-                isOfficerUnassigned && canAssignOfficer ? classes.officerAssignTrigger : ''
-              }`}
-              {...(isOfficerUnassigned ? officerClickProps : {})}
-            >
-              {isOfficerUnassigned ? (
-                <Box className={classes.reassignedOfficerFlex}>
-                  <UnassignedOfficerIcon className={classes.unassignedOfficerIcon} />
-                </Box>
-              ) : (
-                <Box
-                  className={`${classes.reassignedOfficerFlex} ${
-                    canAssignOfficer ? classes.officerAssignTrigger : ''
-                  }`}
-                  {...officerClickProps}
-                >
-                  <Avatar
-                    className={classes.eventAvatar}
-                    src={officer?.imageUrl || reassignedOfficer?.imageUrl || AvatarSchedule}
-                  />
-                </Box>
-              )}
-              <Typography className={classes.reassignedName} variant="subtitle4">
-                {officerName || t('obx.schedules.calendar.unassigned')}
-              </Typography>
-            </Box>
-            <Box className={`${classes.reassignedFooter} ${classes.newReassignedFooter}`}>
-              <Box className={classes.reassignedFooterFlex}>
-                {/* A solid `WhiteCarIcon` beside "Unassigned" read as a vehicle
-                    having been allocated — same problem the officer row had, and
-                    the fix is the same shape: not "drop the icon" but "draw a
-                    different one". `unassigned-vehicle.svg` takes the same
-                    `carIcon` boxing `WhiteCarIcon` uses (16px, bordered) so the
-                    row holds its height and position in both states; only the
-                    glyph inside changes with `vehicleName`. This row is wrapped
-                    in `reassignedFooter`, which already pins it to 16px, so —
-                    unlike the officer row — there was never a height patch to
-                    remove here. */}
-                <Box className={classes.reassignedOfficerFlex}>
-                  {vehicleName ? (
-                    <>
-                      {vehicle?.images?.[0]?.url ? (
-                        <Avatar className={classes.eventAvatar} src={vehicle?.images?.[0]?.url} />
-                      ) : (
-                        <Box className={classes.carIcon}>
-                          <WhiteCarIcon />
-                        </Box>
-                      )}
-                    </>
-                  ) : (
-                    <Box className={classes.carIcon}>
-                      <UnassignedVehicleIcon />
-                    </Box>
-                  )}
-                </Box>
-                <Typography className={classes.reassignedName} variant="subtitle4">
-                  {vehicleName || t('obx.schedules.calendar.unassigned')}
-                </Typography>
-              </Box>
-              <Box className={classes.reassignedFooter}>
-                {shift?.isSplit && (
-                  <Tooltip title={t('obx.schedules.splitShift.splitShift')}>
-                    <Box className={classes.splitShiftIconWrapperInView}>
-                      <SplittedCalenderIcon />
-                    </Box>
-                  </Tooltip>
-                )}
-                {!!hasNotes && (
-                  <StatusTooltip
-                    title={t('obx.schedules.calendar.scheduleStatus.noteStatusShow')}
-                    icon={<NotesIcon />}
-                  />
-                )}
-                <StatusTooltip title={statusValue} icon={statusIcon} />
-              </Box>
-            </Box>
-          </>
+        {isPatrolOrDispatch && (
+          <PatrolCardBody
+            classes={classes}
+            shift={shift}
+            statusIcon={statusIcon}
+            statusValue={statusValue}
+            showVehicle={showVehicle}
+            showContextualDetails={showContextualDetails}
+            canAssignOfficer={canAssignOfficer}
+            officerClickProps={officerClickProps}
+            visitCount={visitCount}
+            visitCountTitle={visitCountTitle}
+          />
         )}
 
         {[SCHEDULE_DUTIES.DEDICATED, SCHEDULE_DUTIES.EXTRA].includes(shiftType) && (
@@ -2899,4 +2908,18 @@ CalendarCardContent.propTypes = {
   is24Hours: PropTypes.bool,
   onOfficerAssignClick: PropTypes.func,
   showContextualDetails: PropTypes.bool,
+  /**
+   * Whether the card names the vehicle. True everywhere the vehicle is part of
+   * what a card is *for* — the patrol and dedicated tabs, the multi-service
+   * overview, both embeds, the day view — and false on the routes reading of the
+   * main tab, where the rows are the routes and the fleet is not the question.
+   */
+  showVehicle: PropTypes.bool,
+  /**
+   * Visits on this run, for the routes reading only — `null` everywhere else, and
+   * on that reading too whenever the window has no visit list to count from.
+   * Forwarded to `PatrolCardBody`, which is where both are documented.
+   */
+  visitCount: PropTypes.number,
+  visitCountTitle: PropTypes.string,
 };

@@ -222,23 +222,25 @@ const StopList = ({
   const reorderable = stops.filter((stop) => !stop.completed).length > 1;
 
   /**
-   * **`legAfter` and `legLabel` are gone with the connector they wrote on.**
+   * `Drive 12m`, or nothing at all.
    *
-   * The old shape gave every stop its own connector box below it, and `Drive 12m` was set
-   * beside the dashed rule there — argued for on the grounds that it let the day be read by
-   * scanning rather than by opening twelve chevrons. The supplied design has no such mark: the
-   * track is a bare dashed rule inside the row, and the drive leg is the *first line of the
-   * disclosure* (`Travel time: 13 min`), which is the same number in the one place it can be
-   * checked against the total it is part of.
+   * **`legAfter` went with the per-stop connector and this stayed, because one caller
+   * outlived the other.** Every stop used to carry a connector box below it with its onward
+   * drive set beside the dashed rule; the design draws no such mark, and a stop's travel time
+   * is the first line of its disclosure now — the same number in the one place it can be
+   * checked against the total it is part of. The **leading** connector is not a stop's row: it
+   * is the run out of the origin into stop 1, it has no disclosure to carry its number, and
+   * nothing else on this screen says how far the day starts from its first call. So it keeps
+   * its label, and this keeps the formatting rules that label needs.
    *
-   * What is lost is real and worth stating: the drive times are no longer scannable down a
-   * closed list. What is gained is that the row's figure — `18 mi · 2 hr 12 min` — is the only
-   * number on a closed row, and it is the one a planner compares between stops.
-   *
-   * `startLeg` below survives, because the leading connector is not a stop's row: it is the
-   * run out of the origin, it has no disclosure to carry its number, and nothing else on the
-   * screen says how far the day starts from its first call.
+   * **While `pendingTimes` there is no number**, and a `Drive —` placeholder is an answer
+   * offered before its question. A 0-minute leg is dropped for a different reason — two stops
+   * at one address, or an origin that already *is* the first site: `Drive 0m` is a line of
+   * type saying nothing happened.
    */
+  const legLabel = (minutes) =>
+    !pendingTimes && minutes > 0 ? tt('drive', { time: formatMinutesLong(minutes) }) : '';
+
   const startLeg = legLabel(stops[0]?.travelFromPrevious);
 
   /**

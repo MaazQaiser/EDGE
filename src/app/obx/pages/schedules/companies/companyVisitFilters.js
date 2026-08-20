@@ -138,17 +138,35 @@ const filterVisits = (site, keep) => ({
  * hides the company holding it, and matching a company brings all of its
  * locations, so "walmart" lists the ten stores rather than only the ones with the
  * word in the building name.
+ *
+ * **Cancelled visits are hidden unless they are what you asked for.** Every other
+ * status answers "what is happening at this building"; a cancelled visit answers
+ * "what was going to happen and now is not", which is a different question and not
+ * the one a planner scanning a year of work is asking. Left in by default they take
+ * a slot in a month column, and on the collapsed reading a slot in the strip, to say
+ * that nothing will happen then — so a quarterly location could read as four visits
+ * due when one of them was called off weeks ago.
+ *
+ * They are not dropped from the payload, only from the view: picking **Cancelled**
+ * in the status filter shows them and nothing else, which is the one case where they
+ * *are* the question. Asked for directly. This is the only status the filter treats
+ * asymmetrically, and it is why the "nothing is narrowing this" short-circuit below
+ * had to go — there is no longer such a state.
  */
 export const narrowCompanies = (companies = [], { status, query, from, to, dropQuiet } = {}) => {
   const needle = `${query ?? ''}`.trim().toLowerCase();
   const statuses = STATUS_FILTER_MATCHES[status] || null;
+  /* Asked for by name, so it is the answer rather than the noise. Read off the
+     resolved match list rather than off `status`, so the two cannot disagree about
+     what "Cancelled is selected" means. */
+  const showsCancelled = Boolean(statuses?.includes(calendarShiftStatusEnum.CANCELLED));
   /* `visit.date` is a `YYYY-MM-DD` key and so are these, so the comparison is a
      plain string one — no parsing, no timezone, and the same test the endpoint
      itself applies to the range it is given. */
   const visible = from && to ? { from, to } : null;
-  if (!needle && !statuses && !visible) return sortByName(companies);
 
   const keepVisit = (visit) => {
+    if (!showsCancelled && visit.status === calendarShiftStatusEnum.CANCELLED) return false;
     if (statuses && !statuses.includes(visit.status)) return false;
     if (visible && (visit.date < visible.from || visit.date > visible.to)) return false;
     return true;
@@ -162,8 +180,10 @@ export const narrowCompanies = (companies = [], { status, query, from, to, dropQ
     const kept = companyMatches ? sites : sites.filter((site) => matchesText(site.name, needle));
     if (!kept.length) return;
 
-    let narrowedSites =
-      statuses || visible ? kept.map((site) => filterVisits(site, keepVisit)) : kept;
+    /* Unconditional. This used to run only when a status or a window was set, on the
+       reasoning that an unfiltered payload should come back untouched — and the
+       cancelled rule above is always in force, so there is no untouched case left. */
+    let narrowedSites = kept.map((site) => filterVisits(site, keepVisit));
 
     if (dropQuiet) narrowedSites = narrowedSites.filter((site) => countVisits(site) > 0);
     if (dropQuiet && !narrowedSites.length) return;
@@ -188,3 +208,24 @@ export const isScopeNarrowed = (scope = {}) =>
     scope.status ||
     `${scope.query ?? ''}`.trim(),
   );
+
+/**
+ * Every visit a location is due in the window, flattened out of its month buckets
+ * and put in the order they happen.
+ *
+ * The payload is a month-bucket matrix (`site.months` is one array per calendar
+ * month the request spans), which is the shape the year matrix's *expanded* reading
+ * needs — a bucket is a column. Every other reading wants the sequence instead: the
+ * grouped list draws a row as a run of visits in date order, and so does the
+ * matrix's collapsed reading, which drops the month axis and packs the same cards
+ * together.
+ *
+ * Lives here, beside `narrowCompanies`, because it is the second half of the same
+ * job — that one decides which visits survive, this one decides what order the
+ * survivors are read in — and because it was already written twice.
+ */
+export const visitsInDateOrder = (site = {}) =>
+  (site.months || [])
+    .flat()
+    .filter(Boolean)
+    .sort((left, right) => (left.date < right.date ? -1 : left.date > right.date ? 1 : 0));

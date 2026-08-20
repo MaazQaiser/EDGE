@@ -94,13 +94,14 @@ StatusTooltip.propTypes = {
  * **This component sets no background of its own.** The wash is on the shell,
  * applied by the caller: `getVisitLegacyBgClass(classes, shift)` for V2, which is
  * the reference's own `EVENT_BG_COLOR_CLASSES` and is what "match the site
- * scheduler exactly" was asked for (D26). Two consequences come with that match,
- * inherited rather than introduced: `dutyBlueBg` resolves to
- * `theme.palette.surfaceBrandSubtle`, so on FilterGo's green brand an "in progress"
- * card renders green — case **4.12** / decision **D9 — one owner per pixel** — and
- * only three statuses have a fill at all, so unassigned, missed and cancelled are
- * told apart by the badge alone. V1 is the variant that does neither, which is part
- * of what the pair is being judged on.
+ * scheduler exactly" was asked for (D26). Two things follow from that match, and
+ * only one of them is still inherited: **only three statuses have a fill at all**, so
+ * unassigned, missed and cancelled are told apart by the badge alone. The other —
+ * in-progress washed with `dutyBlueBg`, i.e. `surfaceBrandSubtle`, which is a pale
+ * *green* on FilterGo's brand (case **4.12** / decision **D9 — one owner per pixel**)
+ * — is fixed: it takes the semantic `#EFF8FF` now, the same blue V1 and the Companies
+ * views draw, so the wash agrees with the blue status badge on its own card. See
+ * `getVisitLegacyBgClass` and `calendarStatusWash.js`.
  *
  * Either way the mapping is resolved once at the call site rather than copied here:
  * a second copy is exactly the two-owners mistake D9 is about. Like

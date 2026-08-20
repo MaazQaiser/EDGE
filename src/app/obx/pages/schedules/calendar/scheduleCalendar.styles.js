@@ -353,6 +353,42 @@ export const useStyles = makeStyles((theme) => ({
 
   /* Unrouted demand. This one is *meant* to be alert-coloured — it counts work
      nobody is coming for. */
+  /* The window total, opening the top-right cluster.
+
+     Deliberately **not** `TOOLBAR_PILL`: that shape belongs to the row's filter
+     chips, and this is neither a filter nor an action — it is the context the red
+     count beside it is an exception to. D29 allows one loud count in this row, so
+     this one is carried by type alone. Same two-weight idiom as the visits month
+     cell (`visitsMonthCount` / `visitsMonthTerm`), one step up in size because it
+     sits beside a 28px pill rather than inside a calendar cell. */
+  scheduleWindowTotal: {
+    display: 'flex',
+    alignItems: 'baseline',
+    gap: '4px',
+    minWidth: 0,
+    flexShrink: 0,
+  },
+  scheduleWindowTotalCount: {
+    '&.MuiTypography-root': {
+      color: theme.palette.textPrimary,
+      fontSize: '16px',
+      fontWeight: 700,
+      lineHeight: '20px',
+      /* So the number does not shift the noun sideways as the window changes
+         width — the same reason the month cell's count is tabular. */
+      fontVariantNumeric: 'tabular-nums',
+    },
+  },
+  scheduleWindowTotalTerm: {
+    '&.MuiTypography-root': {
+      color: theme.palette.textSecondary1,
+      fontSize: '12px',
+      fontWeight: 500,
+      lineHeight: '18px',
+      whiteSpace: 'nowrap',
+    },
+  },
+
   scheduleAssignmentActionButton: {
     '&.MuiButtonBase-root': {
       ...TOOLBAR_PILL,

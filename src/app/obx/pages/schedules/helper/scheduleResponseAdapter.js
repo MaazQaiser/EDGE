@@ -456,12 +456,20 @@ export const mapFooterStatsToScheduleStatsFooter = (
           suffix: legend.sitesTotal == null ? '' : `/${legend.sitesTotal}`,
         },
       ],
-      // Visits swap `split` (a shift concept) for the two terminal states the
-      // grid draws, so the footer totals match what is on screen.
+      /* Visits swap `split` (a shift concept) for `missed`, so the footer totals
+         match what is on screen.
+
+         The payload's `cancelled` count is read by nothing on purpose — the same
+         reason `split` is dropped, one step further: a cancelled visit is not
+         drawn at all unless the status filter asks for it
+         (`dropCancelledEvents` below), so counting it made the footer total
+         overshoot the cards by exactly the cancellations in the window — 42
+         against 38 on the August month. `VISITS_STATUS_STATS` has no `cancelled`
+         entry to receive it either; leaving the number here would be a value with
+         no mark and no label, waiting to reintroduce the mismatch. */
       statusStats: [
         ...statusStats.filter((stat) => stat.id !== 'split'),
         { id: 'missed', value: value(statuses.missed ?? legend.missed) },
-        { id: 'cancelled', value: value(statuses.cancelled ?? legend.cancelled) },
       ],
     };
   }
@@ -493,4 +501,83 @@ export const mapFooterStatsToScheduleStatsFooter = (
     ],
     statusStats,
   };
+};
+
+/* ------------------------------------------------------------------ cancelled */
+
+/**
+ * Is this record cancelled — **by any of the names the payload gives that fact**.
+ *
+ * Deliberately the *union* of the two predicates that already exist, rather than a
+ * third opinion beside them: `visitState.js`'s private `isCancelled` reads
+ * `scheduleStatus || shiftStatus`, `ScheduleCalendarGrid`'s private
+ * `isShiftCancelled` reads `shiftStatus || scheduleStatus`, and the visits payload
+ * carries a plain `status` as well (`makeVisit` sets `status` and `scheduleStatus` to
+ * the same value; the Companies payload carries only `status`). A filter narrower
+ * than any painter would leave a card on screen that the grid draws as cancelled,
+ * which is the exact failure this is here to prevent — so it checks all three fields,
+ * the `isCancelled` flag, and both spellings.
+ *
+ * The American spelling is not defensive padding: the grid tests for it explicitly,
+ * so something upstream has produced it.
+ */
+export const isCancelledRecord = (record = {}) => {
+  const named = [record.shiftStatus, record.scheduleStatus, record.status].some((value) => {
+    const normalized = `${value ?? ''}`.toLowerCase();
+    return normalized === 'cancelled' || normalized === 'canceled';
+  });
+  const flagged = record.isCancelled === true || `${record.isCancelled}`.toLowerCase() === 'true';
+  return named || flagged;
+};
+
+/**
+ * Does this status-filter value mean "show me the cancelled ones"?
+ *
+ * The scheduler filters status **server-side** — `shiftStatus` goes out as a query
+ * param — so this reads the value the request was built from rather than any
+ * client-side filter state, and the two cannot disagree about what is on screen.
+ */
+export const isCancelledStatusFilter = (statusValue) => {
+  const normalized = `${statusValue ?? ''}`.toLowerCase();
+  return normalized === 'cancelled' || normalized === 'canceled';
+};
+
+/**
+ * Every view's event list, with cancelled records dropped — unless cancelled is what
+ * the planner asked the status filter for.
+ *
+ * Cancelled answers a different question from every other status: not "what is
+ * happening at this site" but "what was going to happen and now is not". Left in by
+ * default it takes a card's worth of room on a day, a week or a month to say that
+ * nothing will happen — so a site with two visits and one cancellation reads as three
+ * pieces of work. The Companies views already hide it this way
+ * (`companies/companyVisitFilters.js`); this is the same rule for the surfaces fed by
+ * the schedule endpoints.
+ *
+ * Applied on arrival rather than in the request because the endpoint's `shiftStatus`
+ * is a filter *to* one status, not an exclusion of one — there is no query this could
+ * become without the API growing an exclude. That is also why it is applied at the
+ * single point where every branch commits its payload to state: one place to be right
+ * instead of six.
+ */
+export const dropCancelledEvents = (events, keepCancelled = false) => {
+  if (keepCancelled || !Array.isArray(events)) return events;
+  return events.filter((event) => !isCancelledRecord(event));
+};
+
+/**
+ * The same cut for the two payloads that arrive **keyed by group** rather than flat —
+ * the day view (`shifts` by location name) and the list view.
+ *
+ * Keys are preserved even when emptied. The day view gives every site a lane so an
+ * empty one reads as "nothing booked" rather than disappearing, and dropping a key
+ * here would take that lane away for a site whose only visit was cancelled — the
+ * same reasoning that keeps a quiet row on the Companies planning grains.
+ */
+export const dropCancelledGroups = (groups, keepCancelled = false) => {
+  if (keepCancelled || !groups || typeof groups !== 'object') return groups;
+
+  return Object.fromEntries(
+    Object.entries(groups).map(([key, value]) => [key, dropCancelledEvents(value, keepCancelled)]),
+  );
 };

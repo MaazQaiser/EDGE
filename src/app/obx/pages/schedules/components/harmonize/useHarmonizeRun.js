@@ -1148,7 +1148,10 @@ export const useHarmonizeRun = ({ open, visits, routeTerm, startPoint }) => {
           widerWindow != null
             ? {
                 label: tt('remedyNeedBy', { window: daysPhrase(widerWindow) }),
-                onApply: () => setNeedByPill(widerWindow),
+                /* `setNeedBy`, not the `setNeedByPill` this used to call: the pills are gone
+                   and with them the snap that rounded a remedy up to the next offered window.
+                   The link now sets the exact figure it names. */
+                onApply: () => setNeedBy(widerWindow),
               }
             : null,
         /* A tighter contract is not the planner's to overrule, so the note says which of

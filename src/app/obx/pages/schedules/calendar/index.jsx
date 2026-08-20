@@ -1,5 +1,13 @@
 import { ArrowDropDown, AutoAwesome as AutoAwesomeIcon } from '@mui/icons-material';
-import { Box, Button, Skeleton, ToggleButton, ToggleButtonGroup, Tooltip } from '@mui/material';
+import {
+  Box,
+  Button,
+  Skeleton,
+  ToggleButton,
+  ToggleButtonGroup,
+  Tooltip,
+  Typography,
+} from '@mui/material';
 import dayjs from 'dayjs';
 import PropTypes from 'prop-types';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -74,6 +82,7 @@ import {
   resolveScheduleFooterVariant,
   VISITS_SCHEDULE_TAB_ID,
   withCompanyGroupingFilters,
+  withRouteGroupingFilters,
 } from '../config/scheduleTabConfigs';
 import { DEFAULT_VISIT_VIEW_VARIANT, VISIT_VIEW_VARIANT } from '../config/visitViewVariant';
 import {
@@ -91,6 +100,9 @@ import {
 } from '../helper/patchShiftOfficerAssignment';
 import {
   buildOverviewFooterStats,
+  dropCancelledEvents,
+  dropCancelledGroups,
+  isCancelledStatusFilter,
   mapGridV2OverviewSections,
   mapGridV2WeekData,
   mapWeekRowsToCalendarResources,
@@ -100,8 +112,10 @@ import { useCanViewSummaryStats } from '../hooks/useCanViewSummaryStats';
 import { useSiteLocations } from '../hooks/useSiteLocations';
 import ShiftDetail from '../shiftDetail';
 import DedicatedSplitShift from '../shiftDetail/components/dedicatedSplitShift/index';
+import { buildRouteVisitCounts } from './routeVisitCount';
 import { useStyles } from './scheduleCalendar.styles';
 import ScheduleCalendarGrid from './ScheduleCalendarGrid';
+import { resolveScheduleWindowTerm, sumScheduleWindowTotal } from './scheduleWindowTotal';
 import { useApplyMotion } from './useApplyMotion';
 
 export { DUTY_COLORS } from '../helper/scheduleColors';
@@ -585,6 +599,18 @@ const ScheduleCalendar = (props) => {
       ? MAIN_VIEW_GROUPING.COMPANIES
       : visitGroupingChoice;
   const isCompanyGrouping = visitGrouping === MAIN_VIEW_GROUPING.COMPANIES;
+  /**
+   * The routes reading **of the tab that has the switch** — not "routes anywhere".
+   *
+   * `visitGrouping` falls back to `ROUTES` for every surface that cannot group by
+   * company at all, so the enum on its own is true on the dedicated tab, the patrol
+   * tab, the multi-service overview and both embeds. `canSwitchGrouping` is what
+   * narrows it to the one tab this is a statement about: a single-service patrol
+   * tenant's main tab, which is where `withRouteGroupingFilters` applies and the only
+   * place the `Locations`/`All Jobs` argument holds. Gate on this, never on
+   * `!isCompanyGrouping`, which would also catch the timeline pane.
+   */
+  const isRouteGrouping = canSwitchGrouping && visitGrouping === MAIN_VIEW_GROUPING.ROUTES;
   /** The third reading: the company timeline pane, in the grid's place. */
   const showsCompanyTimeline = visitGrouping === TIMELINE_PANE_GROUPING;
 
@@ -709,6 +735,30 @@ const ScheduleCalendar = (props) => {
       .filter((shift) => !getVisitActionRules(shift).isReadOnly)
       .map(projectVisitForRoute);
   }, [visitsForHarmonize, companyWeekVisits, offersHarmonize, rendersOwnPane]);
+
+  /**
+   * How many visits each route card on the grid is carrying.
+   *
+   * The routes reading's own grid has no such number in it — its cards are
+   * runsheets, and a runsheet is not a visit on that fetch — so the count comes off
+   * the visit list this page already holds for the same window. **`visitsForHarmonize`
+   * and not a rawer list**, for the reason the header total reads the footer rather
+   * than counting `allDuties`: cancelled visits are already out of it, and a
+   * cancelled visit is not drawn on this grid unless the status filter asks for it,
+   * so counting one would put a number on a card for work the card does not show.
+   *
+   * Not `harmonizableVisits`, which is the same list narrowed to what the optimizer
+   * may *move* — completed, cancelled and past-dated visits are dropped there (D4,
+   * D5). Those are still visits on the run, and a Tuesday whose stops are all done
+   * must not read `0`.
+   *
+   * Gated on the routes reading because it is the only one whose cards are routes;
+   * every other surface hands the grid `null` and draws no count at all.
+   */
+  const routeVisitCounts = useMemo(
+    () => (isRouteGrouping ? buildRouteVisitCounts(visitsForHarmonize) : null),
+    [isRouteGrouping, visitsForHarmonize],
+  );
 
   /* Harmonize belongs wherever visits are. Leaving that surface must not strand a
      selection the planner can no longer see, nor ghosts on a calendar with no
@@ -932,37 +982,34 @@ const ScheduleCalendar = (props) => {
      the main tab share one config. So the resolved variant is handed up the same
      way the status control is. */
   const onFooterVariantChange = props.onFooterVariantChange;
-  useEffect(() => {
-    /**
-     * The timeline pane brings its own summary and wants no page footer, which is
-     * what the Companies **tab** gets for free: its config's `footerVariant` is
-     * `null`, and the page also sees `rendersOwnPane` on that tab and suppresses
-     * the legend. Neither is true of Variation 2 — the tab is still `overview`, so
-     * the page would draw the overview stats bar, empty, under a pane that has no
-     * shifts to count.
-     *
-     * `NONE` rather than `null` because the page resolves this with `??`: null means
-     * "nothing reported yet, fall back to the tab's own variant", and the tab's own
-     * variant is exactly the wrong answer here. `NONE` is an answer — *no footer* —
-     * and the page matches it explicitly rather than by falsiness.
-     */
-    if (showsCompanyTimeline) {
-      onFooterVariantChange?.(SCHEDULE_STATS_FOOTER_VARIANTS.NONE);
-      return;
-    }
-
-    onFooterVariantChange?.(
-      resolveScheduleFooterVariant(isEmbeddedScheduleView ? EMBEDDED_SCHEDULE_TAB_ID : activeTab, {
+  /**
+   * Which footer describes this grid, resolved once.
+   *
+   * The timeline pane brings its own summary and wants no page footer, which is
+   * what the Companies **tab** gets for free: its config's `footerVariant` is
+   * `null`, and the page also sees `rendersOwnPane` on that tab and suppresses
+   * the legend. Neither is true of Variation 2 — the tab is still `overview`, so
+   * the page would draw the overview stats bar, empty, under a pane that has no
+   * shifts to count.
+   *
+   * `NONE` rather than `null` because the page resolves this with `??`: null means
+   * "nothing reported yet, fall back to the tab's own variant", and the tab's own
+   * variant is exactly the wrong answer here. `NONE` is an answer — *no footer* —
+   * and the page matches it explicitly rather than by falsiness.
+   *
+   * Held as a value rather than computed inside the effect below because the header
+   * total now reads it too: the total is the footer's own numbers added up, so it
+   * has to be counted the way the footer on screen counts (see
+   * `sumScheduleWindowTotal`). One resolution, two readers.
+   */
+  const footerVariant = showsCompanyTimeline
+    ? SCHEDULE_STATS_FOOTER_VARIANTS.NONE
+    : resolveScheduleFooterVariant(isEmbeddedScheduleView ? EMBEDDED_SCHEDULE_TAB_ID : activeTab, {
         isCompanyGrouping,
-      }),
-    );
-  }, [
-    onFooterVariantChange,
-    activeTab,
-    isCompanyGrouping,
-    isEmbeddedScheduleView,
-    showsCompanyTimeline,
-  ]);
+      });
+  useEffect(() => {
+    onFooterVariantChange?.(footerVariant);
+  }, [onFooterVariantChange, footerVariant]);
 
   const dutyNameMonth = {
     [SCHEDULE_DUTIES.DEDICATED]: t('obx.schedules.legends.dedicated', {
@@ -1040,6 +1087,31 @@ const ScheduleCalendar = (props) => {
     data.unassignedCount ?? data.footerStats?.statuses?.unassigned ?? 0;
 
   /**
+   * The window's counts, kept **here as well as handed up**.
+   *
+   * The page above draws the legend from them; the header total above the grid sums
+   * them. Two readers, one object — deliberately, because the alternative is a
+   * header that counts the cards itself, and two counts of one fact drift: this
+   * feature has already shipped a missed-visits pill reading 3 over a grid that drew
+   * 2. Every branch reports through `reportFooterStats`, so there is no path that can
+   * update the footer and leave the total stale, and none that can update the total
+   * without the footer beneath it moving too.
+   *
+   * `null` where a payload genuinely has no counts to give — the day view, the
+   * embedded grids, the routes reading's month `/aggregate` — and the total simply
+   * does not render there, rather than inventing a number the footer cannot show.
+   */
+  const [windowFooterStats, setWindowFooterStats] = useState(null);
+  const onFooterStatsChange = props.onFooterStatsChange;
+  const reportFooterStats = useCallback(
+    (footerStats) => {
+      setWindowFooterStats(footerStats || null);
+      onFooterStatsChange?.(footerStats || null);
+    },
+    [onFooterStatsChange],
+  );
+
+  /**
    * A month of individual visits, for the company grouping's month view.
    *
    * The default month path calls `/aggregate`, which returns one count per day per
@@ -1106,7 +1178,7 @@ const ScheduleCalendar = (props) => {
 
       if (applyFooterStats) {
         setRequireAttentionJobs(getUnassignedCount(data));
-        props.onFooterStatsChange?.(data.footerStats || null);
+        reportFooterStats(data.footerStats || null);
       }
 
       return data || {};
@@ -1171,7 +1243,7 @@ const ScheduleCalendar = (props) => {
 
       // Keep overview footer visible while grids refetch; only clear when stats will refetch.
       if (shouldFetchOverviewStats || !fetchTabConfig.isOverviewTab || type !== DAY_GRID.WEEK) {
-        props.onFooterStatsChange?.(null);
+        reportFooterStats(null);
       }
 
       if ((isSitesModule && !props.selectedSite?.id) || (isUsersModule && !props.officerId)) {
@@ -1194,9 +1266,14 @@ const ScheduleCalendar = (props) => {
          reading brings each one back with its dropdown rather than silently
          discarding it. */
       const ignoresCompanyGroupingFilters = isCompanyGrouping && !isEmbeddedScheduleView;
+      /* The routes grouping's row drops `All Jobs` and `Locations` too — see
+         `withRouteGroupingFilters`. Same rule, one dimension shorter: the officer
+         dropdown is still on screen here, so `officerId` is still sent. */
+      const ignoresRouteGroupingFilters = isRouteGrouping && !isEmbeddedScheduleView;
+      const ignoresGroupingShiftType = ignoresCompanyGroupingFilters || ignoresRouteGroupingFilters;
       const shiftType =
         isEmbeddedScheduleView ||
-        (fetchTabConfig.filters.showShiftType && !ignoresCompanyGroupingFilters)
+        (fetchTabConfig.filters.showShiftType && !ignoresGroupingShiftType)
           ? filter?.selectedDutyType?.value
           : undefined;
       const shiftStatus = filter?.selectedStatus?.value;
@@ -1209,7 +1286,7 @@ const ScheduleCalendar = (props) => {
       const isDayOrMonthView = type === DAY_GRID.DAY || type === DAY_GRID.MONTH;
       const locationId = isEmbeddedScheduleView
         ? filter?.selectedLocations?.value
-        : isDayOrMonthView || ignoresCompanyGroupingFilters
+        : isDayOrMonthView || ignoresCompanyGroupingFilters || ignoresRouteGroupingFilters
           ? undefined
           : getSelectedFilterValues(filter?.selectedLocations);
       const officerId = isUsersModule
@@ -1274,7 +1351,7 @@ const ScheduleCalendar = (props) => {
              the week reading below is where the button is actually used. */
         }
         if (isStaleFetch()) return;
-        props.onFooterStatsChange?.(monthFooterStats);
+        reportFooterStats(monthFooterStats);
       } else if (type == TIME_GRID.LIST) {
         const res = await getAllListDuties(query, config);
         if (isStaleFetch()) return;
@@ -1297,14 +1374,14 @@ const ScheduleCalendar = (props) => {
         }
         const dayViewData = await getAllDuties(query, config);
         if (isStaleFetch()) return;
-        props.onFooterStatsChange?.(null);
+        reportFooterStats(null);
         dayViewShifts = dayViewData?.shifts || {};
         setDayViewLocations(dayViewData?.locations || []);
       } else if (type == DAY_GRID.WEEK) {
         if (isEmbeddedScheduleView) {
           const res = await getAllDuties(query, config);
           if (isStaleFetch()) return;
-          props.onFooterStatsChange?.(null);
+          reportFooterStats(null);
 
           shifts = (res.shifts || []).map((shift) => ({
             ...shift,
@@ -1367,7 +1444,7 @@ const ScheduleCalendar = (props) => {
           // Nothing to expand: the accordion sections belong to the routes reading.
           setOverviewSections([]);
           setRequireAttentionJobs(getUnassignedCount(res));
-          props.onFooterStatsChange?.(buildOverviewFooterStats(kpiData || {}, res.footerStats));
+          reportFooterStats(buildOverviewFooterStats(kpiData || {}, res.footerStats));
         } else if (fetchTabConfig.isOverviewTab) {
           const toastOverviewFailure = (error) => {
             if (config.signal?.aborted) return;
@@ -1468,10 +1545,10 @@ const ScheduleCalendar = (props) => {
               dedicatedRes.footerStats,
             );
             setRequireAttentionJobs(getUnassignedCount({ footerStats }));
-            props.onFooterStatsChange?.(footerStats);
+            reportFooterStats(footerStats);
           } else {
             setRequireAttentionJobs(0);
-            props.onFooterStatsChange?.(null);
+            reportFooterStats(null);
           }
 
           const overviewSectionsData = mapGridV2OverviewSections(
@@ -1503,11 +1580,32 @@ const ScheduleCalendar = (props) => {
 
       if (isStaleFetch()) return;
 
-      setListDuties(listShifts);
-      setDayViewDuties(dayViewShifts);
+      /**
+       * **Cancelled is hidden unless it is what was asked for**, on every view this
+       * function feeds — week, day, month-as-cards, the list, the overview tabs and
+       * the company grouping. Applied here because this is the one point every
+       * branch above converges on, whatever shape it fetched.
+       *
+       * `shiftStatus` is the value that went out with the request, so "did the
+       * planner ask for cancelled" is read from the same fact the payload was
+       * narrowed by. See `dropCancelledEvents` for why this is a cut on arrival
+       * rather than part of the query.
+       *
+       * `weekViewLocations` is deliberately not cut: those are the grid's *rows*,
+       * not its cards. A location whose only visit this week was cancelled keeps its
+       * lane and reads as empty, which is the same call the Companies planning grains
+       * make for a quiet row — and the alternative is rows appearing and vanishing as
+       * the status filter moves.
+       */
+      const keepCancelled = isCancelledStatusFilter(shiftStatus);
+
+      setListDuties(dropCancelledGroups(listShifts, keepCancelled));
+      setDayViewDuties(dropCancelledGroups(dayViewShifts, keepCancelled));
       setWeekViewLocations(weekViewLocations);
-      setAllDuties(shifts);
-      setVisitsForHarmonize(harmonizeVisits);
+      setAllDuties(dropCancelledEvents(shifts, keepCancelled));
+      /* Harmonize plans real work. A called-off visit is not work, and it has no
+         business consuming a man-day in a proposed route. */
+      setVisitsForHarmonize(dropCancelledEvents(harmonizeVisits, keepCancelled));
       setScheduleLoading(false);
     } catch (error) {
       if (!isStaleFetch()) {
@@ -1519,7 +1617,7 @@ const ScheduleCalendar = (props) => {
         clearCalendarData();
         setDayViewLocations([]);
         setRequireAttentionJobs(0);
-        props.onFooterStatsChange?.(null);
+        reportFooterStats(null);
         setScheduleLoading(false);
       }
     }
@@ -1561,14 +1659,14 @@ const ScheduleCalendar = (props) => {
           selectedStatus: resetStatus ? {} : prev.filter.selectedStatus,
         },
       }));
-      props.onFooterStatsChange?.(null);
+      reportFooterStats(null);
       props.onTabChange?.(tabId);
     },
     [
       activeTab,
       clearCalendarData,
       isEmbeddedScheduleView,
-      props.onFooterStatsChange,
+      reportFooterStats,
       props.onTabChange,
       t,
       tabConfig.filters.shiftTypeOptionsKey,
@@ -1721,7 +1819,7 @@ const ScheduleCalendar = (props) => {
          that renders its own pane — but Variation 2 reaches this pane from the
          main tab, where the page has no such rule and would keep the last week's
          numbers on screen under a twelve-month surface. */
-      props.onFooterStatsChange?.(null);
+      reportFooterStats(null);
       return;
     }
 
@@ -2353,14 +2451,18 @@ const ScheduleCalendar = (props) => {
       </Button>
     ) : null;
 
-  /* The filter row's own view of the tab, and nothing else's: the company grouping
-     shows two dropdowns fewer, while the fetch and the grid keep reading the real
-     config. Derived per grouping rather than flagged on the tab, because the routes
-     reading shares that config and still asks both questions. */
-  const filtersTabConfig = useMemo(
-    () => (isCompanyGrouping ? withCompanyGroupingFilters(tabConfig) : tabConfig),
-    [isCompanyGrouping, tabConfig],
-  );
+  /* The filter row's own view of the tab, and nothing else's: each reading of the
+     main tab shows fewer dropdowns than the config declares — three fewer grouped by
+     company, two fewer grouped by routes — while the fetch and the grid keep reading
+     the real config. Derived per grouping rather than flagged on the tab, because the
+     dedicated and patrol tabs and the multi-service overview share that config and
+     still ask every question. Anything that is neither reading (the timeline pane,
+     both embeds, every other tab) falls through to the config untouched. */
+  const filtersTabConfig = useMemo(() => {
+    if (isCompanyGrouping) return withCompanyGroupingFilters(tabConfig);
+    if (isRouteGrouping) return withRouteGroupingFilters(tabConfig);
+    return tabConfig;
+  }, [isCompanyGrouping, isRouteGrouping, tabConfig]);
 
   const scheduleFilters = (
     <ScheduleCalendarFilters
@@ -2380,6 +2482,28 @@ const ScheduleCalendar = (props) => {
       leadingFilter={companySearch}
     />
   );
+
+  /**
+   * The window's **visit total**, for the top-right cluster.
+   *
+   * Read off the footer rather than counted from `allDuties` — see
+   * `sumScheduleWindowTotal` for why, and for why cancelled records are already out
+   * of it. `null` whenever the footer has no numbers (the day view, the embedded
+   * grids, the routes reading's month aggregate), which is the honest answer there:
+   * no total rather than a total of nothing.
+   *
+   * **`null` on the routes reading too, and that is the point.** It used to read
+   * `12 Routes` there — a count of cards already on screen, in a unit nobody plans
+   * in — and it was asked to go. The unit that matters on that reading is visits, and
+   * that number is now written per run on the cards themselves, where a planner can
+   * act on it. The gate is inside `sumScheduleWindowTotal`, keyed on the footer's
+   * subject, so nothing here decides it a second time.
+   */
+  const windowTotal = useMemo(
+    () => sumScheduleWindowTotal(windowFooterStats, footerVariant),
+    [windowFooterStats, footerVariant],
+  );
+  const windowTotalTerm = resolveScheduleWindowTerm({ count: windowTotal, getLabel, t });
 
   const createMenu = (
     <RenderIfHasPermission name={ACL_OBX_SITE_EXTRA_JOB_CREATE}>
@@ -2447,6 +2571,44 @@ const ScheduleCalendar = (props) => {
         )}
 
         <Box className={classes.scheduleCalendarHeaderRight}>
+          {/* The volume, then the exception, then the actions — general to specific,
+              left to right, which is also loud-to-louder-to-quiet in weight.
+
+              **Quiet on purpose, and not a pill.** D29 settled this row on *one* red
+              count, and it is the one a planner can act on from here; a second
+              filled chip beside it would ask them to hold two numbers and then
+              decide which the morning was about, which is exactly the pair of red
+              pills D29 removed. So the total is set in type rather than in a
+              container: a number and its noun, the same two-weight idiom the visits
+              month cell uses for the same fact (`visitsMonthCount` /
+              `visitsMonthTerm`), so a total reads the same wherever it is written.
+              It is also the row's only non-interactive element, which is the honest
+              signal — it is context for the count beside it, not a filter.
+
+              Nothing is gated on the *view* here: the total exists exactly where the
+              footer has numbers *and its cards are visits*, so it cannot appear over a
+              grid whose counts the page cannot show — nor over the routes reading,
+              which no longer has a total at all (`sumScheduleWindowTotal`). */}
+          {windowTotal === null ? null : (
+            <Box
+              className={classes.scheduleWindowTotal}
+              /* Same scope statement the pill's tooltip makes, for the same reason:
+                 the number describes the dates fetched, which in month is the whole
+                 grid — trailing cells of the next month included — and not the month
+                 in the title. */
+              title={t('obx.schedules.calendar.windowTotal', {
+                count: windowTotal,
+                hits: windowTotalTerm,
+              })}
+            >
+              <Typography component="span" className={classes.scheduleWindowTotalCount}>
+                {windowTotal}
+              </Typography>
+              <Typography component="span" className={classes.scheduleWindowTotalTerm}>
+                {windowTotalTerm}
+              </Typography>
+            </Box>
+          )}
           {/* **On every grouping, including company.** Asked for directly — "we will
               have assignment message instead of missed" — and the removal of the
               Missed pill is what makes it necessary rather than merely consistent.
@@ -2644,6 +2806,7 @@ const ScheduleCalendar = (props) => {
                 companyQuery={companyQuery}
                 onSelectCompany={handleSelectCompany}
                 visitCardVariant={visitCardVariant}
+                routeVisitCounts={routeVisitCounts}
               />
             </CalendarToolbarArrangementContext.Provider>
           )}
