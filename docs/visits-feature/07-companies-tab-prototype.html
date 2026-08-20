@@ -1,0 +1,981 @@
+<meta charset="utf-8">
+<title>Companies tab — clickable prototype</title>
+<style>
+  :root{
+    --page-ink:#0F1D17; --page-ink-2:#425149; --page-rule:#DCE3DD; --page-bg:#FAFBF9;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --page-ink:#E6EDE8; --page-ink-2:#A9B8AE; --page-rule:#2A3833; --page-bg:#0C1310; }
+  }
+  :root[data-theme="dark"]{ --page-ink:#E6EDE8; --page-ink-2:#A9B8AE; --page-rule:#2A3833; --page-bg:#0C1310; }
+  :root[data-theme="light"]{ --page-ink:#0F1D17; --page-ink-2:#425149; --page-rule:#DCE3DD; --page-bg:#FAFBF9; }
+
+  body{margin:0;background:var(--page-bg);color:var(--page-ink);font-family:var(--sans);
+       font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased;}
+  .page{max-width:1460px;margin:0 auto;padding:24px 20px 70px;}
+
+  .pagehead{display:flex;flex-wrap:wrap;gap:14px 26px;align-items:flex-end;justify-content:space-between;margin-bottom:8px;}
+  .pagehead h1{font-family:var(--mono);font-size:23px;font-weight:600;letter-spacing:-.02em;margin:0;}
+  .pagehead p{margin:6px 0 0;color:var(--page-ink-2);font-size:14.5px;max-width:74ch;}
+  .kicker{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:#1F7B3C;margin:0 0 8px;}
+  .try{display:flex;flex-wrap:wrap;gap:6px 10px;font-family:var(--mono);font-size:11px;color:var(--page-ink-2);
+       margin:16px 0 18px;padding:11px 14px;border:1px solid var(--page-rule);border-radius:6px;}
+  .try b{color:var(--page-ink);font-weight:600;}
+  .try span{white-space:nowrap;}
+
+  /* ── the app frame is always light: it is a picture of the product, not of this page ── */
+  .app{
+    --ink:#111827; --ink-2:#4B5563; --ink-3:#6B7280; --line:#E5E7EB; --line-2:#F0F1F3;
+    --surface:#FFFFFF; --surface-2:#F7F8F8; --brand:#16A34A; --brand-ink:#15803D; --brand-wash:#E8F6ED;
+    --blue:#2563EB; --blue-wash:#E7EEFD; --red:#DC2626; --red-wash:#FDECEC; --amber:#B45309; --amber-wash:#FBF1DE;
+    --nav:#14161A; --nav-ink:#8E959F;
+    background:var(--surface);color:var(--ink);
+    border:1px solid #D8DCDE;border-radius:10px;overflow:hidden;
+    box-shadow:0 18px 44px -28px rgba(15,29,23,.5);
+    display:grid;grid-template-columns:60px 1fr;height:clamp(560px, 78vh, 780px);
+    font-size:13px;
+  }
+  .app *{box-sizing:border-box;}
+
+  /* nav rail */
+  .nav{background:var(--nav);display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 0;
+       overflow:hidden;min-height:0;}
+  .logo{width:28px;height:28px;border-radius:8px;background:var(--brand);color:#fff;display:grid;place-items:center;
+        font-weight:700;font-size:14px;margin-bottom:10px;flex:0 0 auto;}
+  .navi{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;color:var(--nav-ink);flex:0 0 auto;}
+  .navi svg{width:17px;height:17px;}
+  .navi.on{background:var(--blue);color:#fff;}
+
+  /* main column */
+  /* min-height:0 — a grid item defaults to min-height:auto, which lets the column grow to its
+     content and quietly kills the pane's own scrolling. */
+  .main{display:flex;flex-direction:column;min-width:0;min-height:0;overflow:hidden;background:var(--surface);}
+
+  .topbar{height:52px;flex:0 0 auto;display:flex;align-items:center;gap:10px;padding:0 18px;border-bottom:1px solid var(--line);}
+  .topbar .ttl{display:flex;align-items:center;gap:9px;font-size:15px;font-weight:600;}
+  .topbar .sp{flex:1;}
+  .pill-id{background:var(--brand-wash);color:var(--brand-ink);font-size:11px;font-weight:700;padding:4px 9px;border-radius:12px;}
+  .fake-select{border:1px solid var(--line);border-radius:7px;padding:6px 11px;color:var(--ink-3);display:flex;align-items:center;gap:7px;}
+  .who{display:flex;align-items:center;gap:8px;}
+  .who .nm{text-align:right;line-height:1.25;}
+  .who .nm b{display:block;font-size:12.5px;}
+  .who .nm span{font-size:10.5px;color:var(--ink-3);}
+  .avatar{width:26px;height:26px;border-radius:50%;background:var(--line);display:grid;place-items:center;color:var(--ink-3);}
+
+  .tabrow{height:44px;flex:0 0 auto;display:flex;align-items:stretch;gap:22px;padding:0 18px;border-bottom:1px solid var(--line);}
+  .tab{display:flex;align-items:center;border:0;background:none;font:inherit;font-size:13px;color:var(--ink-3);
+       padding:0 2px;border-bottom:2.5px solid transparent;cursor:default;}
+  .tab.on{color:var(--brand-ink);font-weight:600;border-bottom-color:var(--brand);}
+  .tabrow .sp{flex:1;}
+  .alertpill{align-self:center;display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;
+             padding:5px 11px;border-radius:14px;background:var(--red-wash);color:var(--red);}
+  .alertpill.amber{background:var(--amber-wash);color:var(--amber);}
+
+  .toolbar{min-height:52px;flex:0 0 auto;display:flex;align-items:center;gap:10px;padding:9px 18px;border-bottom:1px solid var(--line);}
+  .seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;}
+  .seg button{border:0;background:none;font:inherit;font-size:12px;color:var(--ink-2);padding:6px 13px;cursor:pointer;}
+  .seg button + button{border-left:1px solid var(--line);}
+  .seg button[aria-pressed="true"]{background:var(--brand);color:#fff;font-weight:600;}
+  .seg button:focus-visible{outline:2px solid var(--blue);outline-offset:-2px;}
+  .search{flex:0 1 300px;display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:8px;padding:0 10px;height:32px;}
+  .search input{border:0;outline:0;font:inherit;font-size:12.5px;width:100%;background:none;color:var(--ink);}
+  .search svg{width:14px;height:14px;color:var(--ink-3);flex:0 0 auto;}
+  .toggle{border:1px solid var(--line);background:none;font:inherit;font-size:12px;color:var(--ink-2);
+          padding:6px 13px;border-radius:16px;cursor:pointer;}
+  .toggle[aria-pressed="true"]{background:var(--red-wash);color:var(--red);border-color:#F3C9C9;font-weight:600;}
+  .toggle:focus-visible,.linkbtn:focus-visible,.rowbtn:focus-visible,.railbtn:focus-visible{outline:2px solid var(--blue);outline-offset:1px;}
+  .toolbar .sp{flex:1;}
+  .range{font-size:12px;color:var(--ink-3);}
+  .backbtn{display:flex;align-items:center;gap:7px;border:1px solid var(--line);background:none;font:inherit;font-size:12.5px;
+           color:var(--ink-2);padding:6px 13px;border-radius:8px;cursor:pointer;}
+  .backbtn:hover{background:var(--surface-2);}
+
+  /* body */
+  .body{flex:1;display:grid;grid-template-columns:250px 1fr;min-height:0;}
+  .rail{border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0;background:var(--surface);}
+  .rail h2{margin:0;padding:12px 14px 8px;font-family:var(--mono);font-size:10px;letter-spacing:.12em;
+           text-transform:uppercase;color:var(--ink-3);font-weight:600;}
+  .raillist{overflow-y:auto;padding:0 8px 12px;}
+  .railbtn{width:100%;display:flex;align-items:center;gap:8px;border:0;background:none;font:inherit;font-size:12.5px;
+           color:var(--ink);text-align:left;padding:7px 9px;border-radius:7px;cursor:pointer;border-left:2.5px solid transparent;}
+  .railbtn:hover{background:var(--surface-2);}
+  .railbtn .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .railbtn .ct{font-size:11.5px;color:var(--ink-3);font-variant-numeric:tabular-nums;}
+  .railbtn.quiet .nm{color:var(--ink-3);}
+  .railbtn.due .ct{color:var(--red);font-weight:700;}
+  .railbtn.on{background:var(--brand-wash);border-left-color:var(--brand);color:var(--brand-ink);font-weight:600;}
+  .railbtn.on .ct{color:var(--brand-ink);}
+
+  .pane{overflow-y:auto;min-height:0;}
+  .panehead{position:sticky;top:0;z-index:2;background:var(--surface);border-bottom:1px solid var(--line);
+            padding:12px 18px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+  .panehead h3{margin:0;font-size:14.5px;font-weight:600;}
+  .panehead .sub{font-size:12px;color:var(--ink-3);}
+  .panehead .sp{flex:1;}
+  .linkbtn{border:1px solid var(--line);background:none;font:inherit;font-size:12px;color:var(--ink-2);
+           padding:6px 12px;border-radius:7px;cursor:pointer;}
+  .linkbtn:hover{background:var(--surface-2);}
+  select.prop{border:1px solid var(--line);border-radius:7px;padding:6px 10px;font:inherit;font-size:12px;color:var(--ink-2);background:var(--surface);}
+
+  .band{display:flex;align-items:center;gap:10px;padding:6px 18px;background:var(--red-wash);color:var(--red);
+        font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;}
+  .band .sp{flex:1;}
+  .band em{font-style:normal;font-weight:500;letter-spacing:.02em;text-transform:none;font-size:11px;}
+
+  .cohead{display:flex;align-items:center;gap:10px;padding:8px 18px;background:var(--surface-2);border-top:1px solid var(--line-2);}
+  .cohead b{font-size:13px;}
+  .cohead .sp{flex:1;}
+  .cohead .meta{font-size:11.5px;color:var(--ink-3);}
+  .cohead .meta .warn{color:var(--red);font-weight:600;}
+
+  .rowbtn{width:100%;display:grid;align-items:center;gap:10px;border:0;background:none;font:inherit;text-align:left;
+          padding:8px 18px;border-bottom:1px solid var(--line-2);cursor:pointer;color:var(--ink);
+          grid-template-columns:minmax(150px,1fr) 92px 78px 90px minmax(120px,168px) 92px;}
+  .rowbtn:hover{background:var(--surface-2);}
+  .rowbtn[disabled]{cursor:default;}
+  .rowbtn[disabled]:hover{background:none;}
+  .rowbtn .nm{font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .rowbtn .dt{font-size:12px;font-variant-numeric:tabular-nums;}
+  .rowbtn .dt.late{color:var(--red);font-weight:600;}
+  .rowbtn .mut{font-size:11.5px;color:var(--ink-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .rowbtn .co{font-size:11px;color:var(--ink-3);}
+
+  .chip{justify-self:end;font-family:var(--mono);font-size:9px;letter-spacing:.07em;text-transform:uppercase;
+        font-weight:700;padding:3px 8px;border-radius:11px;white-space:nowrap;}
+  .chip.done{background:var(--brand-wash);color:var(--brand-ink);}
+  .chip.live{background:var(--blue-wash);color:var(--blue);}
+  .chip.sched{background:#F1F2F4;color:var(--ink-2);}
+  .chip.miss{background:var(--red-wash);color:var(--red);}
+  .chip.none{background:var(--amber-wash);color:var(--amber);}
+  .unassigned{justify-self:start;font-family:var(--mono);font-size:9.5px;letter-spacing:.05em;font-weight:700;
+              padding:3px 9px;border-radius:11px;background:var(--red-wash);color:var(--red);
+              border:1px dashed var(--red);white-space:nowrap;}
+
+  /* company year */
+  .propblock{border-bottom:1px solid var(--line-2);padding:14px 18px 12px;}
+  .propblock .ph{display:flex;align-items:baseline;gap:10px;}
+  .propblock .ph b{font-size:13.5px;}
+  .propblock .ph .sp{flex:1;}
+  .propblock .ph .cad{font-size:11.5px;color:var(--ink-2);}
+  .propblock .addr{font-size:11.5px;color:var(--ink-3);margin-top:2px;}
+  .propblock .hist{font-size:11.5px;color:var(--ink-3);margin-top:6px;}
+  .dates{margin-top:8px;display:flex;flex-direction:column;}
+  .drow{display:grid;align-items:center;gap:10px;grid-template-columns:14px 108px 76px minmax(120px,1fr) 92px;
+        padding:5px 0;border:0;background:none;font:inherit;text-align:left;color:var(--ink);border-radius:6px;}
+  button.drow{cursor:pointer;}
+  button.drow:hover{background:var(--surface-2);}
+  .dot{width:9px;height:9px;border-radius:50%;justify-self:center;}
+  .dot.solid{background:var(--brand);}
+  .dot.hollow{border:1.6px solid #A9B0B8;}
+  .drow .dt{font-size:12.5px;font-variant-numeric:tabular-nums;}
+  .drow.proj .dt{color:#5F6B76;}
+  .drow .mut{font-size:11.5px;color:var(--ink-3);}
+  .drow .exp{font-size:11px;color:var(--ink-3);font-style:italic;}
+  .horizon{display:flex;align-items:center;gap:10px;margin:8px 0 4px;}
+  .horizon .ln{flex:1;border-top:1px dashed #C6CCD2;}
+  .horizon span{font-size:10.5px;color:var(--ink-3);}
+  .more{align-self:flex-start;margin-top:6px;border:0;background:none;font:inherit;font-size:11.5px;
+        color:var(--brand-ink);font-weight:600;cursor:pointer;padding:4px 0;}
+  .more:hover{text-decoration:underline;}
+  .flag{font-family:var(--mono);font-size:9px;letter-spacing:.07em;text-transform:uppercase;font-weight:700;
+        padding:3px 8px;border-radius:11px;background:var(--amber-wash);color:var(--amber);}
+  .note{font-size:11px;color:var(--ink-3);margin-top:8px;}
+
+  .empty{padding:38px 18px;text-align:center;color:var(--ink-3);font-size:13px;}
+  .empty b{display:block;color:var(--ink);font-size:14px;margin-bottom:5px;}
+
+  /* footer */
+  .foot{flex:0 0 auto;border-top:1px solid var(--line);padding:8px 18px;display:flex;align-items:center;
+        gap:22px;flex-wrap:wrap;background:var(--surface);}
+  .foot .stat{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--ink-2);}
+  .foot .stat b{color:var(--ink);font-variant-numeric:tabular-nums;}
+  .foot .sp{flex:1;}
+  .legend{display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+  .legend span{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--ink-2);}
+  .swatch{width:9px;height:9px;border-radius:50%;}
+
+  /* drawer */
+  .scrim{position:absolute;inset:0;background:rgba(17,24,39,.28);opacity:0;pointer-events:none;transition:opacity .18s;}
+  .scrim.on{opacity:1;pointer-events:auto;}
+  .drawer{position:absolute;top:0;right:0;bottom:0;width:340px;background:var(--surface);border-left:1px solid var(--line);
+          transform:translateX(100%);transition:transform .22s ease;display:flex;flex-direction:column;}
+  .drawer.on{transform:none;}
+  .drawer header{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;align-items:flex-start;gap:10px;}
+  .drawer header h4{margin:0;font-size:14px;}
+  .drawer header .sub{font-size:11.5px;color:var(--ink-3);margin-top:3px;}
+  .drawer .x{margin-left:auto;border:0;background:none;font-size:17px;line-height:1;color:var(--ink-3);cursor:pointer;padding:2px 4px;}
+  .drawer dl{margin:0;padding:14px 16px;display:grid;grid-template-columns:96px 1fr;gap:9px 12px;font-size:12.5px;}
+  .drawer dt{color:var(--ink-3);}
+  .drawer dd{margin:0;}
+  .drawer .foot2{margin-top:auto;padding:14px 16px;border-top:1px solid var(--line);font-size:11.5px;color:var(--ink-3);}
+  .appwrap{position:relative;}
+
+  .after{margin-top:26px;display:grid;gap:18px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));}
+  .after section{border:1px solid var(--page-rule);border-radius:6px;padding:15px 17px;}
+  .after h3{font-family:var(--mono);font-size:12px;letter-spacing:.02em;margin:0 0 8px;}
+  .after ul{margin:0;padding-left:18px;}
+  .after li{font-size:13.5px;color:var(--page-ink-2);margin-bottom:6px;line-height:1.5;}
+  .after li b{color:var(--page-ink);}
+  .after a{color:#1F7B3C;}
+
+  @media (prefers-reduced-motion: reduce){ .drawer,.scrim{transition:none;} }
+  @media (max-width:1080px){
+    .app{height:auto;grid-template-columns:1fr;}
+    .nav{flex-direction:row;height:48px;padding:0 10px;gap:8px;overflow-x:auto;}
+    .logo{margin:0;}
+    .body{grid-template-columns:1fr;}
+    .rail{border-right:0;border-bottom:1px solid var(--line);max-height:190px;}
+    .pane{max-height:560px;}
+    .rowbtn{grid-template-columns:1fr 92px 92px;row-gap:4px;}
+    .rowbtn .mut.win,.rowbtn .mut.cad{display:none;}
+  }
+</style>
+
+<div class="page">
+
+  <div class="pagehead">
+    <div>
+      <p class="kicker">FilterGo · Visits · Prototype for doc 07</p>
+      <h1>The Companies tab, running</h1>
+      <p>The design in <a href="07-consolidated-visits-view.html">07</a> as a working screen: the scheduler’s
+        chrome, a new <b>Companies</b> tab beside the two that exist, and both views wired up. It runs on
+        demo data in the browser — nothing here is connected to the app.</p>
+    </div>
+  </div>
+
+  <div class="try">
+    <b>Try:</b>
+    <span>switch <b>Today / This week / This month</b></span>
+    <span>·</span>
+    <span>pick a company in the left rail to open its year</span>
+    <span>·</span>
+    <span>search a company or a property</span>
+    <span>·</span>
+    <span>click a scheduled row for the drawer</span>
+    <span>·</span>
+    <span>note the projected dates below the dashed line don’t respond — by design</span>
+  </div>
+
+  <div class="appwrap">
+  <div class="app">
+    <nav class="nav" aria-label="Product (mock)">
+      <div class="logo">F</div>
+      <div class="navi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 10.5 12 3l9 7.5V21H3z"/></svg></div>
+      <div class="navi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></div>
+      <div class="navi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20V9l8-5 8 5v11z"/><path d="M10 20v-6h4v6"/></svg></div>
+      <div class="navi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.5 3 14 0 18-3-4-3-14.5 0-18z"/></svg></div>
+      <div class="navi on" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></div>
+      <div class="navi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M8.5 6H15a3 3 0 0 1 0 6H9a3 3 0 0 0 0 6h6.5"/></svg></div>
+      <div class="navi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3a6 6 0 0 1 6 6v5l2 3H4l2-3V9a6 6 0 0 1 6-6z"/></svg></div>
+      <div class="navi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 3h6v3H9z"/></svg></div>
+      <div class="navi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="7" width="18" height="12" rx="2"/><path d="M8 7V5h8v2"/></svg></div>
+      <div class="navi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19V5m16 14V5M4 12h16"/></svg></div>
+      <div class="navi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></svg></div>
+      <div class="navi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8.5"/><path d="M12 12V4M12 12l6 4"/></svg></div>
+      <div class="navi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 8h13l3 4h2v5H3z"/><circle cx="7.5" cy="17.5" r="2"/><circle cx="16.5" cy="17.5" r="2"/></svg></div>
+    </nav>
+
+    <div class="main">
+      <div class="topbar">
+        <div class="ttl">
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+          Schedule
+        </div>
+        <div class="sp"></div>
+        <span class="pill-id">ID: 1</span>
+        <span class="fake-select">Select A Franchise
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+        </span>
+        <span class="avatar"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 8-3 8h18s-3-1-3-8"/></svg></span>
+        <span class="who">
+          <span class="avatar"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></svg></span>
+          <span class="nm"><b>Signal Demo Owner</b><span>Franchise Owner</span></span>
+        </span>
+      </div>
+
+      <div class="tabrow">
+        <button class="tab" title="Existing tab — unchanged by this design" disabled>Filter Replacement Service</button>
+        <button class="tab" title="Existing tab — unchanged by this design" disabled>Visits</button>
+        <button class="tab on" aria-current="page">Companies</button>
+        <div class="sp"></div>
+        <span class="alertpill amber">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+          2 shifts require assignment
+        </span>
+        <span class="alertpill">3 Missed Visits</span>
+      </div>
+
+      <div class="toolbar" id="toolbar"></div>
+
+      <div class="body">
+        <aside class="rail">
+          <h2 id="railHead">Companies</h2>
+          <div class="raillist" id="raillist"></div>
+        </aside>
+        <div class="pane" id="pane"></div>
+      </div>
+
+      <div class="foot" id="foot"></div>
+    </div>
+  </div>
+
+  <div class="scrim" id="scrim"></div>
+  <aside class="drawer" id="drawer" aria-hidden="true" aria-label="Visit detail"></aside>
+  </div>
+
+  <div class="after">
+    <section>
+      <h3>What this proves</h3>
+      <ul>
+        <li><b>The year is one scroll.</b> Pick Downtown Holdings or Meridian Health Group: a quarterly
+          property shows four dates, a monthly one twelve. Nobody chose those numbers.</li>
+        <li><b>Planned and projected never look alike.</b> Solid dot, route and status above the dashed
+          line; hollow dot and the word <i>expected</i> below it, with nothing to click.</li>
+        <li><b>Quiet companies are still reachable.</b> They dim out of the roll-up but stay in the rail,
+          which is how you get to a customer nobody is visiting this week.</li>
+      </ul>
+    </section>
+    <section>
+      <h3>What is faked</h3>
+      <ul>
+        <li>Demo data generated in the page from a cadence, the way <code>schedule.mock.js</code> does.
+          Today is <b>Mon 17 Aug 2026</b> and routes are built through <b>Sun 6 Sep</b>.</li>
+        <li>The other two tabs, the nav rail and the alert pills are painted, not wired — they are there so
+          the new tab can be judged in its actual surroundings.</li>
+        <li>Export and <b>Unassigned →</b> open nothing. In the product they hand off to the existing
+          CSV and add-to-a-route flows.</li>
+      </ul>
+    </section>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var DAY = 86400000;
+  var TODAY = new Date(2026, 7, 17);              // Mon 17 Aug 2026 — the demo's today
+  var HORIZON = new Date(2026, 8, 6);             // routes are built through Sun 6 Sep
+  var YEAR_END = new Date(2027, 7, 16);
+
+  var WD = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  var MO = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  function d(y,m,day){ return new Date(y, m-1, day); }
+  function key(x){ return x.getFullYear()+'-'+(x.getMonth()+1)+'-'+x.getDate(); }
+  function fmt(x){ return WD[x.getDay()]+' '+x.getDate()+' '+MO[x.getMonth()]; }
+  function fmtY(x){ return fmt(x)+' '+x.getFullYear(); }
+  function days(a,b){ return Math.round((b-a)/DAY); }
+
+  // Cadence in words — the field that lets someone predict the next date without opening anything.
+  function cadence(n, long){
+    if(!n) return 'No schedule';
+    if(n===7)  return long ? 'Every week' : 'Weekly';
+    if(n===14) return long ? 'Every 2 weeks' : 'Every 2 wks';
+    if(n===21) return long ? 'Every 3 weeks' : 'Every 3 wks';
+    if(n===30) return long ? 'Every month' : 'Monthly';
+    if(n===45) return long ? 'Every 6 weeks' : 'Every 45d';
+    if(n===60) return long ? 'Every 2 months' : 'Every 60d';
+    if(n===90) return long ? 'Every 3 months' : 'Every 90d';
+    if(n===120)return long ? 'Every 4 months' : 'Every 120d';
+    return 'Every '+n+'d';
+  }
+
+  var ROUTES = [
+    ['Sun North','A. Green'], ['Bay Loop','M. Diaz'], ['Dock Run','M. Diaz'],
+    ['Night Loop','K. Patel'], ['River Circuit','S. Connor'], ['Ridgeway','D. Nguyen']
+  ];
+
+  // name, interval, anchor (a known due date), window, route index, address, contract
+  function P(name, interval, anchor, win, r, addr, contract){
+    return {name:name, interval:interval, anchor:anchor, win:win,
+            route:interval?ROUTES[r][0]:null, tech:interval?ROUTES[r][1]:null,
+            addr:addr, contract:contract};
+  }
+
+  var COMPANIES = [
+    {id:'CUST-1002', name:'Downtown Holdings', props:[
+      P('Downtown Plaza', 14, d(2026,8,17), '11a – 1p', 0, '88 Greenwich St, Brooklyn', 'Filter Replacement Programme'),
+      P('Downtown Annexe', 90, d(2026,8,20), '2p – 4p', 0, '88 Greenwich St, Unit B', 'Rooftop AHU Service'),
+      P('Greenwich Cold Store', 30, d(2026,8,21), '8a – 10a', 1, '12 Wharf Rd, Brooklyn', 'Cold Chain Filters'),
+      P('Riverside Lot 4', null, null, null, 0, '4 Riverside Way, Brooklyn', '—')
+    ]},
+    {id:'CUST-1003', name:'Harborview Logistics', props:[
+      P('Harborview Logistics Hub', 14, d(2026,8,19), '11a – 1p', 2, '210 Pier St, Building C', 'Warehouse Filter Programme'),
+      P('Harborview Cold Chain', 45, d(2026,8,21), '2p – 4p', 2, '210 Pier St, Building F', 'Dock Air Quality Add-on'),
+      P('Northgate Cold Storage', 21, d(2026,9,2), '8a – 10a', 1, '9 Dockside Rd', 'Cold Chain Filters')
+    ]},
+    {id:'CUST-1006', name:'Northgate Properties', props:[
+      P('Northgate Corporate Center', 14, d(2026,8,17), '8a – 10a', 0, '450 Lexington Ave, Suite 1200', 'Core Floors Programme'),
+      P('Northgate Annexe', 30, d(2026,8,19), '11a – 1p', 0, '450 Lexington Ave, Annexe', 'Common Areas'),
+      P('Fairmont Office Tower', 21, d(2026,9,9), '2p – 4p', 4, '1 Fairmont Plaza', 'Core Floors Programme')
+    ]},
+    {id:'CUST-1004', name:'Meridian Health Group', props:[
+      P('Meridian Medical Center', 30, d(2026,8,18), '8a – 10a', 4, '4 Charter Way, Newark', 'HEPA Programme — Wards'),
+      P('Meridian Theatre Suite', 30, d(2026,8,18), '11a – 1p', 4, '4 Charter Way, Level 3', 'Theatre Suite Filters'),
+      P('Riverside Medical Centre', 21, d(2026,8,22), '2p – 4p', 4, '77 Riverside Dr', 'HEPA Programme — Wards'),
+      P('Pinecrest Assisted Living', 30, d(2026,10,2), '8a – 10a', 5, '3 Pinecrest Lane', 'Resident Wing Filters')
+    ]},
+    {id:'CUST-4265', name:'EDGE Sync', props:[
+      P('EDGE Sync Test Site', 21, d(2026,8,20), '5p – 7p', 3, '123 Test Street, New York', 'Filter Replacement — Core Floors')
+    ]},
+    {id:'CUST-1010', name:'Alderwood Group', props:[
+      P('Alderwood Business Park', 14, d(2026,8,18), '8a – 10a', 5, '2 Alderwood Way', 'Business Park Programme'),
+      P('Kingsway Retail Centre', 14, d(2026,8,22), '11a – 1p', 5, '40 Kingsway', 'Mall Common Areas')
+    ]},
+    {id:'CUST-1011', name:'Sable Ridge Ltd', props:[
+      P('Sable Ridge Warehouse', 30, d(2026,9,12), '8a – 10a', 1, '18 Sable Ridge Rd', 'Warehouse Filter Programme')
+    ]},
+    {id:'CUST-1012', name:'Oakhurst Leisure', props:[
+      P('Oakhurst Leisure Club', 30, d(2026,9,10), '11a – 1p', 5, '5 Oakhurst Ave', 'Pool Hall Air Handling'),
+      P('Clearwater Aquatics', 45, d(2026,9,25), '2p – 4p', 5, '19 Clearwater Rd', 'Pool Hall Air Handling')
+    ]},
+    {id:'CUST-1013', name:'Vantage Labs', props:[
+      P('Vantage Point Labs', 30, d(2026,9,3), '8a – 10a', 4, '60 Vantage Point', 'Lab Clean Air Programme'),
+      P('Ironside Manufacturing', 30, d(2026,9,17), '2p – 4p', 4, '11 Ironside Way', 'Plant Extraction Filters')
+    ]},
+    {id:'CUST-1014', name:'Cedar Mill Estates', props:[
+      P('Cedar Mill Campus', 30, d(2026,9,4), '8a – 10a', 3, '1 Cedar Mill Dr', 'Campus Programme'),
+      P('Harlow Distribution Depot', 30, d(2026,9,24), '11a – 1p', 3, '7 Harlow Rd', 'Depot Filters')
+    ]},
+    {id:'CUST-1015', name:'Southgate Civic Trust', props:[
+      P('Southgate Civic Hall', 30, d(2026,9,8), '2p – 4p', 2, '1 Civic Square', 'Public Halls Programme'),
+      P('Marchmont Library', 60, d(2026,9,29), '11a – 1p', 2, '22 Marchmont St', 'Public Halls Programme')
+    ]},
+    {id:'CUST-1016', name:'Tanner Street Studios', props:[
+      P('Tanner Street Studios', 30, d(2026,9,15), '5p – 7p', 3, '3 Tanner St', 'Studio Air Quality')
+    ]},
+    {id:'CUST-1017', name:'Beaumont Group', props:[
+      P('Beaumont Conference Centre', 45, d(2026,9,11), '8a – 10a', 0, '9 Beaumont Row', 'Conference Halls Programme'),
+      P('Dunmore Trade Park', 45, d(2026,10,6), '11a – 1p', 0, '31 Dunmore Way', 'Trade Park Filters')
+    ]},
+    {id:'CUST-1018', name:'Elmsworth Trust', props:[
+      P('Elmsworth Academy', 45, d(2026,9,18), '8a – 10a', 4, '14 Elmsworth Rd', 'School Programme'),
+      P('Fenchurch Chambers', 45, d(2026,10,13), '2p – 4p', 4, '2 Fenchurch St', 'Chambers Filters')
+    ]},
+    {id:'CUST-1019', name:'Holloway Estates', props:[
+      P('Holloway Retail Park', 45, d(2026,9,22), '11a – 1p', 1, '80 Holloway Rd', 'Mall Common Areas'),
+      P('Inverness Freight Terminal', 45, d(2026,10,20), '8a – 10a', 2, '5 Inverness Quay', 'Freight Terminal Filters')
+    ]},
+    {id:'CUST-1020', name:'Kelvin Court', props:[
+      P('Kelvin Court Offices', 60, d(2026,9,16), '11a – 1p', 0, '18 Kelvin Court', 'Office Programme'),
+      P('Langford Textiles', 60, d(2026,10,15), '2p – 4p', 0, '44 Langford Way', 'Plant Extraction Filters')
+    ]},
+    {id:'CUST-1021', name:'Redhill Industrial', props:[
+      P('Redhill Chemical Works', 90, d(2026,9,23), '8a – 10a', 5, '90 Redhill Rd', 'Plant Extraction Filters'),
+      P('Thornbury Foundry', 90, d(2026,11,4), '2p – 4p', 5, '12 Thornbury Ln', 'Plant Extraction Filters')
+    ]},
+    {id:'CUST-1022', name:'Ashcombe Holdings', props:[
+      P('Ashcombe Mill', null, null, null, 0, '1 Ashcombe Mill Rd', '—'),
+      P('Bellmont Annexe', null, null, null, 0, '6 Bellmont Way', '—')
+    ]}
+  ];
+
+  // Visits that were missed and are still open — they outlive their own date (06 D5).
+  var OVERDUE = [
+    {co:'CUST-1011', prop:'Sable Ridge Warehouse', date:d(2026,8,13), win:'8a – 10a'},
+    {co:'CUST-1016', prop:'Tanner Street Studios', date:d(2026,8,11), win:'5p – 7p'}
+  ];
+
+  // Planned occurrences with no route on them yet.
+  var UNASSIGNED = { 'Northgate Annexe':1, 'Harborview Cold Chain':1, 'Kingsway Retail Centre':1 };
+
+  COMPANIES.forEach(function(c){ c.props.forEach(function(p){ p.company = c; }); });
+
+  /* Step by calendar parts, never by milliseconds: adding 14 × 86 400 000 across the November
+     DST change lands at 11pm the previous day, which silently shifts every date after it.
+     A cadence that divides into months also steps in months, so "monthly" really is twelve
+     visits a year and "every 3 months" really is four — the arithmetic the design promises. */
+  function addDays(dt, n){ return new Date(dt.getFullYear(), dt.getMonth(), dt.getDate() + n); }
+  function addMonths(dt, n){
+    var m = dt.getMonth() + n, y = dt.getFullYear();
+    var lastDay = new Date(y, m + 1, 0).getDate();
+    return new Date(y, m, Math.min(dt.getDate(), lastDay));
+  }
+  function monthStep(interval){ return (interval >= 30 && interval % 30 === 0) ? interval / 30 : 0; }
+
+  function occurrences(p, from, to){
+    if(!p.interval || !p.anchor) return [];
+    var out = [], ms = monthStep(p.interval);
+    var step = ms ? function(dt, dir){ return addMonths(dt, dir * ms); }
+                  : function(dt, dir){ return addDays(dt, dir * p.interval); };
+    var t = new Date(p.anchor);
+    while(t.getTime() > from.getTime()) t = step(t, -1);
+    while(t.getTime() < from.getTime()) t = step(t, 1);
+    while(t.getTime() <= to.getTime()){ out.push(new Date(t)); t = step(t, 1); }
+    return out;
+  }
+
+  function stateOf(p, date){
+    var t = date.getTime(), today = TODAY.getTime();
+    if(t > HORIZON.getTime()) return 'projected';
+    if(UNASSIGNED[p.name] === 1 && t > today) return 'unassigned';
+    if(t < today) return 'completed';
+    if(t === today) return (p.name.charCodeAt(0) % 2 === 0) ? 'inProgress' : 'completed';
+    return 'scheduled';
+  }
+
+  var CHIP = {
+    completed:['done','Completed'], inProgress:['live','In progress'], scheduled:['sched','Scheduled'],
+    missed:['miss','Missed'], projected:['',''], unassigned:['','']
+  };
+
+  function rangeFor(scope){
+    if(scope === 'today') return {from:new Date(TODAY), to:new Date(TODAY), label:'Today', sub:fmtY(TODAY)};
+    if(scope === 'week'){
+      var s = new Date(TODAY.getTime() - ((TODAY.getDay()+6)%7)*DAY);
+      var e = new Date(s.getTime() + 6*DAY);
+      return {from:s, to:e, label:'This week', sub:fmt(s)+' – '+fmt(e)+' '+e.getFullYear()};
+    }
+    var ms = new Date(TODAY.getFullYear(), TODAY.getMonth(), 1);
+    var me = new Date(TODAY.getFullYear(), TODAY.getMonth()+1, 0);
+    return {from:ms, to:me, label:'This month', sub:MO[ms.getMonth()]+' '+ms.getFullYear()};
+  }
+
+  var state = {scope:'week', company:null, q:'', unassignedOnly:false, prop:'all', expanded:{}};
+
+  function matches(text){ return !state.q || text.toLowerCase().indexOf(state.q.toLowerCase()) > -1; }
+
+  function rollup(){
+    var r = rangeFor(state.scope), groups = [], totals = {visits:0, props:{}, cos:0, unassigned:0};
+    COMPANIES.forEach(function(c){
+      var rows = [];
+      c.props.forEach(function(p){
+        occurrences(p, r.from, r.to).forEach(function(date){
+          var st = stateOf(p, date);
+          if(state.unassignedOnly && st !== 'unassigned') return;
+          if(!matches(c.name) && !matches(p.name)) return;
+          rows.push({prop:p, date:date, st:st, co:c});
+        });
+      });
+      if(!rows.length) return;
+      rows.sort(function(a,b){ return a.date - b.date || a.prop.name.localeCompare(b.prop.name); });
+      rows.forEach(function(x){
+        totals.visits++; totals.props[x.prop.name] = 1;
+        if(x.st === 'unassigned') totals.unassigned++;
+      });
+      totals.cos++;
+      groups.push({co:c, rows:rows});
+    });
+    return {range:r, groups:groups, totals:totals};
+  }
+
+  function overdueRows(){
+    if(state.unassignedOnly) return [];
+    return OVERDUE.filter(function(o){
+      var c = byId(o.co);
+      return matches(c.name) || matches(o.prop);
+    });
+  }
+
+  function byId(id){ for(var i=0;i<COMPANIES.length;i++) if(COMPANIES[i].id===id) return COMPANIES[i]; return null; }
+  function propOf(c, name){ for(var i=0;i<c.props.length;i++) if(c.props[i].name===name) return c.props[i]; return null; }
+
+  function el(tag, cls, txt){
+    var n = document.createElement(tag);
+    if(cls) n.className = cls;
+    if(txt != null) n.textContent = txt;
+    return n;
+  }
+
+  /* ── toolbar ─────────────────────────────────────────────── */
+  function renderToolbar(data){
+    var t = document.getElementById('toolbar');
+    t.innerHTML = '';
+
+    if(state.company){
+      var back = el('button','backbtn');
+      back.innerHTML = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg> All companies';
+      back.onclick = function(){ state.company = null; state.prop = 'all'; render(); };
+      t.appendChild(back);
+    } else {
+      var seg = el('div','seg');
+      [['today','Today'],['week','This week'],['month','This month']].forEach(function(s){
+        var b = el('button', null, s[1]);
+        b.setAttribute('aria-pressed', state.scope === s[0] ? 'true' : 'false');
+        b.onclick = function(){ state.scope = s[0]; render(); };
+        seg.appendChild(b);
+      });
+      t.appendChild(seg);
+    }
+
+    var search = el('div','search');
+    search.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>';
+    var inp = document.createElement('input');
+    inp.type = 'search'; inp.placeholder = 'Search company or property'; inp.value = state.q;
+    inp.setAttribute('aria-label','Search company or property');
+    inp.oninput = function(){ state.q = inp.value; render({keepFocus:true}); };
+    search.appendChild(inp);
+    t.appendChild(search);
+
+    if(!state.company){
+      var tg = el('button','toggle','Unassigned only');
+      tg.setAttribute('aria-pressed', state.unassignedOnly ? 'true' : 'false');
+      tg.onclick = function(){ state.unassignedOnly = !state.unassignedOnly; render(); };
+      t.appendChild(tg);
+    }
+
+    t.appendChild(el('div','sp'));
+    t.appendChild(el('span','range', state.company ? 'Next 12 months · through '+MO[YEAR_END.getMonth()]+' '+YEAR_END.getFullYear()
+                                                   : data.range.sub));
+  }
+
+  /* ── rail ────────────────────────────────────────────────── */
+  function renderRail(data){
+    var list = document.getElementById('raillist');
+    document.getElementById('railHead').textContent = 'Companies · ' + COMPANIES.length;
+    list.innerHTML = '';
+
+    var counts = {};
+    data.groups.forEach(function(g){ counts[g.co.id] = g.rows.length; });
+    var late = {};
+    OVERDUE.forEach(function(o){ late[o.co] = (late[o.co]||0)+1; });
+
+    var all = el('button','railbtn' + (state.company ? '' : ' on'));
+    all.appendChild(el('span','nm','All companies'));
+    all.appendChild(el('span','ct', String(data.groups.length)));
+    all.onclick = function(){ state.company = null; state.prop='all'; render(); };
+    list.appendChild(all);
+
+    COMPANIES.forEach(function(c){
+      var n = counts[c.id] || 0, od = late[c.id] || 0;
+      var b = el('button','railbtn' + (state.company === c.id ? ' on' : (n||od ? '' : ' quiet')) + (od && state.company !== c.id ? ' due' : ''));
+      b.appendChild(el('span','nm', c.name));
+      b.appendChild(el('span','ct', n ? String(n) : (od ? String(od) : '—')));
+      b.title = n ? n+' visit'+(n>1?'s':'')+' in this period' : (od ? od+' overdue' : 'nothing in this period — open for the year');
+      b.onclick = function(){ state.company = c.id; state.prop='all'; render(); };
+      list.appendChild(b);
+    });
+  }
+
+  /* ── period roll-up ──────────────────────────────────────── */
+  function visitRow(p, date, st, co, showCo){
+    var read = (st === 'completed' || st === 'missed');
+    var b = el('button','rowbtn');
+    var nm = el('span','nm', p.name);
+    if(showCo){ nm.appendChild(el('span','co', '  ·  ' + co.name)); }
+    b.appendChild(nm);
+
+    var dt = el('span','dt' + (st === 'missed' ? ' late' : ''), fmt(date));
+    b.appendChild(dt);
+    b.appendChild(el('span','mut win', p.win || ''));
+    b.appendChild(el('span','mut cad', cadence(p.interval)));
+
+    if(st === 'unassigned'){
+      var u = el('span','unassigned','Unassigned →');
+      b.appendChild(u);
+      b.appendChild(el('span',null,''));
+    } else {
+      b.appendChild(el('span','mut', p.route ? p.route + ' · ' + p.tech : ''));
+      var c = CHIP[st];
+      b.appendChild(el('span','chip ' + c[0], c[1]));
+    }
+    b.onclick = function(){ openDrawer(p, date, st, co); };
+    b.setAttribute('aria-label', p.name + ', ' + fmt(date) + ', ' + (st === 'unassigned' ? 'unassigned' : CHIP[st][1]));
+    if(read) b.title = 'Read-only — ' + CHIP[st][1].toLowerCase();
+    return b;
+  }
+
+  function renderRollup(data){
+    var pane = document.getElementById('pane');
+    pane.innerHTML = '';
+
+    var head = el('div','panehead');
+    head.appendChild(el('h3', null, data.range.label));
+    head.appendChild(el('span','sub', data.range.sub));
+    head.appendChild(el('div','sp'));
+    var t = data.totals;
+    head.appendChild(el('span','sub',
+      t.visits + ' visit' + (t.visits===1?'':'s') + ' · ' +
+      Object.keys(t.props).length + ' propert' + (Object.keys(t.props).length===1?'y':'ies') + ' · ' +
+      t.cos + ' compan' + (t.cos===1?'y':'ies')));
+    pane.appendChild(head);
+
+    var od = overdueRows();
+    if(od.length){
+      var band = el('div','band');
+      band.appendChild(el('span', null, 'Overdue · ' + od.length));
+      band.appendChild(el('div','sp'));
+      band.appendChild(el('em', null, 'not done, still open'));
+      pane.appendChild(band);
+      od.forEach(function(o){
+        var c = byId(o.co), p = propOf(c, o.prop);
+        pane.appendChild(visitRow(p, o.date, 'missed', c, true));
+      });
+    }
+
+    if(!data.groups.length && !od.length){
+      var e = el('div','empty');
+      var next = nextAnywhere();
+      e.innerHTML = '<b>Nothing scheduled ' + data.range.label.toLowerCase() + '.</b>' +
+        (next ? 'Next visit <strong>' + fmt(next.date) + '</strong> — ' + next.co.name + ', ' + next.prop.name
+              : 'Nothing on the books in the next year.');
+      pane.appendChild(e);
+      return;
+    }
+
+    data.groups.forEach(function(g){
+      var h = el('div','cohead');
+      h.appendChild(el('b', null, g.co.name));
+      h.appendChild(el('div','sp'));
+      var props = {}; g.rows.forEach(function(r){ props[r.prop.name] = 1; });
+      var un = g.rows.filter(function(r){ return r.st === 'unassigned'; }).length;
+      var meta = el('span','meta',
+        Object.keys(props).length + ' propert' + (Object.keys(props).length===1?'y':'ies') + ' · ' +
+        g.rows.length + ' visit' + (g.rows.length===1?'':'s'));
+      if(un){ var w = el('span','warn', ' · ' + un + ' unassigned'); meta.appendChild(w); }
+      h.appendChild(meta);
+      pane.appendChild(h);
+      g.rows.forEach(function(r){ pane.appendChild(visitRow(r.prop, r.date, r.st, g.co, false)); });
+    });
+  }
+
+  function nextAnywhere(){
+    var best = null;
+    COMPANIES.forEach(function(c){
+      c.props.forEach(function(p){
+        var o = occurrences(p, TODAY, YEAR_END)[0];
+        if(o && (!best || o < best.date)) best = {date:o, prop:p, co:c};
+      });
+    });
+    return best;
+  }
+
+  /* ── company year ────────────────────────────────────────── */
+  function renderCompany(){
+    var c = byId(state.company);
+    var pane = document.getElementById('pane');
+    pane.innerHTML = '';
+
+    var head = el('div','panehead');
+    var titleWrap = el('div');
+    titleWrap.appendChild(el('h3', null, c.name));
+    var scheduled = c.props.filter(function(p){ return p.interval; }).length;
+    titleWrap.appendChild(el('div','sub',
+      c.props.length + ' propert' + (c.props.length===1?'y':'ies') +
+      ' · next 12 months, through ' + MO[YEAR_END.getMonth()] + ' ' + YEAR_END.getFullYear() +
+      (scheduled < c.props.length ? ' · ' + (c.props.length - scheduled) + ' not scheduled' : '')));
+    head.appendChild(titleWrap);
+    head.appendChild(el('div','sp'));
+
+    var sel = document.createElement('select');
+    sel.className = 'prop';
+    sel.setAttribute('aria-label','Filter to one property');
+    var o0 = document.createElement('option'); o0.value = 'all'; o0.textContent = 'All properties';
+    sel.appendChild(o0);
+    c.props.forEach(function(p){
+      var o = document.createElement('option'); o.value = p.name; o.textContent = p.name;
+      if(state.prop === p.name) o.selected = true;
+      sel.appendChild(o);
+    });
+    sel.onchange = function(){ state.prop = sel.value; render(); };
+    head.appendChild(sel);
+
+    var ex = el('button','linkbtn','Export');
+    ex.onclick = function(){ ex.textContent = 'CSV — not wired here'; setTimeout(function(){ ex.textContent = 'Export'; }, 1600); };
+    head.appendChild(ex);
+    pane.appendChild(head);
+
+    var props = c.props.filter(function(p){ return state.prop === 'all' || p.name === state.prop; })
+                       .filter(function(p){ return matches(c.name) || matches(p.name) || state.prop !== 'all'; });
+
+    if(!props.length){
+      pane.appendChild(el('div','empty','No property here matches “' + state.q + '”.'));
+      return;
+    }
+
+    // Unscheduled first: a property that has fallen off the schedule is the thing worth interrupting for.
+    props.sort(function(a,b){ return (a.interval?1:0) - (b.interval?1:0) || a.name.localeCompare(b.name); });
+
+    props.forEach(function(p){
+      var block = el('div','propblock');
+      var ph = el('div','ph');
+      ph.appendChild(el('b', null, p.name));
+      ph.appendChild(el('div','sp'));
+      if(p.interval) ph.appendChild(el('span','cad', cadence(p.interval, true)));
+      else ph.appendChild(el('span','flag','Not scheduled'));
+      block.appendChild(ph);
+      block.appendChild(el('div','addr', p.addr + (p.contract !== '—' ? ' · ' + p.contract : '')));
+
+      if(!p.interval){
+        block.appendChild(el('div','hist','No recurring service on file · last visit Tue 3 Mar'));
+        pane.appendChild(block);
+        return;
+      }
+
+      var last = occurrences(p, new Date(TODAY.getTime() - 400*DAY), new Date(TODAY.getTime() - DAY)).pop();
+      if(last) block.appendChild(el('div','hist','Last visit ' + fmt(last) + ' · completed'));
+
+      var all = occurrences(p, TODAY, YEAR_END);
+      var open = state.expanded[p.name];
+      var shown = open ? all : all.slice(0, 12);
+      var dates = el('div','dates');
+      var drewLine = false;
+
+      shown.forEach(function(date){
+        var st = stateOf(p, date);
+        if(st === 'projected' && !drewLine){
+          drewLine = true;
+          var hz = el('div','horizon');
+          hz.appendChild(el('div','ln'));
+          hz.appendChild(el('span', null, 'routes are built to ' + fmt(HORIZON) + ' — everything below is projected from the cadence'));
+          dates.appendChild(hz);
+        }
+        var row;
+        if(st === 'projected'){
+          row = el('div','drow proj');
+          row.title = 'Projected from a ' + p.interval + '-day cadence · not yet scheduled';
+        } else {
+          row = el('button','drow');
+          row.onclick = function(){ openDrawer(p, date, st, c); };
+        }
+        var dot = el('span','dot ' + (st === 'projected' ? 'hollow' : 'solid'));
+        row.appendChild(dot);
+        row.appendChild(el('span','dt', fmt(date)));
+        if(st === 'projected'){
+          row.appendChild(el('span','exp','expected'));
+          row.appendChild(el('span',null,''));
+          row.appendChild(el('span',null,''));
+        } else {
+          row.appendChild(el('span','mut', p.win));
+          if(st === 'unassigned'){
+            row.appendChild(el('span','unassigned','Unassigned →'));
+            row.appendChild(el('span',null,''));
+          } else {
+            row.appendChild(el('span','mut', p.route + ' · ' + p.tech));
+            var ch = CHIP[st];
+            row.appendChild(el('span','chip ' + ch[0], ch[1]));
+          }
+        }
+        dates.appendChild(row);
+      });
+
+      if(all.length > 12){
+        var m = el('button','more', open
+          ? 'Show fewer'
+          : '+ ' + (all.length - 12) + ' more through ' + fmtY(all[all.length-1]));
+        m.onclick = function(){ state.expanded[p.name] = !open; render(); };
+        dates.appendChild(m);
+      } else {
+        dates.appendChild(el('div','note', all.length + ' visit' + (all.length===1?'':'s') +
+          ' a year — the whole contract fits on screen'));
+      }
+
+      block.appendChild(dates);
+      pane.appendChild(block);
+    });
+  }
+
+  /* ── footer ──────────────────────────────────────────────── */
+  function renderFoot(data){
+    var f = document.getElementById('foot');
+    f.innerHTML = '';
+    var t = data.totals;
+
+    function stat(label, value){
+      var s = el('div','stat');
+      s.appendChild(el('b', null, value));
+      s.appendChild(el('span', null, label));
+      return s;
+    }
+
+    if(state.company){
+      var c = byId(state.company);
+      var planned = 0, projected = 0, unsched = 0;
+      c.props.forEach(function(p){
+        if(!p.interval){ unsched++; return; }
+        occurrences(p, TODAY, YEAR_END).forEach(function(dt){
+          if(stateOf(p, dt) === 'projected') projected++; else planned++;
+        });
+      });
+      f.appendChild(stat('Properties', String(c.props.length)));
+      f.appendChild(stat('Visits scheduled', String(planned)));
+      f.appendChild(stat('Projected', String(projected)));
+      if(unsched) f.appendChild(stat('Not scheduled', String(unsched)));
+    } else {
+      f.appendChild(stat('Visits', String(t.visits)));
+      f.appendChild(stat('Properties', String(Object.keys(t.props).length)));
+      f.appendChild(stat('Companies', String(t.cos) + ' of ' + COMPANIES.length));
+      if(t.unassigned) f.appendChild(stat('Unassigned', String(t.unassigned)));
+      if(OVERDUE.length) f.appendChild(stat('Overdue', String(OVERDUE.length)));
+    }
+
+    f.appendChild(el('div','sp'));
+    var lg = el('div','legend');
+    [['#16A34A','Completed'],['#2563EB','In progress'],['#9CA3AF','Scheduled'],
+     ['#DC2626','Missed / unassigned'],['transparent','Projected']].forEach(function(x){
+      var s = el('span');
+      var sw = el('span','swatch');
+      sw.style.background = x[0];
+      if(x[0] === 'transparent') sw.style.border = '1.6px solid #A9B0B8';
+      s.appendChild(sw); s.appendChild(el('span', null, x[1]));
+      lg.appendChild(s);
+    });
+    f.appendChild(lg);
+  }
+
+  /* ── drawer ──────────────────────────────────────────────── */
+  var drawer = document.getElementById('drawer'), scrim = document.getElementById('scrim');
+
+  function openDrawer(p, date, st, co){
+    drawer.innerHTML = '';
+    var h = document.createElement('header');
+    var wrap = el('div');
+    wrap.appendChild(el('h4', null, p.name));
+    wrap.appendChild(el('div','sub', co.name + ' · ' + fmtY(date)));
+    h.appendChild(wrap);
+    var x = el('button','x','×');
+    x.setAttribute('aria-label','Close');
+    x.onclick = closeDrawer;
+    h.appendChild(x);
+    drawer.appendChild(h);
+
+    var dl = document.createElement('dl');
+    function pair(k, v){
+      dl.appendChild(el('dt', null, k));
+      dl.appendChild(el('dd', null, v));
+    }
+    pair('Status', st === 'unassigned' ? 'Unassigned — no route yet' : CHIP[st][1]);
+    pair('Service window', p.win);
+    pair('Cadence', cadence(p.interval, true));
+    pair('Contract', p.contract);
+    pair('Route', st === 'unassigned' ? '—' : p.route + ' · ' + p.tech);
+    pair('Address', p.addr);
+    drawer.appendChild(dl);
+
+    var f = el('div','foot2');
+    f.textContent = (st === 'completed' || st === 'missed')
+      ? 'Past visits are read-only here. A missed visit keeps its Reschedule action on the Visits tab.'
+      : 'Assignment and rescheduling happen on the Visits tab — this surface reads.';
+    drawer.appendChild(f);
+
+    drawer.classList.add('on'); scrim.classList.add('on');
+    drawer.setAttribute('aria-hidden','false');
+    x.focus();
+  }
+  function closeDrawer(){
+    drawer.classList.remove('on'); scrim.classList.remove('on');
+    drawer.setAttribute('aria-hidden','true');
+  }
+  scrim.onclick = closeDrawer;
+  document.addEventListener('keydown', function(e){ if(e.key === 'Escape') closeDrawer(); });
+
+  /* ── render ──────────────────────────────────────────────── */
+  function render(opts){
+    var focus = opts && opts.keepFocus;
+    var data = rollup();
+    renderToolbar(data);
+    renderRail(data);
+    if(state.company) renderCompany(); else renderRollup(data);
+    renderFoot(data);
+    if(focus){
+      var i = document.querySelector('.search input');
+      if(i){ i.focus(); i.setSelectionRange(i.value.length, i.value.length); }
+    }
+  }
+
+  render();
+})();
+</script>

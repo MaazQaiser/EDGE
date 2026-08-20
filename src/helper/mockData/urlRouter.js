@@ -2,10 +2,37 @@ import { Contracts } from 'src/app/obx/pages/sites/listing/component/graph/stubb
 import { dealsData } from 'src/stubbedData/mocks/deals.mock';
 import { dispatchListMock } from 'src/stubbedData/mocks/dispatch.mock';
 import { duties, dutiesMonth, shiftDetailMock } from 'src/stubbedData/mocks/dutyList.mock';
+import {
+  buildInvoiceDetail,
+  buildInvoiceExportCsv,
+  buildInvoiceLineItems,
+  buildInvoicePdf,
+  buildOutstandingSummary,
+  buildPeriodReconciliation,
+  buildPeriodReconciliationCsv,
+  buildReconciliationRows,
+  bulkUpdateStatus,
+  createInvoice,
+  deleteInvoice as deleteMockInvoice,
+  deletePayment as deleteMockPayment,
+  filterInvoices,
+  findInvoice as findMockInvoice,
+  getBillingContacts,
+  getMergeableContractSets,
+  getMergedContractSets,
+  getSiteContracts,
+  getSitesDropdown,
+  markInvoiceAsPaid,
+  paymentsForInvoice,
+  refreshInvoice,
+  toListingRow,
+  updateInvoice as updateMockInvoice,
+} from 'src/stubbedData/mocks/invoice.mock';
 import { locationsData } from 'src/stubbedData/mocks/locations.mock';
 import { payrollListMock } from 'src/stubbedData/mocks/payroll.mock';
 import { runsheetDetail, runsheets } from 'src/stubbedData/mocks/runsheetList.mock';
 import {
+  buildCompanyVisitMatrix,
   buildMissedHits,
   buildMissedHitsCount,
   buildRunsheetShiftDetail,
@@ -31,10 +58,6 @@ import { addToStore, findInStore, getStore, removeFromStore, updateInStore } fro
 import { getMockTenantLabels, getMockUserDataResponse } from './mockUserData';
 import { buildSiteGeoLocationResponse, getAddressConfigsMock } from './siteGeoMock';
 import { getTenantMockData } from './tenantMockData';
-
-const invoiceList = [
-  { id: 123, name: 'Bilal Malik', amount: 12312, companyName: 'ABC Company', dueDate: '1-24-2024' },
-];
 
 function listResponse(key, rows, queryParams = {}) {
   const { items, pagination } = mockPaginate(rows, queryParams);
@@ -119,6 +142,37 @@ export function resolveMockResponse(method, url, body = null) {
     return mockResponse({ sites: items, pagination }, 'Success Message');
   }
 
+  // Invoicing reads sites through its own dropdown + contract endpoints. Both
+  // must precede `/sites/:id`, which would otherwise treat "sites_dropdown" as
+  // an id and answer with a site-detail shape the dropdowns cannot read.
+  if (pathOnly.includes('/sites/sites_dropdown')) {
+    const { items, pagination } = mockPaginate(getSitesDropdown(query), {
+      ...query,
+      perPage: query.perPage || 25,
+    });
+    return mockResponse(
+      { sites: items, pagination },
+      'Sites fetched successfully',
+      200,
+      pagination,
+    );
+  }
+
+  if (matchPath(pathOnly, '/sites/:siteId/site_contracts')) {
+    const { siteId } = matchPath(pathOnly, '/sites/:siteId/site_contracts');
+    return mockSuccess('Site contracts fetched', getSiteContracts(siteId));
+  }
+
+  if (matchPath(pathOnly, '/sites/:siteId/merged_contracts')) {
+    const { siteId } = matchPath(pathOnly, '/sites/:siteId/merged_contracts');
+    return mockSuccess('Merged contracts fetched', getMergedContractSets(siteId));
+  }
+
+  if (matchPath(pathOnly, '/sites/:siteId/mergeable_contract_sets')) {
+    const { siteId } = matchPath(pathOnly, '/sites/:siteId/mergeable_contract_sets');
+    return mockSuccess('Mergeable contracts fetched', getMergeableContractSets(siteId));
+  }
+
   if (matchPath(pathOnly, '/sites/:id')) {
     const params = matchPath(pathOnly, '/sites/:id');
     const site = findInStore('sites', params.id) || getStore('sites')[0];
@@ -172,6 +226,21 @@ export function resolveMockResponse(method, url, body = null) {
   if (pathOnly.includes('/vehicles/list') || pathOnly.includes('/vehicles'))
     return listResponse('vehicles', getStore('vehicles'), query);
 
+  // The "Invoice Reconciliation" export in the invoices toolbar currently points
+  // at payroll (see `invoiceReconciliationModel`) and expects `data` as rows it
+  // joins itself. Answer in that shape so it stops downloading a file that says
+  // "undefined" while the reconciliation feature is being designed. Must precede
+  // the generic /shiftActivityLog handler below.
+  if (pathOnly.includes('/shiftActivityLog/payrollCSV')) {
+    return mockSuccess('Reconciliation export ready', buildReconciliationRows(query));
+  }
+
+  /* The Companies tab: every company, its sites, and twelve months of visits.
+     Must precede the generic /shiftActivityLog handler below, which would answer
+     with the week-grid shape and leave the matrix with no months at all. */
+  if (pathOnly.includes('/shiftActivityLog/companies/schedule'))
+    return mockSuccess('Company schedule fetched', buildCompanyVisitMatrix(query));
+
   // Revamped (grid-v2) schedule calendar endpoints — match the specific paths
   // before the generic /shiftActivityLog handlers below.
   if (pathOnly.includes('/shiftActivityLog/schedule/stats'))
@@ -183,8 +252,11 @@ export function resolveMockResponse(method, url, body = null) {
         services: MULTI_TENANT_AUTH[mainDomain()]?.services || {},
       }),
     );
+  // The query carries the window the pill is counting for. It used to be dropped
+  // here, and the builder ignored it anyway, so the pill read the same number in
+  // every view — including views whose grid drew a different one.
   if (pathOnly.toLowerCase().includes('/missedhits/count'))
-    return mockSuccess('Missed hits count fetched', buildMissedHitsCount());
+    return mockSuccess('Missed hits count fetched', buildMissedHitsCount(query));
   // Must stay ahead of the generic /shiftActivityLog handler below, which would
   // otherwise answer with an object the drawer cannot iterate.
   if (pathOnly.toLowerCase().includes('/missedhits'))
@@ -231,9 +303,127 @@ export function resolveMockResponse(method, url, body = null) {
   if (pathOnly.includes('/dispatch')) return listResponse('dispatches', dispatchListMock, query);
   if (pathOnly.includes('/payroll')) return listResponse('payrolls', payrollListMock, query);
 
+  // ------------------------------------------------------------- invoicing
+  // Ordered narrowest-first: the sub-resources all contain "/invoices", so the
+  // list handler has to come last inside this block.
+
+  // Blob endpoints. Callers pass responseType arraybuffer/blob and hand the
+  // result straight to `new Blob([response])`, so these return raw payloads
+  // rather than a `{ statusCode, data }` envelope.
+  if (matchPath(pathOnly, '/invoices/:id/invoice_pdf')) {
+    return buildInvoicePdf(matchPath(pathOnly, '/invoices/:id/invoice_pdf').id);
+  }
+  if (matchPath(pathOnly, '/invoices/:id/eu_invoice')) {
+    return buildInvoicePdf(matchPath(pathOnly, '/invoices/:id/eu_invoice').id);
+  }
+  if (pathOnly.includes('/invoices/export')) {
+    return buildInvoiceExportCsv(query);
+  }
+
+  if (matchPath(pathOnly, '/invoices/:id/refresh')) {
+    refreshInvoice(matchPath(pathOnly, '/invoices/:id/refresh').id);
+    return mockMutationSuccess('Invoice re-synced with payroll successfully');
+  }
+
+  if (matchPath(pathOnly, '/invoices/:id/fetch_line_items')) {
+    const { id } = matchPath(pathOnly, '/invoices/:id/fetch_line_items');
+    return mockSuccess('Line items fetched', buildInvoiceLineItems(id, query));
+  }
+
+  // Reconciliation / outstanding. Must precede `/invoices/:id`, which would read
+  // "outstanding" as an invoice id.
+  if (pathOnly.includes('/invoices/outstanding')) {
+    return mockSuccess('Outstanding fetched successfully', buildOutstandingSummary(query));
+  }
+
+  // Period reconciliation. The CSV variant returns raw text — the caller pipes it
+  // straight into a Blob — so it must be matched before the JSON one.
+  if (pathOnly.includes('/invoices/reconciliation/export')) {
+    return buildPeriodReconciliationCsv(query);
+  }
+  if (pathOnly.includes('/invoices/reconciliation')) {
+    return mockSuccess('Reconciliation fetched successfully', buildPeriodReconciliation(query));
+  }
+
+  if (matchPath(pathOnly, '/invoices/:id/payments')) {
+    const { id } = matchPath(pathOnly, '/invoices/:id/payments');
+    const invoice = findMockInvoice(id);
+    if (!invoice) return mockResponse({}, 'Invoice not found', 404);
+    return mockSuccess('Payments fetched successfully', {
+      payments: paymentsForInvoice(id),
+      invoice: toListingRow(invoice),
+    });
+  }
+
+  if (matchPath(pathOnly, '/payments/:paymentId') && upperMethod === 'DELETE') {
+    const { paymentId } = matchPath(pathOnly, '/payments/:paymentId');
+    const removed = deleteMockPayment(paymentId);
+    if (!removed) return mockResponse({}, 'Payment not found', 404);
+    return mockMutationSuccess('Payment reversed successfully');
+  }
+
+  if (matchPath(pathOnly, '/invoices/:id/mark_as_paid')) {
+    const { id } = matchPath(pathOnly, '/invoices/:id/mark_as_paid');
+    const updated = markInvoiceAsPaid(id, body || {});
+    if (!updated) return mockResponse({}, 'Invoice not found', 404);
+    return mockMutationSuccess('Payment recorded successfully', {
+      invoice: toListingRow(updated),
+    });
+  }
+
+  if (pathOnly.includes('/invoices/bulk_update_status')) {
+    const count = bulkUpdateStatus(body?.invoice_ids || []);
+    return mockMutationSuccess(
+      count === 1 ? 'Invoice approved successfully' : `${count} invoices approved successfully`,
+    );
+  }
+
+  if (matchPath(pathOnly, '/invoices/:id')) {
+    const { id } = matchPath(pathOnly, '/invoices/:id');
+
+    if (upperMethod === 'PUT' || upperMethod === 'PATCH') {
+      const updated = updateMockInvoice(id, body || {});
+      if (!updated) return mockResponse({}, 'Invoice not found', 404);
+      return mockMutationSuccess('Invoice updated successfully');
+    }
+    if (upperMethod === 'DELETE') {
+      deleteMockInvoice(id);
+      return mockMutationSuccess('Invoice deleted successfully');
+    }
+    return mockSuccess('Invoice fetched successfully', buildInvoiceDetail(id));
+  }
+
   if (pathOnly.includes('/invoices')) {
-    const { items, pagination } = mockPaginate(invoiceList, query);
-    return { statusCode: 200, message: 'invoices fetched successfully', data: items, pagination };
+    if (upperMethod === 'POST') {
+      const invoice = createInvoice(body || {});
+      return mockMutationSuccess('Invoice created successfully', {
+        invoice: toListingRow(invoice),
+      });
+    }
+
+    const rows = filterInvoices(query).map(toListingRow);
+    const { items, pagination } = mockPaginate(rows, query);
+
+    // Two callers, two shapes. The invoices listing reads `data.invoices`. The
+    // site-scoped caller (`duty.services/getInvoiceData`) reads `data` as a bare
+    // array with pagination alongside — its only consumer,
+    // `sites/detail/components/invoices`, is currently orphaned, but a per-site
+    // outstanding view is the obvious place it comes back. Keying off siteId
+    // serves both without a second endpoint.
+    const isSiteScoped = Object.keys(query).some((key) => key.startsWith('siteId'));
+    if (isSiteScoped) {
+      return { statusCode: 200, message: 'Invoices fetched successfully', data: items, pagination };
+    }
+    return mockResponse(
+      { invoices: items, pagination },
+      'Invoices fetched successfully',
+      200,
+      pagination,
+    );
+  }
+
+  if (pathOnly.includes('/sage_contacts')) {
+    return mockSuccess('Billing contacts fetched', getBillingContacts());
   }
 
   // Geo-fencing boundaries used by the sites detail / edit map (getGeoLocation,

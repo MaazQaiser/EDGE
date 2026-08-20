@@ -1,0 +1,392 @@
+<meta charset="utf-8">
+<title>Companies — sites and monthly visits</title>
+<style>
+  :root{
+    --bg:#FBFCFB; --card:#FFFFFF; --band:#F4F7F4;
+    --ink:#10201A; --ink-2:#3D4E45; --muted:#7C8B82;
+    --rule:#E2E8E3; --rule-2:#EFF3EF;
+    --green:#2DA551; --green-deep:#1C7A3C; --green-wash:#EDF7F0;
+    --red:#B4341F; --amber:#8A6209; --amber-wash:#FBF3E0;
+    --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --bg:#0B110E; --card:#111A15; --band:#16211B;
+      --ink:#E8EFEA; --ink-2:#B7C5BC; --muted:#86988D;
+      --rule:#26332C; --rule-2:#1B2620;
+      --green:#4EC575; --green-deep:#7BD99A; --green-wash:#14251A;
+      --red:#E08672; --amber:#D6A544; --amber-wash:#282013;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0B110E; --card:#111A15; --band:#16211B;
+    --ink:#E8EFEA; --ink-2:#B7C5BC; --muted:#86988D;
+    --rule:#26332C; --rule-2:#1B2620;
+    --green:#4EC575; --green-deep:#7BD99A; --green-wash:#14251A;
+    --red:#E08672; --amber:#D6A544; --amber-wash:#282013;
+  }
+  :root[data-theme="light"]{
+    --bg:#FBFCFB; --card:#FFFFFF; --band:#F4F7F4;
+    --ink:#10201A; --ink-2:#3D4E45; --muted:#7C8B82;
+    --rule:#E2E8E3; --rule-2:#EFF3EF;
+    --green:#2DA551; --green-deep:#1C7A3C; --green-wash:#EDF7F0;
+    --red:#B4341F; --amber:#8A6209; --amber-wash:#FBF3E0;
+  }
+
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  .shell{max-width:1180px;margin:0 auto;padding:26px 20px 70px}
+
+  .tabs{display:flex;gap:2px;border-bottom:1px solid var(--rule);margin-bottom:20px}
+  .tab{font-size:13px;padding:9px 15px;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap}
+  .tab.on{color:var(--green-deep);border-bottom-color:var(--green);font-weight:600}
+
+  .head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:14px;margin-bottom:16px}
+  h1{font-size:21px;letter-spacing:-.01em;margin:0 0 3px;font-weight:600}
+  .sub{color:var(--muted);font-size:12.5px;margin:0}
+
+  .bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px}
+  .search{flex:1 1 250px;max-width:340px;position:relative}
+  .search input{width:100%;box-sizing:border-box;font:inherit;font-size:13px;color:var(--ink);background:var(--card);
+    border:1px solid var(--rule);border-radius:6px;padding:7px 11px 7px 30px}
+  .search input::placeholder{color:var(--muted)}
+  .search input:focus{outline:2px solid var(--green);outline-offset:1px;border-color:transparent}
+  .search svg{position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--muted)}
+  button.btn{font:inherit;font-size:12.5px;color:var(--ink-2);background:var(--card);border:1px solid var(--rule);
+    border-radius:6px;padding:7px 12px;cursor:pointer}
+  button.btn:hover{background:var(--band)}
+  button.btn:focus-visible{outline:2px solid var(--green);outline-offset:1px}
+  .spacer{flex:1}
+  .legend{display:flex;gap:14px;font-size:11.5px;color:var(--muted);align-items:center;flex-wrap:wrap}
+  .legend b{font-weight:600;font-variant-numeric:tabular-nums}
+  .legend .done{color:var(--muted)}
+  .legend .up{color:var(--ink)}
+  .legend .ov{color:var(--red)}
+
+  .panel{background:var(--card);border:1px solid var(--rule);border-radius:9px;overflow:auto}
+  table{border-collapse:separate;border-spacing:0;width:100%;min-width:1000px}
+  th,td{padding:0;text-align:left}
+
+  thead th{position:sticky;top:0;z-index:3;background:var(--card);border-bottom:1px solid var(--rule);
+    font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:600;padding:11px 0 9px}
+  thead th.nm{left:0;z-index:4;padding-left:16px;min-width:250px;width:250px}
+  thead th.mo{text-align:center;width:56px}
+  thead th.mo .y{display:block;font-size:9px;letter-spacing:.06em;color:var(--muted);opacity:.65;font-weight:500}
+  thead th.mo.now{color:var(--green-deep)}
+  thead th.tt{text-align:right;padding-right:16px;width:52px}
+
+  td.nm,th.nm{position:sticky;left:0;background:var(--card);z-index:2}
+  tr.co td,tr.co th{background:var(--band);border-top:1px solid var(--rule);border-bottom:1px solid var(--rule-2)}
+  tr.co th.nm{background:var(--band);padding:9px 16px}
+  tr.co .cname{display:flex;align-items:center;gap:7px;font-weight:600;font-size:13.5px;color:var(--ink);cursor:pointer;
+    background:none;border:0;font-family:inherit;padding:0;text-align:left}
+  tr.co .cname:focus-visible{outline:2px solid var(--green);outline-offset:2px;border-radius:3px}
+  tr.co .chev{color:var(--muted);transition:transform .14s ease;flex:none}
+  tr.co.closed .chev{transform:rotate(-90deg)}
+  tr.co .cmeta{font-size:11.5px;color:var(--muted);font-weight:400;padding-left:23px}
+  /* Company rows carry a count, site rows carry dates. They sit in the same column,
+     so the count is drawn as a pill — otherwise a "5" reads as the 5th of the month. */
+  tr.co td.cnum{text-align:center;border-left:1px solid var(--rule-2)}
+  tr.co td.cnum i{font-style:normal;display:inline-block;min-width:9px;padding:1px 5px;border-radius:9px;
+    background:var(--card);border:1px solid var(--rule);color:var(--muted);font-family:var(--mono);
+    font-size:9.5px;line-height:1.5;font-variant-numeric:tabular-nums}
+  tr.co td.tt{text-align:right;padding-right:16px;font-size:12px;font-weight:600;color:var(--ink-2);font-variant-numeric:tabular-nums}
+
+  tr.st td,tr.st th{border-bottom:1px solid var(--rule-2);height:38px}
+  tr.st:hover td,tr.st:hover th.nm{background:var(--green-wash)}
+  tr.st th.nm{padding:5px 14px 5px 30px;font-weight:500}
+  tr.st .sname{font-size:13px;color:var(--ink);display:block}
+  tr.st .cad{font-size:10.5px;color:var(--muted);letter-spacing:.03em}
+  td.cell{text-align:center;font-family:var(--mono);font-size:11px;font-variant-numeric:tabular-nums;color:var(--ink);
+    border-left:1px solid var(--rule-2)}
+  td.cell.now{background:var(--green-wash)}
+  td.cell .d{display:inline}
+  td.cell .d.past{color:var(--muted)}
+  td.cell .d.over{color:var(--red);font-weight:700}
+  td.cell .sep{color:var(--rule);margin:0 1px}
+  td.tt{text-align:right;padding-right:16px;font-family:var(--mono);font-size:11.5px;font-weight:600;color:var(--ink-2);
+    font-variant-numeric:tabular-nums;border-left:1px solid var(--rule-2)}
+  td.nos{color:var(--amber);font-size:11px;letter-spacing:.04em;padding-left:8px;background:var(--amber-wash)}
+
+  tfoot td,tfoot th{position:sticky;bottom:0;background:var(--card);border-top:1px solid var(--rule);
+    font-size:11.5px;font-weight:600;color:var(--ink-2);padding:10px 0;font-variant-numeric:tabular-nums}
+  tfoot th.nm{padding-left:16px;z-index:3}
+  tfoot td.cnum{text-align:center;font-family:var(--mono);font-size:11px}
+  tfoot td.tt{text-align:right;padding-right:16px;font-family:var(--mono)}
+
+  .empty{padding:34px 16px;text-align:center;color:var(--muted);font-size:13px}
+</style>
+
+<div class="shell">
+
+  <div class="tabs">
+    <div class="tab">Filter Replacement Service</div>
+    <div class="tab">Visits</div>
+    <div class="tab on">Companies</div>
+  </div>
+
+  <div class="head">
+    <div>
+      <h1>Companies</h1>
+      <p class="sub">Every company, the sites it owns, and the visits scheduled at each site month by month.</p>
+    </div>
+    <div class="legend">
+      <span class="done">Past</span>
+      <span class="up">Upcoming</span>
+      <span class="ov">Missed</span>
+      <span>·</span>
+      <span>Numbers are days of the month</span>
+    </div>
+  </div>
+
+  <div class="bar">
+    <label class="search">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
+           stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></svg>
+      <input id="q" type="search" placeholder="Search company or site" autocomplete="off">
+    </label>
+    <button class="btn" id="toggleAll">Collapse all</button>
+    <span class="spacer"></span>
+    <button class="btn" id="csv">Export CSV</button>
+  </div>
+
+  <div class="panel" id="panel"></div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var TODAY = new Date(2026, 7, 17);          // Mon 17 Aug 2026
+  var EPOCH = Date.UTC(2026, 0, 1);           // cadence anchor, same as the app's book
+  var DAY = 86400000;
+  var MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  /* The 46-site book, with each site's service interval in days.
+     null = on the books with no recurring schedule. */
+  var BOOK = [
+    ['Downtown Holdings', [
+      ['Downtown Plaza', 14], ['Fairmont Office Tower', 21],
+      ['Fenchurch Chambers', 45], ['Verity House', 90]]],
+    ['Harborview Logistics', [
+      ['Harborview Logistics Hub', 14], ['Northgate Cold Storage', 21],
+      ['Granby Cold Chain', 45], ['Inverness Freight Terminal', 45]]],
+    ['Alderwood Group', [
+      ['Alderwood Business Park', 14], ['Kingsway Retail Centre', 14],
+      ['Holloway Retail Park', 45]]],
+    ['Meridian Health Group', [
+      ['Meridian Hotel', 21], ['Riverside Medical Centre', 21],
+      ['Pinecrest Assisted Living', 30], ['Netherby Care Home', 60]]],
+    ['Brookfield Technologies', [
+      ['Brookfield Data Centre', 21], ['Vantage Point Labs', 30]]],
+    ['Sable Ridge Ltd', [
+      ['Sable Ridge Warehouse', 30], ['Harlow Distribution Depot', 30],
+      ['Quarrywood Depot', 60]]],
+    ['Oakhurst Leisure', [
+      ['Oakhurst Leisure Club', 30], ['Clearwater Aquatics', 45],
+      ['Jubilee Sports Complex', 60]]],
+    ['Ironside Industrial', [
+      ['Ironside Manufacturing', 30], ['Prescott Bottling Plant', 60],
+      ['Redhill Chemical Works', 90], ['Thornbury Foundry', 90]]],
+    ['Cedar Mill Estates', [
+      ['Cedar Mill Campus', 30], ['Upton Grange Estate', 90],
+      ['Ashcombe Mill', null]]],
+    ['Southgate Civic Trust', [
+      ['Southgate Civic Hall', 30], ['Marchmont Library', 60],
+      ['Stanmore Exhibition Hall', 90]]],
+    ['Tanner Street Studios', [
+      ['Tanner Street Studios', 30], ['Ravenswood Print Works', 30]]],
+    ['Beaumont Group', [
+      ['Beaumont Conference Centre', 45], ['Dunmore Trade Park', 45],
+      ['Ormesby Business Village', 60]]],
+    ['Elmsworth Trust', [
+      ['Elmsworth Academy', 45], ['Kelvin Court Offices', 60],
+      ['Langford Textiles', 60], ['Bellmont Annexe', null]]],
+    ['Wexford Agri', [
+      ['Wexford Grain Store', 90], ['Yarrow Cannery', 120],
+      ['Zetland Dockside', 120]]],
+    ['EDGE Sync', [
+      ['EDGE Sync Test Site', 21]]]
+  ];
+
+  function cadenceLabel(n){
+    if(!n) return 'No schedule';
+    if(n === 14) return 'Every 2 weeks';
+    if(n === 21) return 'Every 3 weeks';
+    return 'Every ' + n + ' days';
+  }
+
+  // The 12 months on show: the current month, then eleven forward.
+  var COLS = [];
+  for(var i = 0; i < 12; i++){
+    var d = new Date(TODAY.getFullYear(), TODAY.getMonth() + i, 1);
+    COLS.push({ y: d.getFullYear(), m: d.getMonth() });
+  }
+  var FROM = new Date(COLS[0].y, COLS[0].m, 1);
+  var TO = new Date(COLS[11].y, COLS[11].m + 1, 0);
+
+  function dayIndex(dt){ return Math.round((Date.UTC(dt.getFullYear(), dt.getMonth(), dt.getDate()) - EPOCH) / DAY); }
+  function fromIndex(ix){ var d = new Date(EPOCH + ix * DAY); return new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()); }
+
+  /* Build every site's visit dates inside the window, from its interval and anchor —
+     the same arithmetic the schedule is generated from, so the dates line up. */
+  var seq = 0;
+  BOOK.forEach(function(co){
+    co[1].forEach(function(s){
+      var interval = s[1], idx = seq++;
+      s.push(interval ? (idx * 17) % interval : 0);      // anchor
+      var dates = [];
+      if(interval){
+        var start = dayIndex(FROM), end = dayIndex(TO), anchor = s[2];
+        var first = start + ((anchor - start) % interval + interval) % interval;
+        for(var ix = first; ix <= end; ix += interval) dates.push(fromIndex(ix));
+      }
+      s.push(dates);                                      // s[3] = dates
+    });
+  });
+
+  var COMPANIES = BOOK.map(function(co){
+    var sites = co[1].map(function(s){
+      var byMonth = COLS.map(function(){ return []; });
+      s[3].forEach(function(dt){
+        for(var c = 0; c < 12; c++){
+          if(dt.getFullYear() === COLS[c].y && dt.getMonth() === COLS[c].m){ byMonth[c].push(dt); break; }
+        }
+      });
+      return { name: s[0], interval: s[1], cadence: cadenceLabel(s[1]), byMonth: byMonth, total: s[3].length };
+    });
+    return {
+      name: co[0], sites: sites,
+      total: sites.reduce(function(a, s){ return a + s.total; }, 0),
+      open: true
+    };
+  });
+
+  var collapsed = {};
+  var query = '';
+
+  function matches(co){
+    if(!query) return { co: co, sites: co.sites };
+    var q = query.toLowerCase();
+    if(co.name.toLowerCase().indexOf(q) > -1) return { co: co, sites: co.sites };
+    var hit = co.sites.filter(function(s){ return s.name.toLowerCase().indexOf(q) > -1; });
+    return hit.length ? { co: co, sites: hit } : null;
+  }
+
+  function isPast(dt){ return dt < TODAY; }
+  // A past date whose visit never happened is the one thing worth interrupting for.
+  function isMissed(dt, site){ return isPast(dt) && site.interval && dayIndex(dt) % 7 === 0; }
+
+  function cellHtml(dates, site, isNow){
+    if(!dates.length) return '<td class="cell' + (isNow ? ' now' : '') + '"></td>';
+    var parts = dates.map(function(dt){
+      var cls = isMissed(dt, site) ? 'over' : isPast(dt) ? 'past' : '';
+      return '<span class="d ' + cls + '">' + dt.getDate() + '</span>';
+    });
+    return '<td class="cell' + (isNow ? ' now' : '') + '">' + parts.join('<span class="sep">·</span>') + '</td>';
+  }
+
+  function render(){
+    var shown = COMPANIES.map(matches).filter(Boolean);
+
+    if(!shown.length){
+      document.getElementById('panel').innerHTML =
+        '<p class="empty">No company or site matches “' + query.replace(/[<>&]/g, '') + '”.</p>';
+      return;
+    }
+
+    var h = '<table><thead><tr><th class="nm">Company · site</th>';
+    COLS.forEach(function(c, i){
+      h += '<th class="mo' + (i === 0 ? ' now' : '') + '">' + MONTHS[c.m] +
+           '<span class="y">' + String(c.y).slice(2) + '</span></th>';
+    });
+    h += '<th class="tt">Visits</th></tr></thead><tbody>';
+
+    var totals = COLS.map(function(){ return 0; }), grand = 0, siteCount = 0;
+
+    shown.forEach(function(row, ci){
+      var co = row.co, out = collapsed[co.name];
+      h += '<tr class="co' + (out ? ' closed' : '') + '">' +
+           '<th class="nm"><button class="cname" data-co="' + ci + '" aria-expanded="' + (!out) + '">' +
+             '<svg class="chev" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+             'stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>' +
+             co.name + '</button>' +
+           '<div class="cmeta">' + row.sites.length + (row.sites.length === 1 ? ' site' : ' sites') + '</div></th>';
+
+      var coMonth = COLS.map(function(){ return 0; }), coTotal = 0;
+      row.sites.forEach(function(s){
+        coTotal += s.total;
+        s.byMonth.forEach(function(dd, i){ coMonth[i] += dd.length; });
+      });
+      COLS.forEach(function(c, i){
+        h += '<td class="cnum">' + (coMonth[i] ? '<i>' + coMonth[i] + '</i>' : '') + '</td>';
+        totals[i] += coMonth[i];
+      });
+      h += '<td class="tt">' + coTotal + '</td></tr>';
+      grand += coTotal;
+      siteCount += row.sites.length;
+
+      if(out) return;
+      row.sites.forEach(function(s){
+        h += '<tr class="st"><th class="nm"><span class="sname">' + s.name + '</span>' +
+             '<span class="cad">' + s.cadence + '</span></th>';
+        if(!s.interval){
+          h += '<td class="nos" colspan="12">Not scheduled</td><td class="tt">0</td></tr>';
+          return;
+        }
+        s.byMonth.forEach(function(dd, i){ h += cellHtml(dd, s, i === 0); });
+        h += '<td class="tt">' + s.total + '</td></tr>';
+      });
+    });
+
+    h += '</tbody><tfoot><tr><th class="nm">' + shown.length + ' companies · ' + siteCount + ' sites</th>';
+    COLS.forEach(function(c, i){ h += '<td class="cnum">' + (totals[i] || '') + '</td>'; });
+    h += '<td class="tt">' + grand + '</td></tr></tfoot></table>';
+
+    document.getElementById('panel').innerHTML = h;
+  }
+
+  document.getElementById('panel').addEventListener('click', function(e){
+    var b = e.target.closest('.cname');
+    if(!b) return;
+    var co = COMPANIES.map(matches).filter(Boolean)[+b.dataset.co].co;
+    collapsed[co.name] = !collapsed[co.name];
+    render();
+  });
+
+  document.getElementById('q').addEventListener('input', function(e){
+    query = e.target.value.trim();
+    render();
+  });
+
+  document.getElementById('toggleAll').addEventListener('click', function(e){
+    var anyOpen = COMPANIES.some(function(c){ return !collapsed[c.name]; });
+    COMPANIES.forEach(function(c){ collapsed[c.name] = anyOpen; });
+    e.target.textContent = anyOpen ? 'Expand all' : 'Collapse all';
+    render();
+  });
+
+  document.getElementById('csv').addEventListener('click', function(){
+    var rows = [['Company', 'Site', 'Cadence'].concat(COLS.map(function(c){
+      return MONTHS[c.m] + ' ' + c.y;
+    })).concat(['Visits'])];
+    COMPANIES.map(matches).filter(Boolean).forEach(function(row){
+      row.sites.forEach(function(s){
+        rows.push([row.co.name, s.name, s.cadence].concat(s.byMonth.map(function(dd){
+          return dd.map(function(d){ return d.getDate(); }).join(' ');
+        })).concat([s.total]));
+      });
+    });
+    var csv = rows.map(function(r){
+      return r.map(function(v){ return /[",]/.test(v) ? '"' + String(v).replace(/"/g, '""') + '"' : v; }).join(',');
+    }).join('\n');
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+    a.download = 'companies-visits.csv';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  });
+
+  render();
+})();
+</script>

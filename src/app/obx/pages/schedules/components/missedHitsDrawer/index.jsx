@@ -46,8 +46,14 @@ const MissedHitsDrawer = ({
   const [selectedMissedHit, setSelectedMissedHit] = useState(null);
   const [missedHitsList, setMissedHitsList] = useState([]);
 
+  /* `endsAt` is the **last day in scope**, not the day after it.
+     This used to subtract one, because the window it is handed came from the
+     calendar's `activeEnd`, which FullCalendar makes exclusive. The month view's
+     window is now the inclusive last visible date — the same convention the pill's
+     own count is calculated on — so subtracting here would open a drawer listing
+     fewer visits than the pill that opened it says exist. */
   const startDate = dayjs(missedHitDrawerData?.startsAt);
-  const endDate = dayjs(missedHitDrawerData?.endsAt).subtract(1, 'day');
+  const endDate = dayjs(missedHitDrawerData?.endsAt);
   const [selectedDates, setSelectedDates] = useState([startDate, endDate]);
 
   const closeDrawer = () => {

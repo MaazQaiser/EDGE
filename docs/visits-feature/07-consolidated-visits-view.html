@@ -1,0 +1,1049 @@
+<meta charset="utf-8">
+<title>Who are we visiting? — FilterGo consolidated visits view</title>
+<style>
+  :root {
+    --ink:#0F1D17; --ink-2:#33463D; --slate:#5C6C63;
+    --rule:#DCE3DD; --rule-soft:#EAEFEA;
+    --paper:#FAFBF9; --card:#FFFFFF;
+    --green:#2DA551; --green-deep:#1F7B3C; --green-wash:#EAF6EE;
+    --amber:#96650F; --amber-wash:#FBF2DF;
+    --clay:#A63D28;  --clay-wash:#FAECE8;
+    --blue:#1F5F8B;  --blue-wash:#E7F0F6;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --measure: 68ch;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ink:#E6EDE8; --ink-2:#B4C3BA; --slate:#8A9A90;
+      --rule:#2A3833; --rule-soft:#1E2A25;
+      --paper:#0C1310; --card:#111A16;
+      --green:#4FC776; --green-deep:#7BD99A; --green-wash:#16281D;
+      --amber:#D9A441; --amber-wash:#2A2213;
+      --clay:#E0836C;  --clay-wash:#2C1A15;
+      --blue:#7FB4D6;  --blue-wash:#14222C;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ink:#E6EDE8; --ink-2:#B4C3BA; --slate:#8A9A90;
+    --rule:#2A3833; --rule-soft:#1E2A25;
+    --paper:#0C1310; --card:#111A16;
+    --green:#4FC776; --green-deep:#7BD99A; --green-wash:#16281D;
+    --amber:#D9A441; --amber-wash:#2A2213;
+    --clay:#E0836C;  --clay-wash:#2C1A15;
+    --blue:#7FB4D6;  --blue-wash:#14222C;
+  }
+  :root[data-theme="light"] {
+    --ink:#0F1D17; --ink-2:#33463D; --slate:#5C6C63;
+    --rule:#DCE3DD; --rule-soft:#EAEFEA;
+    --paper:#FAFBF9; --card:#FFFFFF;
+    --green:#2DA551; --green-deep:#1F7B3C; --green-wash:#EAF6EE;
+    --amber:#96650F; --amber-wash:#FBF2DF;
+    --clay:#A63D28;  --clay-wash:#FAECE8;
+    --blue:#1F5F8B;  --blue-wash:#E7F0F6;
+  }
+
+  body { margin:0; background:var(--paper); color:var(--ink); font-family:var(--sans); font-size:16px; line-height:1.6; -webkit-font-smoothing:antialiased; }
+  .wrap { max-width:940px; margin:0 auto; padding:56px 28px 120px; }
+  .prose { max-width:var(--measure); }
+
+  .masthead { border-bottom:2px solid var(--ink); padding-bottom:22px; margin-bottom:14px; }
+  .kicker { font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--green-deep); margin:0 0 14px; }
+  h1 { font-family:var(--mono); font-size:clamp(29px,4.8vw,44px); line-height:1.07; letter-spacing:-.03em; font-weight:600; margin:0 0 16px; text-wrap:balance; }
+  .standfirst { font-size:18px; line-height:1.55; color:var(--ink-2); max-width:60ch; margin:0; }
+  .meta { display:flex; flex-wrap:wrap; gap:8px 22px; font-family:var(--mono); font-size:11.5px; letter-spacing:.05em; color:var(--slate); margin-bottom:52px; }
+  .meta b { color:var(--ink-2); font-weight:600; }
+
+  section { margin-bottom:58px; }
+  .sec-head { display:flex; align-items:baseline; gap:14px; border-top:1px solid var(--rule); padding-top:14px; margin-bottom:24px; }
+  .sec-tag { font-family:var(--mono); font-size:10.5px; letter-spacing:.13em; text-transform:uppercase; color:var(--slate); white-space:nowrap; padding-top:6px; }
+  h2 { font-family:var(--mono); font-size:25px; letter-spacing:-.02em; font-weight:600; margin:0; text-wrap:balance; }
+  h3 { font-family:var(--mono); font-size:15.5px; font-weight:600; margin:32px 0 10px; letter-spacing:-.005em; }
+  p { margin:0 0 15px; }
+  code { font-family:var(--mono); font-size:.87em; background:var(--rule-soft); padding:.1em .36em; border-radius:3px; color:var(--ink-2); }
+  a { color:var(--green-deep); }
+  a:focus-visible { outline:2px solid var(--green); outline-offset:3px; border-radius:2px; }
+
+  .scenario { border:1px solid var(--rule); border-left:3px solid var(--blue); background:var(--blue-wash); border-radius:3px; padding:18px 20px; margin:24px 0; }
+  .scenario h4 { font-family:var(--mono); font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--blue); margin:0 0 9px; }
+  .scenario p { font-size:15.5px; line-height:1.55; color:var(--ink); margin:0; font-style:italic; }
+  .scenario p + p { margin-top:10px; font-style:normal; font-size:14px; color:var(--ink-2); }
+
+  .dec { display:grid; gap:1px; background:var(--rule); border:1px solid var(--rule); border-radius:4px; overflow:hidden; margin-top:8px; }
+  .dec-row { display:grid; grid-template-columns:52px 1fr 1.2fr; gap:1px; background:var(--rule); }
+  .dec-row > * { background:var(--card); padding:12px 14px; font-size:14px; line-height:1.5; }
+  .dec-row.head > * { background:var(--rule-soft); font-family:var(--mono); font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--slate); }
+  .dec-id { font-family:var(--mono); font-size:11.5px; font-weight:600; color:var(--green-deep); }
+  .dec-what { font-weight:600; color:var(--ink); }
+  .dec-why { color:var(--ink-2); }
+  .dec-row.changed .dec-id { color:var(--clay); }
+  @media (max-width:680px){ .dec-row{ grid-template-columns:42px 1fr; } .dec-why{ grid-column:2/3; padding-top:0; } }
+
+  figure { margin:30px 0; }
+  .figbox { border:1px solid var(--rule); border-radius:4px; background:var(--card); padding:20px 18px 12px; overflow-x:auto; }
+  figure svg { display:block; width:100%; max-width:100%; height:auto; color:var(--ink-2); min-width:660px; }
+  figcaption { font-family:var(--mono); font-size:11.5px; line-height:1.55; color:var(--slate); margin-top:12px; max-width:72ch; }
+
+  .rules { width:100%; border-collapse:collapse; font-size:14px; }
+  .rules th, .rules td { text-align:left; padding:11px 13px; border-bottom:1px solid var(--rule-soft); vertical-align:top; line-height:1.5; }
+  .rules th { font-family:var(--mono); font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--slate); border-bottom:1px solid var(--rule); }
+  .rules td:first-child { color:var(--ink); font-weight:600; width:32%; }
+  .rules td:last-child { color:var(--ink-2); }
+  .rules.thirds td:first-child { width:24%; }
+  .tablewrap { overflow-x:auto; border:1px solid var(--rule); border-radius:4px; background:var(--card); padding:4px 14px 8px; margin-top:10px; }
+
+  .chip { font-family:var(--mono); font-size:9.5px; letter-spacing:.09em; text-transform:uppercase; padding:3px 7px; border-radius:10px; font-weight:600; white-space:nowrap; display:inline-block; }
+  .chip.block { background:var(--clay-wash); color:var(--clay); }
+  .chip.warn  { background:var(--amber-wash); color:var(--amber); }
+  .chip.ok    { background:var(--green-wash); color:var(--green-deep); }
+  .chip.info  { background:var(--blue-wash); color:var(--blue); }
+
+  ul.tight { margin:0 0 15px; padding-left:20px; }
+  ul.tight li { margin-bottom:8px; color:var(--ink-2); font-size:15px; line-height:1.55; }
+  ul.tight li b { color:var(--ink); }
+
+  .callout { border:1px solid var(--rule); border-left:3px solid var(--clay); background:var(--clay-wash); border-radius:3px; padding:15px 18px; margin:24px 0; font-size:14.5px; line-height:1.55; color:var(--ink-2); }
+  .callout b.lbl { font-family:var(--mono); font-size:10.5px; letter-spacing:.09em; text-transform:uppercase; color:var(--clay); display:block; margin-bottom:6px; }
+  .callout.good { border-left-color:var(--green); background:var(--green-wash); }
+  .callout.good b.lbl { color:var(--green-deep); }
+  .callout.note { border-left-color:var(--blue); background:var(--blue-wash); }
+  .callout.note b.lbl { color:var(--blue); }
+
+  ol.q { margin:0; padding-left:0; list-style:none; counter-reset:q; }
+  ol.q li { counter-increment:q; display:grid; grid-template-columns:34px 1fr; gap:12px; padding:12px 0; border-bottom:1px solid var(--rule-soft); font-size:14.5px; line-height:1.55; color:var(--ink-2); }
+  ol.q li::before { content:"Q" counter(q); font-family:var(--mono); font-size:11px; color:var(--green-deep); padding-top:4px; font-weight:600; }
+  ol.q li b { color:var(--ink); font-weight:600; }
+
+  .phases { display:grid; gap:1px; background:var(--rule); border:1px solid var(--rule); border-radius:4px; overflow:hidden; margin-top:10px; }
+  .phase { background:var(--card); padding:14px 16px; display:grid; grid-template-columns:110px 1fr; gap:16px; align-items:start; }
+  .phase .ph { font-family:var(--mono); font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--green-deep); font-weight:600; padding-top:2px; }
+  .phase .pb { font-size:14px; line-height:1.55; color:var(--ink-2); }
+  .phase .pb b { color:var(--ink); }
+  @media (max-width:680px){ .phase{ grid-template-columns:1fr; gap:6px; } }
+</style>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <p class="kicker">FilterGo · Visits · Design spec</p>
+    <h1>Who are we visiting, and when are they due again?</h1>
+    <p class="standfirst">The consolidated visits view was demoed as a week of calendar and rejected
+      outright. This is the redesign: a <b>Companies</b> tab in the scheduler that answers a customer’s
+      question in one screen and a year in one scroll — built on the visits data that already exists,
+      and leaving the Visits tab exactly as it is.</p>
+  </header>
+
+  <div class="meta">
+    <span><b>Doc</b> 07 · revision 2</span>
+    <span><b>Status</b> Design, for review</span>
+    <span><b>Supersedes</b> the demoed week-calendar consolidated view</span>
+    <span><b>Depends on</b> 06 (D1–D13)</span>
+    <span><b>Decisions</b> D14–D24</span>
+    <span><b>Rev 2</b> its own <b>Companies</b> tab; Visits tab unchanged (D14)</span>
+    <span><b>Prototype</b> <a href="07-companies-tab-prototype.html">the screen, running</a></span>
+  </div>
+
+  <section>
+    <div class="sec-head">
+      <span class="sec-tag">The brief</span>
+      <h2>What the rejection actually said</h2>
+    </div>
+
+    <div class="prose">
+      <p>The consolidated view was asked for by Brian Gessink and Jason, through Mehroz, so that a
+        franchisee would stop drilling into individual sites to find out what was happening. What was
+        demoed showed the current week, in calendar form. Umair rejected it in one sentence — <i>“not
+        helpful at all, this doesn’t work”</i> — and then reframed the problem in a way that is worth
+        separating into its three distinct claims, because they fail for different reasons and only
+        one of them is about the calendar.</p>
+
+      <ul class="tight">
+        <li><b>The horizon is wrong.</b> Filters are replaced quarterly. A week-at-a-time surface makes
+          “when is this customer next due” a twelve-click question. The unit of the customer’s question
+          is a <i>year</i>; the unit of the demo was a week.</li>
+        <li><b>The subject is wrong.</b> “The scheduler shows a run sheet, and you must click into it to
+          discover who you’re visiting.” The rows are routes. The question is about companies. Every row
+          in the scheduler is an answer to a question the franchisee is not asking.</li>
+        <li><b>The form is wrong for this job.</b> A calendar answers <i>“what happens on this date”</i> —
+          it is a planning instrument, and it is indexed by date. A list answers <i>“when does this thing
+          happen next”</i> — a lookup instrument, indexed by subject. Quarterly service is a lookup
+          problem. As Umair put it, a calendar is “not the regular customer experience.”</li>
+      </ul>
+
+      <p>None of that makes the week grid wrong. It was built against session 2’s problem statement —
+        <i>is all of this week’s demand visible, and is it routed?</i> — and it answers that well. The
+        mistake was offering one instrument for two jobs. So <b>the Visits tab is not touched, not
+        re-defaulted and not hidden</b>: this is a new tab beside it, reading the same data. The planner
+        keeps the grid they have; the franchisee gets a surface that was never there.</p>
+
+      <div class="scenario">
+        <h4>The moment this is for</h4>
+        <p>A customer calls: “when are you next coming to the Greenwich building, and what about the
+          other three?”</p>
+        <p>Today: open the scheduler, page through weeks, open each run sheet, read its stops, hope you
+          recognise the site names. After this: type the company name, read four dates.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <span class="sec-tag">The model</span>
+      <h2>Subscribe &amp; Save, with filters instead of coffee</h2>
+    </div>
+
+    <div class="prose">
+      <p>Umair named the reference and the reason: <i>“we don’t have to reinvent the wheel… I am not
+        above copying somebody.”</i> Amazon’s Subscribe &amp; Save solves the identical problem — a
+        recurring delivery on an interval the customer half-remembers — and it solves it without ever
+        drawing a calendar. Worth being precise about what carries over, because the mapping is almost
+        one-to-one.</p>
+    </div>
+
+    <div class="tablewrap">
+      <table class="rules thirds">
+        <thead><tr><th>Subscribe &amp; Save</th><th>FilterGo</th><th>What it buys us</th></tr></thead>
+        <tbody>
+          <tr><td>A subscription</td><td>A property’s recurring service</td>
+              <td>The stable object the list is built from. Not the visit — the <i>arrangement</i> that produces visits.</td></tr>
+          <tr><td>“Every 2 months”, in words</td><td>“Every 3 months”, in words</td>
+              <td>Cadence stated as text, so the interval never has to be inferred from the gaps between dates.</td></tr>
+          <tr><td>Next delivery date, as text</td><td>Next visit date, as text</td>
+              <td>The single most-wanted fact, at the top, unclickable. Reading it is the whole interaction.</td></tr>
+          <tr><td>“Your upcoming deliveries”</td><td>The company’s next 12 months</td>
+              <td>A forward list, not a grid. Scroll replaces navigation.</td></tr>
+          <tr><td>Skip / change this delivery</td><td>Reschedule this visit</td>
+              <td>One action per row, on the row that has a problem — not a toolbar of bulk verbs.</td></tr>
+          <tr><td>“Estimated” until it ships</td><td><b>Projected</b> until it is scheduled</td>
+              <td>The load-bearing one. Amazon is honest about which dates are firm; so is this. See <a href="#projected">Planned and projected</a>.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="prose">
+      <p>What does <i>not</i> carry over: Amazon’s user has eight subscriptions and one address. A
+        franchisee has hundreds of properties across dozens of companies, on five different intervals,
+        some of them not scheduled at all. That is why the design below adds a company rail and a period
+        roll-up on top of the Subscribe &amp; Save list — the list itself is copied almost verbatim.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <span class="sec-tag">Structure</span>
+      <h2>One dataset, two views</h2>
+    </div>
+
+    <div class="prose">
+      <p>The agreed design is two views of the same data: a <b>period roll-up</b> — today, this week,
+        this month — listing companies and the properties being visited; and a <b>company schedule</b> —
+        one company, its full year. They are not two screens. They are one screen whose left rail is the
+        list of companies and whose pane is whichever answer you asked for. Selecting a company is the
+        switch between the two views, which is exactly what “left side = company names, then their
+        visits underneath” describes.</p>
+    </div>
+
+    <figure>
+      <div class="figbox">
+        <svg viewBox="0 0 860 196" role="img" aria-label="Diagram: one visits dataset feeds two views. The period roll-up is filtered by date range and grouped by company; the company schedule is filtered by company and projected forward twelve months. Selecting a company in the shared left rail switches between them.">
+          <rect x="24" y="62" width="196" height="72" rx="3" fill="none" stroke="currentColor" stroke-width="1.2"/>
+          <text x="122" y="88" text-anchor="middle" font-family="ui-monospace, monospace" font-size="11.5" font-weight="700" fill="currentColor">Visits + cadence</text>
+          <text x="122" y="106" text-anchor="middle" font-family="ui-monospace, monospace" font-size="9.5" fill="currentColor" opacity="0.6">one dataset, one adapter</text>
+          <text x="122" y="122" text-anchor="middle" font-family="ui-monospace, monospace" font-size="9.5" fill="currentColor" opacity="0.6">the week grid also reads</text>
+
+          <path d="M 220 82 L 300 82" fill="none" stroke="currentColor" stroke-width="1.2" opacity="0.5"/>
+          <path d="M 220 114 L 300 114" fill="none" stroke="currentColor" stroke-width="1.2" opacity="0.5"/>
+          <path d="M 294 78 l 6 4 l -6 4" fill="none" stroke="currentColor" stroke-width="1.2" opacity="0.5"/>
+          <path d="M 294 110 l 6 4 l -6 4" fill="none" stroke="currentColor" stroke-width="1.2" opacity="0.5"/>
+          <text x="260" y="76" text-anchor="middle" font-family="ui-monospace, monospace" font-size="8.5" fill="currentColor" opacity="0.5">by date</text>
+          <text x="260" y="108" text-anchor="middle" font-family="ui-monospace, monospace" font-size="8.5" fill="currentColor" opacity="0.5">by company</text>
+
+          <rect x="304" y="30" width="252" height="62" rx="3" fill="none" stroke="#2DA551" stroke-width="1.4"/>
+          <text x="318" y="52" font-family="ui-monospace, monospace" font-size="11" font-weight="700" fill="#2DA551">Period roll-up</text>
+          <text x="318" y="70" font-family="ui-monospace, monospace" font-size="9.5" fill="currentColor" opacity="0.7">Today · This week · This month</text>
+          <text x="318" y="84" font-family="ui-monospace, monospace" font-size="9.5" fill="currentColor" opacity="0.55">companies → properties being visited</text>
+
+          <rect x="304" y="104" width="252" height="62" rx="3" fill="none" stroke="#1F5F8B" stroke-width="1.4"/>
+          <text x="318" y="126" font-family="ui-monospace, monospace" font-size="11" font-weight="700" fill="#1F5F8B">Company schedule</text>
+          <text x="318" y="144" font-family="ui-monospace, monospace" font-size="9.5" fill="currentColor" opacity="0.7">next 12 months, one company</text>
+          <text x="318" y="158" font-family="ui-monospace, monospace" font-size="9.5" fill="currentColor" opacity="0.55">properties → their due dates</text>
+
+          <path d="M 556 61 C 590 61 590 135 556 135" fill="none" stroke="currentColor" stroke-width="1.2" stroke-dasharray="3 3" opacity="0.45"/>
+          <path d="M 562 131 l -6 4 l 6 4" fill="none" stroke="currentColor" stroke-width="1.2" opacity="0.45"/>
+          <text x="600" y="94" font-family="ui-monospace, monospace" font-size="9" fill="currentColor" opacity="0.55">select a company in the rail</text>
+          <text x="600" y="108" font-family="ui-monospace, monospace" font-size="9" fill="currentColor" opacity="0.55">clear it to go back</text>
+
+          <rect x="24" y="20" width="196" height="22" rx="3" fill="currentColor" opacity="0.05"/>
+          <text x="34" y="35" font-family="ui-monospace, monospace" font-size="9" letter-spacing="1" fill="currentColor" opacity="0.6">SOURCE</text>
+          <rect x="600" y="24" width="236" height="46" rx="3" fill="none" stroke="currentColor" stroke-width="1" opacity="0.25"/>
+          <text x="612" y="42" font-family="ui-monospace, monospace" font-size="9" letter-spacing="1" fill="currentColor" opacity="0.6">SHARED CHROME</text>
+          <text x="612" y="58" font-family="ui-monospace, monospace" font-size="9" fill="currentColor" opacity="0.55">rail · search · filters · counts</text>
+        </svg>
+      </div>
+      <figcaption>Both views are projections of the same visit set — the roll-up slices it by date,
+        the company schedule slices it by company and extends it forward with cadence. Nothing is
+        fetched twice and nothing can disagree.</figcaption>
+    </figure>
+
+    <h3>Where it lives</h3>
+    <div class="prose">
+      <p>A new <b>Companies</b> tab in the scheduler’s own tab row, beside the ones already there. On
+        Filter Go that reads <code>Filter Replacement Service · Visits · Companies</code>; on a
+        multi-service tenant it lands after Visits in the same position. <b>Nothing about the Visits tab
+        changes</b> — not its default, not its views, not its toolbar.</p>
+      <p>The tab row is the right home because that row already answers <i>what kind of thing am I
+        looking at</i> — a service, its demand, and now the people that demand belongs to. It is not a
+        page under the nav, because everything this view needs is scheduler chrome: the same filters, the
+        same status vocabulary, the same footer counts, and a franchisee who should not have to learn
+        that visits live in two different menu items.</p>
+    </div>
+
+    <div class="tablewrap">
+      <table class="rules">
+        <thead><tr><th>Tab-level chrome</th><th>What it does</th></tr></thead>
+        <tbody>
+          <tr><td>Day / Week / Month switcher</td>
+            <td><b>Hidden on this tab.</b> The view carries its own scope control — Today / This week /
+              This month for the roll-up, twelve months for a company — and two scope controls on one
+              screen is the ambiguity this whole redesign exists to remove.</td></tr>
+          <tr><td>Tab config</td>
+            <td>A <code>companies</code> entry alongside the existing ones: no <code>apiView</code> on the
+              grid endpoint, its own footer variant, no resource-area header, and filters reduced to
+              status plus route. It is a sibling of <code>visits</code>, not a variant of it.</td></tr>
+          <tr><td>Who gets it</td>
+            <td>The Visits tab’s gate is the floor — no visits, no due dates to list — but it is not
+              sufficient on its own. Signal passes that gate and should still not get this tab: daily
+              guarding has no cadence to project. <b>Recommendation: a service-level flag, defaulting on
+              for interval-based service and off for daily.</b> Needs confirming — see Q9.</td></tr>
+          <tr><td>Footer</td>
+            <td>Its own counts, reconciled with the rows on screen: <code>12 visits · 9 properties ·
+              6 companies</code>. Not the visits KPI footer, which is about routing.</td></tr>
+          <tr><td>URL</td>
+            <td><code>?tab=companies&amp;scope=week&amp;company=CUST-1002</code>. Deep-linkable, because
+              “send me the schedule for Downtown Holdings” is a real request and a link is the cheapest
+              answer to it. Session 3B skipped URL state on the grid; here it earns itself.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <span class="sec-tag">View A</span>
+      <h2>The period roll-up</h2>
+    </div>
+
+    <figure>
+      <div class="figbox">
+        <svg viewBox="0 0 860 540" role="img" aria-label="Wireframe of the period roll-up: a left rail listing companies with visit counts, and a pane showing this week's visits grouped under company headers. An overdue band is pinned at the top. Each property row carries the date, time window, cadence, route and status.">
+          <!-- scheduler tab row — the two existing tabs are untouched -->
+          <text x="40" y="20" font-family="ui-monospace, monospace" font-size="11" fill="currentColor" opacity="0.5">Filter Replacement Service</text>
+          <text x="236" y="20" font-family="ui-monospace, monospace" font-size="11" fill="currentColor" opacity="0.5">Visits</text>
+          <text x="300" y="20" font-family="ui-monospace, monospace" font-size="11" font-weight="700" fill="#2DA551">Companies</text>
+          <line x1="24" y1="28" x2="836" y2="28" stroke="currentColor" stroke-width="1" opacity="0.2"/>
+          <rect x="298" y="26" width="64" height="2.5" fill="#2DA551"/>
+          <text x="836" y="20" text-anchor="end" font-family="ui-monospace, monospace" font-size="9" fill="currentColor" opacity="0.4">no Day / Week / Month switcher on this tab</text>
+
+          <!-- toolbar -->
+          <rect x="24" y="34" width="200" height="20" rx="3" fill="none" stroke="currentColor" stroke-width="1.1" opacity="0.6"/>
+          <rect x="91" y="35" width="67" height="18" fill="currentColor" opacity="0.1"/>
+          <text x="57" y="48" text-anchor="middle" font-family="ui-monospace, monospace" font-size="9.5" fill="currentColor" opacity="0.6">Today</text>
+          <text x="124" y="48" text-anchor="middle" font-family="ui-monospace, monospace" font-size="9.5" font-weight="700" fill="currentColor">This week</text>
+          <text x="191" y="48" text-anchor="middle" font-family="ui-monospace, monospace" font-size="9.5" fill="currentColor" opacity="0.6">This month</text>
+
+          <rect x="240" y="34" width="200" height="20" rx="3" fill="none" stroke="currentColor" stroke-width="1" opacity="0.4"/>
+          <text x="250" y="48" font-family="ui-monospace, monospace" font-size="9" fill="currentColor" opacity="0.5">Search company or property</text>
+
+          <rect x="456" y="34" width="104" height="20" rx="10" fill="none" stroke="currentColor" stroke-width="1" opacity="0.45"/>
+          <text x="508" y="48" text-anchor="middle" font-family="ui-monospace, monospace" font-size="9" fill="currentColor" opacity="0.6">Unassigned only</text>
+
+          <!-- rail -->
+          <rect x="24" y="60" width="196" height="452" rx="3" fill="none" stroke="currentColor" stroke-width="1.2"/>
+          <text x="38" y="79" font-family="ui-monospace, monospace" font-size="9.5" letter-spacing="1" fill="currentColor" opacity="0.55">COMPANIES · 18</text>
+
+          <rect x="25" y="88" width="194" height="26" fill="#2DA551" opacity="0.1"/>
+          <rect x="25" y="88" width="2.5" height="26" fill="#2DA551"/>
+          <text x="40" y="105" font-family="ui-monospace, monospace" font-size="10.5" font-weight="700" fill="#2DA551">All companies</text>
+          <text x="206" y="105" text-anchor="end" font-family="ui-monospace, monospace" font-size="9.5" fill="#2DA551">6</text>
+
+          <text x="40" y="131" font-family="ui-monospace, monospace" font-size="10.5" fill="currentColor">Alderwood Group</text>
+          <text x="206" y="131" text-anchor="end" font-family="ui-monospace, monospace" font-size="9.5" fill="currentColor" opacity="0.6">2</text>
+          <text x="40" y="157" font-family="ui-monospace, monospace" font-size="10.5" fill="currentColor">Downtown Holdings</text>
+          <text x="206" y="157" text-anchor="end" font-family="ui-monospace, monospace" font-size="9.5" fill="currentColor" opacity="0.6">3</text>
+          <text x="40" y="183" font-family="ui-monospace, monospace" font-size="10.5" fill="currentColor">EDGE Sync</text>
+          <text x="206" y="183" text-anchor="end" font-family="ui-monospace, monospace" font-size="9.5" fill="currentColor" opacity="0.6">1</text>
+          <text x="40" y="209" font-family="ui-monospace, monospace" font-size="10.5" fill="currentColor">Harborview Logistics</text>
+          <text x="206" y="209" text-anchor="end" font-family="ui-monospace, monospace" font-size="9.5" fill="currentColor" opacity="0.6">2</text>
+          <text x="40" y="235" font-family="ui-monospace, monospace" font-size="10.5" fill="currentColor">Meridian Health</text>
+          <text x="206" y="235" text-anchor="end" font-family="ui-monospace, monospace" font-size="9.5" fill="currentColor" opacity="0.6">2</text>
+          <text x="40" y="261" font-family="ui-monospace, monospace" font-size="10.5" fill="currentColor">Northgate Properties</text>
+          <text x="206" y="261" text-anchor="end" font-family="ui-monospace, monospace" font-size="9.5" fill="currentColor" opacity="0.6">2</text>
+          <text x="40" y="287" font-family="ui-monospace, monospace" font-size="10.5" fill="currentColor" opacity="0.45">Oakhurst Leisure</text>
+          <text x="206" y="287" text-anchor="end" font-family="ui-monospace, monospace" font-size="9.5" fill="currentColor" opacity="0.35">—</text>
+          <text x="40" y="313" font-family="ui-monospace, monospace" font-size="10.5" fill="currentColor" opacity="0.45">Pinecrest Care</text>
+          <text x="206" y="313" text-anchor="end" font-family="ui-monospace, monospace" font-size="9.5" fill="currentColor" opacity="0.35">—</text>
+          <text x="40" y="339" font-family="ui-monospace, monospace" font-size="10.5" fill="#A63D28">Sable Ridge Ltd</text>
+          <text x="206" y="339" text-anchor="end" font-family="ui-monospace, monospace" font-size="9.5" fill="#A63D28">1</text>
+          <text x="40" y="365" font-family="ui-monospace, monospace" font-size="10.5" fill="currentColor" opacity="0.45">Southgate Civic</text>
+          <text x="206" y="365" text-anchor="end" font-family="ui-monospace, monospace" font-size="9.5" fill="currentColor" opacity="0.35">—</text>
+          <text x="40" y="391" font-family="ui-monospace, monospace" font-size="10.5" fill="currentColor" opacity="0.45">Tanner Street Studios</text>
+          <text x="206" y="391" text-anchor="end" font-family="ui-monospace, monospace" font-size="9.5" fill="currentColor" opacity="0.35">—</text>
+          <text x="40" y="417" font-family="ui-monospace, monospace" font-size="10" fill="currentColor" opacity="0.45">…7 more</text>
+
+          <!-- pane -->
+          <rect x="232" y="60" width="604" height="452" rx="3" fill="none" stroke="currentColor" stroke-width="1.2"/>
+          <text x="248" y="81" font-family="ui-monospace, monospace" font-size="12" font-weight="700" fill="currentColor">This week</text>
+          <text x="322" y="81" font-family="ui-monospace, monospace" font-size="10" fill="currentColor" opacity="0.6">Mon 17 – Sun 23 Aug</text>
+          <text x="820" y="81" text-anchor="end" font-family="ui-monospace, monospace" font-size="9.5" fill="currentColor" opacity="0.6">12 visits · 9 properties · 6 companies</text>
+          <line x1="233" y1="90" x2="835" y2="90" stroke="currentColor" stroke-width="1" opacity="0.18"/>
+
+          <!-- overdue band -->
+          <rect x="233" y="96" width="602" height="20" fill="#A63D28" opacity="0.11"/>
+          <text x="248" y="110" font-family="ui-monospace, monospace" font-size="10" font-weight="700" fill="#A63D28">OVERDUE · 1</text>
+          <text x="820" y="110" text-anchor="end" font-family="ui-monospace, monospace" font-size="9" fill="#A63D28">carried from last week</text>
+
+          <text x="248" y="137" font-family="ui-monospace, monospace" font-size="10.5" fill="currentColor">Sable Ridge Warehouse</text>
+          <text x="400" y="137" font-family="ui-monospace, monospace" font-size="10" fill="#A63D28">Thu 13 Aug</text>
+          <text x="476" y="137" font-family="ui-monospace, monospace" font-size="9.5" fill="currentColor" opacity="0.6">8a – 10a</text>
+          <text x="540" y="137" font-family="ui-monospace, monospace" font-size="9.5" fill="currentColor" opacity="0.6">Every 30d</text>
+          <text x="620" y="137" font-family="ui-monospace, monospace" font-size="9.5" fill="currentColor" opacity="0.6">Bay Loop · M. Diaz</text>
+          <rect x="762" y="127" width="58" height="14" rx="7" fill="#A63D28" opacity="0.16"/>
+          <text x="791" y="137" text-anchor="middle" font-family="ui-monospace, monospace" font-size="8" font-weight="700" fill="#A63D28">MISSED</text>
+          <line x1="248" y1="146" x2="820" y2="146" stroke="currentColor" stroke-width="1" opacity="0.12"/>
+
+          <!-- company: Northgate -->
+          <rect x="233" y="154" width="602" height="22" fill="currentColor" opacity="0.05"/>
+          <text x="248" y="169" font-family="ui-monospace, monospace" font-size="11" font-weight="700" fill="currentColor">Northgate Properties</text>
+          <text x="820" y="169" text-anchor="end" font-family="ui-monospace, monospace" font-size="9" fill="currentColor" opacity="0.55">2 properties · 2 visits · 1 unassigned</text>
+
+          <text x="248" y="195" font-family="ui-monospace, monospace" font-size="10.5" fill="currentColor">Northgate Corp Center</text>
+          <text x="400" y="195" font-family="ui-monospace, monospace" font-size="10" fill="currentColor">Mon 17 Aug</text>
+          <text x="476" y="195" font-family="ui-monospace, monospace" font-size="9.5" fill="currentColor" opacity="0.6">8a – 10a</text>
+          <text x="540" y="195" font-family="ui-monospace, monospace" font-size="9.5" fill="currentColor" opacity="0.6">Every 2 wks</text>
+          <text x="620" y="195" font-family="ui-monospace, monospace" font-size="9.5" fill="currentColor" opacity="0.6">Sun North · A. Green</text>
+          <rect x="748" y="185" width="72" height="14" rx="7" fill="#2DA551" opacity="0.16"/>
+          <text x="784" y="195" text-anchor="middle" font-family="ui-monospace, monospace" font-size="8" font-weight="700" fill="#1F7B3C">COMPLETED</text>
+
+          <text x="248" y="217" font-family="ui-monospace, monospace" font-size="10.5" fill="currentColor">Northgate Annexe</text>
+          <text x="400" y="217" font-family="ui-monospace, monospace" font-size="10" fill="currentColor">Wed 19 Aug</text>
+          <text x="476" y="217" font-family="ui-monospace, monospace" font-size="9.5" fill="currentColor" opacity="0.6">11a – 1p</text>
+          <text x="540" y="217" font-family="ui-monospace, monospace" font-size="9.5" fill="currentColor" opacity="0.6">Monthly</text>
+          <rect x="620" y="207" width="94" height="15" rx="7" fill="#A63D28" opacity="0.14" stroke="#A63D28" stroke-width="1" stroke-dasharray="2.5 2"/>
+          <text x="667" y="218" text-anchor="middle" font-family="ui-monospace, monospace" font-size="8.5" font-weight="700" fill="#A63D28">Unassigned →</text>
+
+          <!-- company: Downtown -->
+          <rect x="233" y="230" width="602" height="22" fill="currentColor" opacity="0.05"/>
+          <text x="248" y="245" font-family="ui-monospace, monospace" font-size="11" font-weight="700" fill="currentColor">Downtown Holdings</text>
+          <text x="820" y="245" text-anchor="end" font-family="ui-monospace, monospace" font-size="9" fill="currentColor" opacity="0.55">3 properties · 3 visits</text>
+
+          <text x="248" y="271" font-family="ui-monospace, monospace" font-size="10.5" fill="currentColor">Downtown Plaza</text>
+          <text x="400" y="271" font-family="ui-monospace, monospace" font-size="10" fill="currentColor">Mon 17 Aug</text>
+          <text x="476" y="271" font-family="ui-monospace, monospace" font-size="9.5" fill="currentColor" opacity="0.6">11a – 1p</text>
+          <text x="540" y="271" font-family="ui-monospace, monospace" font-size="9.5" fill="currentColor" opacity="0.6">Every 2 wks</text>
+          <text x="620" y="271" font-family="ui-monospace, monospace" font-size="9.5" fill="currentColor" opacity="0.6">Sun North · A. Green</text>
+          <rect x="744" y="261" width="76" height="14" rx="7" fill="#1F5F8B" opacity="0.16"/>
+          <text x="782" y="271" text-anchor="middle" font-family="ui-monospace, monospace" font-size="8" font-weight="700" fill="#1F5F8B">IN PROGRESS</text>
+
+          <text x="248" y="293" font-family="ui-monospace, monospace" font-size="10.5" fill="currentColor">Downtown Annexe</text>
+          <text x="400" y="293" font-family="ui-monospace, monospace" font-size="10" fill="currentColor">Thu 20 Aug</text>
+          <text x="476" y="293" font-family="ui-monospace, monospace" font-size="9.5" fill="currentColor" opacity="0.6">2p – 4p</text>
+          <text x="540" y="293" font-family="ui-monospace, monospace" font-size="9.5" fill="currentColor" opacity="0.6">Every 90d</text>
+          <text x="620" y="293" font-family="ui-monospace, monospace" font-size="9.5" fill="currentColor" opacity="0.6">Sun North · A. Green</text>
+          <rect x="750" y="283" width="70" height="14" rx="7" fill="currentColor" opacity="0.09"/>
+          <text x="785" y="293" text-anchor="middle" font-family="ui-monospace, monospace" font-size="8" font-weight="700" fill="currentColor" opacity="0.7">SCHEDULED</text>
+
+          <text x="248" y="315" font-family="ui-monospace, monospace" font-size="10.5" fill="currentColor">Greenwich Cold Store</text>
+          <text x="400" y="315" font-family="ui-monospace, monospace" font-size="10" fill="currentColor">Fri 21 Aug</text>
+          <text x="476" y="315" font-family="ui-monospace, monospace" font-size="9.5" fill="currentColor" opacity="0.6">8a – 10a</text>
+          <text x="540" y="315" font-family="ui-monospace, monospace" font-size="9.5" fill="currentColor" opacity="0.6">Monthly</text>
+          <text x="620" y="315" font-family="ui-monospace, monospace" font-size="9.5" fill="currentColor" opacity="0.6">Bay Loop · M. Diaz</text>
+          <rect x="750" y="305" width="70" height="14" rx="7" fill="currentColor" opacity="0.09"/>
+          <text x="785" y="315" text-anchor="middle" font-family="ui-monospace, monospace" font-size="8" font-weight="700" fill="currentColor" opacity="0.7">SCHEDULED</text>
+
+          <!-- company: Harborview -->
+          <rect x="233" y="328" width="602" height="22" fill="currentColor" opacity="0.05"/>
+          <text x="248" y="343" font-family="ui-monospace, monospace" font-size="11" font-weight="700" fill="currentColor">Harborview Logistics</text>
+          <text x="820" y="343" text-anchor="end" font-family="ui-monospace, monospace" font-size="9" fill="currentColor" opacity="0.55">2 properties · 2 visits</text>
+
+          <text x="248" y="369" font-family="ui-monospace, monospace" font-size="10.5" fill="currentColor">Harborview Hub</text>
+          <text x="400" y="369" font-family="ui-monospace, monospace" font-size="10" fill="currentColor">Wed 19 Aug</text>
+          <text x="476" y="369" font-family="ui-monospace, monospace" font-size="9.5" fill="currentColor" opacity="0.6">11a – 1p</text>
+          <text x="540" y="369" font-family="ui-monospace, monospace" font-size="9.5" fill="currentColor" opacity="0.6">Every 2 wks</text>
+          <text x="620" y="369" font-family="ui-monospace, monospace" font-size="9.5" fill="currentColor" opacity="0.6">Dock Run · M. Diaz</text>
+          <rect x="750" y="359" width="70" height="14" rx="7" fill="currentColor" opacity="0.09"/>
+          <text x="785" y="369" text-anchor="middle" font-family="ui-monospace, monospace" font-size="8" font-weight="700" fill="currentColor" opacity="0.7">SCHEDULED</text>
+
+          <text x="248" y="391" font-family="ui-monospace, monospace" font-size="10.5" fill="currentColor">Harborview Cold Chain</text>
+          <text x="400" y="391" font-family="ui-monospace, monospace" font-size="10" fill="currentColor">Fri 21 Aug</text>
+          <text x="476" y="391" font-family="ui-monospace, monospace" font-size="9.5" fill="currentColor" opacity="0.6">2p – 4p</text>
+          <text x="540" y="391" font-family="ui-monospace, monospace" font-size="9.5" fill="currentColor" opacity="0.6">Every 45d</text>
+          <rect x="620" y="381" width="94" height="15" rx="7" fill="#A63D28" opacity="0.14" stroke="#A63D28" stroke-width="1" stroke-dasharray="2.5 2"/>
+          <text x="667" y="392" text-anchor="middle" font-family="ui-monospace, monospace" font-size="8.5" font-weight="700" fill="#A63D28">Unassigned →</text>
+
+          <!-- company: EDGE -->
+          <rect x="233" y="404" width="602" height="22" fill="currentColor" opacity="0.05"/>
+          <text x="248" y="419" font-family="ui-monospace, monospace" font-size="11" font-weight="700" fill="currentColor">EDGE Sync</text>
+          <text x="820" y="419" text-anchor="end" font-family="ui-monospace, monospace" font-size="9" fill="currentColor" opacity="0.55">1 property · 1 visit</text>
+
+          <text x="248" y="445" font-family="ui-monospace, monospace" font-size="10.5" fill="currentColor">EDGE Sync Test Site</text>
+          <text x="400" y="445" font-family="ui-monospace, monospace" font-size="10" fill="currentColor">Thu 20 Aug</text>
+          <text x="476" y="445" font-family="ui-monospace, monospace" font-size="9.5" fill="currentColor" opacity="0.6">5p – 7p</text>
+          <text x="540" y="445" font-family="ui-monospace, monospace" font-size="9.5" fill="currentColor" opacity="0.6">Every 3 wks</text>
+          <text x="620" y="445" font-family="ui-monospace, monospace" font-size="9.5" fill="currentColor" opacity="0.6">Night Loop · K. Patel</text>
+          <rect x="750" y="435" width="70" height="14" rx="7" fill="currentColor" opacity="0.09"/>
+          <text x="785" y="445" text-anchor="middle" font-family="ui-monospace, monospace" font-size="8" font-weight="700" fill="currentColor" opacity="0.7">SCHEDULED</text>
+
+          <text x="248" y="482" font-family="ui-monospace, monospace" font-size="10" fill="currentColor" opacity="0.45">…2 more companies · 4 visits</text>
+        </svg>
+      </div>
+      <figcaption>A third tab, beside the two that already exist. Companies A–Z; properties inside a
+        company by date. The rail keeps every company on the book — the ones with nothing this week are
+        dimmed rather than dropped, so the rail is also the way into the year view for a customer who is
+        not being visited right now. <b><a href="07-companies-tab-prototype.html">The clickable
+        prototype</a></b> runs this screen on demo data.</figcaption>
+    </figure>
+
+    <h3>What each line carries</h3>
+    <div class="tablewrap">
+      <table class="rules">
+        <thead><tr><th>Element</th><th>Contents and rules</th></tr></thead>
+        <tbody>
+          <tr><td>Scope control</td>
+              <td><b>Today · This week · This month</b>, with the resolved range printed next to it in
+                words. “This month” is the calendar month, because that is how a customer says it; the
+                range text removes the ambiguity either way.</td></tr>
+          <tr><td>Overdue band</td>
+              <td>Missed and past-due visits pinned above everything, in the alert palette — the same
+                device as the unassigned band on the week grid. A visit that did not happen outlives its
+                date (06 D5), and a customer-facing list that quietly drops it is a list that lies.</td></tr>
+          <tr><td>Company header</td>
+              <td>Name, then <code>N properties · N visits</code>, plus <code>N unassigned</code> in the
+                alert colour when any of them are. It is a heading, not a row: no date, no status.</td></tr>
+          <tr><td>Property row</td>
+              <td>Property · date · time window · cadence · route and technician · status. Six columns,
+                fixed, in that order — the first three are the answer, the last three are the follow-up.</td></tr>
+          <tr><td>Cadence</td>
+              <td>Stated in words on every row (<code>Every 2 wks</code>, <code>Monthly</code>,
+                <code>Every 90d</code>). It is the field that lets someone predict the <i>next</i> date
+                without opening anything, which is the whole Subscribe &amp; Save trick.</td></tr>
+          <tr><td>Unassigned</td>
+              <td>Replaces the route cell with a dashed alert pill that is the row’s one action. Dashed
+                because the grid already means “no plan” by a dashed border (06 D6) and the two surfaces
+                must not invent separate vocabularies.</td></tr>
+          <tr><td>Status</td>
+              <td>The same eight states and the same chips as the grid, resolved by
+                <code>helper/visitState.js</code>. <code>SCHEDULED</code> is drawn here rather than left
+                blank: on a grid the baseline can be silent, but a list read down a column needs every
+                row to state itself.</td></tr>
+          <tr><td>Empty period</td>
+              <td>Never a blank pane. “Nothing scheduled this week. Next visit <b>Mon 24 Aug</b> —
+                Harborview Logistics.” This is 06 D8’s rule — quiet says <i>when</i>, not <i>zero</i> —
+                applied to a whole period instead of a row.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <span class="sec-tag">View B</span>
+      <h2>The company’s year</h2>
+    </div>
+
+    <div class="prose">
+      <p>Select a company and the pane becomes its full forward schedule: every property, every date it
+        is due over the next twelve months, filterable down to one location. The requirement states the
+        volume exactly — <i>“next 4 visits quarterly, or next 12 if monthly”</i> — and that is not a
+        setting anyone has to choose. It falls out of the cadence: twelve months of a quarterly service
+        is four dates, twelve months of a monthly service is twelve.</p>
+    </div>
+
+    <figure>
+      <div class="figbox">
+        <svg viewBox="0 0 860 540" role="img" aria-label="Wireframe of the company schedule: Downtown Holdings selected in the rail; the pane lists each property with its address and cadence, and beneath it the dates it is due over the next twelve months. Early dates are filled dots with a route and status; later dates are hollow dots marked Expected, below a dashed line labelled as the end of the scheduled horizon.">
+          <!-- scheduler tab row -->
+          <text x="40" y="20" font-family="ui-monospace, monospace" font-size="11" fill="currentColor" opacity="0.5">Filter Replacement Service</text>
+          <text x="236" y="20" font-family="ui-monospace, monospace" font-size="11" fill="currentColor" opacity="0.5">Visits</text>
+          <text x="300" y="20" font-family="ui-monospace, monospace" font-size="11" font-weight="700" fill="#2DA551">Companies</text>
+          <line x1="24" y1="28" x2="836" y2="28" stroke="currentColor" stroke-width="1" opacity="0.2"/>
+          <rect x="298" y="26" width="64" height="2.5" fill="#2DA551"/>
+
+          <!-- toolbar: the scope control is replaced by the way back -->
+          <rect x="24" y="34" width="152" height="20" rx="3" fill="none" stroke="currentColor" stroke-width="1.1" opacity="0.55"/>
+          <text x="36" y="48" font-family="ui-monospace, monospace" font-size="9.5" fill="currentColor" opacity="0.7">← All companies</text>
+          <rect x="192" y="34" width="200" height="20" rx="3" fill="none" stroke="currentColor" stroke-width="1" opacity="0.4"/>
+          <text x="202" y="48" font-family="ui-monospace, monospace" font-size="9" fill="currentColor" opacity="0.5">Search company or property</text>
+
+          <!-- rail -->
+          <rect x="24" y="60" width="196" height="452" rx="3" fill="none" stroke="currentColor" stroke-width="1.2"/>
+          <text x="38" y="79" font-family="ui-monospace, monospace" font-size="9.5" letter-spacing="1" fill="currentColor" opacity="0.55">COMPANIES · 18</text>
+          <text x="40" y="105" font-family="ui-monospace, monospace" font-size="10.5" fill="currentColor" opacity="0.6">All companies</text>
+          <text x="40" y="131" font-family="ui-monospace, monospace" font-size="10.5" fill="currentColor" opacity="0.6">Alderwood Group</text>
+          <rect x="25" y="140" width="194" height="26" fill="#1F5F8B" opacity="0.12"/>
+          <rect x="25" y="140" width="2.5" height="26" fill="#1F5F8B"/>
+          <text x="40" y="157" font-family="ui-monospace, monospace" font-size="10.5" font-weight="700" fill="#1F5F8B">Downtown Holdings</text>
+          <text x="206" y="157" text-anchor="end" font-family="ui-monospace, monospace" font-size="9.5" fill="#1F5F8B">4</text>
+          <text x="40" y="183" font-family="ui-monospace, monospace" font-size="10.5" fill="currentColor" opacity="0.6">EDGE Sync</text>
+          <text x="40" y="209" font-family="ui-monospace, monospace" font-size="10.5" fill="currentColor" opacity="0.6">Harborview Logistics</text>
+          <text x="40" y="235" font-family="ui-monospace, monospace" font-size="10.5" fill="currentColor" opacity="0.6">Meridian Health</text>
+          <text x="40" y="261" font-family="ui-monospace, monospace" font-size="10.5" fill="currentColor" opacity="0.6">Northgate Properties</text>
+          <text x="40" y="287" font-family="ui-monospace, monospace" font-size="10.5" fill="currentColor" opacity="0.45">Oakhurst Leisure</text>
+          <text x="40" y="313" font-family="ui-monospace, monospace" font-size="10.5" fill="currentColor" opacity="0.45">Pinecrest Care</text>
+          <text x="40" y="339" font-family="ui-monospace, monospace" font-size="10.5" fill="currentColor" opacity="0.45">Sable Ridge Ltd</text>
+          <text x="40" y="365" font-family="ui-monospace, monospace" font-size="10.5" fill="currentColor" opacity="0.45">Southgate Civic</text>
+          <text x="40" y="391" font-family="ui-monospace, monospace" font-size="10.5" fill="currentColor" opacity="0.45">Tanner Street Studios</text>
+          <text x="40" y="417" font-family="ui-monospace, monospace" font-size="10" fill="currentColor" opacity="0.45">…7 more</text>
+
+          <!-- pane -->
+          <rect x="232" y="60" width="604" height="452" rx="3" fill="none" stroke="currentColor" stroke-width="1.2"/>
+          <text x="248" y="82" font-family="ui-monospace, monospace" font-size="12.5" font-weight="700" fill="currentColor">Downtown Holdings</text>
+          <rect x="756" y="69" width="64" height="18" rx="3" fill="none" stroke="currentColor" stroke-width="1.1" opacity="0.55"/>
+          <text x="788" y="82" text-anchor="middle" font-family="ui-monospace, monospace" font-size="9" fill="currentColor" opacity="0.7">Export</text>
+          <text x="248" y="100" font-family="ui-monospace, monospace" font-size="9.5" fill="currentColor" opacity="0.6">4 properties · next 12 months, through Aug 2027</text>
+          <rect x="612" y="90" width="130" height="17" rx="3" fill="none" stroke="currentColor" stroke-width="1" opacity="0.4"/>
+          <text x="622" y="103" font-family="ui-monospace, monospace" font-size="9" fill="currentColor" opacity="0.6">All properties ▾</text>
+          <line x1="233" y1="114" x2="835" y2="114" stroke="currentColor" stroke-width="1" opacity="0.18"/>
+
+          <!-- property 1 -->
+          <text x="248" y="134" font-family="ui-monospace, monospace" font-size="11" font-weight="700" fill="currentColor">Downtown Plaza</text>
+          <text x="820" y="134" text-anchor="end" font-family="ui-monospace, monospace" font-size="9.5" fill="currentColor" opacity="0.7">Every 2 weeks</text>
+          <text x="248" y="149" font-family="ui-monospace, monospace" font-size="9.5" fill="currentColor" opacity="0.5">88 Greenwich St, Brooklyn · Filter Replacement Programme</text>
+          <text x="248" y="166" font-family="ui-monospace, monospace" font-size="9.5" fill="currentColor" opacity="0.45">Last visit  Mon 3 Aug · completed</text>
+
+          <circle cx="253" cy="182" r="3.4" fill="#2DA551"/>
+          <text x="266" y="186" font-family="ui-monospace, monospace" font-size="10.5" fill="currentColor">Mon 17 Aug</text>
+          <text x="352" y="186" font-family="ui-monospace, monospace" font-size="9.5" fill="currentColor" opacity="0.6">11a – 1p</text>
+          <text x="424" y="186" font-family="ui-monospace, monospace" font-size="9.5" fill="currentColor" opacity="0.6">Sun North · A. Green</text>
+          <rect x="744" y="176" width="76" height="14" rx="7" fill="#1F5F8B" opacity="0.16"/>
+          <text x="782" y="186" text-anchor="middle" font-family="ui-monospace, monospace" font-size="8" font-weight="700" fill="#1F5F8B">IN PROGRESS</text>
+
+          <circle cx="253" cy="204" r="3.4" fill="#2DA551"/>
+          <text x="266" y="208" font-family="ui-monospace, monospace" font-size="10.5" fill="currentColor">Mon 31 Aug</text>
+          <text x="352" y="208" font-family="ui-monospace, monospace" font-size="9.5" fill="currentColor" opacity="0.6">11a – 1p</text>
+          <text x="424" y="208" font-family="ui-monospace, monospace" font-size="9.5" fill="currentColor" opacity="0.6">Sun North · A. Green</text>
+          <rect x="750" y="198" width="70" height="14" rx="7" fill="currentColor" opacity="0.09"/>
+          <text x="785" y="208" text-anchor="middle" font-family="ui-monospace, monospace" font-size="8" font-weight="700" fill="currentColor" opacity="0.7">SCHEDULED</text>
+
+          <line x1="248" y1="220" x2="820" y2="220" stroke="currentColor" stroke-width="1" stroke-dasharray="3 3" opacity="0.35"/>
+          <rect x="248" y="212" width="252" height="16" fill="none"/>
+          <text x="820" y="234" text-anchor="end" font-family="ui-monospace, monospace" font-size="8.5" fill="currentColor" opacity="0.5">routes are built to Sun 6 Sep — everything below is projected from the cadence</text>
+
+          <circle cx="253" cy="248" r="3.4" fill="none" stroke="currentColor" stroke-width="1.3" opacity="0.5"/>
+          <text x="266" y="252" font-family="ui-monospace, monospace" font-size="10.5" fill="currentColor" opacity="0.72">Mon 14 Sep</text>
+          <text x="352" y="252" font-family="ui-monospace, monospace" font-size="9" fill="currentColor" opacity="0.45">expected</text>
+
+          <circle cx="253" cy="268" r="3.4" fill="none" stroke="currentColor" stroke-width="1.3" opacity="0.5"/>
+          <text x="266" y="272" font-family="ui-monospace, monospace" font-size="10.5" fill="currentColor" opacity="0.72">Mon 28 Sep</text>
+          <text x="352" y="272" font-family="ui-monospace, monospace" font-size="9" fill="currentColor" opacity="0.45">expected</text>
+
+          <text x="266" y="292" font-family="ui-monospace, monospace" font-size="9.5" fill="#1F7B3C">+ 22 more through Mon 2 Aug 2027 ▾</text>
+          <line x1="248" y1="304" x2="820" y2="304" stroke="currentColor" stroke-width="1" opacity="0.12"/>
+
+          <!-- property 2 -->
+          <text x="248" y="326" font-family="ui-monospace, monospace" font-size="11" font-weight="700" fill="currentColor">Downtown Annexe</text>
+          <text x="820" y="326" text-anchor="end" font-family="ui-monospace, monospace" font-size="9.5" fill="currentColor" opacity="0.7">Every 3 months</text>
+          <text x="248" y="341" font-family="ui-monospace, monospace" font-size="9.5" fill="currentColor" opacity="0.5">88 Greenwich St, Unit B · Rooftop AHU Service</text>
+
+          <circle cx="253" cy="358" r="3.4" fill="#2DA551"/>
+          <text x="266" y="362" font-family="ui-monospace, monospace" font-size="10.5" fill="currentColor">Thu 20 Aug</text>
+          <text x="352" y="362" font-family="ui-monospace, monospace" font-size="9.5" fill="currentColor" opacity="0.6">2p – 4p</text>
+          <text x="424" y="362" font-family="ui-monospace, monospace" font-size="9.5" fill="currentColor" opacity="0.6">Sun North · A. Green</text>
+          <rect x="750" y="352" width="70" height="14" rx="7" fill="currentColor" opacity="0.09"/>
+          <text x="785" y="362" text-anchor="middle" font-family="ui-monospace, monospace" font-size="8" font-weight="700" fill="currentColor" opacity="0.7">SCHEDULED</text>
+
+          <circle cx="253" cy="380" r="3.4" fill="none" stroke="currentColor" stroke-width="1.3" opacity="0.5"/>
+          <text x="266" y="384" font-family="ui-monospace, monospace" font-size="10.5" fill="currentColor" opacity="0.72">Thu 19 Nov</text>
+          <text x="352" y="384" font-family="ui-monospace, monospace" font-size="9" fill="currentColor" opacity="0.45">expected</text>
+          <circle cx="253" cy="400" r="3.4" fill="none" stroke="currentColor" stroke-width="1.3" opacity="0.5"/>
+          <text x="266" y="404" font-family="ui-monospace, monospace" font-size="10.5" fill="currentColor" opacity="0.72">Thu 18 Feb</text>
+          <text x="352" y="404" font-family="ui-monospace, monospace" font-size="9" fill="currentColor" opacity="0.45">expected</text>
+          <circle cx="253" cy="420" r="3.4" fill="none" stroke="currentColor" stroke-width="1.3" opacity="0.5"/>
+          <text x="266" y="424" font-family="ui-monospace, monospace" font-size="10.5" fill="currentColor" opacity="0.72">Thu 20 May</text>
+          <text x="352" y="424" font-family="ui-monospace, monospace" font-size="9" fill="currentColor" opacity="0.45">expected</text>
+          <text x="266" y="444" font-family="ui-monospace, monospace" font-size="9" fill="currentColor" opacity="0.4">4 visits a year — the whole contract fits on screen</text>
+          <line x1="248" y1="456" x2="820" y2="456" stroke="currentColor" stroke-width="1" opacity="0.12"/>
+
+          <!-- property 3 -->
+          <text x="248" y="478" font-family="ui-monospace, monospace" font-size="11" font-weight="700" fill="currentColor">Riverside Lot 4</text>
+          <rect x="742" y="468" width="78" height="15" rx="7" fill="#96650F" opacity="0.18"/>
+          <text x="781" y="479" text-anchor="middle" font-family="ui-monospace, monospace" font-size="8" font-weight="700" fill="#96650F">NOT SCHEDULED</text>
+          <text x="248" y="493" font-family="ui-monospace, monospace" font-size="9.5" fill="#96650F" opacity="0.9">No recurring service on file · last visit Tue 3 Mar</text>
+        </svg>
+      </div>
+      <figcaption>Property-major, not month-major: the question is “when is <i>this</i> building due”, and
+        grouping by month would make you scan every month for the name you came in with. The dashed line is
+        the end of the scheduled horizon — above it the dates are real visits with routes, below it they are
+        arithmetic.</figcaption>
+    </figure>
+
+    <h3>The twelve-row rule</h3>
+    <div class="prose">
+      <p>A quarterly property produces four rows and a monthly one produces twelve. A fortnightly property
+        produces twenty-six, and a weekly one fifty-two — which would bury the other properties under a
+        single noisy building. <b>Each property shows at most twelve dates, then collapses to “+22 more
+        through Mon 2 Aug 2027”.</b> The cap is set at twelve deliberately: it is exactly the monthly case,
+        so the stated requirement is met verbatim, the pathological cases are bounded, and nobody has to
+        choose a number.</p>
+      <p>History gets <b>one line</b> — <code>Last visit Mon 3 Aug · completed</code> — and no more. This
+        view faces forward; the full service history already exists on the site’s own Schedule tab and
+        duplicating it here would double every block for a fact that is rarely the question.</p>
+    </div>
+  </section>
+
+  <section id="projected">
+    <div class="sec-head">
+      <span class="sec-tag">The honesty rule</span>
+      <h2>Planned and projected are not the same fact</h2>
+    </div>
+
+    <div class="prose">
+      <p>This is the part the design has to get right, and it is the part a year-long list makes
+        unavoidable. Visits exist as real objects only inside the window the scheduler has actually
+        generated. Beyond it there is no visit — there is a cadence, an anchor date and a multiplication.
+        A twelve-month list therefore mixes two kinds of date, and they must not look alike.</p>
+    </div>
+
+    <div class="tablewrap">
+      <table class="rules thirds">
+        <thead><tr><th></th><th>Planned</th><th>Projected</th></tr></thead>
+        <tbody>
+          <tr><td>What it is</td><td>A visit record — a hit with an id</td><td>Cadence × interval from the last anchor</td></tr>
+          <tr><td>Marker</td><td>Filled dot, full-strength ink</td><td>Hollow dot, ~70% ink, the word <code>expected</code></td></tr>
+          <tr><td>Carries</td><td>Time window, route, technician, status</td><td>A date. Nothing else.</td></tr>
+          <tr><td>Clickable</td><td>Yes — opens the visit drawer</td><td>No. There is nothing to open.</td></tr>
+          <tr><td>Can move</td><td>Only by someone moving it</td><td>Freely, as earlier visits shift</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout good">
+      <b class="lbl">Why this is worth the pixels</b>
+      This list will be read down a phone to a customer. A date that reads as firm and then moves costs
+      more than an estimate that was labelled as one — Amazon learned this and marks every unshipped
+      delivery “estimated”. It is also the same principle session 4 applied to the demo data when a
+      routed visit whose window had passed was made to resolve to <b>missed</b> (06 D11): the screen is
+      not allowed to assert something the system does not know.
+    </div>
+
+    <div class="callout">
+      <b class="lbl">Dependency this creates</b>
+      Projection needs the <b>contracted service interval</b> to be a stored, per-property field, and it
+      needs the backend to state <b>how far ahead visits are actually generated</b> so the boundary can be
+      drawn. The interval was already an open question in the handoff, where session 3B narrowed it to a
+      compliance nicety — “is this site overdue against its contract”. <b>This view promotes it back to a
+      hard dependency.</b> Without it the year is guesswork; without the horizon field the planned/projected
+      line cannot be drawn and every date has to be labelled as an estimate.
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <span class="sec-tag">Interaction</span>
+      <h2>What is clickable, and what is only text</h2>
+    </div>
+
+    <div class="prose">
+      <p>“Dates are info text only, not clickable” is an explicit requirement, and it is a good one — it
+        is the requirement that stops this becoming a calendar by other means. But a screen where nothing
+        responds is its own failure, so the affordances are placed deliberately and sparsely.</p>
+    </div>
+
+    <div class="tablewrap">
+      <table class="rules">
+        <thead><tr><th>Target</th><th>Behaviour</th></tr></thead>
+        <tbody>
+          <tr><td>A date</td><td><b>Inert.</b> No link, no hover, no cursor change, on either kind of date.</td></tr>
+          <tr><td>A planned visit row</td><td>Opens the existing visit drawer, with the state rules already
+            settled in 06 — completed is read-only (D4), past is read-only except missed (D5), a started
+            route accepts an insert but marks it (D3).</td></tr>
+          <tr><td>A projected row</td><td><b>Inert</b>, with a tooltip stating where the date came from:
+            “projected from a 90-day cadence · not yet scheduled”.</td></tr>
+          <tr><td>The <code>Unassigned</code> pill</td><td>The one action this surface carries. Opens the
+            same add-to-a-route flow the grid uses. Seeing unrouted demand and being unable to act on it
+            is the exact frustration the visits tab was built to end.</td></tr>
+          <tr><td>A property name</td><td>Opens the site, on its Schedule tab. Names are navigation; dates
+            are not.</td></tr>
+          <tr><td>A company in the rail</td><td>Switches the pane to that company’s year. Clearing it
+            returns to the period roll-up with the previous scope intact.</td></tr>
+          <tr><td>Export</td><td>Downloads the visible company year as CSV. Download only — no send, no
+            email. Handing a schedule to a customer is the franchisee’s conversation to have.</td></tr>
+          <tr><td>Everything else</td><td>Not here. Bulk selection, harmonize and route building stay on
+            the Visits tab, which is the reason that tab keeps its own shape. <b>This is a read
+            surface</b>, and the discipline is what keeps it fast to scan.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <span class="sec-tag">Decisions</span>
+      <h2>D14 – D24</h2>
+    </div>
+
+    <div class="prose">
+      <p>Numbering continues 06’s sequence, so the visits record stays one list. Rows marked in the alert
+        colour change or reverse an earlier decision <i>for this surface only</i> — the grid keeps its own
+        behaviour and the reason is stated in each case.</p>
+    </div>
+
+    <div class="dec">
+      <div class="dec-row head"><div>ID</div><div>Decision</div><div>Why</div></div>
+
+      <div class="dec-row changed">
+        <div class="dec-id">D14</div>
+        <div class="dec-what">A new <b>Companies</b> tab in the scheduler tab row. The Visits tab is untouched — same default, same views, same toolbar.</div>
+        <div class="dec-why">Two jobs, two instruments — but the second instrument gets its own place rather than displacing the first. <b>Revises this document’s first draft</b>, which made the list the Visits tab’s default view: re-defaulting a working screen to solve a different problem taxes the planner for the franchisee’s benefit, and nobody asked for that trade.</div>
+      </div>
+      <div class="dec-row">
+        <div class="dec-id">D15</div>
+        <div class="dec-what">One screen: a company rail plus a pane. Selecting a company <i>is</i> the switch between the two views.</div>
+        <div class="dec-why">“Left side = company names, then their visits underneath”, taken literally. Two separate screens would need a navigation the requirement never asked for.</div>
+      </div>
+      <div class="dec-row">
+        <div class="dec-id">D16</div>
+        <div class="dec-what">A company is keyed on <code>customerId</code> and displayed from <code>site.company</code>. Properties with no company group under <b>No company on file</b>.</div>
+        <div class="dec-why">Two customers can share a name and a name can be edited. Dropping the orphans would hide demand, which is the failure this whole tab exists to prevent.</div>
+      </div>
+      <div class="dec-row">
+        <div class="dec-id">D17</div>
+        <div class="dec-what">The year is property-major, not month-major.</div>
+        <div class="dec-why">The question is “when is this building due”. Month-major makes you scan twelve headings for a name you already know.</div>
+      </div>
+      <div class="dec-row">
+        <div class="dec-id">D18</div>
+        <div class="dec-what">Visit count per property is a consequence of cadence over a fixed 12-month horizon — capped at 12 rows, then collapsed.</div>
+        <div class="dec-why">Delivers “4 if quarterly, 12 if monthly” verbatim, bounds the fortnightly and weekly cases, and asks nobody to pick a number.</div>
+      </div>
+      <div class="dec-row">
+        <div class="dec-id">D19</div>
+        <div class="dec-what">Projected dates are marked, carry no route and no status, and are inert.</div>
+        <div class="dec-why">They are arithmetic, not records. Giving one a status would be the screen asserting something the system does not know.</div>
+      </div>
+      <div class="dec-row">
+        <div class="dec-id">D20</div>
+        <div class="dec-what">Dates are text. The <i>row</i> is the click target, and only when it is a real visit.</div>
+        <div class="dec-why">Stated requirement, and the thing that stops the list drifting back into being a calendar.</div>
+      </div>
+      <div class="dec-row">
+        <div class="dec-id">D21</div>
+        <div class="dec-what">Read surface, with exactly one action: the <code>Unassigned</code> pill.</div>
+        <div class="dec-why">Scanning speed is the feature. But unrouted demand you can see and cannot fix is the original complaint in a new costume.</div>
+      </div>
+      <div class="dec-row changed">
+        <div class="dec-id">D22</div>
+        <div class="dec-what">The period roll-up shows only companies with visits in the period. Quiet companies stay in the rail, dimmed.</div>
+        <div class="dec-why"><b>Reverses 06 D10’s default for this surface.</b> On the planning grid a quiet row earns its space by carrying a next-due date; here the period <i>is</i> the question, and the rail plus search is the way to anyone else.</div>
+      </div>
+      <div class="dec-row">
+        <div class="dec-id">D23</div>
+        <div class="dec-what">Overdue and missed visits pin above the roll-up in their own band.</div>
+        <div class="dec-why">Same device as the grid’s unassigned band. A missed visit outlives its date (06 D5) and is the one thing on this screen worth interrupting for.</div>
+      </div>
+      <div class="dec-row changed">
+        <div class="dec-id">D24</div>
+        <div class="dec-what">The view is deep-linkable: scope, company and property live in the URL.</div>
+        <div class="dec-why"><b>Reverses session 3B’s “no URL state”.</b> “Send me Downtown Holdings’ schedule” is the use case, and a link is the cheapest possible answer to it.</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <span class="sec-tag">Edge cases</span>
+      <h2>What breaks it, and what each case does</h2>
+    </div>
+
+    <div class="tablewrap">
+      <table class="rules">
+        <thead><tr><th>Case</th><th>Behaviour</th></tr></thead>
+        <tbody>
+          <tr><td>Property with no recurring service</td>
+            <td>Amber <code>Not scheduled</code>, sorted to the top of its company block, with the last visit
+              date beneath it. Same treatment as the grid (06 D8) so the fact reads identically in both places.</td></tr>
+          <tr><td>Every property in a company unscheduled</td>
+            <td>The company shows in the rail with an amber count of zero and its year page states the whole
+              condition once, at the top, rather than repeating it per property.</td></tr>
+          <tr><td>One property, two contracts</td>
+            <td>Two blocks, not one merged block — a rooftop AHU service on 90 days and a filter programme on
+              30 days are two arrangements with two cadences. Merging them would invent an interval nobody sold.</td></tr>
+          <tr><td>Cadence changed mid-year</td>
+            <td>Planned visits stand; projection recomputes from the new interval and anchor. The block states
+              <code>Interval changed 12 Jun · every 60 days</code> so the gap in the dates is explained rather than
+              looking like a bug.</td></tr>
+          <tr><td>Contract ends inside the horizon</td>
+            <td>Projection stops at the end date and the block says so: <code>Contract ends 31 Mar 2027</code>.
+              Projecting past a contract invents work that has not been sold.</td></tr>
+          <tr><td>Harmonize moves a visit</td>
+            <td>The list shows the new date immediately — one dataset, and this is the payoff for that. The
+              projection re-anchors on the moved visit, so the following dates shift too.</td></tr>
+          <tr><td>Missed visit still open</td>
+            <td>Appears in the overdue band of every period until it is rescheduled or cancelled, and in the
+              company year in the alert colour above the upcoming dates.</td></tr>
+          <tr><td>Cancelled visit</td>
+            <td>Struck through and greyed in the company year <i>if it was planned</i>. A projected date is never
+              “cancelled” — it just stops being projected.</td></tr>
+          <tr><td>Two visits, one property, one day</td>
+            <td>Two rows. The time window is the disambiguator and it is already a column; collapsing them would
+              hide the second visit’s route.</td></tr>
+          <tr><td>Property outside the user’s zone or franchise</td>
+            <td>Excluded — and the company header count must be the count of what is <i>shown</i>. “5 properties”
+              over three rows is a support ticket.</td></tr>
+          <tr><td>Company renamed</td>
+            <td>Nothing breaks: the key is <code>customerId</code>, the label is read fresh. A deep link stays valid.</td></tr>
+          <tr><td>Long book</td>
+            <td>The rail is paged and searchable; the pane virtualizes. 300 companies × 12 months is a server
+              query, not a client loop — see below.</td></tr>
+          <tr><td>Timezone</td>
+            <td>Every date renders in the franchise timezone, as the grid does. Note handoff §7: the mock’s
+              non-visit times still carry a UTC skew, so a list built off them will read wrong before the visit
+              windows are used.</td></tr>
+          <tr><td>Search matches a property, not a company</td>
+            <td>The company block still frames the result — you get the company, with non-matching properties
+              collapsed behind <code>+3 other properties</code>. The hierarchy is never broken by a filter.</td></tr>
+          <tr><td>Nothing in the period at all</td>
+            <td>An empty state that names the next date something happens, and who it is for. Never a blank pane.</td></tr>
+          <tr><td>Signal tenant</td>
+            <td>The tab does not appear. Signal has visits and would pass the Visits tab’s own gate, so this
+              needs a flag of its own: daily guarding has no cadence, and a twelve-month view of a site
+              visited every day is twelve months of noise. The gate is the shape of the service, never the
+              tenant’s name — a Signal client on a monthly patrol contract should get it.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <span class="sec-tag">Data</span>
+      <h2>What the backend has to supply</h2>
+    </div>
+
+    <div class="prose">
+      <p>Three reads, all server-side. The projection in particular must not be a client loop — twelve months
+        of cadence across a full book is exactly the arithmetic a database does well and a browser does
+        badly, and doing it on the client would also put the horizon boundary in the wrong place.</p>
+    </div>
+
+    <div class="tablewrap">
+      <table class="rules">
+        <thead><tr><th>Endpoint</th><th>Returns</th></tr></thead>
+        <tbody>
+          <tr><td><code>GET /visits/by-company?from&amp;to</code></td>
+            <td>The period roll-up. Companies with visits in the range, each with its properties and their
+              visits — id, date, window, cadence, route, technician, status. Plus a roll-up of counts for the
+              header, computed on the same filter as the rows.</td></tr>
+          <tr><td><code>GET /companies/{customerId}/schedule?months=12</code></td>
+            <td>Per property: address, contract, cadence, <code>lastVisit</code>, the planned visits, the
+              projected dates, <code>contractEndsAt</code> where one exists, and
+              <code>scheduledHorizonEndsAt</code> — the date the dashed line is drawn on.</td></tr>
+          <tr><td><code>GET /companies?query=&amp;page=</code></td>
+            <td>The rail. Name, <code>customerId</code>, property count, and the count of visits in the
+              current period so the rail and the pane cannot disagree.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Fields that do not exist yet</h3>
+    <ul class="tight">
+      <li><b><code>cadence</code> per property (or per contract)</b> — interval and anchor. The one hard
+        dependency; see the honesty rule above.</li>
+      <li><b><code>scheduledHorizonEndsAt</code></b> — how far ahead visits are actually generated. Without it
+        every date has to be labelled projected, which is honest but much less useful.</li>
+      <li><b><code>customerId</code> on the visit’s site</b>, reliably. It exists on the site record today and is
+        already used by billing; it needs to survive into the visits payload.</li>
+      <li><b><code>contractEndsAt</code></b> — optional, but without it the projection will happily schedule work
+        beyond the end of a contract.</li>
+    </ul>
+
+    <h3>For the demo</h3>
+    <div class="prose">
+      <p>Everything needed is already in <code>schedule.mock.js</code>, which is a strong signal that this is
+        buildable rather than aspirational: the book is a cadence (<code>VISIT_SITE_BOOK</code>, 46 sites on
+        14–120 day intervals with two unscheduled), and <code>isSiteDueOn</code> /
+        <code>nextDueDayIndex</code> already <i>are</i> the projection function. Two additions:</p>
+      <ul class="tight">
+        <li>A <b>company</b> column on the book, many-to-one — today all 46 sites are effectively standalone, and
+          a company view of 46 companies with one property each would demo the layout while hiding the point.
+          Aim for ~18 companies, a few with four or five properties, one with a single property, one with a
+          property that has no cadence.</li>
+        <li>A <b>synthetic horizon</b> — say 21 days — so the planned/projected boundary is visible in the demo
+          rather than theoretical.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <span class="sec-tag">Sequence</span>
+      <h2>Build order</h2>
+    </div>
+
+    <div class="phases">
+      <div class="phase">
+        <div class="ph">First</div>
+        <div class="pb"><b>The tab, and the period roll-up on existing data.</b> A
+          <code>companies</code> tab config, then the visits the week grid already holds, grouped by
+          company, in a list. No projection, no rail selection — a scope control, company groups, rows and
+          the overdue band. This alone answers “who are we visiting this week” and is the half that needs
+          no backend change.</div>
+      </div>
+      <div class="phase">
+        <div class="ph">Second</div>
+        <div class="pb"><b>The rail and the company year.</b> Company list, selection, the twelve-month
+          projection with the planned/projected boundary, the property filter, the twelve-row cap. This is the
+          half that answers Umair’s actual objection, and the half that needs the cadence field.</div>
+      </div>
+      <div class="phase">
+        <div class="ph">Third</div>
+        <div class="pb"><b>The edges.</b> Deep links, CSV export, search across both levels, the empty and
+          amber states, and the multi-contract case. Individually small; collectively the difference between a
+          demo and a screen somebody uses on the phone to a customer.</div>
+      </div>
+    </div>
+
+    <div class="callout note">
+      <b class="lbl">Demo before build</b>
+      The last version of this was rejected in one sentence at the demo. The first phase is deliberately the
+      one that runs on data that already exists — build it, show it against the real book, and get the
+      grouping and the row shape agreed before the projection work starts.
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <span class="sec-tag">Still open</span>
+      <h2>Questions this design creates</h2>
+    </div>
+
+    <ol class="q">
+      <li><b>Is the contracted service interval stored per property?</b> Promoted from “needed for compliance”
+        to <b>blocking</b> — the twelve-month view is arithmetic on this field. If it does not exist, the
+        fallback is inferring the interval from the last three visits, which is wrong the first time a customer
+        changes their contract.</li>
+      <li><b>How far ahead does the scheduler actually generate visits?</b> Decides where the planned/projected
+        line falls. A fixed rolling window, a per-franchise setting, or as-far-as-someone-has-built?</li>
+      <li><b>Is <code>customerId</code> on the site authoritative and unique?</b> Billing treats it as the
+        customer key. Can one property belong to two companies — a landlord and a managing agent — and if so,
+        which one owns the row?</li>
+      <li><b>Cadence per property, or per contract?</b> The invoice model already gives a site multiple
+        contracts. The design assumes per contract and draws a block each; confirm before the field is named.</li>
+      <li><b>Is CSV enough, or does the franchisee need a branded customer-facing PDF?</b> The export exists
+        because this list gets read to customers. A PDF is a different piece of work and should be scoped
+        separately if it is wanted.</li>
+      <li><b>Calendar month or rolling 30 days for “this month”?</b> Recommendation: calendar month, because
+        that is how the question is asked. The range text makes it unambiguous either way.</li>
+      <li><b>Does “company” need a tenant label?</b> The screen says Company; the data says
+        <code>customerId</code>, <code>company</code> and <code>client</code> in three different places. One
+        term should win, and it should go through <code>getLabel</code> like every other tenant noun.</li>
+      <li><b>Should the roll-up scope include a “next 30 days”?</b> Not designed in — three scopes is already
+        the requirement’s answer — but a franchisee planning stock might want it. Worth asking before it is
+        added on someone’s hunch.</li>
+      <li><b>What turns the Companies tab on?</b> The Visits tab’s gate lets Signal through, and daily
+        guarding has nothing to project. The design assumes a service-level flag — on for interval-based
+        service, off for daily — rather than a tenant check, so a Signal client on a monthly patrol
+        contract is not excluded by accident. Confirm the flag exists, or name what should stand in for it.</li>
+    </ol>
+  </section>
+
+</div>

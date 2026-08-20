@@ -34,6 +34,34 @@ const useStyles = makeStyles((theme) => ({
       flex: '0 0 auto',
     },
   },
+
+  /**
+   * The Cancelled mark, greyed so it agrees with the card it describes.
+   *
+   * A cancelled visit's card is flat grey (`visitFillCancelled`, `#F6F7F9`) —
+   * void, not absent, and nothing about it invites action — but
+   * `CancelledIcon.svg` draws a red disc, so the legend was promising a red card
+   * the grid stopped drawing.
+   *
+   * The grey is applied **here, at the legend's call site, rather than in the
+   * asset**, because the asset is shared and red is still right in its other two
+   * homes: the grid stamps card badges from `calendarIndicatorIcons` below, and
+   * the visit drawer's status chip imports the same svg
+   * (`shiftDetail/hitDetail/VisitAssignment.jsx`). Recolouring the file would
+   * have changed all three from one edit.
+   *
+   * `grayscale(1)` rather than a fill override: the svg states its colours as
+   * presentation attributes on half a dozen nested nodes, so overriding them
+   * means selecting on hex literals a Figma re-export would silently invalidate.
+   * The filter is the same idiom `scheduleCalendar.styles.js` already uses to
+   * retire a card, and it keeps the white glyph legible — a flat `#F6F7F9`, the
+   * card's own fill, would be an invisible mark on this white footer.
+   */
+  cancelledMark: {
+    '& svg': {
+      filter: 'grayscale(1)',
+    },
+  },
 }));
 
 export const calendarIndicatorIcons = {
@@ -75,6 +103,9 @@ const ScheduleStatusIcons = ({ statuses }) => {
             startIcon={calendarIndicatorIcons[status]}
             variant="onlyText"
             key={index}
+            className={
+              status === calendarShiftStatusEnum.CANCELLED ? classes.cancelledMark : undefined
+            }
           >
             {calendarShiftStatusValues(t)?.[status]}
           </Button>

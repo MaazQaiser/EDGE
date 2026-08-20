@@ -94,6 +94,16 @@ export function getMockUserDataResponse() {
               // impossible to show. Whether payment capture *should* be tied to
               // the accounting integration is an open product question.
               invoicingMethod: 'quickbooks',
+              runsheets: {
+                /* Gates the scheduler's **Forecasting** button
+                   (`isSupplierForecasting` in `schedules/calendar/index.jsx`). Off,
+                   the header row ends at the assignment message and the button — which
+                   is part of the design being reviewed — cannot be seen at all.
+                   Enabled *here*, in the demo payload, rather than by relaxing the
+                   gate: it is a tenant feature flag, and a tenant that has not bought
+                   supplies forecasting still must not be shown it. */
+                suppliesForecasting: true,
+              },
             },
           },
           properties: {

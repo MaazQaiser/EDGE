@@ -392,8 +392,8 @@ const CreateExtraDuty = () => {
       for (let i = 0; i < services.length; i++) {
         const currentService = services[i];
         for (let k = 0; k < currentService.visits.length; k++) {
-          const serviceStartDate = currentService?.dateRange?.[0]?.format('DD-MM-YYYY');
-          const serviceEndDate = currentService?.dateRange?.[1]?.format('DD-MM-YYYY');
+          const serviceStartDate = currentService?.dateRange?.[0]?.format('YYYY-MM-DD');
+          const serviceEndDate = currentService?.dateRange?.[1]?.format('YYYY-MM-DD');
 
           const currentVisit = currentService?.visits[k];
 

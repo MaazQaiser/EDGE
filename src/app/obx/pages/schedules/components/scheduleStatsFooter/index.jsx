@@ -1,4 +1,4 @@
-import { AccessTime, AvTimer, DirectionsCarOutlined, PersonOutline } from '@mui/icons-material';
+import { AccessTime, PersonOutline } from '@mui/icons-material';
 import { Box, Skeleton, Typography } from '@mui/material';
 import { makeStyles } from '@mui/styles';
 import PropTypes from 'prop-types';
@@ -20,6 +20,21 @@ export const SCHEDULE_STATS_FOOTER_VARIANTS = {
   DEDICATED: 'dedicated',
   PATROL: 'patrol',
   VISITS: 'visits',
+  /**
+   * **No page footer at all** — not "unknown", which is what `null` means here.
+   *
+   * The page resolves the calendar's reported variant with `??`, so `null` says
+   * "I have nothing to report, fall back to the tab's own variant". A surface that
+   * brings its own footer needs the opposite: an answer, and the answer is none.
+   * Variation 2's company-timeline grouping is the case — it mounts a pane with its
+   * own chrome from a tab whose config still says `overview`, so without this the
+   * page drew an empty overview stats bar underneath it.
+   *
+   * Deliberately a truthy string so it survives `??`, and matched explicitly at the
+   * page rather than by falsiness — the previous stopgap reported `''` and leaned on
+   * `Boolean(footerVariant)`, which works by accident and reads as a missing value.
+   */
+  NONE: 'none',
 };
 
 /**
@@ -51,6 +66,10 @@ const STATUS_STATS = [
  * did not sum to the visits on screen — the footer said 34 of 42. Swapping split
  * for missed and cancelled makes the footer add up and makes both states
  * filterable, which is how a planner finds them.
+ *
+ * Reached through `resolveScheduleFooterVariant`, not through a tab id: the
+ * retired Visits tab used to be the only route in, which left the main tab's
+ * company grouping — a grid of visits — counting itself with the shift list.
  */
 const VISITS_STATUS_STATS = [
   { id: 'completed', icon: CompletedIcon, labelKey: 'obx.schedules.filters.status.completed' },
@@ -66,6 +85,13 @@ const VISITS_STATUS_STATS = [
     id: 'cancelled',
     icon: CancelledIcon,
     labelKey: 'obx.schedules.calendar.scheduleStatus.cancelled',
+    /* The cancelled card is flat grey (`visitFillCancelled`) and this icon is a
+       red disc, so the legend contradicted the grid. Greyed at the call site
+       rather than in the asset — `CancelledIcon.svg` is shared with the grid's
+       card badges and the visit drawer's status chip, where red is intended.
+       See `cancelledMark` in `scheduleStatusIcons` for the full reasoning; the
+       two legend paths have to agree, so they use the same treatment. */
+    mutedMark: true,
   },
 ];
 
@@ -122,29 +148,15 @@ const getFooterPresentation = (t, getLabel, services = {}, shiftTypes = {}) => {
       color: '#12B76A',
       label: 'Hrs Completed',
     },
-    {
-      id: 'overtime',
-      icon: AvTimer,
-      color: '#F79009',
-      label: 'Hrs Overtime',
-    },
   ];
 
   if (services?.patrol === true) {
-    overviewMetrics.push(
-      {
-        id: 'runsheetsCompleted',
-        icon: Runsheet,
-        color: '#146DFF',
-        label: `${runsheets} Completed`,
-      },
-      {
-        id: 'patrolVisitsCompleted',
-        icon: DirectionsCarOutlined,
-        color: '#12B76A',
-        label: `${patrol} Visits Completed`,
-      },
-    );
+    overviewMetrics.push({
+      id: 'runsheetsCompleted',
+      icon: Runsheet,
+      color: '#146DFF',
+      label: `${runsheets} Completed`,
+    });
   }
 
   if (services?.dispatch === true) {
@@ -186,6 +198,15 @@ const getFooterPresentation = (t, getLabel, services = {}, shiftTypes = {}) => {
 
   return {
     [SCHEDULE_STATS_FOOTER_VARIANTS.VISITS]: {
+      /* The KPI row is the *week's* facts — coverage, hours, routes completed —
+         not the shift vocabulary's, so it survives the switch to this variant.
+         Without it, correcting the status row (swapping the permanently-zero
+         `Split` for the Missed and Cancelled the grid actually draws) would have
+         silently cost the company grouping its coverage ring and top row, which
+         is a trade nobody asked for. Rendered only when the payload carries an
+         `overview` block, so the month — which has no KPI call — still collapses
+         to the short footer. */
+      metrics: overviewMetrics,
       dutyStats: [
         { id: 'patrol', color: '#146DFF', label: `${hits} on a ${runsheet}` },
         { id: 'extraRunsheet', color: '#F04438', label: `Unassigned ${hits}` },
@@ -305,8 +326,11 @@ const useStyles = makeStyles((theme) => ({
   metricsRow: {
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: '14px',
+    justifyContent: 'flex-start',
+    // Matches the dutyStats/statusStats gap in the legend row below so the
+    // spacing reads as one consistent system now that space-between no
+    // longer stretches items across the row.
+    gap: '22px',
     minWidth: '980px',
   },
   metricItem: {
@@ -329,6 +353,21 @@ const useStyles = makeStyles((theme) => ({
       color: 'var(--metric-color)',
       flexShrink: 0,
     },
+  },
+  // "Scheduled Technicians" rendered narrower than its neighbors on request.
+  // A nowrap flex item won't shrink below its content's min width without
+  // overflowing into the next metric (verified: a bare `width` override with
+  // nowrap intact just prints past its box and collides with "Hrs Completed").
+  // Allowing the label to wrap is the only way to actually shrink the box;
+  // 120px is tuned so it breaks cleanly after "Scheduled" onto a second line
+  // (matches the two-line "78% / Coverage" pattern already used on the left
+  // of this footer) instead of fragmenting into three lines. That is roughly
+  // 65% of the original ~187px width — not a literal 50%, since anything
+  // narrower forced an ugly three-line break (tested at 112px). If tenant
+  // copy for this label changes, re-check that the break still lands cleanly.
+  metricItemNarrow: {
+    width: '120px',
+    whiteSpace: 'normal',
   },
   metricText: {
     '&.MuiTypography-root': {
@@ -393,6 +432,14 @@ const useStyles = makeStyles((theme) => ({
       width: '16px',
       height: '16px',
       flex: '0 0 auto',
+    },
+  },
+  /* A status whose card carries no colour of its own — see `mutedMark`. Scoped to
+     the one entry that asks for it rather than applied to `statusItem`, so the
+     four coloured marks beside it are untouched. */
+  statusMarkMuted: {
+    '& svg': {
+      filter: 'grayscale(1)',
     },
   },
   // The status counts are the most natural drill-down on the page, so where a
@@ -561,8 +608,7 @@ const withEmptyValues = (presentation = {}) => ({
   metrics: (presentation.metrics || []).map((metric) => ({
     ...metric,
     value: '0',
-    // Completed/Total metrics use a suffix; Hrs Overtime is a plain count.
-    suffix: metric.id === 'overtime' ? '' : '/0',
+    suffix: '/0',
   })),
   dutyStats: (presentation.dutyStats || []).map((item) => ({
     ...item,
@@ -591,8 +637,18 @@ const ScheduleStatsFooter = ({
   const footerPresentation = getFooterPresentation(t, getLabel, services, shiftTypes);
   const presentation =
     footerPresentation[variant] || footerPresentation[SCHEDULE_STATS_FOOTER_VARIANTS.OVERVIEW];
-  // Coverage + KPI metrics come from summary/stats, which restricted roles never fetch.
-  const isOverview = variant === SCHEDULE_STATS_FOOTER_VARIANTS.OVERVIEW && canViewSummaryStats;
+  /**
+   * Coverage + KPI metrics come from summary/stats, which restricted roles never
+   * fetch — so this is a question about the *payload*, not about the variant name.
+   *
+   * It used to test `variant === OVERVIEW`. That made the tall footer the private
+   * property of one variant, and the moment the company grouping started reporting
+   * itself as `VISITS` — which it must, so the status row stops counting a
+   * permanently-zero `Split` and starts counting Missed and Cancelled — the week
+   * would have lost its coverage ring as a side effect of a status-row fix.
+   */
+  const hasKpiMetrics = Boolean(data?.metrics?.length);
+  const isOverview = hasKpiMetrics && canViewSummaryStats;
 
   if (loading) {
     return (
@@ -645,7 +701,9 @@ const ScheduleStatsFooter = ({
 
                 return (
                   <Box
-                    className={classes.metricItem}
+                    className={`${classes.metricItem} ${
+                      metric.id === 'scheduledOfficers' ? classes.metricItemNarrow : ''
+                    }`}
                     key={metric.id}
                     sx={{ '--metric-color': metric.color }}
                   >
@@ -722,10 +780,11 @@ const LegendRow = ({
 
           const filterValue = STATUS_FILTER_VALUES[item.id];
           const isInteractive = Boolean(filterValue) && typeof onStatusSelect === 'function';
+          const markClass = item.mutedMark ? classes.statusMarkMuted : '';
 
           if (!isInteractive) {
             return (
-              <Box className={classes.statusItem} key={item.id}>
+              <Box className={`${classes.statusItem} ${markClass}`} key={item.id}>
                 <Icon />
                 {renderStatText(classes, item)}
               </Box>
@@ -739,7 +798,7 @@ const LegendRow = ({
               component="button"
               type="button"
               key={item.id}
-              className={`${classes.statusItem} ${classes.statusItemInteractive} ${
+              className={`${classes.statusItem} ${markClass} ${classes.statusItemInteractive} ${
                 isActive ? classes.statusItemActive : ''
               }`}
               aria-pressed={isActive}

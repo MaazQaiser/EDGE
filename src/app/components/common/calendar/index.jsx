@@ -11,10 +11,29 @@ import fcClass from '@fullcalendar/react/protected-styles';
 import themePlugin from '@fullcalendar/react/themes/classic';
 import timeGridPlugin from '@fullcalendar/react/timegrid';
 import resourceTimelinePlugin from '@fullcalendar/react-scheduler/resource-timeline';
-import { Box, Button, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
+import {
+  Box,
+  Button,
+  Popover,
+  ToggleButton,
+  ToggleButtonGroup,
+  Tooltip,
+  Typography,
+} from '@mui/material';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { DateCalendar } from '@mui/x-date-pickers/DateCalendar';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import dayjs from 'dayjs';
 import PropTypes from 'prop-types';
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { ReactComponent as NoShiftIcon } from 'src/assets/images/no-shift.svg';
 import { ReactComponent as LeftArrow } from 'src/assets/svg/calendar-left.svg';
@@ -92,6 +111,39 @@ const hasVisibleVirtualRows = (root) => {
 };
 
 /**
+ * How the toolbar's right-hand cluster is ordered.
+ *
+ * Two arrangements of the same four things — the date navigator, the caller's
+ * `toolbarRightContent`, the Day/Week/Month toggle and `toolbarTrailingContent`:
+ *
+ * - `DATE_FIRST` — date navigator, then the right slot, then the view toggles,
+ *   then the trailing slot. The original order, and the default.
+ * - `TOGGLES_FIRST` — the right slot and the view toggles lead, the date
+ *   navigator follows them, and the trailing slot still closes the row. For a
+ *   caller that wants "what am I looking at" ahead of "when".
+ *
+ * Named for the *shape* rather than for any caller's variation, because this is
+ * the shared shell: it knows about a date navigator and two content slots, and
+ * nothing about what a consumer puts in them.
+ */
+export const CALENDAR_TOOLBAR_ARRANGEMENT = {
+  DATE_FIRST: 'dateFirst',
+  TOGGLES_FIRST: 'togglesFirst',
+};
+
+/**
+ * Read by the toolbar, provided by whoever renders the calendar — **through
+ * context rather than a prop** because the two are not always neighbours: the
+ * schedules grid sits between the page and this shell and forwards a fixed prop
+ * list, so an ordering prop would have to be plumbed through a component that has
+ * no interest in it. The default is the order this toolbar has always drawn, so a
+ * caller that provides nothing is unaffected.
+ */
+export const CalendarToolbarArrangementContext = createContext(
+  CALENDAR_TOOLBAR_ARRANGEMENT.DATE_FIRST,
+);
+
+/**
  * Domain-agnostic calendar shell.
  * Consumers pass normalized resources/events and optional render callbacks.
  */
@@ -103,8 +155,10 @@ const Calendar = ({
   loading = false,
   isEmpty = false,
   skeletonVariant = 'default',
+  toolbarLeadingContent,
   toolbarLeftContent,
   toolbarRightContent,
+  toolbarTrailingContent,
   showListSwitch = true,
   resourceColumnHeader = '',
   resourceOrder,
@@ -130,6 +184,7 @@ const Calendar = ({
   // Rendered under the FC grid (full width). Used by day view so cards are not
   // trapped in FC's centered dayHeaderContent shrink-wrap.
   belowGridContent = null,
+  monthFillsScrollport = false,
 }) => {
   const calendarRef = useRef(null);
   const calendarContainerRef = useRef(null);
@@ -157,9 +212,17 @@ const Calendar = ({
      failed to load. A month cell here is a count, not a stack of cards, so there is
      nothing for that height to hold. This also lets the `contentHeight: 'auto'` in
      the `dayGridMonth` view config take effect — FullCalendar ignores it whenever
-     `height` is set. */
+     `height` is set.
+
+     `monthFillsScrollport` is for the month whose cells *are* a stack of cards.
+     There the reasoning inverts: a week row sized to its contents is 62px, so the
+     grid ended a third of the way down the page with the rest of the scrollport
+     white below it, and the chips inside those rows had no room to be spaced
+     apart. Caller-driven rather than inferred, because only the caller knows what
+     its cells hold. */
   const isMonthView = queryParams?.selectedView?.type === DAY_GRID.MONTH;
-  const calendarHeight = belowGridContent || isMonthView ? 'auto' : '100%';
+  const monthSizesToContent = isMonthView && !monthFillsScrollport;
+  const calendarHeight = belowGridContent || monthSizesToContent ? 'auto' : '100%';
   const resolvedCalendarClassName = [
     calendarClassName,
     isOverviewSectionsEmptyOnly ? classes.overviewCalendarSectionsEmpty : '',
@@ -167,6 +230,14 @@ const Calendar = ({
   ]
     .filter(Boolean)
     .join(' ');
+
+  window.__calDebug = {
+    calendarHeight,
+    monthSizesToContent,
+    isMonthView,
+    monthFillsScrollport,
+    ref: () => calendarRef.current,
+  };
 
   // Hide until FC finishes column + row sizing after eventContent mounts.
   // A single updateSize in the same turn is not enough — row heights settle one
@@ -430,8 +501,10 @@ const Calendar = ({
         calendarRef={calendarRef}
         queryParams={queryParams}
         setQueryParams={setQueryParams}
+        toolbarLeadingContent={toolbarLeadingContent}
         toolbarLeftContent={toolbarLeftContent}
         toolbarRightContent={toolbarRightContent}
+        toolbarTrailingContent={toolbarTrailingContent}
         showListSwitch={showListSwitch}
       />
       <Box className={classes.calendarBody}>
@@ -516,7 +589,10 @@ const Calendar = ({
             views={{
               resourceTimelineWeek: {
                 // Week timeline uses a custom 1px resource↔grid divider; suppress FC's
-                // outer left/right borders. Do NOT set globally — day/month grids need them.
+                // outer left/right borders. Do NOT set globally — the classic theme's
+                // viewClass always adds a top+bottom border regardless of this flag, so
+                // setting it per-view only ever drops the left/right pair (see dayGridDay
+                // and dayGridMonth below, which want that same open-sided look).
                 borderlessX: true,
                 slotHeaderContent: weekSlotHeaderContent || dayHeaderContent,
                 slotHeaderInnerClass: classes.slotHeaderInnerReset,
@@ -533,6 +609,13 @@ const Calendar = ({
                 dayHeaderAlign: 'start',
               },
               dayGridMonth: {
+                /* Same reasoning as `dayGridDay`/`resourceTimelineWeek` above: the classic
+                   theme's `viewClass` always borders the view root top+bottom, and adds a
+                   left+right pair on top of that unless `borderlessX` says otherwise. Month
+                   was the one view still leaving that pair on, so it alone read as a boxed-in
+                   card — internal cell rules (`.fc-theme-standard td`/`th`) are untouched by
+                   this flag and still divide the days and weeks. */
+                borderlessX: true,
                 /* FullCalendar pads every month to six weeks by default. August 2026
                    needs five, so the grid rendered a whole extra row — Sep 5–11,
                    empty, ~150px tall, with nothing in it and nothing that could ever
@@ -542,8 +625,47 @@ const Calendar = ({
                 /* And rows sized themselves to fill the viewport rather than to their
                    contents, so each one was ~150px of white around a single line of
                    text. A month cell here holds a count, not a list of cards — let
-                   the rows be as tall as what is in them. */
-                contentHeight: 'auto',
+                   the rows be as tall as what is in them.
+
+                   Spread in rather than set to `undefined`, because `contentHeight`
+                   outranks `height`: a grid that wants the port has to have this
+                   option *absent*, not merely falsy — and then has to say so
+                   twice, since a calendar given a height still leaves its rows at
+                   their content size until `expandRows` lets them take it. */
+                ...(monthSizesToContent ? { contentHeight: 'auto' } : { expandRows: true }),
+                /* Except on the company grouping, where a cell holds one chip per
+                   visit and a busy day would otherwise stretch its whole week row.
+                   Three is what fits before the row is taller than the two beside
+                   it; the rest collapse into FullCalendar's own "+N more", which
+                   opens the day. Harmless on the counting cells — those never
+                   render more than one entry per service. */
+                dayMaxEvents: 3,
+                /**
+                 * Keep the order the payload arrived in, which is start-time order.
+                 *
+                 * FullCalendar's default `eventOrder` is `start,-duration,allDay,title`.
+                 * A month visit is deliberately an all-day event with a date-only
+                 * start (that is what puts the chip in the cell's flow instead of on
+                 * a time axis), so the first three keys tie on every chip in a cell
+                 * and **`title` decides** — and the title is the window's name. That
+                 * sorted a day alphabetically: `Afternoon visit`, `Evening visit`,
+                 * `Midday visit`, `Morning visit`, i.e. 2p, 5p, 11a, 8a. Sorting the
+                 * events before handing them over could not survive it.
+                 *
+                 * So the month sorts on an explicit key instead. `sortKey` is stamped
+                 * on every visit event as the franchise-local `YYYY-MM-DDTHH:mm` — the
+                 * same projection that places the chip in its cell and prints the time
+                 * on it, so the order, the placement and the label cannot disagree.
+                 * Naming the key here rather than relying on `Array.sort` stability is
+                 * the difference between FullCalendar preserving our order and
+                 * re-deriving one of its own.
+                 *
+                 * Scoped to `dayGridMonth`: the week and day grids keep FullCalendar's
+                 * own ordering, where a real clock time makes `start` the deciding key
+                 * rather than a tiebreak. The aggregate month carries no `sortKey` and
+                 * needs none — one entry per day per service.
+                 */
+                eventOrder: 'sortKey',
               },
             }}
           />
@@ -562,8 +684,12 @@ Calendar.propTypes = {
   loading: PropTypes.bool,
   isEmpty: PropTypes.bool,
   skeletonVariant: PropTypes.string,
+  /** Leads the row, before the filters, separated from them by a hairline rule. */
+  toolbarLeadingContent: PropTypes.node,
   toolbarLeftContent: PropTypes.node,
   toolbarRightContent: PropTypes.node,
+  /** Rendered after the view toggles, at the row's right edge — for page actions. */
+  toolbarTrailingContent: PropTypes.node,
   showListSwitch: PropTypes.bool,
   resourceColumnHeader: PropTypes.string,
   resourceOrder: PropTypes.string,
@@ -585,16 +711,35 @@ Calendar.propTypes = {
   calendarClassName: PropTypes.string,
   isOverviewSectionsEmptyOnly: PropTypes.bool,
   belowGridContent: PropTypes.node,
+  /** Month cells hold a stack of cards, so the grid takes the whole scrollport. */
+  monthFillsScrollport: PropTypes.bool,
 };
 
 export default Calendar;
 
+/**
+ * Month reports its window as two *inclusive* date-only strings, so `windowEnd` is
+ * the last cell the grid actually draws — for an August grid that ends on Sep 4,
+ * `2026-09-04`. FullCalendar's `activeEnd` is exclusive (`Sep 5` for that grid), so
+ * the last visible date is always one day back from it.
+ *
+ * That day used to be taken off by calling `activeEnd.setDate(...)` — an in-place
+ * write to a Date that belongs to FullCalendar's live view object, on a function
+ * that runs on mount, on prev/next, on view change and on Today. It happened to
+ * stay a stable one-day shift only because `view.activeEnd` is a getter that builds
+ * a throwaway Date per access; the moment a caller read `activeEnd` once and passed
+ * it twice, the window would have walked backwards a day at a time. Subtract into a
+ * new value instead and never write through the argument.
+ *
+ * Anything turning this string back into an instant has to treat it as the *end* of
+ * that day (23:59:59.999). Read as midnight it excludes the day it names, which is
+ * how every visit on the last visible cell went missing from the month grid.
+ */
 export const getStartEndTimeForView = ({ activeStart, activeEnd, type }) => {
   if (type == DAY_GRID.MONTH) {
-    activeEnd?.setDate(activeEnd?.getDate() - 1);
     return {
       windowStart: dayjs(activeStart)?.format('YYYY-MM-DD'),
-      windowEnd: dayjs(activeEnd)?.format('YYYY-MM-DD'),
+      windowEnd: dayjs(activeEnd)?.subtract(1, 'day')?.format('YYYY-MM-DD'),
     };
   }
 
@@ -608,14 +753,18 @@ const CalendarHeaderToolbar = ({
   calendarRef,
   queryParams,
   setQueryParams,
+  toolbarLeadingContent,
   toolbarLeftContent,
   toolbarRightContent,
+  toolbarTrailingContent,
   showListSwitch = true,
 }) => {
   const { t } = useTranslation();
   const classes = useStyles();
   const [title, setTitle] = useState('');
   const calendarView = queryParams.selectedView?.type;
+  const toolbarArrangement = useContext(CalendarToolbarArrangementContext);
+  const leadsWithToggles = toolbarArrangement === CALENDAR_TOOLBAR_ARRANGEMENT.TOGGLES_FIRST;
 
   const handlePrevNext = (isNext) => () => {
     const calendarGetApi = calendarRef.current.getApi();
@@ -733,11 +882,23 @@ const CalendarHeaderToolbar = ({
 
   const isCalenderView = [DAY_GRID.DAY, DAY_GRID.WEEK, DAY_GRID.MONTH].includes(calendarView);
 
-  const handleGoToToday = () => {
-    const calendarGetApi = calendarRef.current?.getApi();
-    if (!calendarGetApi) return;
+  const [datePickerAnchorEl, setDatePickerAnchorEl] = useState(null);
+  const isDatePickerOpen = Boolean(datePickerAnchorEl);
 
-    calendarGetApi.today();
+  const handleOpenDatePicker = (event) => {
+    setDatePickerAnchorEl(event.currentTarget);
+  };
+
+  const handleCloseDatePicker = () => {
+    setDatePickerAnchorEl(null);
+  };
+
+  const handleSelectDate = (selectedDate) => {
+    const calendarGetApi = calendarRef.current?.getApi();
+    if (!calendarGetApi || !selectedDate) return;
+
+    calendarGetApi.gotoDate(selectedDate.toDate());
+
     const { activeEnd, activeStart, type } = calendarGetApi.view || {};
     const { windowStart, windowEnd } = getStartEndTimeForView({ activeEnd, activeStart, type });
 
@@ -745,19 +906,9 @@ const CalendarHeaderToolbar = ({
       ...prev,
       selectedView: { ...prev.selectedView, windowStart, windowEnd },
     }));
+
+    handleCloseDatePicker();
   };
-
-  // "Today" is only meaningful when the visible range does not already contain
-  // it. This is a browser-clock comparison — the schedules-domain timezone
-  // helper does not belong in the shared calendar, and the only consequence of
-  // being off near a period boundary is whether the button reads as disabled.
-  const isViewingToday = (() => {
-    const { windowStart, windowEnd } = queryParams.selectedView || {};
-    if (!windowStart || !windowEnd) return false;
-
-    const now = dayjs();
-    return now.isAfter(dayjs(windowStart)) && now.isBefore(dayjs(windowEnd));
-  })();
 
   const dateNavigator = (
     <Box className={classes.calendarHeaderToolbarLeft}>
@@ -769,9 +920,36 @@ const CalendarHeaderToolbar = ({
       >
         <LeftArrow />
       </Button>
-      <Typography className={classes.calendarHeaderToolbarLeftText} variant="subtitle2">
-        {title}
-      </Typography>
+      <Box
+        component="button"
+        type="button"
+        className={classes.calendarHeaderToolbarLeftTextTrigger}
+        onClick={handleOpenDatePicker}
+        aria-label={t('obx.schedules.calendar.openDatePicker')}
+      >
+        <Typography className={classes.calendarHeaderToolbarLeftText} variant="subtitle2">
+          {title}
+        </Typography>
+      </Box>
+      <Popover
+        open={isDatePickerOpen}
+        anchorEl={datePickerAnchorEl}
+        onClose={handleCloseDatePicker}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'left' }}
+        className={classes.calendarHeaderToolbarDatePickerPopover}
+      >
+        <LocalizationProvider dateAdapter={AdapterDayjs}>
+          <DateCalendar
+            value={
+              queryParams.selectedView?.windowStart
+                ? dayjs(queryParams.selectedView.windowStart)
+                : null
+            }
+            onChange={handleSelectDate}
+          />
+        </LocalizationProvider>
+      </Popover>
       <Button
         variant="tertiaryGrey"
         className={classes.calendarHeaderToolbarLeftAction}
@@ -779,16 +957,6 @@ const CalendarHeaderToolbar = ({
         aria-label={t('obx.schedules.calendar.nextPeriod')}
       >
         <RightArrow />
-      </Button>
-      {/* Without this, returning to the current period meant clicking the arrow
-          once per week navigated away. */}
-      <Button
-        variant="tertiaryGrey"
-        className={classes.calendarHeaderToolbarToday}
-        onClick={handleGoToToday}
-        disabled={isViewingToday}
-      >
-        {t('obx.schedules.calendar.today')}
       </Button>
     </Box>
   );
@@ -799,41 +967,64 @@ const CalendarHeaderToolbar = ({
         toolbarLeftContent ? classes.calendarHeaderToolbarWithFilters : ''
       }`}
     >
+      {/* Ahead of the filters, and fenced off from them by a hairline rule: what
+          leads this row is a *view* control — it re-groups the grid rather than
+          narrowing it — and sitting flush against a run of filter dropdowns it read
+          as the first of them. The rule is drawn only when something is in the slot,
+          so a caller that passes nothing gets no stray line. */}
+      {toolbarLeadingContent}
+      {toolbarLeadingContent ? (
+        <Box className={classes.calendarHeaderToolbarLeadingDivider} aria-hidden />
+      ) : null}
       {toolbarLeftContent ? (
         <Box className={classes.calendarHeaderToolbarFilters}>{toolbarLeftContent}</Box>
       ) : (
         dateNavigator
       )}
       <Box className={classes.calendarHeaderToolbarRight}>
+        {/* After the date navigator, so it lands beside the Day/Week/Month toggle:
+            both are view controls and reading them as one cluster is the point.
+
+            Under `TOGGLES_FIRST` the navigator moves to *after* the toggles instead
+            (see below) — the cluster is unchanged, only which side of it the date
+            sits on. Rendered in one place or the other, never both. */}
+        {toolbarLeftContent && !leadsWithToggles && dateNavigator}
         {toolbarRightContent}
-        {toolbarLeftContent && dateNavigator}
+        {/* **D / W / M**, not Day / Week / Month. Three words are three of the widest
+            things in a row that now also carries a labelled grouping toggle, a date
+            range and two page actions, and the words were the most compressible of
+            them: the initials are unambiguous *because* the three are always shown
+            together and always in that order.
+
+            Each keeps its full name in a tooltip and in `aria-label`, so nothing is
+            lost to anyone reading the control rather than glancing at it — the
+            Tooltip wraps the *button*, never a bare glyph, for the ref reason noted
+            on the grouping switch. */}
         {calendarView !== TIME_GRID.LIST && (
           <ToggleButtonGroup
             value={calendarView}
             exclusive
             className={classes.calendarHeaderToolbarToggle}
           >
-            <ToggleButton
-              className={classes.calendarHeaderToolbarToggleBtn}
-              value={DAY_GRID.DAY}
-              onClick={handleChangeCalenderView(DAY_GRID.DAY)}
-            >
-              {t('obx.schedules.calendar.view.day')}
-            </ToggleButton>
-            <ToggleButton
-              className={classes.calendarHeaderToolbarToggleBtn}
-              value={DAY_GRID.WEEK}
-              onClick={handleChangeCalenderView(DAY_GRID.WEEK)}
-            >
-              {t('obx.schedules.calendar.view.week')}
-            </ToggleButton>
-            <ToggleButton
-              className={classes.calendarHeaderToolbarToggleBtn}
-              value={DAY_GRID.MONTH}
-              onClick={handleChangeCalenderView(DAY_GRID.MONTH)}
-            >
-              {t('obx.schedules.calendar.view.month')}
-            </ToggleButton>
+            {[
+              { value: DAY_GRID.DAY, short: 'dayShort', full: 'day' },
+              { value: DAY_GRID.WEEK, short: 'weekShort', full: 'week' },
+              { value: DAY_GRID.MONTH, short: 'monthShort', full: 'month' },
+            ].map((view) => {
+              const fullLabel = t(`obx.schedules.calendar.view.${view.full}`);
+              return (
+                <Tooltip key={view.value} arrow placement="top" title={fullLabel}>
+                  <ToggleButton
+                    className={classes.calendarHeaderToolbarToggleBtn}
+                    value={view.value}
+                    aria-label={fullLabel}
+                    onClick={handleChangeCalenderView(view.value)}
+                  >
+                    {t(`obx.schedules.calendar.view.${view.short}`)}
+                  </ToggleButton>
+                </Tooltip>
+              );
+            })}
           </ToggleButtonGroup>
         )}
 
@@ -860,6 +1051,18 @@ const CalendarHeaderToolbar = ({
             </ToggleButton>
           </ToggleButtonGroup>
         )}
+
+        {/* `TOGGLES_FIRST`: the toggles have had their turn, so the date navigator
+            follows them here instead of leading the cluster. Still inside the right
+            group and still before the trailing slot — the page action keeps the
+            edge in both arrangements. */}
+        {toolbarLeftContent && leadsWithToggles && dateNavigator}
+
+        {/* The trailing slot: after the view toggles, hard against the right edge.
+            `toolbarRightContent` lands *before* them so that what it usually holds —
+            another segmented control — reads as part of the same cluster. A page
+            action does not: it is the end of the row, not a member of that group. */}
+        {toolbarTrailingContent}
       </Box>
     </Box>
   );
@@ -869,8 +1072,12 @@ CalendarHeaderToolbar.propTypes = {
   calendarRef: PropTypes.object,
   queryParams: PropTypes.object,
   setQueryParams: PropTypes.func,
+  /** Leads the row, before the filters, separated from them by a hairline rule. */
+  toolbarLeadingContent: PropTypes.node,
   toolbarLeftContent: PropTypes.node,
   toolbarRightContent: PropTypes.node,
+  /** Rendered after the view toggles, at the row's right edge — for page actions. */
+  toolbarTrailingContent: PropTypes.node,
   showListSwitch: PropTypes.bool,
 };
 

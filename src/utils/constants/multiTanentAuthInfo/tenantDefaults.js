@@ -1,4 +1,4 @@
-import filterGoLogoShort from 'src/assets/images/filterGoLogoShort.svg';
+import filterGoLogoFull from 'src/assets/images/filterGoLogoFull.svg';
 import signalLogoShort from 'src/assets/images/signalLogoShort.svg';
 import signalLogoFull from 'src/assets/images/signlaLogoFull.svg';
 
@@ -70,11 +70,21 @@ export default {
     name: 'Filter Go',
     brandColor: '#2DA551',
     services: FILTER_GO_SERVICES,
-    logo: 'https://signalassets.blob.core.windows.net/filtergo/filter-go-logo.png',
-    logoShort: filterGoLogoShort,
+    /* Local SVG rather than the Azure-hosted PNG these used to point at. The nav
+       renders `images.logo1` expanded and `logoShort` collapsed, so the wordmark was
+       a remote raster request on every load — blurry on a 2× display, and blank
+       whenever the demo runs without network. Its green is #2DA551, the same
+       `brandColor` above, so the mark and the theme cannot drift. */
+    logo: filterGoLogoFull,
+    /* The same wordmark in the collapsed rail, on purpose. Filter Go's brand asset is
+       a wordmark only — no monogram or icon exists — so both nav states show it and it
+       just scales down. Signal's `logoShort` is a separate square glyph, which is why
+       the rail's img is sized by max-width/max-height rather than a fixed width: the
+       slot has to fit either aspect ratio (see sideBar.js `signalLogoShortIcon`). */
+    logoShort: filterGoLogoFull,
     images: {
-      logo1: 'https://signalassets.blob.core.windows.net/filtergo/filter-go-logo.png',
-      logoShort: filterGoLogoShort,
+      logo1: filterGoLogoFull,
+      logoShort: filterGoLogoFull,
     },
     loader: FilterGoLoader,
     showFaq: false,

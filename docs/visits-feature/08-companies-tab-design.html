@@ -1,0 +1,902 @@
+<meta charset="utf-8">
+<title>Companies, locations, and a year of visits — FilterGo Companies tab</title>
+<style>
+  :root {
+    --ink:#0F1D17; --ink-2:#33463D; --slate:#5C6C63;
+    --rule:#DCE3DD; --rule-soft:#EAEFEA;
+    --paper:#FAFBF9; --card:#FFFFFF;
+    --green:#2DA551; --green-deep:#1F7B3C; --green-wash:#EAF6EE;
+    --amber:#96650F; --amber-wash:#FBF2DF;
+    --clay:#A63D28;  --clay-wash:#FAECE8;
+    --blue:#1F5F8B;  --blue-wash:#E7F0F6;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --measure: 68ch;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ink:#E6EDE8; --ink-2:#B4C3BA; --slate:#8A9A90;
+      --rule:#2A3833; --rule-soft:#1E2A25;
+      --paper:#0C1310; --card:#111A16;
+      --green:#4FC776; --green-deep:#7BD99A; --green-wash:#16281D;
+      --amber:#D9A441; --amber-wash:#2A2213;
+      --clay:#E0836C;  --clay-wash:#2C1A15;
+      --blue:#7FB4D6;  --blue-wash:#14222C;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ink:#E6EDE8; --ink-2:#B4C3BA; --slate:#8A9A90;
+    --rule:#2A3833; --rule-soft:#1E2A25;
+    --paper:#0C1310; --card:#111A16;
+    --green:#4FC776; --green-deep:#7BD99A; --green-wash:#16281D;
+    --amber:#D9A441; --amber-wash:#2A2213;
+    --clay:#E0836C;  --clay-wash:#2C1A15;
+    --blue:#7FB4D6;  --blue-wash:#14222C;
+  }
+  :root[data-theme="light"] {
+    --ink:#0F1D17; --ink-2:#33463D; --slate:#5C6C63;
+    --rule:#DCE3DD; --rule-soft:#EAEFEA;
+    --paper:#FAFBF9; --card:#FFFFFF;
+    --green:#2DA551; --green-deep:#1F7B3C; --green-wash:#EAF6EE;
+    --amber:#96650F; --amber-wash:#FBF2DF;
+    --clay:#A63D28;  --clay-wash:#FAECE8;
+    --blue:#1F5F8B;  --blue-wash:#E7F0F6;
+  }
+
+  body { margin:0; background:var(--paper); color:var(--ink); font-family:var(--sans); font-size:16px; line-height:1.6; -webkit-font-smoothing:antialiased; }
+  .wrap { max-width:940px; margin:0 auto; padding:56px 28px 120px; }
+  .prose { max-width:var(--measure); }
+
+  .masthead { border-bottom:2px solid var(--ink); padding-bottom:22px; margin-bottom:14px; }
+  .kicker { font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--green-deep); margin:0 0 14px; }
+  h1 { font-family:var(--mono); font-size:clamp(29px,4.8vw,44px); line-height:1.07; letter-spacing:-.03em; font-weight:600; margin:0 0 16px; text-wrap:balance; }
+  .standfirst { font-size:18px; line-height:1.55; color:var(--ink-2); max-width:60ch; margin:0; }
+  .meta { display:flex; flex-wrap:wrap; gap:8px 22px; font-family:var(--mono); font-size:11.5px; letter-spacing:.05em; color:var(--slate); margin-bottom:52px; }
+  .meta b { color:var(--ink-2); font-weight:600; }
+
+  section { margin-bottom:58px; }
+  .sec-head { display:flex; align-items:baseline; gap:14px; border-top:1px solid var(--rule); padding-top:14px; margin-bottom:24px; }
+  .sec-tag { font-family:var(--mono); font-size:10.5px; letter-spacing:.13em; text-transform:uppercase; color:var(--slate); white-space:nowrap; padding-top:6px; }
+  h2 { font-family:var(--mono); font-size:25px; letter-spacing:-.02em; font-weight:600; margin:0; text-wrap:balance; }
+  h3 { font-family:var(--mono); font-size:15.5px; font-weight:600; margin:32px 0 10px; letter-spacing:-.005em; }
+  p { margin:0 0 15px; }
+  code { font-family:var(--mono); font-size:.87em; background:var(--rule-soft); padding:.1em .36em; border-radius:3px; color:var(--ink-2); }
+  a { color:var(--green-deep); }
+  a:focus-visible { outline:2px solid var(--green); outline-offset:3px; border-radius:2px; }
+
+  .scenario { border:1px solid var(--rule); border-left:3px solid var(--blue); background:var(--blue-wash); border-radius:3px; padding:18px 20px; margin:24px 0; }
+  .scenario h4 { font-family:var(--mono); font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--blue); margin:0 0 9px; }
+  .scenario p { font-size:15.5px; line-height:1.55; color:var(--ink); margin:0; font-style:italic; }
+  .scenario p + p { margin-top:10px; font-style:normal; font-size:14px; color:var(--ink-2); }
+
+  .dec { display:grid; gap:1px; background:var(--rule); border:1px solid var(--rule); border-radius:4px; overflow:hidden; margin-top:8px; }
+  .dec-row { display:grid; grid-template-columns:52px 1fr 1.2fr; gap:1px; background:var(--rule); }
+  .dec-row > * { background:var(--card); padding:12px 14px; font-size:14px; line-height:1.5; }
+  .dec-row.head > * { background:var(--rule-soft); font-family:var(--mono); font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--slate); }
+  .dec-id { font-family:var(--mono); font-size:11.5px; font-weight:600; color:var(--green-deep); }
+  .dec-what { font-weight:600; color:var(--ink); }
+  .dec-why { color:var(--ink-2); }
+  .dec-row.changed .dec-id { color:var(--clay); }
+  @media (max-width:680px){ .dec-row{ grid-template-columns:42px 1fr; } .dec-why{ grid-column:2/3; padding-top:0; } }
+
+  figure { margin:30px 0; }
+  .figbox { border:1px solid var(--rule); border-radius:4px; background:var(--card); padding:18px 16px 12px; overflow-x:auto; }
+  figcaption { font-family:var(--mono); font-size:11.5px; line-height:1.55; color:var(--slate); margin-top:12px; max-width:72ch; }
+
+  .rules { width:100%; border-collapse:collapse; font-size:14px; }
+  .rules th, .rules td { text-align:left; padding:11px 13px; border-bottom:1px solid var(--rule-soft); vertical-align:top; line-height:1.5; }
+  .rules th { font-family:var(--mono); font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--slate); border-bottom:1px solid var(--rule); }
+  .rules td:first-child { color:var(--ink); font-weight:600; width:32%; }
+  .rules td:last-child { color:var(--ink-2); }
+  .rules.thirds td:first-child { width:24%; }
+  .tablewrap { overflow-x:auto; border:1px solid var(--rule); border-radius:4px; background:var(--card); padding:4px 14px 8px; margin-top:10px; }
+
+  .chip { font-family:var(--mono); font-size:9.5px; letter-spacing:.09em; text-transform:uppercase; padding:3px 7px; border-radius:10px; font-weight:600; white-space:nowrap; display:inline-block; }
+  .chip.block { background:var(--clay-wash); color:var(--clay); }
+  .chip.warn  { background:var(--amber-wash); color:var(--amber); }
+  .chip.ok    { background:var(--green-wash); color:var(--green-deep); }
+  .chip.info  { background:var(--blue-wash); color:var(--blue); }
+
+  ul.tight { margin:0 0 15px; padding-left:20px; }
+  ul.tight li { margin-bottom:8px; color:var(--ink-2); font-size:15px; line-height:1.55; }
+  ul.tight li b { color:var(--ink); }
+
+  .callout { border:1px solid var(--rule); border-left:3px solid var(--clay); background:var(--clay-wash); border-radius:3px; padding:15px 18px; margin:24px 0; font-size:14.5px; line-height:1.55; color:var(--ink-2); }
+  .callout b.lbl { font-family:var(--mono); font-size:10.5px; letter-spacing:.09em; text-transform:uppercase; color:var(--clay); display:block; margin-bottom:6px; }
+  .callout.good { border-left-color:var(--green); background:var(--green-wash); }
+  .callout.good b.lbl { color:var(--green-deep); }
+  .callout.note { border-left-color:var(--blue); background:var(--blue-wash); }
+  .callout.note b.lbl { color:var(--blue); }
+  .callout.warn { border-left-color:var(--amber); background:var(--amber-wash); }
+  .callout.warn b.lbl { color:var(--amber); }
+
+  ol.q { margin:0; padding-left:0; list-style:none; counter-reset:q; }
+  ol.q li { counter-increment:q; display:grid; grid-template-columns:34px 1fr; gap:12px; padding:12px 0; border-bottom:1px solid var(--rule-soft); font-size:14.5px; line-height:1.55; color:var(--ink-2); }
+  ol.q li::before { content:"Q" counter(q); font-family:var(--mono); font-size:11px; color:var(--green-deep); padding-top:4px; font-weight:600; }
+  ol.q li b { color:var(--ink); font-weight:600; }
+
+  .phases { display:grid; gap:1px; background:var(--rule); border:1px solid var(--rule); border-radius:4px; overflow:hidden; margin-top:10px; }
+  .phase { background:var(--card); padding:14px 16px; display:grid; grid-template-columns:110px 1fr; gap:16px; align-items:start; }
+  .phase .ph { font-family:var(--mono); font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--green-deep); font-weight:600; padding-top:2px; }
+  .phase .pb { font-size:14px; line-height:1.55; color:var(--ink-2); }
+  .phase .pb b { color:var(--ink); }
+  @media (max-width:680px){ .phase{ grid-template-columns:1fr; gap:6px; } }
+
+  /* ---- The matrix mock. A real grid rather than a drawing of one, so the
+         arithmetic in it can be checked against the cadence it claims. ---- */
+  table.mx { border-collapse:separate; border-spacing:0; font-family:var(--mono); font-size:11px; min-width:780px; font-variant-numeric:tabular-nums; }
+  table.mx th, table.mx td { padding:0; }
+  .mx .mo { font-size:9.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--slate); font-weight:600; text-align:center; padding:0 0 7px; width:46px; }
+  .mx .mo.b4 { color:var(--green-deep); }
+  .mx .yr { font-size:9.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--slate); font-weight:600; text-align:right; padding:0 4px 7px 12px; }
+  .mx .lbl { position:sticky; left:0; background:var(--card); text-align:left; padding:0 14px 7px 0; min-width:212px; font-size:9.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--slate); font-weight:600; }
+  .mx .co th { padding-top:12px; }
+  .mx .co .lbl { font-size:12px; letter-spacing:0; text-transform:none; color:var(--ink); font-weight:600; padding-bottom:5px; }
+  .mx .co .lbl .sub { font-size:10px; color:var(--slate); font-weight:400; letter-spacing:.02em; display:block; margin-top:1px; }
+  .mx .co .lbl .terr { color:var(--blue); }
+  .mx tr.loc td, .mx tr.loc th { border-top:1px solid var(--rule-soft); height:34px; }
+  .mx tr.loc .lbl { padding:5px 14px 5px 14px; font-size:11.5px; letter-spacing:0; text-transform:none; color:var(--ink-2); font-weight:500; vertical-align:middle; }
+  .mx tr.loc .lbl .cad { display:block; font-size:9.5px; color:var(--slate); letter-spacing:.05em; text-transform:uppercase; margin-top:2px; }
+  .mx td.cell { text-align:center; vertical-align:middle; color:var(--slate); }
+  .mx td.cell.proj { background:var(--rule-soft); }
+  .mx b.pl { color:var(--ink); font-weight:600; }
+  .mx b.done { color:var(--green-deep); font-weight:600; }
+  .mx span.pj { color:var(--slate); font-weight:400; }
+  .mx td.bnd { border-left:1px dashed var(--green); }
+  .mx th.bnd { border-left:1px dashed var(--green); }
+  .mx td.tot { text-align:right; padding:0 4px 0 12px; color:var(--ink-2); font-weight:600; }
+  .mx td.none { text-align:left; padding-left:6px; }
+  .mx td.none em { font-style:normal; color:var(--amber); font-size:10px; letter-spacing:.06em; text-transform:uppercase; font-weight:600; }
+  .mx td.miss b { color:var(--clay); font-weight:600; }
+  .mxlegend { display:flex; flex-wrap:wrap; gap:6px 18px; font-family:var(--mono); font-size:10px; letter-spacing:.05em; color:var(--slate); margin-top:14px; padding-top:11px; border-top:1px solid var(--rule-soft); }
+  .mxlegend span { display:inline-flex; align-items:center; gap:6px; }
+  .mxlegend i { width:16px; height:11px; border-radius:2px; display:inline-block; }
+  .mxlegend i.i-pl { background:var(--ink); }
+  .mxlegend i.i-done { background:var(--green-deep); }
+  .mxlegend i.i-miss { background:var(--clay); }
+  .mxlegend i.i-pj { background:var(--rule-soft); border:1px solid var(--rule); }
+  .mxlegend i.i-bnd { width:0; border-left:1px dashed var(--green); height:13px; border-radius:0; }
+
+  /* ---- The hierarchy tree. Three levels, stated once. ---- */
+  .tree { font-family:var(--mono); font-size:12px; line-height:1.85; color:var(--ink-2); margin:0; }
+  .tree b { color:var(--ink); }
+  .tree .k { color:var(--green-deep); }
+  .tree .g { color:var(--slate); }
+  .tree .x { color:var(--clay); }
+</style>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <p class="kicker">FilterGo · Visits · Design spec</p>
+    <h1>A company, its locations, and a year of visits in twelve columns</h1>
+    <p class="standfirst">The <b>Companies</b> tab, specified against the client call rather than
+      inferred from it. Three things that call settled and <code>07</code> did not have: what a
+      <b>location</b> is and that it is never a company, the <b>parent–child company</b> relationship
+      the whole view hangs on, and <b>multi-select across companies</b> because planning happens
+      across several at once. The year becomes a <b>month matrix</b> — one row per location, twelve
+      columns, the dates in the cells.</p>
+  </header>
+
+  <div class="meta">
+    <span><b>Doc</b> 08</span>
+    <span><b>Status</b> Design, for review</span>
+    <span><b>Builds on</b> 07 (D14–D24)</span>
+    <span><b>Depends on</b> 06 (D1–D13)</span>
+    <span><b>Decisions</b> D25–D36</span>
+    <span><b>Revises</b> D15 · D18 · D20</span>
+    <span><b>Source</b> client call, transcript notes</span>
+  </div>
+
+  <section>
+    <div class="sec-head">
+      <span class="sec-tag">The call</span>
+      <h2>What was settled, and what was newly demanded</h2>
+    </div>
+    <div class="prose">
+      <p><code>07</code> was written from a second-hand account of the rejection. The call notes
+        confirm most of it and add three requirements that change the shape of the thing. Worth
+        separating the two, because the confirmations mean <code>07</code>'s decisions can stand and
+        the new demands mean some of them cannot.</p>
+
+      <h3>Confirmed — <code>07</code> was right about these</h3>
+      <ul class="tight">
+        <li><b>A list, not a calendar.</b> Emphatic: for a quarterly customer a calendar means
+          clicking <i>next</i> twelve times. <i>“That's not the regular customer experience.”</i></li>
+        <li><b>Dates are information text, not links.</b> Asked directly whether clicking Sept 8
+          should jump to Sept 8 — the answer was no. <code>07</code> D20 holds, with one refinement
+          the matrix forces (D33).</li>
+        <li><b>Company names on the left, visits to the right.</b> The layout in one phrase.</li>
+        <li><b>Two ways to look at the same view</b> — a time-scoped multi-company list, and a
+          single-company forward year. Not two screens.</li>
+        <li><b>Volume falls out of cadence:</b> next 4 visits if quarterly, next 12 if monthly.
+          <code>07</code> D18 got this right.</li>
+        <li><b>The current build showing only this week</b> — <i>“Not helpful. Not helpful at all.
+          This doesn't work.”</i></li>
+      </ul>
+
+      <h3>New — and each one changes the design</h3>
+      <ul class="tight">
+        <li><b>Site = property = location.</b> Synonyms for one thing: <i>a physical address</i>.
+          That definition has to persist identically across Leads, SET and Edge. This is a
+          vocabulary requirement with teeth — see <a href="#vocab">the vocabulary</a>.</li>
+        <li><b>Company ≠ site, and the parent–child company relationship must be built.</b>
+          <i>“Mega Saver” the parent versus all the Mega Saver locations in a franchisee's
+          territory.</i> <code>07</code> assumed a flat <code>customerId</code>; that is not enough.</li>
+        <li><b>Multi-select across companies</b>, because FilterGo plans across several at once —
+          then filter down to a single location. <code>07</code>'s rail selected exactly one company
+          and used that selection as the mode switch. That has to go (D31).</li>
+      </ul>
+
+      <div class="callout warn">
+        <b class="lbl">Read this as a warning, not a footnote</b>
+        The notes record that he will <b>hold Mehroz accountable if this comes up again</b> — and
+        the “this” is the company-versus-site conflation, not a feature. So the vocabulary section
+        below is the most load-bearing part of this document, and it is deliberately first. A screen
+        that gets the layout right and the nouns wrong fails the same way the week calendar did.
+      </div>
+    </div>
+  </section>
+
+  <section id="vocab">
+    <div class="sec-head">
+      <span class="sec-tag">Vocabulary</span>
+      <h2>One physical address, three words, and a company is none of them</h2>
+    </div>
+    <div class="prose">
+      <p>The instruction is that <b>site</b>, <b>property</b> and <b>location</b> denote the same
+        thing — a physical address — and that the definition must be stable across three products.
+        The design consequence is not which word wins; it is that <b>only one of them may appear on
+        a screen</b>, and that the word for the address is never used for the company that occupies
+        it.</p>
+
+      <div class="tablewrap">
+        <table class="rules thirds">
+          <thead><tr><th>Term</th><th>Is</th><th>Is not</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>Company <span class="chip info">parent</span></td>
+              <td>A trading name that occupies many addresses. <i>Mega Saver.</i> The row group.</td>
+              <td>Not an address. Not a billing account. Not one shop.</td>
+            </tr>
+            <tr>
+              <td>Account</td>
+              <td>The billing entity a visit is invoiced to — <code>customerId</code>, already the
+                key invoicing uses.</td>
+              <td>Not the thing the franchisee names when they talk about a customer.</td>
+            </tr>
+            <tr>
+              <td>Location <span class="chip ok">= site = property</span></td>
+              <td>One physical address that gets serviced. The row.</td>
+              <td>Never a company, never a contract, never a route.</td>
+            </tr>
+            <tr>
+              <td>Visit</td>
+              <td>One service occurrence at one location on one date. API: <code>hit</code>.</td>
+              <td>Not a runsheet, which is a day's route of many visits at many locations.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>Edge's data layer already says <code>site</code> everywhere — <code>siteId</code>, the Sites
+        module, <code>VISIT_SITE_BOOK</code>. Renaming that is a migration nobody asked for. But the
+        displayed noun already goes through <code>getLabel('terms', 'sites', t)</code>, which means
+        <b>the word on screen is a tenant configuration change, not a code change</b>. So: keep
+        <code>site</code> as the data key, set the display term once per tenant, and never hardcode
+        any of the three in copy. If the client wants FilterGo to read <i>Locations</i>, that is one
+        line in the tenant labels payload and a <code>TENANT_LABELS_VERSION</code> bump
+        (handoff §7.2).</p>
+
+      <div class="callout good">
+        <b class="lbl">Why this is cheap here and expensive later</b>
+        Every noun on this screen is already a labelled term in this codebase except one:
+        <b>company</b>. The data says <code>customerId</code>, <code>company</code> and
+        <code>client</code> in three different files — <code>sites.mock.js</code> uses
+        <code>company</code>, <code>invoice.mock.js</code> uses <code>client</code>. One term has to
+        win and it should go through <code>getLabel</code> like every other tenant noun, before a
+        second screen learns the wrong one.
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <span class="sec-tag">The model</span>
+      <h2>Parent, account, location — and why all three have to exist</h2>
+    </div>
+    <div class="prose">
+      <p>“Mega Saver the parent versus all the Mega Saver locations” is a request for a level that
+        does not exist in the data today. Each Mega Saver shop is very likely its own customer
+        record with its own <code>customerId</code>, because that is how it is invoiced — and
+        nothing links them, which is exactly why the franchisee cannot ask <i>“when am I next at a
+        Mega Saver”</i>.</p>
+      <p>So the model is three levels, and the reason it is three rather than two is that
+        <b>billing and recognition disagree</b>: billing needs the account, the franchisee
+        recognises the brand, and the technician drives to the address.</p>
+    </div>
+
+    <figure>
+      <div class="figbox">
+        <p class="tree">
+<b>Mega Saver</b> <span class="g">— company (parent)</span> <span class="k">parentCompanyId: PC-88</span><br>
+&nbsp;&nbsp;├─ <span class="g">account</span> <span class="k">CUST-2041</span> — Mega Saver Franchising LLC<br>
+&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;├─ <b>Mega Saver — Kingsway</b> &nbsp;<span class="g">40 Kingsway</span> &nbsp;<span class="k">Every 2 wks</span><br>
+&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;└─ <b>Mega Saver — Dockside</b> &nbsp;<span class="g">9 Dockside Rd</span> &nbsp;<span class="k">Monthly</span><br>
+&nbsp;&nbsp;└─ <span class="g">account</span> <span class="k">CUST-2077</span> — Ridgeway Retail Ops <span class="g">(a different franchisee of the same brand)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├─ <b>Mega Saver — Fairmont</b> &nbsp;<span class="g">1 Fairmont Plaza</span> &nbsp;<span class="k">Every 3 wks</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└─ <span class="x">Mega Saver — Redhill</span> &nbsp;<span class="g">90 Redhill Rd</span> &nbsp;<span class="x">outside your territory — not shown</span>
+        </p>
+      </div>
+      <figcaption>The three levels, with the two facts that make them necessary: one brand can span
+        two billing accounts, and one brand can span two territories. The tab groups by the parent
+        and shows locations; the account is a badge on a row, not a tier of its own (D26). Redhill is
+        the case that must never be counted — see D27.</figcaption>
+    </figure>
+
+    <div class="prose">
+      <h3>Two levels on screen, three in the data</h3>
+      <p>Rendering all three tiers would triple the row count to answer a question nobody on this
+        screen is asking. The franchisee wants <i>which Mega Savers am I visiting, and when</i> — not
+        which legal entity signs the cheque. So the account appears as a small badge on a location
+        row, and only where a company has more than one; otherwise it is silent.</p>
+
+      <div class="callout note">
+        <b class="lbl">Territory is the trap</b>
+        Mega Saver nationally might be four hundred locations. This franchisee has six. If the
+        company header reads <b>6 locations</b> that is correct and useful; if it reads
+        <b>400 locations</b> and lists six, it is a support ticket. Every count on this screen is the
+        count of <i>what is shown</i>, and the header says so in words — <i>6 locations in your
+        territory</i>. <code>07</code> had this as a one-line edge case; the parent–child model
+        promotes it to a decision (D27), because a parent is exactly the kind of object that spans
+        territories.
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <span class="sec-tag">Structure</span>
+      <h2>One tab, two modes, and a rail that filters instead of navigating</h2>
+    </div>
+    <div class="prose">
+      <p><i>“Two ways to look at the same view.”</i> Both modes are projections of one visit set, so
+        they cannot disagree, and the switch between them is explicit rather than a side effect of
+        selecting something.</p>
+
+      <div class="tablewrap">
+        <table class="rules thirds">
+          <thead><tr><th>Mode</th><th>Answers</th><th>Shape</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>Period <span class="chip ok">default</span></td>
+              <td>“Who am I visiting today / this week / this month?”</td>
+              <td>Scope control, then companies → the locations being visited → the dates. Overdue
+                pinned above. Substantially <code>07</code>'s View A.</td>
+            </tr>
+            <tr>
+              <td>Year</td>
+              <td>“When is this customer due, all year?”</td>
+              <td>A <b>12-month matrix</b>: one row per location, twelve month columns, day-of-month
+                numbers in the cells. Replaces <code>07</code>'s stacked date list.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>The rail is a filter now, not a mode switch</h3>
+      <p><code>07</code> D15 made selecting a company <i>the</i> switch from the roll-up to the year.
+        Multi-select breaks that: selecting four companies cannot mean “show me one company's year”.
+        So the rail becomes a multi-select list — <b>none selected means all</b> — and it narrows
+        whichever mode you are in. A location filter then narrows within the selection, which is the
+        <i>“consolidate at company level, then filter down to a single location”</i> requirement
+        taken literally (D31).</p>
+      <p>This is strictly more capable than the old behaviour and it costs nothing: selecting exactly
+        one company and switching to Year is the single-company year the client asked for, and
+        selecting six gives the cross-company planning view that <code>07</code> could not express at
+        all.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <span class="sec-tag">The year view</span>
+      <h2>Twelve columns, and the rhythm becomes visible</h2>
+    </div>
+    <div class="prose">
+      <p>A stacked list of dates per location tells you <i>when</i>. A month matrix tells you when
+        <i>and</i> shows you the shape of the arrangement — a monthly location is a solid line of
+        twelve, a quarterly one is four marks with three gaps between them, and an unscheduled one
+        is a conspicuously empty row. That is the Subscribe &amp; Save trick made spatial, and it is
+        the reason to prefer the grid.</p>
+      <p>It is only drawable because the arithmetic is small. Across the demo book's cadences the
+        busiest interval — fourteen days — puts <b>at most three visits in a month</b>, and a
+        monthly location puts exactly one in each. So a cell holds one to three numbers and never
+        needs a “+2 more”.</p>
+    </div>
+
+    <figure>
+      <div class="figbox">
+        <table class="mx">
+          <thead>
+            <tr>
+              <th class="lbl">Company · location</th>
+              <th class="mo">Aug</th>
+              <th class="mo bnd">Sep</th>
+              <th class="mo">Oct</th><th class="mo">Nov</th><th class="mo">Dec</th>
+              <th class="mo">Jan</th><th class="mo">Feb</th><th class="mo">Mar</th>
+              <th class="mo">Apr</th><th class="mo">May</th><th class="mo">Jun</th><th class="mo">Jul</th>
+              <th class="yr">/yr</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="co">
+              <th class="lbl" colspan="14">Downtown Holdings
+                <span class="sub">4 locations <span class="terr">in your territory</span> · 42 visits · 1 unrouted</span></th>
+            </tr>
+            <tr class="loc">
+              <th class="lbl">Downtown Plaza <span class="cad">Every 2 wks</span></th>
+              <td class="cell"><b class="done">3</b>·<b class="pl">17·31</b></td>
+              <td class="cell bnd"><span class="pj">14·28</span></td>
+              <td class="cell proj"><span class="pj">12·26</span></td>
+              <td class="cell proj"><span class="pj">9·23</span></td>
+              <td class="cell proj"><span class="pj">7·21</span></td>
+              <td class="cell proj"><span class="pj">4·18</span></td>
+              <td class="cell proj"><span class="pj">1·15</span></td>
+              <td class="cell proj"><span class="pj">1·15·29</span></td>
+              <td class="cell proj"><span class="pj">12·26</span></td>
+              <td class="cell proj"><span class="pj">10·24</span></td>
+              <td class="cell proj"><span class="pj">7·21</span></td>
+              <td class="cell proj"><span class="pj">5·19</span></td>
+              <td class="tot">26</td>
+            </tr>
+            <tr class="loc">
+              <th class="lbl">Greenwich Cold Store <span class="cad">Monthly</span></th>
+              <td class="cell"><b class="pl">21</b></td>
+              <td class="cell bnd"><span class="pj">21</span></td>
+              <td class="cell proj"><span class="pj">21</span></td>
+              <td class="cell proj"><span class="pj">21</span></td>
+              <td class="cell proj"><span class="pj">21</span></td>
+              <td class="cell proj"><span class="pj">21</span></td>
+              <td class="cell proj"><span class="pj">21</span></td>
+              <td class="cell proj"><span class="pj">21</span></td>
+              <td class="cell proj"><span class="pj">21</span></td>
+              <td class="cell proj"><span class="pj">21</span></td>
+              <td class="cell proj"><span class="pj">21</span></td>
+              <td class="cell proj"><span class="pj">21</span></td>
+              <td class="tot">12</td>
+            </tr>
+            <tr class="loc">
+              <th class="lbl">Downtown Annexe <span class="cad">Every 3 months</span></th>
+              <td class="cell"><b class="pl">20</b></td>
+              <td class="cell bnd"></td>
+              <td class="cell proj"></td>
+              <td class="cell proj"><span class="pj">20</span></td>
+              <td class="cell proj"></td>
+              <td class="cell proj"></td>
+              <td class="cell proj"><span class="pj">20</span></td>
+              <td class="cell proj"></td>
+              <td class="cell proj"></td>
+              <td class="cell proj"><span class="pj">20</span></td>
+              <td class="cell proj"></td>
+              <td class="cell proj"></td>
+              <td class="tot">4</td>
+            </tr>
+            <tr class="loc">
+              <th class="lbl">Riverside Lot 4 <span class="cad">No schedule</span></th>
+              <td class="cell none" colspan="12"><em>Not scheduled · last visit 3 Jun</em></td>
+              <td class="tot">0</td>
+            </tr>
+
+            <tr class="co">
+              <th class="lbl" colspan="14">Harborview Logistics
+                <span class="sub">3 locations <span class="terr">in your territory</span> · 51 visits · 1 overdue</span></th>
+            </tr>
+            <tr class="loc">
+              <th class="lbl">Harborview Logistics Hub <span class="cad">Every 2 wks</span></th>
+              <td class="cell"><b class="done">5</b>·<b class="pl">19</b></td>
+              <td class="cell bnd"><b class="pl">2</b>·<span class="pj">16·30</span></td>
+              <td class="cell proj"><span class="pj">14·28</span></td>
+              <td class="cell proj"><span class="pj">11·25</span></td>
+              <td class="cell proj"><span class="pj">9·23</span></td>
+              <td class="cell proj"><span class="pj">6·20</span></td>
+              <td class="cell proj"><span class="pj">3·17</span></td>
+              <td class="cell proj"><span class="pj">3·17·31</span></td>
+              <td class="cell proj"><span class="pj">14·28</span></td>
+              <td class="cell proj"><span class="pj">12·26</span></td>
+              <td class="cell proj"><span class="pj">9·23</span></td>
+              <td class="cell proj"><span class="pj">7·21</span></td>
+              <td class="tot">26</td>
+            </tr>
+            <tr class="loc">
+              <th class="lbl">Harborview Cold Chain <span class="cad">Every 45d</span></th>
+              <td class="cell"><b class="pl">21</b></td>
+              <td class="cell bnd"></td>
+              <td class="cell proj"><span class="pj">5</span></td>
+              <td class="cell proj"><span class="pj">19</span></td>
+              <td class="cell proj"></td>
+              <td class="cell proj"><span class="pj">3</span></td>
+              <td class="cell proj"><span class="pj">17</span></td>
+              <td class="cell proj"></td>
+              <td class="cell proj"><span class="pj">3</span></td>
+              <td class="cell proj"><span class="pj">18</span></td>
+              <td class="cell proj"></td>
+              <td class="cell proj"><span class="pj">2</span></td>
+              <td class="tot">8</td>
+            </tr>
+            <tr class="loc">
+              <th class="lbl">Northgate Cold Storage <span class="cad">Every 3 wks</span></th>
+              <td class="cell miss"><b>12 missed</b></td>
+              <td class="cell bnd"><b class="pl">2</b>·<span class="pj">23</span></td>
+              <td class="cell proj"><span class="pj">14</span></td>
+              <td class="cell proj"><span class="pj">4·25</span></td>
+              <td class="cell proj"><span class="pj">16</span></td>
+              <td class="cell proj"><span class="pj">6·27</span></td>
+              <td class="cell proj"><span class="pj">17</span></td>
+              <td class="cell proj"><span class="pj">10·31</span></td>
+              <td class="cell proj"><span class="pj">21</span></td>
+              <td class="cell proj"><span class="pj">12</span></td>
+              <td class="cell proj"><span class="pj">2·23</span></td>
+              <td class="cell proj"><span class="pj">14</span></td>
+              <td class="tot">17</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="mxlegend">
+          <span><i class="i-done"></i> Completed</span>
+          <span><i class="i-pl"></i> Planned — a real visit, opens</span>
+          <span><i class="i-miss"></i> Missed — still actionable</span>
+          <span><i class="i-pj"></i> Projected — cadence arithmetic, inert</span>
+          <span><i class="i-bnd"></i> Scheduled through Sun 6 Sep</span>
+          <span>Aug 2026 → Jul 2027 · rolling · today 17 Aug</span>
+        </div>
+      </div>
+      <figcaption>Real arithmetic, not a sketch: every date is the demo book's own cadence stepped
+        from its anchor, and the totals were checked against it rather than estimated. Four shapes in
+        the first company alone — fortnightly (26), monthly (12), quarterly (4) and unscheduled (0).
+        Two things only a grid has to solve are visible here: the <b>current month holds three kinds
+        of date at once</b> (Downtown Plaza completed the 3rd, is due the 17th and the 31st), and the
+        <b>September cells are mixed</b> — 2 Sep is a real visit, 16 and 30 Sep are arithmetic,
+        because the horizon falls inside that column.</figcaption>
+    </figure>
+
+    <div class="prose">
+      <h3>What a cell contains</h3>
+      <div class="tablewrap">
+        <table class="rules">
+          <thead><tr><th>Cell state</th><th>Rendering</th></tr></thead>
+          <tbody>
+            <tr><td>One to three visits</td><td>The day-of-month numbers, middle-dot separated, tabular figures so columns align. No month name — the column is the month.</td></tr>
+            <tr><td>Four or more <span class="chip warn">bounded</span></td><td><code>4 dates</code> plus a popover on the cell. No cadence in the current book reaches this; a weekly contract would, and it must not blow the row height.</td></tr>
+            <tr><td>Empty</td><td>Nothing. Not a dash, not a zero — an empty cell in a rhythm is information and punctuation would clutter it.</td></tr>
+            <tr><td>Already completed</td><td>Green, the same green a completed visit is drawn in everywhere else. Only occurs in the current month, which is the one column a rolling year opens in the middle of.</td></tr>
+            <tr><td>Mixed kinds in one cell</td><td>Common, not exceptional: the current month mixes completed with planned, and the horizon month mixes planned with projected. Each date keeps its own treatment.</td></tr>
+            <tr><td>Overdue / missed</td><td>Alert colour and the word, in the month it belongs to. A missed visit outlives its date (06 D5) so it cannot be silently dropped from a customer-facing grid.</td></tr>
+            <tr><td>No cadence at all</td><td>The row spans all twelve columns with amber <code>Not scheduled</code> and the last visit date. Sorted to the top of its company block (D34).</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Geometry</h3>
+      <ul class="tight">
+        <li><b>The location column is sticky</b>, because a row read at the June column is
+          meaningless without its name. Month headers stick to the top for the same reason.</li>
+        <li><b>Twelve columns at 46px plus a 212px label column</b> is about 1030px — it fits the
+          scheduler pane on a desktop and scrolls horizontally inside its own container on anything
+          narrower. The page never scrolls sideways.</li>
+        <li><b>~34px rows.</b> 18 companies and 46 locations is 64 rows, which scrolls in one pane
+          without virtualization; the pane virtualizes when the book is larger.</li>
+        <li><b>Company blocks collapse</b>, and default to expanded — the point of the screen is
+          seeing them at once.</li>
+        <li><b>A <code>/yr</code> total column</b>, right-aligned, because the row already contains
+          that arithmetic and it is the number a stock order is built from (D35).</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <span class="sec-tag">The honesty rule</span>
+      <h2>The horizon is a column boundary, and it lands mid-month</h2>
+    </div>
+    <div class="prose">
+      <p><code>07</code>'s planned/projected distinction survives intact and is still the
+        load-bearing idea: visits are real objects only inside the window the scheduler has actually
+        generated, and beyond it there is a cadence, an anchor and a multiplication. A date that
+        reads as firm and then moves costs more than one that was labelled an estimate.</p>
+      <p>What the matrix changes is <b>where the boundary is drawn</b>. In a stacked list it is a
+        horizontal rule partway down a location's dates. In a grid it is <b>vertical</b> — and
+        because the scheduler's horizon is a date, not a month, it falls <i>inside</i> a column
+        rather than between two. Three rules follow, and the first one is easy to get wrong:</p>
+      <ul class="tight">
+        <li><b>One rule for the whole grid</b>, drawn at the column containing
+          <code>scheduledHorizonEndsAt</code> — <i>not</i> at each row's own first projection. A
+          quarterly location whose next visit is in November has nothing planned in September, but
+          the horizon is still September; deriving the rule per row would draw a different boundary
+          on every line and stop meaning anything.</li>
+        <li><b>The horizon column is not washed</b>, because it holds both kinds. Every column after
+          it is, because every date in it is arithmetic. The wash is the summary; the cell is the
+          truth.</li>
+        <li>Inside that straddling column, <b>each date carries its own weight</b> — full ink for
+          planned, lighter for projected.</li>
+      </ul>
+
+      <h3>The first column holds a third kind of date</h3>
+      <p>A rolling twelve months starts at the <i>current</i> month, so column one contains visits
+        that have already happened — Downtown Plaza was serviced on the 3rd and is due again on the
+        17th and the 31st. That is not planned and it is certainly not projected, so the honesty rule
+        has three states in that column, not two, and one of them is history.</p>
+      <p>Rather than invent a treatment for it, <b>the matrix borrows the scheduler's own status
+        vocabulary</b> — completed reads green, missed reads alert, exactly as a visit card does — so
+        <code>helper/visitState.js</code> stays the single source of truth for what a visit is and no
+        second palette has to be kept in step with it. Projection is the only thing this surface adds,
+        and it is the only thing drawn in a way the grid has no equivalent for.</p>
+
+      <div class="callout">
+        <b class="lbl">The failure this avoids</b>
+        Drawing the boundary at the <i>nearest</i> month edge would be tidier and would lie in one of
+        two directions: round it forward and three planned visits get labelled projections; round it
+        back and projections get read as commitments. The straddling column is slightly less elegant
+        and exactly right, which is the same trade <code>06</code> D11 made when it let a resolved
+        state overrule a stored one.
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <span class="sec-tag">Interaction</span>
+      <h2>What responds, and what is only ink</h2>
+    </div>
+    <div class="prose">
+      <p>The requirement is that dates do not navigate. The matrix strains it in one place — a row
+        now spans a year and many visits, so “the row is the click target” no longer identifies
+        anything. The target moves down a level to the cell, and the date keeps its inertness.</p>
+
+      <div class="tablewrap">
+        <table class="rules thirds">
+          <thead><tr><th>Target</th><th>Behaviour</th></tr></thead>
+          <tbody>
+            <tr><td>A date number</td><td><b>Inert.</b> No link styling, no underline, no cursor change, on either kind of date. Unchanged from D20.</td></tr>
+            <tr><td>A cell holding planned visits</td><td>Hover wash on the <i>cell</i>; click opens a small popover listing that month's visits with window, route and status — each opening the existing visit drawer, with 06's state rules (D3/D4/D5) already governing what it offers.</td></tr>
+            <tr><td>A cell holding only projections</td><td>Inert, with a tooltip stating provenance: <i>projected from a 90-day cadence · not yet scheduled</i>.</td></tr>
+            <tr><td>A location name</td><td>Opens the location, on its Schedule tab. Names are navigation; dates are not.</td></tr>
+            <tr><td>A company header</td><td>Collapses and expands its block. The name itself opens the company record where one exists.</td></tr>
+            <tr><td>The account badge</td><td>Inert. It is a disambiguator, not a route to billing — this is a read surface.</td></tr>
+            <tr><td>The <code>Unassigned</code> pill</td><td>The one write action on the tab, as in <code>07</code> D21. Opens the same add-to-a-route flow the grid uses.</td></tr>
+            <tr><td>Export</td><td>CSV of the visible grid, months as columns. Download only — handing a schedule to a customer is the franchisee's conversation.</td></tr>
+            <tr><td>Everything else</td><td>Not here. Bulk selection, harmonize and route building stay on the Visits tab.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <span class="sec-tag">Decisions</span>
+      <h2>D25 – D36</h2>
+    </div>
+    <p class="prose">Numbering continues <code>06</code> and <code>07</code>, so the visits record
+      stays one list. Rows marked in the alert colour change or reverse an earlier decision.</p>
+
+    <div class="dec">
+      <div class="dec-row head"><div>ID</div><div>Decision</div><div>Why</div></div>
+
+      <div class="dec-row">
+        <div class="dec-id">D25</div>
+        <div class="dec-what">Site, property and location are one thing — a physical address. One displayed noun, supplied by <code>getLabel</code>; the other two never appear beside it.</div>
+        <div class="dec-why">Stated requirement, and it must hold across Leads, SET and Edge. Keeping <code>site</code> as the data key and the noun as a tenant label makes it a config change rather than a migration.</div>
+      </div>
+      <div class="dec-row">
+        <div class="dec-id">D26</div>
+        <div class="dec-what">Three levels in the data — company (parent) → account → location — and two on screen. The account is a badge on a location row, shown only when a company has more than one.</div>
+        <div class="dec-why">Billing needs the account, the franchisee recognises the brand, the technician drives to the address. A third visible tier triples the rows to answer a question this screen is not asking.</div>
+      </div>
+      <div class="dec-row">
+        <div class="dec-id">D27</div>
+        <div class="dec-what">Every row and every count is scoped to the user's territory, and the company header says so in words.</div>
+        <div class="dec-why">A parent company is exactly the object that spans territories. “400 locations” over six rows is a support ticket; <code>07</code> had this as an edge case, the parent model makes it structural.</div>
+      </div>
+      <div class="dec-row changed">
+        <div class="dec-id">D28</div>
+        <div class="dec-what">The year view is a <b>12-month matrix</b>: locations are rows, months are columns, cells carry day-of-month numbers. Replaces <code>07</code>'s stacked per-location date list.</div>
+        <div class="dec-why">It answers “when” and additionally shows the <i>shape</i> of the arrangement, which is what makes a quarterly customer legible at a glance. Viable because the busiest cadence in the book puts only three visits in a month.</div>
+      </div>
+      <div class="dec-row">
+        <div class="dec-id">D29</div>
+        <div class="dec-what">Twelve months rolling from the current month, not a calendar year. No year stepper.</div>
+        <div class="dec-why">“Forward-looking 12 months.” The first column is then always the one being asked about, and December does not turn half the grid into history.</div>
+      </div>
+      <div class="dec-row">
+        <div class="dec-id">D30</div>
+        <div class="dec-what">The planned/projected boundary is <b>one</b> vertical dashed rule for the whole grid, at the column containing <code>scheduledHorizonEndsAt</code> — never derived per row. That column stays unwashed and its dates carry individual weight; every later column is washed.</div>
+        <div class="dec-why">The horizon is a date, so it falls inside a column. Rounding it to a month edge would either demote planned visits or promote guesses; deriving it per row would draw a different line on every line and mean nothing. Same principle as <code>06</code> D11.</div>
+      </div>
+      <div class="dec-row changed">
+        <div class="dec-id">D31</div>
+        <div class="dec-what">Company selection is <b>multi-select</b> and acts as a filter. None selected means all. A location filter narrows within the selection. <b>Reverses <code>07</code> D15</b>, where selecting one company was the mode switch.</div>
+        <div class="dec-why">“Multi-select across companies, since the use case is planning across several at once.” One selection cannot both mean a filter and a navigation. Selecting exactly one still gives the single-company year.</div>
+      </div>
+      <div class="dec-row">
+        <div class="dec-id">D32</div>
+        <div class="dec-what">Two modes on one tab — <b>Period</b> (today / this week / this month) and <b>Year</b> — switched explicitly. Period is the default.</div>
+        <div class="dec-why">“Two ways to look at the same view.” Both are projections of one visit set, so nothing can disagree. Period is the default because it is the shift-to-shift question.</div>
+      </div>
+      <div class="dec-row changed">
+        <div class="dec-id">D33</div>
+        <div class="dec-what">Dates stay inert; the <b>cell</b> is the click target, opening a popover of that month's visits. <b>Refines D20</b>, which made the row the target.</div>
+        <div class="dec-why">A row spans twelve months now, so it identifies nothing. Confirmed on the call: clicking Sept 8 must not jump to Sept 8. A cell is a month of one location — small enough to be an unambiguous subject.</div>
+      </div>
+      <div class="dec-row">
+        <div class="dec-id">D34</div>
+        <div class="dec-what">A location with no cadence spans all twelve columns as amber <code>Not scheduled</code> with its last visit date, sorted to the top of its company block.</div>
+        <div class="dec-why">Same treatment as the grid (<code>06</code> D8) so the fact reads identically in both places. An empty row in a rhythm grid would otherwise be indistinguishable from a loading failure.</div>
+      </div>
+      <div class="dec-row changed">
+        <div class="dec-id">D35</div>
+        <div class="dec-what">A <code>/yr</code> total column at the right edge. <b>Retires <code>07</code> D18's twelve-row cap</b>, which the matrix makes unnecessary.</div>
+        <div class="dec-why">The row already contains the arithmetic, and annual volume is what a filter stock order is built from. The cap existed to stop a weekly location producing 52 rows — in a grid it produces four numbers in a cell instead.</div>
+      </div>
+      <div class="dec-row">
+        <div class="dec-id">D36</div>
+        <div class="dec-what">A date's treatment comes from <code>helper/visitState.js</code> — completed green, missed alert, the same as a visit card. <b>Projected is the only vocabulary this surface adds.</b> The current month therefore holds three kinds of date, not two.</div>
+        <div class="dec-why">A rolling year opens in the middle of a month, so history is unavoidable in column one. Borrowing the resolver means a visit cannot read one way on the grid and another here — the defect <code>06</code> D6 was written to end — and only one new mark has to be learned.</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <span class="sec-tag">Edge cases</span>
+      <h2>What breaks a grid that a list did not have to answer</h2>
+    </div>
+    <div class="tablewrap">
+      <table class="rules">
+        <thead><tr><th>Case</th><th>Behaviour</th></tr></thead>
+        <tbody>
+          <tr><td>One brand, two billing accounts</td><td>One company block. The account badge appears on every row of that block, because it now disambiguates something real. This is the Mega Saver case and it is the reason the parent level exists.</td></tr>
+          <tr><td>One brand, two territories</td><td>Only the user's territory is listed and counted (D27). The header states the scope; it never implies the parent is that small.</td></tr>
+          <tr><td>One location, two contracts</td><td>Two rows under the same location name, each labelled by contract, each with its own cadence and total. <code>invoice.mock.js</code> already has this — Downtown Holdings holds three contracts — so it is real data, not a hypothetical. Merging them would invent an interval nobody sold.</td></tr>
+          <tr><td>Cadence changed mid-year</td><td>Planned visits stand; projection recomputes from the new interval and anchor. The month it changed carries a marker so the gap in the rhythm is explained rather than reading as a bug.</td></tr>
+          <tr><td>Contract ends inside the horizon</td><td>Projection stops. Columns after it are empty with a rule at the boundary and the row states <code>Contract ends 31 Mar</code>. Projecting past a contract invents work nobody sold.</td></tr>
+          <tr><td>A weekly location</td><td>Four to five visits in a month — the only case that overflows a cell. Renders <code>4 dates</code> with a popover, so row height is fixed whatever the cadence.</td></tr>
+          <tr><td>Short months and month-stepping cadences</td><td>A cadence that divides into months steps in <i>months</i>, not milliseconds — otherwise “monthly” yields thirteen visits a year and the November DST change shifts every date after it. The 07 prototype already found this; the fix carries over verbatim.</td></tr>
+          <tr><td>Harmonize moves a visit</td><td>The cell changes immediately — one dataset. Projection re-anchors on the moved visit, so the rest of the row shifts with it, which is the honest consequence and the reason projections are drawn as estimates.</td></tr>
+          <tr><td>Missed visit still open</td><td>Alert colour in its own month, and in the Period mode's overdue band, until it is rescheduled or cancelled.</td></tr>
+          <tr><td>Cancelled visit</td><td>Struck through in its cell if it was planned. A projected date is never “cancelled” — it simply stops being projected.</td></tr>
+          <tr><td>Search matches a location, not a company</td><td>The company block still frames the result, with non-matching locations collapsed behind <code>+3 other locations</code>. The hierarchy is never broken by a filter.</td></tr>
+          <tr><td>A location that moves company mid-year</td><td>It appears under its current company for the whole row. Splitting a row across two blocks would double it; the history belongs on the location's own Schedule tab.</td></tr>
+          <tr><td>No company on the record</td><td>Grouped under <code>No company on file</code> rather than dropped — hiding demand is the failure this tab exists to prevent (<code>07</code> D16).</td></tr>
+          <tr><td>Timezone</td><td>Every date renders in the franchise timezone, as the grid does. Handoff §7 applies: the mock's non-visit times still carry a UTC skew.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <span class="sec-tag">Data</span>
+      <h2>What the backend has to supply</h2>
+    </div>
+    <div class="prose">
+      <p>All three reads are server-side. The twelve-month projection in particular must not be a
+        client loop — it is the arithmetic a database does well and a browser does badly, and doing
+        it on the client also puts the horizon boundary in the wrong place.</p>
+      <div class="tablewrap">
+        <table class="rules">
+          <thead><tr><th>Endpoint</th><th>Returns</th></tr></thead>
+          <tbody>
+            <tr><td><code>GET /companies?query=&amp;page=</code></td><td>The rail. Parent name, <code>parentCompanyId</code>, location count <b>in territory</b>, and the count of visits in the current period so the rail and the pane cannot disagree.</td></tr>
+            <tr><td><code>GET /visits/by-company?from&amp;to&amp;companyIds</code></td><td>Period mode. Companies with visits in the range, each with its locations and their visits — id, date, window, cadence, route, technician, status — plus header counts computed on the same filter as the rows.</td></tr>
+            <tr><td><code>GET /companies/schedule?months=12&amp;companyIds</code></td><td>Year mode, for the whole selection rather than one company. Per location: address, account, contract, cadence, <code>lastVisit</code>, planned visits, projected dates, <code>contractEndsAt</code>, and <code>scheduledHorizonEndsAt</code> — the date the dashed rule is drawn on.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Fields that do not exist yet</h3>
+      <div class="tablewrap">
+        <table class="rules thirds">
+          <thead><tr><th>Field</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td><code>parentCompanyId</code> + parent name</td><td><span class="chip block">new · blocking</span> The parent–child link. Exists nowhere today — not in the site record, not in billing. This is the field the client explicitly asked to have built, and both modes group on it.</td></tr>
+            <tr><td><code>cadence</code> per location or contract</td><td><span class="chip block">blocking</span> Interval and anchor. Already <code>07</code>'s hard dependency; the matrix is arithmetic on it and additionally prints it in words on every row.</td></tr>
+            <tr><td><code>scheduledHorizonEndsAt</code></td><td><span class="chip block">blocking the rule</span> Without it every column has to be washed as projected, which is honest and much less useful.</td></tr>
+            <tr><td><code>customerId</code> on the visit's site</td><td><span class="chip warn">exists, must survive</span> On the site record and used by billing; it needs to reach the visits payload.</td></tr>
+            <tr><td>Territory scoping on the company query</td><td><span class="chip warn">needed for D27</span> Plus the in-territory location count, which is what the header prints.</td></tr>
+            <tr><td><code>contractEndsAt</code></td><td><span class="chip info">optional</span> Without it, projection schedules work beyond the end of a contract.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>For the demo</h3>
+      <p>Nearly everything is already in <code>schedule.mock.js</code>: the book is a cadence
+        (<code>VISIT_SITE_BOOK</code>, 46 locations on 14–120 day intervals with two unscheduled) and
+        <code>isSiteDueOn</code> / <code>nextDueDayIndex</code> already <i>are</i> the projection
+        function. Three additions:</p>
+      <ul class="tight">
+        <li>A <b>parent company column</b> on the book, many-to-one. Reuse the names billing already
+          uses — <code>sites.mock.js</code> carries <code>company</code> and <code>customerId</code>,
+          <code>invoice.mock.js</code> carries <code>client</code> and <code>billTo</code> — so the
+          demo cross-links to invoicing instead of inventing a parallel customer list.</li>
+        <li><b>One brand deliberately split across two accounts and two territories</b>, so D26 and
+          D27 are demonstrable rather than described. This is the Mega Saver row.</li>
+        <li>A <b>synthetic horizon</b> — 21 days — so the straddling-month boundary is visible in the
+          demo rather than theoretical.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <span class="sec-tag">Sequence</span>
+      <h2>Build order</h2>
+    </div>
+    <div class="phases">
+      <div class="phase">
+        <div class="ph">First</div>
+        <div class="pb"><b>The tab, and Period mode on existing data.</b> A <code>companies</code> tab
+          config, the visits the week grid already holds grouped by company, the multi-select rail,
+          the overdue band. Needs the parent field but no other backend change, and it alone answers
+          “who are we visiting this week”.</div>
+      </div>
+      <div class="phase">
+        <div class="ph">Second</div>
+        <div class="pb"><b>The matrix.</b> Twelve columns, sticky label and header, cells, the
+          planned/projected boundary, the <code>/yr</code> total, the location filter. This is the
+          half that answers the actual objection, and the half that needs cadence and horizon.</div>
+      </div>
+      <div class="phase">
+        <div class="ph">Third</div>
+        <div class="pb"><b>The edges.</b> Deep links, CSV export, search across both levels, the
+          multi-contract and contract-end cases, the weekly-cadence popover. Individually small;
+          collectively the difference between a demo and a screen used on the phone to a
+          customer.</div>
+      </div>
+    </div>
+    <div class="callout note">
+      <b class="lbl">One architectural note for whoever builds it</b>
+      Every existing scheduler tab is a variant of one FullCalendar resource timeline —
+      <code>ScheduleCalendarGrid</code> → <code>components/common/calendar</code> → FullCalendar, and
+      the Day/Week/Month switcher lives <i>inside</i> that common component. A
+      <code>companies</code> entry in <code>SCHEDULE_TAB_CONFIGS</code> buys the tab button, the
+      filter behaviour and a footer variant, but <b>there is no seam for a non-calendar pane</b>. The
+      branch belongs at the <code>ScheduleCalendarGrid</code> call site in
+      <code>calendar/index.jsx</code>, and this tab must skip the week/day/month fetch dispatch
+      entirely — its scope control is not FullCalendar's view type.
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <span class="sec-tag">Still open</span>
+      <h2>Questions this design creates</h2>
+    </div>
+    <ol class="q">
+      <li><b>Where does the parent–child company relationship get stored, and who owns it?</b> It
+        does not exist in Edge today. Is it a new field on the customer record, a separate company
+        table, or something Leads/SET already holds that Edge should read? The client asked for it to
+        be “built”, which implies nobody has it.</li>
+      <li><b>Can one location belong to two parents</b> — a landlord and a managing agent — and if
+        so which one owns the row?</li>
+      <li><b>Is the displayed noun for an address <i>Location</i>, <i>Property</i> or <i>Site</i>?</b>
+        The definition is settled; the word is not. Recommendation: <i>Location</i>, since that is
+        how the client speaks about it, set via tenant labels so Signal can keep <i>Site</i>.</li>
+      <li><b>Is the contracted interval stored per location or per contract?</b> The invoice model
+        already gives a location several contracts. This design assumes per contract and draws a row
+        each; confirm before the field is named.</li>
+      <li><b>How far ahead does the scheduler actually generate visits?</b> A fixed rolling window, a
+        per-franchise setting, or as far as somebody has built? Decides where the dashed rule falls.</li>
+      <li><b>What turns the tab on?</b> The Visits tab's gate lets Signal through, and daily guarding
+        has no cadence to project. A service-level flag — on for interval-based service, off for
+        daily — rather than a tenant check, so a Signal client on a monthly patrol contract is not
+        excluded by accident.</li>
+      <li><b>Is CSV enough, or is a branded customer-facing PDF wanted?</b> This grid gets read to
+        customers; a PDF is a separate piece of work.</li>
+      <li><b>Does Period mode need a “next 30 days” scope?</b> Three scopes is what was asked for,
+        but a franchisee planning filter stock may want it. Worth asking rather than adding on a
+        hunch.</li>
+    </ol>
+  </section>
+
+</div>

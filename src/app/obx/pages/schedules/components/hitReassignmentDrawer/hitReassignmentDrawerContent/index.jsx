@@ -15,17 +15,14 @@ import SweetAlertModal from 'src/app/components/common/sweetAlertModal';
 import { ReactComponent as WarningIcon } from 'src/assets/svg/warning.svg';
 import { useApiControllers } from 'src/helper/axios';
 import { useTenantLabel } from 'src/helper/utilityHooks';
+import useDateTime from 'src/hooks/useDateTime';
 import { fetchRunsheetList, reassignHitsToRunsheet } from 'src/services/duty.services';
 import { getVisitorsLoadsOfficersOptions } from 'src/services/visitorsLoads.service';
 import transformArrayForOptions from 'src/utils/array/transformArrayForOptions';
-import { toastSettings } from 'src/utils/constants';
+import { dayjsFormatsEnum, toastSettings } from 'src/utils/constants';
 
 import { NoRunsheetFound } from '../../../../runSheets/listing';
-import {
-  dayjsWithStandardOffset,
-  dayjsWithTimezone,
-  getCurrentTimeWithDisabledDlsInIso,
-} from '../../../helper';
+import { dayjsWithTimezone, getCurrentTimeWithDisabledDlsInIso } from '../../../helper';
 import PatrolHeader from '../../../shiftDetail/components/patrolHeader';
 import { useStyles } from './reassignHitDrawerContent';
 
@@ -333,10 +330,15 @@ const HitReassignmentDrawerContent = ({
 export default HitReassignmentDrawerContent;
 
 const DisplayDateTimeRange = ({ startsAt, endsAt }) => {
-  startsAt = dayjsWithStandardOffset(startsAt);
-  endsAt = dayjsWithStandardOffset(endsAt);
+  const { formatDayjsDateTime } = useDateTime();
 
-  return `${startsAt.format('MM/DD/YYYY hh:mma')} - ${endsAt.format('MM/DD/YYYY hh:mma')}`;
+  return `${formatDayjsDateTime({
+    value: startsAt,
+    formatType: dayjsFormatsEnum.dateTime,
+  })} - ${formatDayjsDateTime({
+    value: endsAt,
+    formatType: dayjsFormatsEnum.dateTime,
+  })}`;
 };
 
 HitReassignmentDrawerContent.propTypes = {

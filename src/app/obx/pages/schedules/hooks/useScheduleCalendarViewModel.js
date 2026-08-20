@@ -1,6 +1,13 @@
 import { useMemo } from 'react';
+import {
+  MAIN_VIEW_GROUPING,
+  RESOURCE_AREA_HEADER_KEYS,
+} from 'src/app/obx/pages/schedules/config/scheduleTabConfigs';
 import { dayjsWithTimezone } from 'src/app/obx/pages/schedules/helper';
-import { filterResourcesToScheduled } from 'src/app/obx/pages/schedules/helper/scheduleResponseAdapter';
+import {
+  filterResourcesToScheduled,
+  orderCompanyRowsAlphabetically,
+} from 'src/app/obx/pages/schedules/helper/scheduleResponseAdapter';
 import { DAY_GRID } from 'src/utils/constants/schedules';
 
 const normalizeResourceId = (value) => {
@@ -129,6 +136,30 @@ const buildOverviewEvents = ({ sections = [], expandedSections }) =>
 
 const EMPTY_STATE_TAB_IDS = new Set(['overview', 'dedicated', 'patrol', 'embedded', 'visits']);
 
+/**
+ * Every site name a row has visits at, lower-cased, keyed by row id.
+ *
+ * The company rows carry a site *count* and no names, so the only place the
+ * client knows what buildings a customer holds is the visits themselves.
+ */
+const collectRowSiteNames = (events = []) => {
+  const namesByRow = new Map();
+
+  events.forEach((event) => {
+    const resourceId = event?.resourceId == null ? '' : String(event.resourceId);
+    if (!resourceId) return;
+
+    const siteName = `${event.site?.name || event.siteName || ''}`.trim().toLowerCase();
+    if (!siteName) return;
+
+    const names = namesByRow.get(resourceId);
+    if (names) names.add(siteName);
+    else namesByRow.set(resourceId, new Set([siteName]));
+  });
+
+  return namesByRow;
+};
+
 const hasWeekLocationResources = (locations = []) =>
   locations.some((row) => !row?.extendedProps?.isDedicatedSiteBand);
 
@@ -145,14 +176,32 @@ export const useScheduleCalendarViewModel = ({
   overviewExpandedSections,
   dayViewDuties,
   showOnlyScheduledSites = false,
+  visitGrouping = MAIN_VIEW_GROUPING.ROUTES,
+  companyQuery = '',
 }) => {
-  const isOverviewWeekView = scheduleTabConfig?.isOverviewTab && selectedViewType === DAY_GRID.WEEK;
+  /**
+   * The main tab grouped by company is a **visits** grid, not an overview grid.
+   *
+   * It is fed by `weekViewLocations` / `events` like the per-service tabs, so the
+   * accordion path has to stand down — left on, `buildOverviewResources` would
+   * look for sections the fetch deliberately did not build and render an empty
+   * state over a grid full of visits.
+   */
+  const isCompanyGrouping =
+    visitGrouping === MAIN_VIEW_GROUPING.COMPANIES && Boolean(scheduleTabConfig?.isOverviewTab);
+  const isOverviewWeekView =
+    scheduleTabConfig?.isOverviewTab && !isCompanyGrouping && selectedViewType === DAY_GRID.WEEK;
   const isDedicatedWeekView =
     scheduleTabConfig?.id === 'dedicated' && selectedViewType === DAY_GRID.WEEK;
   const isOfficerWeekView =
     scheduleTabConfig?.id === 'officer' && selectedViewType === DAY_GRID.WEEK;
   const isPatrolWeekView = scheduleTabConfig?.id === 'patrol' && selectedViewType === DAY_GRID.WEEK;
-  const isVisitsWeekView = scheduleTabConfig?.id === 'visits' && selectedViewType === DAY_GRID.WEEK;
+  /* One predicate for "the cards on screen are visits", whichever surface put
+     them there — the visits config's own tab, or the main tab grouped by company.
+     Everything downstream (row labels, card shape, selection) keys off this, so
+     the two cannot drift into drawing the same object two ways. */
+  const isVisitsWeekView =
+    (scheduleTabConfig?.id === 'visits' || isCompanyGrouping) && selectedViewType === DAY_GRID.WEEK;
   const isEmbeddedWeekView =
     Boolean(scheduleTabConfig?.isLegacyEmbeddedView) && selectedViewType === DAY_GRID.WEEK;
   const hasCustomResourceLabels =
@@ -172,12 +221,37 @@ export const useScheduleCalendarViewModel = ({
       });
     }
 
-    const resources = weekViewLocations || [];
+    let resources = weekViewLocations || [];
 
     // The quick filter is presentational — it drops rows the client already holds,
     // so it applies here rather than at fetch time and toggles instantly.
     if (isVisitsWeekView && showOnlyScheduledSites) {
-      return filterResourcesToScheduled(resources);
+      resources = filterResourcesToScheduled(resources);
+    }
+
+    /* Company search, same reasoning: it narrows rows the client already has, so it
+       responds per keystroke and costs no request. Rows only — a row leaves with
+       its own cards, so this cannot orphan a visit. */
+    if (isCompanyGrouping && companyQuery.trim()) {
+      const needle = companyQuery.trim().toLowerCase();
+      const siteNamesByRow = collectRowSiteNames(events || []);
+
+      resources = resources.filter((resource) => {
+        if (`${resource.title || ''}`.toLowerCase().includes(needle)) return true;
+
+        /* A building is a way of naming the customer who holds it. Matching the
+           row's own label only meant typing a store name emptied the grid — it
+           dropped the single row that could have answered the question. */
+        const siteNames = siteNamesByRow.get(String(resource.id));
+        if (!siteNames) return false;
+        return [...siteNames].some((siteName) => siteName.includes(needle));
+      });
+    }
+
+    /* Applied last, so it orders exactly the rows that survive rather than a week
+       that also contained rows the filters just removed. */
+    if (isCompanyGrouping) {
+      resources = orderCompanyRowsAlphabetically(resources);
     }
 
     return resources;
@@ -188,6 +262,9 @@ export const useScheduleCalendarViewModel = ({
     weekViewLocations,
     isVisitsWeekView,
     showOnlyScheduledSites,
+    isCompanyGrouping,
+    companyQuery,
+    events,
   ]);
 
   const calendarEvents = useMemo(() => {
@@ -209,8 +286,17 @@ export const useScheduleCalendarViewModel = ({
       return false;
     }
 
+    /**
+     * Measured on the rows that will actually be **drawn**, not on the payload.
+     *
+     * `weekViewLocations` is what arrived; `calendarResources` is what survived the
+     * quick filter and the company search. Testing the former meant a search that
+     * matched no company left a full-height grid holding a header row and nothing
+     * else — no rows, no message, no way to tell a failed search from a failed load.
+     * Both narrowing controls are client-side, so this is the only place that knows.
+     */
     if (isDedicatedWeekView || isPatrolWeekView || isVisitsWeekView) {
-      return !hasWeekLocationResources(weekViewLocations);
+      return !hasWeekLocationResources(calendarResources);
     }
 
     // Site/user embedded week: show no-shift UI when there are no shifts.
@@ -235,7 +321,7 @@ export const useScheduleCalendarViewModel = ({
     isPatrolWeekView,
     isVisitsWeekView,
     isEmbeddedWeekView,
-    weekViewLocations,
+    calendarResources,
     selectedViewType,
     dayViewDuties,
     events,
@@ -261,13 +347,15 @@ export const useScheduleCalendarViewModel = ({
   // to explain what they are — so the resource column needs a header, which the
   // multi-section overview does not.
   const isSingleSectionOverview = isOverviewWeekView && resolvedOverviewSections.length === 1;
-  const resourceAreaHeaderKey =
-    scheduleTabConfig?.resourceAreaHeaderKey || (isSingleSectionOverview ? 'runsheets' : null);
+  const resourceAreaHeaderKey = isCompanyGrouping
+    ? RESOURCE_AREA_HEADER_KEYS.COMPANIES
+    : scheduleTabConfig?.resourceAreaHeaderKey || (isSingleSectionOverview ? 'runsheets' : null);
 
   return {
     calendarResources,
     calendarEvents,
     resourceAreaHeaderKey,
+    isCompanyGrouping,
     isOverviewWeekView,
     isDedicatedWeekView,
     isOfficerWeekView,

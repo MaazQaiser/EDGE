@@ -13,11 +13,19 @@
 
 # misc
 .DS_Store
+# Plain `.env` was missing from this list while every `.env.*.local` variant was
+# here, so the one env file that actually exists in a working tree was the one
+# git would happily commit. It holds only REACT_APP_NODE_ENV / REACT_APP_TENANT
+# today, but it is the file a real key would land in first.
+.env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
-.env.production.local
+
+# Agent/session scratch and captures — large, machine-local, and not source.
+.claude/
+.shot/
 
 npm-debug.log*
 yarn-debug.log*

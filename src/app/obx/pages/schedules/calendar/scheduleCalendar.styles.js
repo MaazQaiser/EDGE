@@ -210,6 +210,109 @@ export const useStyles = makeStyles((theme) => ({
     marginTop: 0,
   },
 
+  /* A pane in the grid's place. The column and `minHeight: 0` are what let the pane
+     keep owning its own scroll — without them its last row is pushed out of view. */
+  scheduleOwnPane: {
+    display: 'flex',
+    flexDirection: 'column',
+    flex: 1,
+    minHeight: 0,
+  },
+
+  /* The grouping switch's row when the pane has replaced the grid. Not a toolbar —
+     it holds one control and has no date navigator or view toggle to balance — so it
+     is a bare row rather than a copy of `calendarHeaderToolbar`'s chrome. `0 0 auto`
+     keeps it out of the pane's scroll below it. */
+  /* Padded on **both** sides. This carried only a `paddingBottom`, so the toggle sat
+     flush against the tab row's bottom border directly above it — the control read as
+     part of that row's chrome rather than as the first thing in the pane below it.
+     16px above matches the gap the calendar's own toolbar leaves under the same
+     border, so the two layouts start at the same height. */
+  scheduleOwnPaneToolbar: {
+    display: 'flex',
+    alignItems: 'center',
+    flex: '0 0 auto',
+    paddingTop: '16px',
+    paddingBottom: '12px',
+  },
+
+  /* --- the Routes / Visits / Companies switch ------------------------------
+     Geometry mirrored from `calendarHeaderToolbarToggle` in
+     `calendar/calendar.styles.js`, because the two sit in the same row and any
+     difference in shell height, radius or segment inset reads as one of them being
+     misaligned rather than as two controls. Only the segment's own padding differs
+     below, where a glyph-plus-word has to fit what a single letter did. */
+  scheduleGroupingToggle: {
+    gap: '4px',
+    '&.MuiToggleButtonGroup-root': {
+      borderRadius: '8px',
+      background: theme.palette.surfaceGreySubtle,
+      height: '32px',
+      display: 'flex',
+      alignItems: 'stretch',
+      justifyContent: 'center',
+      padding: 0,
+      // Must keep its own width at the head of the row, not be squeezed by the
+      // filter run that follows it.
+      flex: '0 0 auto',
+
+      '& .MuiToggleButtonGroup-grouped': {
+        border: 0,
+        /* Labelled, so the segments are as wide as their words — the `minWidth` is
+           only a floor for the narrowest of them, not the equalising rule the
+           single-letter D/W/M switch needs. */
+        width: 'auto',
+        minWidth: '32px',
+        height: 'auto',
+        alignSelf: 'stretch',
+        borderRadius: '7px !important',
+      },
+    },
+  },
+
+  scheduleGroupingToggleBtn: {
+    '&.MuiButtonBase-root': {
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: '6px',
+      padding: '0 10px',
+      fontSize: '12px',
+      fontWeight: 500,
+      textTransform: 'none',
+      whiteSpace: 'nowrap',
+      color: theme.palette.textPlaceholder,
+      border: '1px solid transparent',
+      /* The glyphs are drawn from a mix of stroked and filled paths, so both are
+         re-pointed at `currentColor` — otherwise a segment's icon keeps its
+         exported colour while its label follows the selected state. */
+      '& svg': {
+        width: '16px',
+        height: '16px',
+      },
+      '& svg path[stroke]': {
+        stroke: 'currentColor',
+      },
+      '& svg path[fill]': {
+        fill: 'currentColor',
+      },
+      '&:hover': {
+        backgroundColor: theme.palette.borderSubtle2,
+      },
+      /* The selected segment as its own white pill lifted off the grey track — the
+         same treatment the view toggle uses, and the whole "active" signal, which is
+         why the weight does not change with it. */
+      '&&.Mui-selected': {
+        backgroundColor: theme.palette.surfaceWhite,
+        color: theme.palette.textPrimary,
+        border: `1px solid ${theme.palette.borderSubtle1}`,
+        boxShadow: '0px 1px 2px 0px rgba(16, 24, 40, 0.10)',
+        '&:hover': {
+          backgroundColor: theme.palette.surfaceWhite,
+        },
+      },
+    },
+  },
+
   scheduleCreateButton: {
     '&.MuiButtonBase-root': {
       minWidth: 'auto',
@@ -263,28 +366,60 @@ export const useStyles = makeStyles((theme) => ({
     },
   },
 
-  /* The quick filter shared the class above, which meant two things went wrong at
-     once. It was painted in the alert palette — a neutral "show me fewer rows"
-     control dressed as a warning, sitting next to a real one and indistinguishable
-     from it. And because that class pins `background` and `color` at
-     `&.MuiButtonBase-root`, it beat the `primary`/`secondaryGrey` variant the
-     button switches on when active: pressing it changed `aria-pressed` and nothing
-     else, so the control looked inert whether the filter was on or off. Its own
-     class now, with a pressed state that is visible. */
-  /* GEOMETRY ONLY — deliberately no palette. The quick filter has a real pressed
-     state, and the theme's own `primary` / `secondaryGrey` variants are what draw
-     it: filled-brand when the filter is on, white-bordered when it is off.
+  /* No `scheduleQuickFilterButton` any more — the Companies-with-Visits toggle it
+     shaped is gone, because that filter is now the reading rather than an option.
+     See the note on `showOnlyScheduledSites` in `calendar/index.jsx`. */
 
-     It never worked before because this button borrowed the unrouted-demand pill's
-     class, and that class pins `background` and `color`, so the variant swap was
-     invisible — pressing it changed `aria-pressed` and nothing a user could see.
-     Declaring a palette here at all is what caused that, and every attempt to
-     out-specify the variant from makeStyles lost: a doubled selector at four
-     classes, an `sx` at the call site, and finally two `!important` classes that
-     only fought each other. So the layering is now the plain one — the theme owns
-     colour, this class owns shape. Do not put colours back in here. */
-  scheduleQuickFilterButton: {
-    '&.MuiButtonBase-root': TOOLBAR_PILL,
+  /* The committed pick used to be a chip *beside* the field, and this row has no
+     room for one: its children sum to its full width, so the sibling wrapped the
+     filters onto a second line and pushed the grid down 28px. `CompanySiteSearch`
+     now states the selection inside the field, which costs no width — so the pair
+     needs no wrapper here and no styles of its own. */
+
+  /* Keeps the design system's primary variant — colour, radius, type and hover are
+     all the theme's, because this is still the page's one green CTA and it should
+     not become a bespoke button just because it changed rows.
+
+     Height is the one override. The primary variant is 36px, and this button now
+     stands in the grid's toolbar between the date navigator and the Day/Week/Month
+     toggle, a row built on 32px controls — at 36px it was the tallest thing in the
+     row and set the row's height on its own, so the toggles either side of it sat
+     visibly short of its edges. 32px matches the two segmented groups it neighbours
+     rather than the header row it came from. */
+  /* Ghost, and deliberately the *same* ghost as `forecastingButton` beside it: no
+     fill, no border, no shadow, `textSecondary1`, and the same faint brand wash on
+     hover. The two are the header row's pair of actions, so matching them is the
+     point — the row's only colour belongs to the assignment pill, which is the one
+     thing there reporting a problem. */
+  scheduleHarmonizeButton: {
+    '&.MuiButton-root': {
+      height: '32px',
+      borderRadius: '8px',
+      fontSize: '12px',
+      boxShadow: 'none',
+      border: 'none',
+      textTransform: 'none',
+      color: theme.palette.textSecondary1,
+      whiteSpace: 'nowrap',
+      '&:hover': {
+        boxShadow: 'none',
+        border: 'none',
+        backgroundColor: '#146dff0a',
+      },
+      /* Disabled still has to read as disabled without a fill to dim — the label and
+         glyph drop to the placeholder grey together. */
+      '&.Mui-disabled': {
+        color: theme.palette.textPlaceholder,
+        opacity: 0.6,
+      },
+      '& .MuiButton-startIcon': {
+        marginRight: '8px',
+      },
+      '& .MuiButton-startIcon svg': {
+        width: '16px',
+        height: '16px',
+      },
+    },
   },
 
   scheduleAssignmentActionSkeleton: {
@@ -359,7 +494,10 @@ export const useStyles = makeStyles((theme) => ({
       '& [data-visit-card]::before': {
         content: '""',
         position: 'absolute',
-        top: 7,
+        /* Centred on the card's first line — 6px of padding plus a 12px line
+           leaves a 14px control sitting at 5px. It was 7px against a header row
+           the 20px status icon had inflated to 20px; that row is 12px now. */
+        top: 5,
         left: 8,
         width: 14,
         height: 14,
@@ -392,7 +530,7 @@ export const useStyles = makeStyles((theme) => ({
       '& [data-visit-card]::after': {
         content: '""',
         position: 'absolute',
-        top: 10.5,
+        top: 8.5,
         left: 11,
         width: 7,
         height: 3.5,
@@ -403,20 +541,15 @@ export const useStyles = makeStyles((theme) => ({
       },
     },
 
-    /* ---------- month grid: today ----------
-       The month view had no today marker at all. `calendar.styles.js` carries a
-       `.fc-dayGridMonth-view .fc-day-today` block that paints the date in a 38px
-       brand circle, and none of it applies: this is FullCalendar v7, whose class
-       names are hashed per build (`fc-classic-wsy`…), so every v6 selector in that
-       block is dead — including a `background` whose value is the string
-       "backgroundColor: 'rgba(...)' !important", which was never valid CSS in any
-       version. Attributes are the only stable hooks, and they are what the
-       harmonize rules below already use. `role="gridcell"` scopes this to the month
-       grid; the week view's date nodes are lane headers, not cells. */
-    '[role="gridcell"][data-date][aria-current="date"]': {
-      background: theme.palette.surfaceBrandSubtle,
-      boxShadow: `inset 0 2px 0 ${theme.palette.surfaceBrand}`,
-    },
+    /* Month grid's today marker lives in `calendar.styles.js` now (search
+       `data-schedule-today` there), franchise-timezone-aware via a marker
+       `ScheduleCalendarGrid` stamps from `dayjsWithTimezone()`. This file used
+       to carry its own unconditional green wash on FC's browser-local
+       `aria-current="date"]`, painted regardless of whether the franchise
+       agreed it was today — which both fought the franchise-aware rule on the
+       rare day they disagreed, and, on every ordinary day they didn't, stacked
+       a second green treatment under the other file's marker. One system, one
+       file. */
 
     /* Harmonize preview. The drawer proposes; the calendar shows it happening
        before anything is written. Visits changing day fade where they sit, the
@@ -440,6 +573,63 @@ export const useStyles = makeStyles((theme) => ({
     },
     '[data-date][data-harmonize-target="overflow"]': {
       background: `${theme.palette.surfaceGreySubtle} !important`,
+    },
+  },
+
+  /* ---------- Apply, on the grid ----------
+     The drawer closes and this is where the plan arrives. Two beats, driven by
+     `useApplyMotion` and switched by one `data-applying` attribute per card.
+
+     **settling** — every visit card, not just the movers. The schedule is being
+     recomputed; marking only the movers would assert the outcome before showing it,
+     and it would send the eye hunting for which cards are about to change instead
+     of watching them change. Dimmed and desaturated with a slow pulse: still
+     legible, just not current.
+
+     **landing** — the moved cards are on their new days and rise into place, each
+     delayed by its position in its route (set inline, because twelve stagger
+     classes to express one multiplication is not a stylesheet), so a day fills top
+     to bottom rather than appearing all at once. Cards that did not move come out
+     of the pulse with no animation at all, because nothing happened to them.
+
+     **These rules are a scoped class, not `@global`,** even though the cards they
+     target are FullCalendar's and are reached by descendant selector. `$applySettle`
+     only resolves to the generated keyframes name in a normal rule — inside
+     `@global` it is passed through as a literal, and the animation silently never
+     runs. The wrapper carrying this class is `scheduleCalendarFull`, added only
+     while the sequence is running, which also means these selectors cost nothing
+     the rest of the time.
+
+     Opacity, transform and filter only. A grid full of cards animating width or
+     height is the one thing that would make this janky rather than impressive. */
+  applyingGrid: {
+    '& [data-visit-id][data-applying="settling"]': {
+      opacity: 0.55,
+      filter: 'grayscale(0.85)',
+      animation: '$applySettle 1100ms ease-in-out infinite',
+    },
+    '& [data-visit-id][data-applying="landing"]': {
+      animation: '$applyLand 380ms cubic-bezier(0.2, 0.8, 0.2, 1) both',
+    },
+  },
+  '@keyframes applySettle': {
+    '0%, 100%': { opacity: 0.42 },
+    '50%': { opacity: 0.68 },
+  },
+  /* Up and in, with a touch of scale — a card arriving on this day is a different
+     event from a card that was already here being redrawn. */
+  '@keyframes applyLand': {
+    from: { opacity: 0, transform: 'translateY(10px) scale(0.96)' },
+    to: { opacity: 1, transform: 'translateY(0) scale(1)' },
+  },
+
+  /* The relocation is the information; the pulse and the stagger are the telling of
+     it. `useApplyMotion` skips both beats for these readers and simply moves the
+     visits — this is the belt to that braces. */
+  '@media (prefers-reduced-motion: reduce)': {
+    applyingGrid: {
+      '& [data-visit-id][data-applying="settling"]': { animation: 'none', opacity: 0.6 },
+      '& [data-visit-id][data-applying="landing"]': { animation: 'none' },
     },
   },
 }));
