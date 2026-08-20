@@ -5,8 +5,20 @@
  * so every helper here works in minutes and treats travel and service the same.
  */
 
+import {
+  FILTER_MINUTES,
+  serviceMinutesForFilters,
+  serviceTimeBreakdown,
+  SITE_MINUTES,
+} from 'src/utils/constants/serviceTime';
+
 /** A worker's day. Service time + driving must fit inside this. */
 export const MAN_DAY_MINUTES = 8 * 60;
+
+/* Time on site is a per-stop call-out plus filters × 20 minutes, and that model has
+   one home — see `utils/constants/serviceTime`. Re-exported here so the route maths
+   reads as one module to its callers. */
+export { FILTER_MINUTES, serviceMinutesForFilters, serviceTimeBreakdown, SITE_MINUTES };
 
 /** Average urban speed used to turn straight-line distance into drive time. */
 const AVG_SPEED_KMH = 38;
@@ -30,7 +42,26 @@ export const travelMinutes = (from, to) => Math.round((distanceKm(from, to) / AV
 
 /**
  * Two visits at the same site become one stop with several jobs (D16) — travel
- * is paid once, service time per visit.
+ * is paid once, **the call-out is paid once**, filter time per visit.
+ *
+ * **The call-out is why this function had to change.** A visit's
+ * `serviceMinutes` is `SITE_MINUTES + filters × 20`, so summing two visits at one
+ * address charged the van for arriving twice at a place it arrives at once — and
+ * it charged it on the one screen whose entire argument is that consolidating
+ * visits saves exactly those arrivals. The over-count was invisible in the total
+ * and wrong in the direction that flatters the unconsolidated plan.
+ *
+ * So the second and every later visit at a site contributes its filter time and
+ * not its call-out. The subtraction is deliberately expressed against whatever
+ * `serviceMinutes` each visit arrived with, rather than recomputing the stop from
+ * its filter count, because a visit may carry a duration the API decided and
+ * recomputing would silently discard it.
+ *
+ * `siteMinutes` and `filterMinutes` are carried on the stop so a route can sum
+ * them into a breakdown without re-deriving either. `filterMinutes` is the exact,
+ * checkable figure — filters × 20, the arithmetic a planner can verify by
+ * counting — and `siteMinutes` is the remainder, so the two always add back to
+ * `serviceMinutes` even when a visit's duration did not come from this model.
  */
 export const groupVisitsIntoStops = (visits = []) => {
   const stopsBySite = new Map();
@@ -40,7 +71,13 @@ export const groupVisitsIntoStops = (visits = []) => {
 
     if (existing) {
       existing.visits.push(visit);
-      existing.serviceMinutes += visit.serviceMinutes;
+      /* Its filter time, not its call-out: the van is already here. */
+      existing.serviceMinutes += Math.max(0, (visit.serviceMinutes || 0) - SITE_MINUTES);
+      /* Filters add up across visits at one site, because the estimate does: two
+         visits with three filters each is 120 minutes of work in one place. The
+         stop carries the sum so its tooltip can show the same arithmetic the
+         individual visits do. */
+      existing.filterCount += Number(visit.filterCount) || 0;
       return;
     }
 
@@ -51,11 +88,21 @@ export const groupVisitsIntoStops = (visits = []) => {
       lat: visit.lat,
       lng: visit.lng,
       serviceMinutes: visit.serviceMinutes,
+      filterCount: Number(visit.filterCount) || 0,
       visits: [visit],
     });
   });
 
-  return [...stopsBySite.values()];
+  /* Split once, at the end, so a stop that gained visits is split on its final
+     totals rather than on the first visit's. */
+  return [...stopsBySite.values()].map((stop) => {
+    const filterMinutes = stop.filterCount * FILTER_MINUTES;
+    return {
+      ...stop,
+      filterMinutes,
+      siteMinutes: Math.max(0, (stop.serviceMinutes || 0) - filterMinutes),
+    };
+  });
 };
 
 /**

@@ -10,13 +10,23 @@ import { getCurrentStandardTimeInIsoWrtTimezone } from '../helper';
  * Every surface that draws a visit resolves its state through `resolveVisitState`
  * so that cannot happen again.
  *
- * The visual encoding is layered on purpose, and never leans on colour alone:
+ * **On the grid the state is drawn the way this calendar draws every card**, and
+ * that division of labour is the design (see `VISIT_STATE_STATUS` below):
  *
- *   border style — is there a plan?   dashed = not on a route, solid = routed
- *   colour       — which family?      red needs attention · amber blocked ·
- *                                     blue live · green done · grey void
- *   icon + label — the state's name, so the card is readable in greyscale and
- *                  to a screen reader
+ *   card fill    — the status family, from the calendar's own legend: amber not
+ *                  started · blue in progress · green completed · red hatch
+ *                  missed · grey hatch cancelled · plain grey unrouted
+ *   left accent  — the duty *type*, not the state. A visit is a patrol hit, so
+ *                  it takes the patrol accent like every other hit card
+ *   status badge — bottom-right, from the resolved state rather than the raw
+ *                  record, so a visit the backend has not transitioned yet
+ *                  still reads correctly (D11)
+ *   text lines   — the tour and the runsheet, each of which says *Unassigned*
+ *                  when it is missing. That is how a blocked or unrouted visit
+ *                  announces itself, in words, rather than by tint alone
+ *
+ * The state is also spoken: it is composed into every card's `aria-label` and
+ * stated in full in the drawer's callout.
  */
 export const VISIT_STATE = {
   CANCELLED: 'cancelled',
@@ -143,17 +153,82 @@ export const VISIT_STATE_LABEL_KEYS = {
   [VISIT_STATE.SCHEDULED]: 'scheduled',
 };
 
-/** Card class in `calendar.styles.js`. Every state has one — the visit card's
- *  colour comes from here alone, not from the tenant duty palette. */
+/**
+ * The accent each state is drawn in, and whether that state is on a route.
+ *
+ * Declared here because this file already owns what a state *is*, so anything in
+ * this feature that needs to draw one reads it from here rather than inventing a
+ * third copy of the palette.
+ *
+ * **Known duplication, deliberately not collapsed yet.** `calendar.styles.js` still
+ * carries these same hexes in its `visitState*` classes. It is a `components/common`
+ * file and importing a schedules helper into it would invert the layering — the real
+ * fix is to move the visit-state card classes out of the common stylesheet, which is
+ * wider than this change. Until then: **change both, and keep them equal.**
+ *
+ * `routed` carries the other half of the encoding. On a card it is the left
+ * accent's *style* (dashed = not on a route); on a pin it is fill versus ring. That matters
+ * because `MISSED` and `UNASSIGNED` share an accent — red — and are told apart by
+ * whether anybody ever planned them.
+ *
+ * Literal hexes rather than theme slots on purpose: these are semantic, and the
+ * duty/brand palette means something else per tenant (§7.25).
+ */
+export const VISIT_STATE_STYLE = {
+  [VISIT_STATE.SCHEDULED]: { accent: '#98A2B3', routed: true },
+  [VISIT_STATE.UNASSIGNED]: { accent: '#B42318', routed: false },
+  [VISIT_STATE.BLOCKED_NO_TOUR]: { accent: '#DC6803', routed: false },
+  [VISIT_STATE.ROUTE_IN_PROGRESS]: { accent: '#1570EF', routed: true },
+  [VISIT_STATE.INSERTED_AFTER_START]: { accent: '#1570EF', routed: true },
+  [VISIT_STATE.COMPLETED]: { accent: '#12B76A', routed: true },
+  [VISIT_STATE.MISSED]: { accent: '#B42318', routed: true },
+  [VISIT_STATE.CANCELLED]: { accent: '#D0D5DD', routed: true },
+};
+
+/**
+ * The status each state reads as on a card — the calendar's own status
+ * vocabulary, the one its legend spells out along the bottom of the screen.
+ *
+ * This is what makes a visit card look like every other card here: the fill and
+ * the bottom-right badge both come from this status, exactly as a shift card's
+ * do. Resolving it from the *state* rather than from `scheduleStatus` is the
+ * point — a routed visit whose window closed without starting resolves to
+ * `MISSED` (D11) whatever the record says, and the badge follows.
+ *
+ * Two states share a status because the calendar has no separate mark for them,
+ * and they say so in words instead: `BLOCKED_NO_TOUR` and `UNASSIGNED` both read
+ * as unassigned, and the card's tour and runsheet lines are what tell them
+ * apart. `INSERTED_AFTER_START` is in progress like any other live stop, plus a
+ * broken left accent — see `calendar.styles.js`.
+ */
+export const VISIT_STATE_STATUS = {
+  [VISIT_STATE.SCHEDULED]: calendarShiftStatusEnum.NOT_STARTED,
+  [VISIT_STATE.UNASSIGNED]: calendarShiftStatusEnum.UNASSIGNED,
+  [VISIT_STATE.BLOCKED_NO_TOUR]: calendarShiftStatusEnum.UNASSIGNED,
+  [VISIT_STATE.ROUTE_IN_PROGRESS]: calendarShiftStatusEnum.IN_PROGRESS,
+  [VISIT_STATE.INSERTED_AFTER_START]: calendarShiftStatusEnum.IN_PROGRESS,
+  [VISIT_STATE.COMPLETED]: calendarShiftStatusEnum.COMPLETED,
+  [VISIT_STATE.MISSED]: calendarShiftStatusEnum.MISSED,
+  [VISIT_STATE.CANCELLED]: calendarShiftStatusEnum.CANCELLED,
+};
+
+/**
+ * The card's *fill* class in `calendar.styles.js` — the status wash, nothing
+ * else. The left accent is the duty type's and is applied alongside this, the
+ * same way a patrol or dedicated card gets one.
+ *
+ * Several states share a fill because they share a status. What separates them
+ * on screen is the badge, the two text lines, and — for an insert — the accent.
+ */
 export const VISIT_STATE_CARD_CLASSES = {
-  [VISIT_STATE.CANCELLED]: 'visitStateCancelled',
-  [VISIT_STATE.COMPLETED]: 'visitStateCompleted',
-  [VISIT_STATE.MISSED]: 'visitStateMissed',
-  [VISIT_STATE.BLOCKED_NO_TOUR]: 'visitStateBlocked',
-  [VISIT_STATE.UNASSIGNED]: 'visitStateUnassigned',
-  [VISIT_STATE.INSERTED_AFTER_START]: 'visitStateInserted',
-  [VISIT_STATE.ROUTE_IN_PROGRESS]: 'visitStateInProgress',
-  [VISIT_STATE.SCHEDULED]: 'visitStateScheduled',
+  [VISIT_STATE.CANCELLED]: 'visitFillCancelled',
+  [VISIT_STATE.COMPLETED]: 'visitFillCompleted',
+  [VISIT_STATE.MISSED]: 'visitFillMissed',
+  [VISIT_STATE.BLOCKED_NO_TOUR]: 'visitFillUnrouted',
+  [VISIT_STATE.UNASSIGNED]: 'visitFillUnrouted',
+  [VISIT_STATE.INSERTED_AFTER_START]: 'visitFillInProgress',
+  [VISIT_STATE.ROUTE_IN_PROGRESS]: 'visitFillInProgress',
+  [VISIT_STATE.SCHEDULED]: 'visitFillNotStarted',
 };
 
 /**

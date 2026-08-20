@@ -3,11 +3,11 @@ import classNames from 'classnames';
 import PropTypes from 'prop-types';
 import React, { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useFlipReorder } from 'src/hooks/useFlipReorder';
 
 import { formatMinutesAsDuration, formatSignedDuration } from '../helper';
 import { isFrozen, SEQUENCE_ROUTE, SEQUENCE_STOPS, STOP_STATE } from '../mockSequence';
 import { useStyles } from '../optimizeRoute.styles';
-import { useFlipReorder } from '../useFlipReorder';
 
 /**
  * A route reorder does not deserve a screen. It changes one list the planner is

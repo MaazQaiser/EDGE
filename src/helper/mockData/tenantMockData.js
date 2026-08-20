@@ -1,5 +1,5 @@
 import { mainDomain } from 'src/helper/utilityFunctions';
-import { FILTER_GO_TENANT, SIGNAL_TENANT } from 'src/theme/tenantBranding';
+import { FILTER_GO_TENANT } from 'src/theme/tenantBranding';
 
 export function isFilterGoTenant(tenant = mainDomain()) {
   return tenant === FILTER_GO_TENANT;
@@ -107,8 +107,14 @@ const filterGoMocks = {
    */
   terms: {
     patrol: 'Filter Replacement Service',
-    runsheets: 'Runsheets',
-    runsheet: 'Runsheet',
+    /* A runsheet is a **Route** here. The word the planner uses for an ordered
+       day of driving is "route", and every screen that talks about one — the
+       schedule, the optimizer, the visit drawer — reads this term rather than
+       hard-coding either word. Signal keeps "Runsheet"; the API says runsheet on
+       both. Bump `TENANT_LABELS_VERSION` when this changes or existing sessions
+       keep the cached vocabulary (§7.2). */
+    runsheets: 'Routes',
+    runsheet: 'Route',
     hits: 'Visits',
     hit: 'Visit',
     // The work template attached to a visit — the on-site checklist that produces

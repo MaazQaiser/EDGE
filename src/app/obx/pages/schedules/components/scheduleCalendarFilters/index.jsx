@@ -92,11 +92,25 @@ const ScheduleCalendarFilters = ({
   filterOfficerOptions,
   services,
   getLabel,
+  leadingFilter = null,
   trailingFilter = null,
 }) => {
   const { t } = useTranslation();
   const { filters } = tabConfig;
   const isWeekView = selectedViewType !== DAY_GRID.DAY && selectedViewType !== DAY_GRID.MONTH;
+  /**
+   * Why this row is shorter in day and month, stated where it changes shape.
+   *
+   * `Sites` and `All Statuses` stay because the day and month fetches carry
+   * `siteId` and `shiftStatus` and the grid visibly narrows. `Locations` and
+   * `{Officers}` are dropped from those queries — a month cell is a tally per day
+   * with no officer or location dimension to filter on, and the day view returns
+   * rows already grouped by location — so leaving the dropdowns on screen would
+   * offer two controls that answer nothing. A filter that cannot act is worse
+   * than an absent one; hiding it is the honest half of the same decision, and
+   * this comment is the pair to the `isDayOrMonthView` guards in the fetch, which
+   * is where the other half lives.
+   */
   const showMainScheduleFilters = isWeekView && !isSitesModule && !isUsersModule;
 
   const shiftFilterOptions = getShiftFilterOptions(filters, t, getLabel, services);
@@ -104,15 +118,65 @@ const ScheduleCalendarFilters = ({
     filters.patrolStatusOptions ? getPatrolStatusFilterOptions(t) : STATUS_FILTER_DATA(t) || [],
   );
 
+  /**
+   * The unique companies behind `queryParams.allSites`, keyed by `customerId` —
+   * the same identity the Sites dropdown narrows on below. Deduped so a company
+   * with several sites offers one row, not one per site.
+   */
+  const companyOptions = sortByLabelAsc(
+    Array.from(
+      (queryParams.allSites || []).reduce((byCustomerId, site) => {
+        const customerId = site?.customerId;
+        if (customerId === undefined || customerId === null || customerId === '') {
+          return byCustomerId;
+        }
+        const key = `${customerId}`;
+        if (!byCustomerId.has(key)) {
+          byCustomerId.set(key, { value: key, label: `${site?.company || ''}`.trim() });
+        }
+        return byCustomerId;
+      }, new Map()),
+      ([, option]) => option,
+    ),
+    ['label'],
+  );
+
+  const selectedCompanyIds = toMultiSelectValue(queryParams.filter.selectedCompanies).map(
+    (selected) => `${selected?.value ?? selected?.id ?? ''}`,
+  );
+
+  /**
+   * A site option is the site payload **minus its photographs**.
+   *
+   * `CustomDropDown` draws an `<Avatar>` for any option carrying `image`, which is
+   * right for the technician filter and wrong here: a site's `image` is its gallery
+   * of building photos, an *array*, so every row in this list rendered an avatar
+   * whose `src` was a stringified array — a broken thumbnail against a PropTypes
+   * warning asking for a string. Sites with no photos fared no better, because an
+   * empty array is still truthy.
+   *
+   * Stripped from the option rather than guarded inside the dropdown: that
+   * component is shared app-wide and the officer filter legitimately wants faces.
+   * `image` is the only key it treats as an avatar; `description`, the other key
+   * that reshapes a row, is not on this payload.
+   *
+   * Company narrows what Sites can offer: with one or more companies selected,
+   * only their sites appear below, in the same order this narrows the visible
+   * rows on the grid — customer first, then building.
+   */
   const siteOptions = sortByLabelAsc(
-    (queryParams.allSites || []).map((site) => {
-      const label = `${site?.name || site?.siteName || site?.title || site?.label || ''}`.trim();
-      return {
-        ...site,
-        value: `${site?.id ?? site?.value ?? ''}`,
-        label,
-      };
-    }),
+    (queryParams.allSites || [])
+      .filter(
+        (site) => !selectedCompanyIds.length || selectedCompanyIds.includes(`${site?.customerId}`),
+      )
+      .map(({ image: _siteImages, ...site }) => {
+        const label = `${site?.name || site?.siteName || site?.title || site?.label || ''}`.trim();
+        return {
+          ...site,
+          value: `${site?.id ?? site?.value ?? ''}`,
+          label,
+        };
+      }),
     ['label'],
   );
   const locationOptions = sortFilterOptionsAlphabetically(
@@ -146,6 +210,11 @@ const ScheduleCalendarFilters = ({
       )}
 
       <Box className={classes.scheduleCalendarHeaderFilters}>
+        {/* Ahead of the filters, because it is not one: it decides what the rows
+            are, and the filters then narrow them. Reading order matches the
+            dependency — subject first, then the qualifiers. */}
+        {leadingFilter}
+
         {filters.showShiftType && (
           <CustomDropDown
             name="duties"
@@ -154,6 +223,23 @@ const ScheduleCalendarFilters = ({
             options={shiftFilterOptions}
             selectedValues={toSingleSelectValue(queryParams.filter.selectedDutyType)}
             handleChange={(event) => onSelectFilter(event, 'selectedDutyType')}
+          />
+        )}
+
+        {!isSitesModule && (
+          <CustomDropDown
+            name="companies"
+            label={t('obx.schedules.filters.companies.fieldLabel')}
+            className={classes.scheduleCalendarFilterDropdown}
+            options={companyOptions}
+            selectedValues={toMultiSelectValue(queryParams.filter.selectedCompanies)}
+            handleChange={(event) => onSelectFilter(event, 'selectedCompanies')}
+            multiSelect
+            searchPlaceholder={t('form.input.textField.search.placeHolder')}
+            checkmark
+            searchable
+            clearAll
+            additionalOption={<Box className={classes.scheduleCalendarFilterSearchDivider} />}
           />
         )}
 
@@ -257,6 +343,8 @@ ScheduleCalendarFilters.propTypes = {
   filterOfficerOptions: PropTypes.array,
   services: PropTypes.object,
   getLabel: PropTypes.func,
+  /** A view control that owns the left column — rendered before the filters. */
+  leadingFilter: PropTypes.node,
   trailingFilter: PropTypes.node,
 };
 

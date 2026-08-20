@@ -90,5 +90,28 @@ export function extractPathParams(path, pattern) {
 
 export function getQueryParams(path = '') {
   const query = path.includes('?') ? path.split('?')[1] : '';
-  return Object.fromEntries(new URLSearchParams(query));
+  const params = new URLSearchParams(query);
+  const result = {};
+
+  for (const key of params.keys()) {
+    if (Object.prototype.hasOwnProperty.call(result, key)) continue;
+
+    if (key.endsWith('[]')) {
+      /* `queryString.stringify(value, { arrayFormat: 'bracket' })` — the format
+         every multi-select filter on this service uses (see src/services/duty.services.js)
+         — repeats this key once per value: `siteId[]=1&siteId[]=2`. `URLSearchParams`
+         keeps every pair, but `Object.fromEntries` collapsed same-named keys to the
+         last one, so a multi-select filter silently lost every value but its last,
+         under a key no handler ever read (`'siteId[]'`, brackets and all — nothing
+         in this mock layer looks up a bracketed key name). Collect every value into
+         an array under the un-bracketed key instead, so `query.siteId` is what a
+         handler actually reaches for. */
+      const plainKey = key.slice(0, -2);
+      result[plainKey] = params.getAll(key);
+    } else {
+      result[key] = params.get(key);
+    }
+  }
+
+  return result;
 }

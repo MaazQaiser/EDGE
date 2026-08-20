@@ -17,6 +17,8 @@ well-evidenced inference and correct it where the backend disagrees.
 | 04 | [Edge case brainstorm](04-edge-case-brainstorm.html) | Contract compliance when visits move, route start/end, access windows, filter stock |
 | 05 | [Route optimization](05-route-optimization.html) | Sequencing vs harmonization, three scopes, constraints, the propose-diff-accept loop |
 | 06 | [Visits scheduler edge cases](06-visits-scheduler-edge-cases.md) | View-level edge cases for the built visits scheduler — what is handled, open, or blocked |
+| 07 | [Consolidated visits view](07-consolidated-visits-view.html) | **The company-level list.** Redesign after the week-calendar demo was rejected: period roll-up, company year, planned vs projected. Decisions D14–D24 |
+| 07p | [Companies tab prototype](07-companies-tab-prototype.html) | `07` as a working screen — both views wired up on demo data. Open it in a browser and click |
 
 [**FilterGo-Visits-Route-Building.docx**](FilterGo-Visits-Route-Building.docx) compiles
 01–04 into a single Word document for sharing outside the team.
@@ -50,6 +52,10 @@ nearest-neighbour optimizer that does not yet honour site access windows.
 Four answers block further work:
 
 - Are site access windows real restrictions, or nominal service times?
-- Is the contracted service interval stored per site?
+- Is the contracted service interval stored per site? **Now blocking `07`** — the
+  twelve-month company view is arithmetic on this field.
 - Does editing a weekday template affect the current week or only future weeks?
 - Is the eight-hour day fixed, or per worker?
+
+`07` is the design for the **company-level consolidated view**, written after the demoed
+week-calendar version was rejected. It is design only — nothing is built yet.

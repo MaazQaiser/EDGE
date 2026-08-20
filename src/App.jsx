@@ -18,7 +18,7 @@ import { fetchTenantLabelsCall, getUserData } from 'services/auth.services';
 import TenantThemeProvider from 'src/app/components/common/tenantThemeProvider';
 import history from 'src/app/router/utils/history';
 import { generateAzureStorageBlobToken, isAzureTokenExpired } from 'src/helper/utilityFunctions';
-import { setAccessControlPermissions, setSaasToken } from 'src/redux/store/slices/auth';
+import { setSaasToken, setTenantPermissions } from 'src/redux/store/slices/auth';
 import { setTenantLabels, TENANT_LABELS_VERSION } from 'src/redux/store/slices/tenantConfigs';
 import { appInsightUserAgent, enumUserRolesTokenApi } from 'src/utils/constants';
 
@@ -134,16 +134,46 @@ const Main = () => {
     i18n.changeLanguage(currentLanguage?.code);
   }, []);
 
-  const _getPermission = async () => {
-    try {
-      const response = await getUserData();
-      if (response && response.statusCode == 200) {
-        dispatch(setAccessControlPermissions(response?.data?.user?.accessControlList));
+  /**
+   * Refresh the **tenant feature flags** on every boot with a token.
+   *
+   * `tenantPermissions` was written once at login and then frozen: the store is
+   * persisted, so a session kept alive across reloads never saw a flag change again.
+   * A tenant feature turned on server-side stayed invisible, and — the direction that
+   * actually matters — one *revoked* server-side stayed clickable until the user
+   * happened to log out. It is also why enabling `runsheets.suppliesForecasting` for
+   * the demo tenant did not make the scheduler's Forecasting button appear for anyone
+   * already signed in.
+   *
+   * **Only the tenant flags.** There was a `_getPermission` helper here that nothing
+   * ever called, which also dispatched `setAccessControlPermissions(accessControlList)`
+   * — and reviving that part breaks routing. Login does not use that field: it derives
+   * the module access list from the user's *role* (`setUserAccessList`) and builds
+   * `permissionsList` alongside it, so overwriting the store with the raw payload field
+   * collapses module access and every route redirects to the profile page. That is why
+   * the helper is not simply being called; only the half this needs is kept.
+   *
+   * Failures are swallowed deliberately: this refreshes state that is already hydrated
+   * from persistence, so a dropped request means the user keeps working with what they
+   * had rather than losing a working session.
+   */
+  useEffect(() => {
+    if (!accessToken) return;
+
+    (async () => {
+      try {
+        const response = await getUserData();
+        if (response?.statusCode != 200) return;
+
+        const edgePermissions = response?.data?.user?.tenantConfiguration?.permissions?.edge;
+        // Guarded, so a payload that omits the block cannot blank out working
+        // permissions — absent and "none" are different answers.
+        if (edgePermissions) dispatch(setTenantPermissions(edgePermissions));
+      } catch {
+        // See above.
       }
-    } catch (error) {
-      console.log('test permission');
-    }
-  };
+    })();
+  }, [accessToken, dispatch]);
 
   useEffect(() => {
     if (

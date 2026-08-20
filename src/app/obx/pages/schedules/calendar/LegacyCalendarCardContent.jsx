@@ -12,6 +12,8 @@ import { ReactComponent as CarIcon } from 'src/assets/svg/carImage.svg';
 import { ReactComponent as DispatchIndicator } from 'src/assets/svg/dispatchIndicator.svg';
 import { ReactComponent as NotesIcon } from 'src/assets/svg/notesStatus.svg';
 import { ReactComponent as RunsheetIcon } from 'src/assets/svg/runsheetHit.svg';
+import { ReactComponent as UnassignedOfficerIcon } from 'src/assets/svg/unassigned-officer.svg';
+import { ReactComponent as UnassignedVehicleIcon } from 'src/assets/svg/unassigned-vehicle.svg';
 import { ReactComponent as WhiteCarIcon } from 'src/assets/svg/WhiteCarIcon.svg';
 import { SCHEDULE_DUTIES } from 'src/utils/constants/schedules';
 import { capitalizeFirstLetter } from 'src/utils/string/common';
@@ -67,6 +69,15 @@ const LegacyCalendarCardContent = ({ shift, statusIcon, statusValue, is24Hours }
   } = shift || {};
 
   const eventTime = formatShiftScheduleTimeRange(startsAt, endsAt, is24Hours);
+  /* Mirrors CalendarCardContent: the officer label and the officer avatar read
+     off one derived name, so the card can never draw a face beside the word
+     "Unassigned". The legacy payload has no assign-from-calendar affordance, so
+     here the fix is only the conditional render. */
+  const officerName = officer?.name || reassignedOfficer?.name;
+  const isOfficerUnassigned = !officerName;
+  // Same derivation for the vehicle row below — the icon and the label read off one
+  // name, so an unassigned vehicle cannot draw a car next to "Unassigned".
+  const vehicleName = vehicle?.name;
 
   return (
     <>
@@ -159,27 +170,55 @@ const LegacyCalendarCardContent = ({ shift, statusIcon, statusValue, is24Hours }
           </Box>
           <Box className={`${classes.reassignedFooter} ${classes.newReassignedFooter}`}>
             <Box className={classes.reassignedFooterFlex}>
-              <Box className={classes.reassignedOfficerFlex}>
-                <Avatar className={classes.eventAvatar} src={officer?.imageUrl || AvatarSchedule} />
-              </Box>
+              {isOfficerUnassigned ? (
+                /* No assign-from-calendar affordance on the legacy payload (see
+                   the class comment above), so this is display-only: the empty
+                   slot draws `unassigned-officer.svg`, sized to the avatar's own
+                   16px via `unassignedOfficerIcon`, rather than drawing nothing. */
+                <Box className={classes.reassignedOfficerFlex}>
+                  <UnassignedOfficerIcon className={classes.unassignedOfficerIcon} />
+                </Box>
+              ) : (
+                <Box className={classes.reassignedOfficerFlex}>
+                  {/* The label already falls through to the reassignment, so the
+                      avatar follows the same chain — otherwise a reassigned shift
+                      drew the placeholder beside a real officer's name. */}
+                  <Avatar
+                    className={classes.eventAvatar}
+                    src={officer?.imageUrl || reassignedOfficer?.imageUrl || AvatarSchedule}
+                  />
+                </Box>
+              )}
               <Typography className={classes.reassignedName} variant="subtitle4">
-                {officer?.name || reassignedOfficer?.name || t('obx.schedules.calendar.unassigned')}
+                {officerName || t('obx.schedules.calendar.unassigned')}
               </Typography>
             </Box>
           </Box>
           <Box className={`${classes.reassignedFooter} ${classes.newReassignedFooter}`}>
             <Box className={classes.reassignedFooterFlex}>
+              {/* Same rule as the officer row above — a different glyph for an
+                  empty slot, not no glyph — and the same `carIcon` boxing
+                  `WhiteCarIcon` uses, so the row holds its height and position
+                  in both states. */}
               <Box className={classes.reassignedOfficerFlex}>
-                {vehicle?.images?.[0]?.url ? (
-                  <Avatar className={classes.eventAvatar} src={vehicle?.images?.[0]?.url} />
+                {vehicleName ? (
+                  <>
+                    {vehicle?.images?.[0]?.url ? (
+                      <Avatar className={classes.eventAvatar} src={vehicle?.images?.[0]?.url} />
+                    ) : (
+                      <Box className={classes.carIcon}>
+                        <WhiteCarIcon />
+                      </Box>
+                    )}
+                  </>
                 ) : (
                   <Box className={classes.carIcon}>
-                    <WhiteCarIcon />
+                    <UnassignedVehicleIcon />
                   </Box>
                 )}
               </Box>
               <Typography className={classes.reassignedName} variant="subtitle4">
-                {vehicle?.name || t('obx.schedules.calendar.unassigned')}
+                {vehicleName || t('obx.schedules.calendar.unassigned')}
               </Typography>
             </Box>
             <Box className={classes.reassignedFooter}>
@@ -217,17 +256,23 @@ const LegacyCalendarCardContent = ({ shift, statusIcon, statusValue, is24Hours }
               !reassignedOfficer ? classes.reassignedFooterFlex : classes.reassignedFooterFlexGap
             }
           >
-            <Box className={classes.reassignedOfficerFlex}>
-              <Avatar className={classes.eventAvatar} src={officer?.imageUrl || AvatarSchedule} />
-              {reassignedOfficer && (
-                <Avatar
-                  className={classes.eventAvatarReassignedOfficer}
-                  src={reassignedOfficer?.imageUrl || AvatarSchedule}
-                />
-              )}
-            </Box>
+            {isOfficerUnassigned ? (
+              <Box className={classes.reassignedOfficerFlex}>
+                <UnassignedOfficerIcon className={classes.unassignedOfficerIcon} />
+              </Box>
+            ) : (
+              <Box className={classes.reassignedOfficerFlex}>
+                <Avatar className={classes.eventAvatar} src={officer?.imageUrl || AvatarSchedule} />
+                {reassignedOfficer && (
+                  <Avatar
+                    className={classes.eventAvatarReassignedOfficer}
+                    src={reassignedOfficer?.imageUrl || AvatarSchedule}
+                  />
+                )}
+              </Box>
+            )}
             <Typography className={classes.reassignedName} variant="subtitle4">
-              {officer?.name || reassignedOfficer?.name || t('obx.schedules.calendar.unassigned')}
+              {officerName || t('obx.schedules.calendar.unassigned')}
             </Typography>
           </Box>
           <Box className={classes.notesIconDiv}>

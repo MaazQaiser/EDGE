@@ -33,12 +33,28 @@ const mapShiftToCalendarEvent = (shift = {}, row = {}, resourceId) => {
   delete event.resourceID;
   delete event.resourceIds;
 
+  const shiftType = getShiftType(event);
+
+  /**
+   * A visit's route is a fact about the visit, so it is never inferred from the row.
+   *
+   * The row-title fallback below is right for a shift — a runsheet row's shifts
+   * belong to that runsheet, and the payload does not bother repeating it. It is
+   * wrong for a hit: `VisitCardContent` reads this field to decide whether anything
+   * has claimed the visit, so a borrowed name makes an unrouted visit read as
+   * routed. On the site grouping that was invisible, because unrouted visits sit in
+   * a row titled "Unassigned" and the fallback happened to produce the right word.
+   * Group by company and the same fallback prints the customer's name where the
+   * route belongs, on the one card that most needs to say it has no route.
+   */
+  const runsheetName = event.runsheetName || event.runsheet?.name || null;
+
   return {
     ...event,
     id: event.id || event.shiftActivityLogId,
     title: event.title || event.name || row.title,
     name: event.name || event.title || row.title,
-    shiftType: getShiftType(event),
+    shiftType,
     apiShiftType: event.shiftType,
     resourceId,
     startsAt: event.startsAt || shift.start,
@@ -47,7 +63,8 @@ const mapShiftToCalendarEvent = (shift = {}, row = {}, resourceId) => {
     start: dayjsWithStandardOffset(shift.start || shift.startsAt).format('YYYY-MM-DD'),
     officer: normalizeOfficer(event.officer),
     reassignedOfficer: normalizeOfficer(event.reassignedOfficer),
-    runsheetName: event.runsheetName || event.runsheet?.name || row.title || event.name,
+    runsheetName:
+      shiftType === SCHEDULE_DUTIES.HIT ? runsheetName : runsheetName || row.title || event.name,
   };
 };
 
@@ -67,69 +84,22 @@ const compareTitles = (left = {}, right = {}) =>
   );
 
 /**
- * When this site is next due, as a sortable number.
+ * One straight A–Z list. Every grid here orders its rows by name.
  *
- * A row with visits in the visible range is keyed on its earliest one. A quiet row
- * is keyed on `nextVisitAt` — the next visit beyond the range — which is what puts
- * it in the same ordering rather than in a separate alphabetical block. A site with
- * no future visit at all has no place on a timeline, so it sorts last.
- */
-const getRowChronologyKey = (row = {}) => {
-  const shifts = getRowShifts(row);
-
-  if (shifts.length) {
-    return Math.min(
-      ...shifts.map((shift) => dayjsWithStandardOffset(shift.startsAt || shift.start).valueOf()),
-    );
-  }
-
-  const nextVisitAt = row.meta?.nextVisitAt;
-  if (nextVisitAt) return dayjsWithStandardOffset(nextVisitAt).valueOf();
-
-  return Number.POSITIVE_INFINITY;
-};
-
-/**
- * Chronological: the grid reads top to bottom as the order things happen.
+ * The visits grid briefly ordered chronologically instead — earliest visit first,
+ * quiet sites compressed below a divider — on the argument that a week grid should
+ * read as the sequence of work. In use it did the opposite: a site's position moved
+ * every time you paged the week, so the row you were looking for was somewhere new
+ * each time and the only way to find it was to read every label. A name that is
+ * always in the same place is worth more than an order that encodes the dates the
+ * columns already carry. The row's own label still says when the site is next due.
  *
- * This replaced "sites with visits first, then alphabetical". Alphabetical put
- * Alderwood above Downtown whether Alderwood was serviced on Monday or Friday,
- * which is no use to someone planning a week — and it made the eye scan for a name
- * it already knew instead of reading the sequence of work.
- *
- * Sites with visits still land above quiet ones, but now as a *consequence* rather
- * than a rule: a visit inside the range is always earlier than one beyond it.
- * Ties fall back to the name so the order is stable between fetches.
+ * `Sites with Visits` remains the answer to a long book: it drops the quiet rows
+ * outright rather than sorting around them.
  */
-const compareChronologically = (left = {}, right = {}) => {
-  const leftKey = getRowChronologyKey(left);
-  const rightKey = getRowChronologyKey(right);
-
-  if (leftKey !== rightKey) return leftKey - rightKey;
-  return compareTitles(left, right);
-};
-
-/**
- * Unassigned rows sink to the bottom by default — on a runsheet grid they are a
- * remainder. On the visits grid they are the point of the screen, so that view
- * pins them to the top instead.
- */
-const sortRows = (rows = [], { pinUnassignedFirst = false, chronological = false } = {}) => {
-  const comparator = chronological ? compareChronologically : compareTitles;
-  const assigned = rows.filter((row) => !isUnassignedRow(row)).sort(comparator);
+const sortRows = (rows = [], { pinUnassignedFirst = false } = {}) => {
+  const assigned = rows.filter((row) => !isUnassignedRow(row)).sort(compareTitles);
   const unassigned = rows.filter(isUnassignedRow);
-
-  /**
-   * Mark where the worked rows stop and the quiet ones begin. Without a boundary
-   * the eye cannot tell "this week's work" from "the rest of the book" — and with
-   * a sparse cadence the rest of the book is most of the screen.
-   */
-  if (chronological) {
-    const firstQuietIndex = assigned.findIndex((row) => getRowShifts(row).length === 0);
-    if (firstQuietIndex > 0) {
-      assigned[firstQuietIndex] = { ...assigned[firstQuietIndex], isFirstQuietRow: true };
-    }
-  }
 
   return pinUnassignedFirst ? [...unassigned, ...assigned] : [...assigned, ...unassigned];
 };
@@ -155,7 +125,7 @@ const getSiteBandSubtitle = (section = {}) => {
 
 const mapSectionsToGrid = (
   sections = [],
-  { showSectionBands = false, pinUnassignedFirst = false, chronological = false } = {},
+  { showSectionBands = false, pinUnassignedFirst = false } = {},
 ) => {
   const rows = [];
   const shifts = [];
@@ -163,10 +133,7 @@ const mapSectionsToGrid = (
 
   sortedSections.forEach((section, sectionIndex) => {
     const sectionId = String(section.id || section.key || `section-${sectionIndex}`);
-    const sectionRows = sortRows(getSectionRows(section), {
-      pinUnassignedFirst,
-      chronological,
-    });
+    const sectionRows = sortRows(getSectionRows(section), { pinUnassignedFirst });
 
     if (showSectionBands) {
       rows.push({
@@ -207,7 +174,6 @@ const mapSectionsToGrid = (
         sectionTitle: section.title,
         sortOrder: sectionIndex * 10000 + rowIndex + 1,
         isUnassignedLocation: isUnassignedRow(row),
-        isFirstQuietRow: Boolean(row.isFirstQuietRow),
       });
 
       rowShifts.forEach((shift) => {
@@ -223,16 +189,11 @@ const mapSectionsToGrid = (
  * The main schedule route has a stable grid-v2 contract. Only convert its
  * section/row shape into the flat resource/event shape required by FullCalendar.
  */
-export const mapGridV2WeekData = (data = {}) => {
-  const isVisits = data.view === 'visits';
-
-  return mapSectionsToGrid(data.sections || [], {
+export const mapGridV2WeekData = (data = {}) =>
+  mapSectionsToGrid(data.sections || [], {
     showSectionBands: data.view === 'dedicated',
-    pinUnassignedFirst: isVisits,
-    // The visits grid reads top to bottom as the order the work happens.
-    chronological: isVisits,
+    pinUnassignedFirst: data.view === 'visits',
   });
-};
 
 /**
  * Drops rows with nothing scheduled in the visible range — the quick filter.
@@ -250,6 +211,24 @@ export const filterResourcesToScheduled = (resources = []) =>
     return (Number(resource.extendedProps?.meta?.visitCount) || 0) > 0;
   });
 
+/**
+ * Company rows A–Z, and nothing cleverer than that.
+ *
+ * This was briefly ordered by each customer's earliest visit in the window, on the
+ * reasoning that a planner reads the grid to answer "who is first". It is a worse
+ * answer for the same reason it is a worse answer for site rows (see `sortRows`): a
+ * row that moves every time you page the week is a row you have to hunt for, and
+ * *when* the work happens is already written across the row by the column each card
+ * sits in. Position is the one thing the row can say that its cards cannot — so it
+ * spends it on the name, which never moves.
+ *
+ * `sortOrder` is rewritten rather than the array reordered: FullCalendar orders
+ * resources by that field and ignores the order they arrive in, so a sorted array
+ * with the payload's `sortOrder` still intact draws in the payload's order.
+ */
+export const orderCompanyRowsAlphabetically = (resources = []) =>
+  [...resources].sort(compareTitles).map((resource, index) => ({ ...resource, sortOrder: index }));
+
 export const mapWeekRowsToCalendarResources = (rows = []) =>
   rows.map((row) => ({
     id: String(row.id),
@@ -265,7 +244,6 @@ export const mapWeekRowsToCalendarResources = (rows = []) =>
       sectionTitle: row.sectionTitle,
       isDedicatedSiteBand: Boolean(row.isDedicatedSiteBand),
       isUnassignedLocation: Boolean(row.isUnassignedLocation),
-      isFirstQuietRow: Boolean(row.isFirstQuietRow),
     },
   }));
 
@@ -450,7 +428,25 @@ export const mapFooterStatsToScheduleStatsFooter = (
 
   if (variant === SCHEDULE_STATS_FOOTER_VARIANTS.VISITS) {
     const { statuses = {} } = footerStats;
+    /* Coverage and the KPI row belong to the *window*, not to the shift vocabulary,
+       so they carry across to this variant whenever the payload has them — the week
+       fetches them, the month does not, and the footer collapses to its short form
+       on its own when they are absent. Omitting them here would have meant the
+       company grouping paid for a correct status row with its coverage ring. */
+    const kpis = footerStats.overview
+      ? {
+          coverage: overview.coverage?.percentage ?? footerStats.coverage?.percentage ?? 0,
+          metrics: [
+            { id: 'scheduledOfficers', ...metricPair(overview.scheduledOfficers) },
+            { id: 'hoursCompleted', ...metricPair(overview.hoursCompleted) },
+            { id: 'runsheetsCompleted', ...metricPair(overview.runsheetsCompleted) },
+            { id: 'dispatchCompleted', ...metricPair(overview.dispatchCompleted) },
+          ],
+        }
+      : {};
+
     return {
+      ...kpis,
       dutyStats: [
         { id: 'patrol', value: value(legend.patrol) },
         { id: 'extraRunsheet', value: value(legend.extraRunsheet) },
@@ -486,9 +482,7 @@ export const mapFooterStatsToScheduleStatsFooter = (
     metrics: [
       { id: 'scheduledOfficers', ...metricPair(overview.scheduledOfficers) },
       { id: 'hoursCompleted', ...metricPair(overview.hoursCompleted) },
-      { id: 'overtime', value: value(overview.overtimeHours) },
       { id: 'runsheetsCompleted', ...metricPair(overview.runsheetsCompleted) },
-      { id: 'patrolVisitsCompleted', ...metricPair(overview.patrolVisitsCompleted) },
       { id: 'dispatchCompleted', ...metricPair(overview.dispatchCompleted) },
     ],
     dutyStats: [

@@ -1,6 +1,9 @@
 {
   "sideNavBar": {
-    "linkText": { "dashboard": "Dashboard", "Setting": "Setting" }
+    "linkText": {
+      "dashboard": "Dashboard",
+      "Setting": "Setting"
+    }
   },
   "obxZones": {
     "labels": {
@@ -21,7 +24,6 @@
       "changeZone": "Change Zone!",
       "changeZoneDes": "Select a zone you want to change."
     },
-
     "searchFilter": "Search by Zone"
   },
   "schedules": {
@@ -173,7 +175,6 @@
             }
           }
         },
-
         "assignDuty": {
           "title": "Changes will affect this job from today onwards."
         },
@@ -359,7 +360,6 @@
           "editTourAssignment": "Edit {{tour}}",
           "tourTemplateTitle": "{{tour}} Template"
         },
-
         "assignShiftsFor": {
           "locationLabel": "Assign Location for",
           "officerLabel": "Assign Officer for",
@@ -467,6 +467,12 @@
         "searchPlaceholder": "Search for a Site",
         "fieldLabel": "Sites"
       },
+      "companies": {
+        "label": "All Companies",
+        "all": "All Companies",
+        "searchPlaceholder": "Search for a Company",
+        "fieldLabel": "Company"
+      },
       "duties": {
         "label": "All Jobs",
         "all": "All Jobs",
@@ -511,7 +517,11 @@
       "view": {
         "day": "Day",
         "week": "Week",
-        "month": "Month"
+        "month": "Month",
+        "year": "Year",
+        "dayShort": "D",
+        "weekShort": "W",
+        "monthShort": "M"
       },
       "tooltips": {
         "dedicatedAttention": "{{dedicated}} Job needs attention",
@@ -524,6 +534,7 @@
       "today": "Today",
       "previousPeriod": "Previous period",
       "nextPeriod": "Next period",
+      "openDatePicker": "Open date picker",
       "dayView": {
         "scheduledCount": "{{count}} scheduled",
         "nothingScheduled": "Nothing scheduled here today."
@@ -559,12 +570,74 @@
         "rowThisWeek": "{{count}} this week",
         "rowNextVisit": "Next visit {{date}}",
         "rowNotScheduled": "Not scheduled",
+        "prefersDay": "Prefers {{day}}",
+        "prefersDayOff": "Prefers {{day}} — not on it",
+        "tooltipSite": "Site: {{site}}",
+        "tooltipRoute": "Route: {{route}}",
         "rowEveryDays": "Every {{count}} days",
         "sitesServiced": "Sites serviced",
         "monthUnassigned": "{{count}} not on a route",
+        "monthTotal": "{{total}} {{hits}}",
         "onlyScheduledSites": "Sites with {{hits}}",
+        "onlyScheduledCompanies": "Companies with {{hits}}",
         "showOnlyScheduledSites": "Show only the sites with {{hits}} in this period",
-        "showAllSites": "Show every site, including the quiet ones"
+        "showAllSites": "Show every site, including the quiet ones",
+        "showOnlyScheduledCompanies": "Show only the companies with {{hits}} in this period",
+        "showAllCompanies": "Show every company, including the quiet ones",
+        "showOnlyAwaitingRoute": "Show only the {{hits}} that are not on a route, across the dates on screen",
+        "showAllVisits": "Clear the filter and show all {{hits}}"
+      },
+      "grouping": {
+        "label": "Show the schedule as",
+        "routes": "{{runsheets}}",
+        "visits": "{{hits}} by company",
+        "companyTimeline": "Company timeline · 12 months",
+        "searchCompany": "Search company",
+        "searchCompanyOrSite": "Search company or site",
+        "searchAllLocations": "Every location ({{count}})",
+        "searchNoMatches": "No company or site matches",
+        "searchNoRecents": "No recent searches yet",
+        "searchSelectedSite": "{{company}} · {{site}}",
+        "searchOptionTitle": "{{company}} · {{detail}}",
+        "searchRecent": "Recent searches",
+        "searchRecentCompany": "{{company}} · All {{sites}}",
+        "searchClearSelection": "Clear this selection and show every company",
+        "visitsShort": "Visits",
+        "routesShort": "Routes",
+        "companiesShort": "Companies"
+      },
+      "companies": {
+        "companyColumn": "Company",
+        "openCompany": "Open {{company}}'s schedule",
+        "filters": {
+          "allCompanies": "All companies",
+          "allLocations": "All {{sites}}"
+        },
+        "notScheduled": "Not scheduled — no recurring service",
+        "footer": "{{companies}} {{companyWord}} · {{count}} {{sites}}",
+        "companySingular": "company",
+        "companyPlural": "companies",
+        "visitOn": "{{date}} · {{status}}",
+        "legendScheduled": "Scheduled",
+        "legendCompleted": "Completed",
+        "legendMissed": "Missed",
+        "legendUnassigned": "No route",
+        "emptyTitle": "Nothing to show",
+        "emptyBody": "No companies have visits in this period.",
+        "emptySearch": "No company or site matches “{{query}}”.",
+        "emptyDay": "No visits are scheduled on this day.",
+        "emptyWeek": "No visits are scheduled in this week.",
+        "timeline": {
+          "groupMeta": "{{count}} {{sites}} · {{visits}} visits",
+          "groupUnscheduled": "{{count}} not scheduled"
+        },
+        "viewSwitch": {
+          "label": "Companies period",
+          "dayHint": "One day — the companies and locations being serviced on it",
+          "weekHint": "One week of visits, grouped by company and location",
+          "monthHint": "One month, with every location listed whether or not it is due",
+          "yearHint": "Twelve months at a glance — one row per location, one column per month"
+        }
       },
       "noEvents": {
         "title": "No shifts found",
@@ -595,7 +668,8 @@
         "splittedShift": "Split shift"
       },
       "tabs": {
-        "overview": "Overview"
+        "overview": "Overview",
+        "companies": "Companies"
       },
       "resourceHeaders": {
         "locations": "Locations"
@@ -1101,6 +1175,7 @@
     "optimize": {
       "entryAction": "Optimize routes",
       "weekAction": "Harmonize this week",
+      "weekActionShort": "Harmonize",
       "dayAction": "Rebalance {{day}}",
       "sequenceAction": "Reorder stops",
       "changeSettings": "Change settings",
@@ -1325,6 +1400,191 @@
       "drawerEmpty": "Nothing selected. Tick visits on the calendar to harmonize them."
     },
     "harmonize": {
+      "titleOptimize": "Harmonize visits",
+      "columnSetup": "Preferences",
+      "columnAi": "Proposed Route",
+      "columnRoutes": "Proposed route",
+      "columnMap": "On the ground",
+      "harmonizeCta": "Harmonize",
+      "staleNote": "The set-up has changed. Press Harmonize to rebuild this plan.",
+      "harmonizeCtaAria": "Harmonize the visits in this window",
+      "closeWorkspace": "Close",
+      "awaitingTitle": "No route proposed yet",
+      "awaitingText": "Configure the run on the left, then select Harmonize. The proposed route and its map appear here.",
+      "installersLabel": "Installers",
+      "installersAria": "How many installers are on this run",
+      "installersCount": "{{count}} installer",
+      "installersCount_other": "{{count}} installers",
+      "installersHint": "{{count}} of work in the day",
+      "tipInstallers": "Two installers work every stop together, so the day holds twice the work. It is still one round trip in one van.",
+      "setupWhen": "When",
+      "setupWhere": "Where from",
+      "setupWho": "Which visits go in",
+      "skipReveal": "Skip",
+      "thinkingAria": "Working out the best routes",
+      "emptyWeek": "No visits in this week can be harmonized.",
+      "installDays": "Installation Days",
+      "tipInstallDays": "The weekdays this run may build routes on. It starts from the Installation Days in Settings; ticking or un-ticking here changes this run only and never the setting. One route is planned per day that has work for it.",
+      "installDaysHint": "{{count}} route day in this window",
+      "installDaysHint_other": "{{count}} route days in this window",
+      "installDaysNone": "Pick at least one day to plan a route on.",
+      "installDaysFromSettings": "From your Installation Days.",
+      "planWindow": "Harmonize window",
+      "planWindowHintDays": "{{count}} route day in here.",
+      "planWindowHintDays_other": "{{count}} route days in here.",
+      "needByLabel": "Need by window",
+      "needByAria": "Days either side of the date a visit is due",
+      "needByOf": "of {{day}}",
+      "needByOfDue": "of the date each visit is due",
+      "radiusLabel": "Radius",
+      "needByLess": "Allow one day less either side",
+      "needByMore": "Allow one day more either side",
+      "radiusLess": "Reduce the radius by five miles",
+      "radiusMore": "Extend the radius by five miles",
+      "radiusOf": "from the start",
+      "radiusFrom": "from {{origin}}",
+      "tipPlanWindow": "How far ahead a single run may reach for a route day. It starts from your harmonization settings and changing it here only changes this run.",
+      "tipStartEnd": "Where the day begins and ends. The route leaves from here and comes back, the drive home is charged against the eight hours, and the radius is measured from this point.",
+      "tipNeedBy": "How many days either side of its due date a visit may be done; a tighter contract wins.",
+      "tipRadius": "The radius is measured from where the day starts.",
+      "tipRadiusFrom": "The radius is measured from {{origin}}.",
+      "tipFromSettings": "Both come from Settings and change only this run.",
+      "tipFromDefault": "No route days are set yet, so these are starting values. Changing them here changes only this run.",
+      "unitDays": "days",
+      "dayCount": "{{count}} day",
+      "dayCount_other": "{{count}} days",
+      "unitMi": "mi",
+      "stageScope": "{{count}} visits · {{from}} to {{to}}",
+      "lineRead": "Reading {{count}} visits at {{sites}} sites…",
+      "lineNeedBy": "{{count}} can be done on {{day}} within ± {{window}}…",
+      "lineRadius": "{{count}} of those are within {{mi}} mi of the start…",
+      "lineEstimate": "{{time}} on site: {{filters}} filters at {{minutes}} minutes each…",
+      "lineSequence": "Sequencing {{count}} stops, out and back…",
+      "lineFit": "It all fits inside {{budget}} on {{day}}.",
+      "lineSplit": "Split across {{count}} route days, {{budget}} each.",
+      "stepRead": "Read {{count}} visits at {{sites}} sites",
+      "stepNeedBy": "{{count}} can be done on {{day}} within ± {{window}}",
+      "stepRadius": "{{count}} of those within {{mi}} mi of the start",
+      "stepEstimate": "{{time}} on site, from {{filters}} filters at {{minutes}} minutes each",
+      "stepSequence": "Sequenced {{count}} stops, out and back",
+      "stepFit": "Fitted inside {{budget}} on {{day}}",
+      "stepSplit": "Split across {{count}} route days, {{budget}} each",
+      "reasoning": "Reasoning",
+      "showWorking": "Show working",
+      "hideWorking": "Hide working",
+      "outsideTitle": "{{count}} visit is not in this plan",
+      "outsideTitle_other": "{{count}} visits are not in this plan",
+      "groupNeedBy": "{{count}} due too far from {{day}}",
+      "remedyNeedBy": "Allow ± {{window}}",
+      "excludedNeedBy": "due {{date}} · {{count}} day out",
+      "excludedNeedBy_other": "due {{date}} · {{count}} days out",
+      "noteContractWindow": "{{count}} of these has a tighter contract window, which this run cannot widen.",
+      "noteContractWindow_other": "{{count}} of these have tighter contract windows, which this run cannot widen.",
+      "groupRadius": "{{count}} outside {{mi}} mi",
+      "remedyRadius": "Extend to {{mi}} mi",
+      "excludedRadius": "{{mi}} mi away",
+      "groupCapacity": "{{count}} with no room left in the day",
+      "noteCapacity": "These qualify, and the day is full. Add a route day in Settings, or widen the plan window to reach the next one.",
+      "routeForDay": "Route for {{day}}",
+      "routeNameLabel": "Route name",
+      "routeNamePlaceholder": "Name this route",
+      "routeBudget": "{{used}} / {{budget}}",
+      "routeCollapse": "Collapse this route",
+      "routeExpand": "Expand this route",
+      "rowTravelTime": "Travel time:",
+      "rowFilterInstall": "Filter Installation ({{count}}):",
+      "rowAlreadyOnRoute": "Already on this route:",
+      "notIncludedTitle": "{{count}} Visit not included",
+      "notIncludedTitle_other": "{{count}} Visits not included",
+      "notIncludedHelp": "Create new route or pick up in next week or try to adjust in current routes.",
+      "remedyAddDay": "Also run {{day}}",
+      "coversHint": "Covers {{covers}}, {{outside}} out",
+      "coversHintAll": "Covers all {{count}}",
+      "tipCovers": "{{covers}} of {{total}} visits are inside this radius. The {{outside}} outside it are listed under the plan, with the radius that would reach them.",
+      "needByCoversHint": "Reaches {{covers}}, {{outside}} out of window",
+      "needByCoversHintAll": "Reaches all {{count}} visits",
+      "tipNeedByCovers": "{{covers}} of {{total}} visits can legally be done on one of this run's install days. The {{outside}} that cannot are listed under the plan.",
+      "breakdownToggle": "Where the time goes",
+      "breakdownTravel": "Travel",
+      "breakdownSite": "On site",
+      "breakdownSiteDetail": "{{count}} stop × {{minutes}} min",
+      "breakdownSiteDetail_other": "{{count}} stops × {{minutes}} min",
+      "breakdownFilters": "Filters",
+      "breakdownFiltersDetail": "{{count}} filter × {{minutes}} min",
+      "breakdownFiltersDetail_other": "{{count}} filters × {{minutes}} min",
+      "breakdownExisting": "Already on this route",
+      "breakdownTotal": "Total",
+      "tipBreakdownSite": "Arriving, parking, finding the units and signing in — {{minutes}} minutes per site, charged once however many visits share the address. This is the time consolidating a round actually saves.",
+      "tipBreakdownTravel": "Driving between stops and home again. Measured by road for the route on the map; straight-line estimate for the rest.",
+      "pinStripLabel": "{{count}} stops, in order",
+      "pinStripMore": "+{{count}}",
+      "totalCovered": "Total time covered",
+      "tipTotalCovered": "Every route in this run added up — travel, time on site, and anything already on a route this run is merging into.",
+      "routesLabel": "{{count}} route",
+      "routesLabel_other": "{{count}} routes",
+      "routeCardTitle": "{{route}} {{index}} · {{day}}",
+      "routeCardMeta": "{{count}} visit · {{used}} of {{budget}}",
+      "routeCardMeta_other": "{{count}} visits · {{used}} of {{budget}}",
+      "routeCardVisits": "{{count}} visit",
+      "routeCardVisits_other": "{{count}} visits",
+      "routeCardInto": "Into {{name}}",
+      "routeCardIntoNew": "New {{route}} · {{name}}",
+      "routeDayLabel": "Day",
+      "routeTargetLabel": "Add to {{route}}",
+      "spillRibbonTitle": "{{count}} visit would not fit on {{day}}",
+      "spillRibbonTitle_other": "{{count}} visits would not fit on {{day}}",
+      "spillRibbonCreated": "A new {{route}} is proposed for them on the next route day.",
+      "spillRibbonMerged": "They join {{name}}, a {{route}} that already runs that day.",
+      "spillRibbonDrop": "Leave these visits where they are",
+      "spillNoRoutes": "Nothing on {{day}} to join, so a new {{route}} is created.",
+      "timeOnSite": "{{time}} on site",
+      "timeArrive": "Arrives {{time}}",
+      "timeDrive": "{{time}} driving to get here",
+      "timeFilters": "{{count}} filters × {{minutes}} min",
+      "timeVisitsAtSite": "{{count}} visits at this site",
+      "needByOnTime": "Due {{date}}, and this is the day",
+      "needByEarly": "Due {{date}}, so {{count}} day early",
+      "needByEarly_other": "Due {{date}}, so {{count}} days early",
+      "needByLate": "Due {{date}}, so {{count}} day late",
+      "needByLate_other": "Due {{date}}, so {{count}} days late",
+      "dueOn": "due {{date}}",
+      "badgeDone": "Done",
+      "badgeWindow": "Window",
+      "stopDetailToggle": "Show what is behind {{site}}'s times",
+      "overBudget": "{{time}} over {{budget}}",
+      "startPending": "Finding where you are…",
+      "resolvingAddress": "Naming the place…",
+      "startUseCurrent": "Use my current location",
+      "weekListLabel": "Visits in this window",
+      "mapTakenOut": "You took this out of the day.",
+      "mapNoRoom": "No room left on {{day}}.",
+      "mapOutsideRadius": "{{away}} mi away, outside the {{mi}} mi radius.",
+      "mapOutsideNeedBy": "Due {{date}}, outside ± {{window}} of this route day.",
+      "legendRadius": "{{mi}} mi radius",
+      "legendNotInPlan": "Not in this plan",
+      "footerRoutes": "{{route}}",
+      "footerRoutes_other": "{{route}}s",
+      "footerPlaced": "visits scheduled",
+      "footerNotIncluded": "not included",
+      "footerKept": "left alone",
+      "footerWriteSentence": "Apply {{clauses}}.",
+      "footerWriteCreates": "creates {{count}} new {{route}}",
+      "footerWriteCreates_other": "creates {{count}} new {{route}}s",
+      "footerWriteMerges": "adds {{count}} visits to {{names}}",
+      "footerWriteUnplaced": "leaves {{count}} visit where it is",
+      "footerWriteUnplaced_other": "leaves {{count}} visits where they are",
+      "footerReorderedPlain": "{{count}} stop on an existing {{route}} would be re-ordered",
+      "footerReorderedPlain_other": "{{count}} stops on existing {{route}}s would be re-ordered",
+      "blockNoStart": "Set where the day starts and ends, and the route appears here.",
+      "blockStartFar": "The start point is {{distance}} mi from this work. Check the address.",
+      "blockNothingQualifies": "No visit qualifies for {{day}}. Widen the need by window, or the radius.",
+      "blockNothingFits": "Nothing fits inside a {{budget}} day, even on its own.",
+      "blockUnnamed": "Name the new {{route}} before applying.",
+      "blockUnnamed_other": "Name the {{count}} new {{route}}s before applying.",
+      "applyWaiting": "Working it out…",
+      "applyPlain": "Apply",
+      "applyCreate": "Create {{route}} · {{day}}",
+      "applyCreateRoutes": "Create {{count}} {{route}}s",
       "title": "Harmonize {{count}} visit",
       "title_other": "Harmonize {{count}} visits",
       "subtitle": "Nothing is written until you apply.",
@@ -1349,6 +1609,9 @@
       "drivingPending": "Working out driving…",
       "routeOptions": "Route options",
       "routeLabel": "Route",
+      "stopsLabel": "Stops, in order",
+      "stopsReordered": "{{count}} existing stop re-ordered",
+      "stopsReordered_other": "{{count}} existing stops re-ordered",
       "option": {
         "shortest": "Shortest driving",
         "mostFit": "Fits the most",
@@ -1363,7 +1626,6 @@
       "routeStarts": "Route starts here",
       "routeEnds": "Route ends here",
       "drive": "Drive {{time}}",
-      "drivePending": "Drive —",
       "jobsAtStop": "{{count}} jobs",
       "newStop": "New",
       "alreadyDone": "Already done",
@@ -1382,7 +1644,6 @@
       "footerNoOverflow": "Everything fits",
       "footerReordered": "{{count}} existing stop re-ordered on {{name}}",
       "keepCurrent": "Keep current plan",
-      "apply": "Apply → {{day}}",
       "applying": "Applying…",
       "mapUnavailable": "Map unavailable",
       "appliedToast": "{{count}} visits moved to {{day}} · {{runsheet}}",
@@ -1396,8 +1657,9 @@
       "footerNoPlanHint": "No plan yet — set a starting point",
       "footerReordered_other": "{{count}} existing stops re-ordered on {{name}}",
       "startEnd": "Start and End Location",
-      "dragHint": "Drag ⠿ or use ↑ ↓ to reorder",
+      "dragHint": "Drag a handle, or use ↑ ↓ to reorder",
       "reorderStop": "Reorder {{site}}",
+      "reorderAnnounce": "{{site}} moved to stop {{position}} of {{total}}",
       "intoPlaceholder": "Choose a day",
       "legendRoute": "Route",
       "legendStop": "Visit in this day",
@@ -1419,7 +1681,27 @@
       "selectionSpread": "spread over {{count}} days",
       "mapYouAreHere": "You are here",
       "legendDevice": "Your location",
-      "legendSelected": "Selected visit"
+      "legendSelected": "Selected visit",
+      "radiusValue": "{{mi}} mi",
+      "radiusCoversHint": "Covers {{covers}} of {{total}} visits",
+      "radiusCoversHintAll": "Covers all {{count}} visits",
+      "needByCapped": "Limited by your {{window}}-day window",
+      "previewTitle": "Nothing planned yet",
+      "previewText": "Set up the run on the left, then press Harmonize.",
+      "cancelReveal": "Cancel",
+      "cancelRevealAria": "Cancel this run and go back to the configuration",
+      "manualNoticeTitle": "This is your order, not the optimizer’s",
+      "manualNoticeText": "The stops stay exactly where you put them, so this route is no longer the shortest round the optimizer found. Re-optimize hands it back.",
+      "dropAbove": "Drop above {{site}}",
+      "dropBelow": "Drop below {{site}}",
+      "reorderGrab": "Drag to reorder {{site}}, or use the up and down arrow keys",
+      "radiusDecrease": "Decrease the radius by a mile",
+      "radiusIncrease": "Increase the radius by a mile",
+      "previewCoverageFigure": "{{covers}} / {{total}}",
+      "previewCoverageLabel": "visits inside {{mi}} mi",
+      "needByValue": "± {{days}}",
+      "needByDecrease": "Narrow the need-by window by a day",
+      "needByIncrease": "Widen the need-by window by a day"
     }
   },
   "obxExtraDuty": {
@@ -1500,7 +1782,6 @@
           "label": "Country",
           "placeHolder": "Enter your country"
         },
-
         "address": {
           "header": "Address",
           "label": "Address",
@@ -1948,7 +2229,6 @@
       "failure": "Could not get zone details."
     }
   },
-
   "zones": {
     "table": {
       "listing": {
@@ -1968,7 +2248,6 @@
       "action": "Delete Zone"
     }
   },
-
   "vehicles": {
     "table": {
       "listing": {
@@ -1986,7 +2265,6 @@
     },
     "noImageText": "No Image Uploaded"
   },
-
   "users": {
     "homeofficeusers": "Home Office Users",
     "franchiseusers": "Franchise Users",
@@ -2135,7 +2413,6 @@
       },
       "heading": "{{officer}}'s Availability",
       "desc": "{{officers}} daily availability schedule for jobs",
-
       "submit": "save"
     },
     "graph": {
@@ -3110,6 +3387,8 @@
     "searchTemplateType": "Search by Type"
   },
   "settings": {
+    "noAccessTitle": "No settings available",
+    "noAccessText": "Your role doesn't have access to any settings sections. Ask an administrator to grant them.",
     "userGroups": {
       "removeUser": "Remove User",
       "removeUserText": "Are you sure you want to delete this user? This action can not be undone?",
@@ -3393,6 +3672,50 @@
         "extraJob": "{{extra}} Job",
         "breakTypeName": "Break Type Name",
         "addBreakTypeName": "Add Break Type Name"
+      },
+      "harmonization": {
+        "settingTitle": "Harmonization",
+        "title": "Harmonization Configuration",
+        "installationDays": "Installation Days",
+        "installationDaysText": "Select the days you install on, and the longest shift you run on each.",
+        "columnDay": "Day",
+        "columnShift": "Max Shift Hours",
+        "shiftRange": "{{min}}–{{max}} hrs",
+        "shiftTooltip": "Maximum window a harmonization route will be optimized for.",
+        "shiftTooltipAria": "What are max shift hours?",
+        "dayAria": "Install on {{day}}",
+        "shiftAria": "Maximum shift hours on {{day}}",
+        "hrs": "hrs",
+        "startLocation": "Start & End Location",
+        "startLocationText": "The route leaves from here and returns to it.",
+        "locationPlaceholder": "Search for an address",
+        "locationLocating": "Finding your location…",
+        "locationFromDevice": "Defaults to your current location.",
+        "locationFromFranchise": "Defaults to the franchise address.",
+        "locationFromVisits": "Defaults to the middle of your scheduled visits.",
+        "locationUnset": "No default found yet.",
+        "locationMapAria": "Choose {{label}} on a map",
+        "locationMapTip": "Pick the point on a map",
+        "locationResetAria": "Reset {{label}} to the default",
+        "locationResetToDevice": "Goes back to your current location.",
+        "locationResetToFranchise": "Goes back to the franchise address.",
+        "locationResetToVisits": "Goes back to the middle of your scheduled visits.",
+        "locationResetToDefault": "Goes back to the default.",
+        "locationDialogTitle": "Choose {{label}}",
+        "locationDialogText": "Click the map to move the point.",
+        "locationDialogNaming": "Finding the address…",
+        "locationDialogConfirm": "Use this location",
+        "cancel": "Cancel",
+        "needBy": "Need by Date",
+        "needByText": "The window around the need by date within which a visit must be performed.",
+        "needByTooltip": "The need by date is the first installation date for the site, as set in its contract.",
+        "needByTooltipAria": "What is a need by date?",
+        "needByRange": "{{min}}–{{max}}",
+        "days": "days",
+        "save": "Save",
+        "unsaved": "Unsaved changes",
+        "savedToast": "Harmonization settings saved.",
+        "saveFailed": "Couldn't save, but your changes are still here. Try again in a normal browser window, not a private one."
       },
       "runsheetSettings": {
         "settingTitle": "{{runsheet}} Settings",

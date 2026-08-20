@@ -218,12 +218,20 @@ const composeDrawerTitle = (name, context) => {
 };
 
 const getShiftDetailTabs = (t, shiftType) => {
+  // A visit's drawer shows only its Details — the RunsheetHits-style summary
+  // (service time, checkpoints, report, instructions) is the whole story for a
+  // single stop. Activities/Notes/Logs describe a shift with its own clock-in
+  // history, which a visit does not have; offering those tabs here just opened
+  // onto empty or misleading content. Patrol/dedicated keep all four tabs
+  // unchanged — this is scoped to visits only.
+  if (shiftType === SCHEDULE_DUTIES.HIT) {
+    return [t('obx.schedules.dutyDetail.detail.title')];
+  }
   return [
     t('obx.schedules.dutyDetail.detail.title'),
     t('obx.schedules.dutyDetail.activities.title'),
-    ...(shiftType !== SCHEDULE_DUTIES.HIT
-      ? [t('obx.schedules.dutyDetail.notes.title'), t('obx.schedules.dutyDetail.logs.title')]
-      : []),
+    t('obx.schedules.dutyDetail.notes.title'),
+    t('obx.schedules.dutyDetail.logs.title'),
   ];
 };
 

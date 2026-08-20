@@ -1,6 +1,23 @@
 import fcClass from '@fullcalendar/react/protected-styles';
 import { makeStyles } from '@mui/styles';
 
+/**
+ * The wash behind today's column.
+ *
+ * A literal rather than `surfaceGreySubtle`, which is the palette's lightest grey at
+ * `#F5F5F6` and still too present here: it is the fill this app uses for a *hovered*
+ * or *inactive* surface, and spending it on a whole column made the current day look
+ * disabled — a greyed-out lane running the height of the grid, competing with the
+ * cards inside it. This is a hair above it, enough to locate the column against
+ * white and not enough to read as a state. The green rule along its top is what
+ * actually marks the day; this only has to carry it downward.
+ *
+ * Declared once because the header slot and the body lanes are styled by separate
+ * rules in separate blocks, and a column whose head and body are two different greys
+ * reads as a seam.
+ */
+const TODAY_COLUMN_WASH = '#FBFBFC';
+
 export const useStyles = makeStyles((theme) => ({
   calendarHeaderToolbar: {
     display: 'flex',
@@ -14,6 +31,16 @@ export const useStyles = makeStyles((theme) => ({
     marginBottom: 0,
     padding: '8px 0 12px',
     flexWrap: 'wrap',
+  },
+  /* Fences the leading view control off from the filter run beside it. `stretch`
+     rather than a fixed height so the rule matches whatever the row's tallest
+     control turns out to be, and `flex: '0 0 auto'` so a wrapping row never
+     collapses a 1px element to nothing. */
+  calendarHeaderToolbarLeadingDivider: {
+    width: '1px',
+    alignSelf: 'stretch',
+    flex: '0 0 auto',
+    background: theme.palette.borderSubtle1,
   },
   calendarHeaderToolbarFilters: {
     display: 'flex',
@@ -31,22 +58,75 @@ export const useStyles = makeStyles((theme) => ({
     padding: '2px 4px',
     width: 'fit-content',
   },
+  /* --- the date navigator -------------------------------------------------
+     One control, built to the same recipe as the `Day | Week | Month` group it sits
+     beside (`calendarHeaderToolbarToggle`): a 32px bordered shell, 2px of inset, and
+     28px segments rounded to 6px inside it. It read as three loose ghost buttons and
+     a floating date because the shell had an 8px gap and no padding — the chevrons
+     touched the border, and the rule in front of `Today` sat 8px away from the
+     control it was meant to divide. The parts have not changed; what they add up to
+     has. */
   calendarHeaderToolbarLeft: {
-    display: 'flex',
+    display: 'inline-flex',
     alignItems: 'center',
-    gap: '8px',
+    gap: '2px',
     border: `1px solid ${theme.palette.borderSubtle1}`,
     borderRadius: '8px',
     height: '32px',
+    padding: '0 2px',
+    boxSizing: 'border-box',
+    // Beside the filter row this must keep its width rather than be squeezed by it.
+    flex: '0 0 auto',
     background: theme.palette.surfaceWhite,
   },
 
   calendarHeaderToolbarLeftText: {
     '&.MuiTypography-root': {
       color: theme.palette.textPrimary,
-      minWidth: '132px',
+      /* Wide enough for the longest label the three views produce — a week that
+         straddles two months ("Sep 26 – Oct 2, 2026") is longer than either
+         "August 15, 2026" or "September, 2026" — so switching view does not resize
+         the control. It is a floor, not a clamp: the label is never truncated. */
+      minWidth: '148px',
+      padding: '0 4px',
       textAlign: 'center',
       whiteSpace: 'nowrap',
+      /* Stepping a week changes the digits, and proportional digits change their
+         width with them — the label and both chevrons shifted on every click. */
+      fontVariantNumeric: 'tabular-nums',
+    },
+  },
+
+  /* Wraps the date-range label so it can open the date-picker popover. Kept as a
+     plain reset rather than a styled Button — the label's own look (color, width,
+     tabular numerals) is set by `calendarHeaderToolbarLeftText` on the Typography
+     inside and must not change; this only adds the hover/click affordance around
+     it, the same hairline-free hover wash the toggle buttons use. */
+  calendarHeaderToolbarLeftTextTrigger: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    border: '1px solid transparent',
+    borderRadius: '6px',
+    padding: 0,
+    background: 'none',
+    cursor: 'pointer',
+    font: 'inherit',
+    '&:hover': {
+      backgroundColor: theme.palette.surfaceGreySubtle,
+    },
+  },
+
+  calendarHeaderToolbarDatePickerPopover: {
+    '& .MuiPopover-paper': {
+      marginTop: '4px',
+      borderRadius: '8px',
+      border: `1px solid ${theme.palette.borderSubtle1}`,
+      boxShadow:
+        '0px 4px 6px -2px rgba(16, 24, 40, 0.05), 0px 12px 16px -4px rgba(16, 24, 40, 0.10)',
+      '& .MuiPickersDay-root.Mui-selected': {
+        backgroundColor: theme.palette.surfaceBrand,
+      },
     },
   },
 
@@ -56,35 +136,15 @@ export const useStyles = makeStyles((theme) => ({
     justifyContent: 'center',
 
     '&.MuiButtonBase-root': {
-      width: '24px',
-      height: '24px',
-      minWidth: '24px',
+      width: '28px',
+      height: '28px',
+      minWidth: '28px',
       padding: '0',
-      borderRadius: '4px',
+      borderRadius: '6px',
     },
     '& svg': {
       width: '8px',
       height: '14px',
-    },
-  },
-
-  calendarHeaderToolbarToday: {
-    '&.MuiButtonBase-root': {
-      height: '24px',
-      minWidth: 'auto',
-      padding: '0 10px',
-      marginRight: '4px',
-      borderRadius: '4px',
-      borderLeft: `1px solid ${theme.palette.borderSubtle1}`,
-      borderTopLeftRadius: 0,
-      borderBottomLeftRadius: 0,
-      fontSize: '12px',
-      fontWeight: 500,
-      lineHeight: '16px',
-      whiteSpace: 'nowrap',
-    },
-    '&.Mui-disabled': {
-      opacity: 0.45,
     },
   },
 
@@ -120,14 +180,18 @@ export const useStyles = makeStyles((theme) => ({
       textTransform: 'capitalize',
     },
   },
+  /* The row label sets the floor on row height — a lane holding one two-line card
+     is shorter than this cushion, so 56px of label decided how tall every row was.
+     36px still clears the two lines it holds (15px + 15px) and hands the saving to
+     the rows themselves. */
   resourceLabelContent: {
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'center',
-    gap: '4px',
-    minHeight: '56px',
+    gap: '2px',
+    minHeight: '36px',
     // Match v6 datagrid cushion padding (classic theme no longer provides it).
-    padding: '8px',
+    padding: '6px 8px',
     width: '100%',
     minWidth: 0,
     maxWidth: '100%',
@@ -153,11 +217,12 @@ export const useStyles = makeStyles((theme) => ({
     gap: '10px',
     width: '100%',
     height: '100%',
-    minHeight: '56px',
+    // Floored by the 34px avatar rather than by a round number.
+    minHeight: '38px',
     minWidth: 0,
     maxWidth: '100%',
     overflow: 'hidden',
-    padding: '8px',
+    padding: '6px 8px',
     boxSizing: 'content-box',
   },
   officerResourceAvatar: {
@@ -196,8 +261,8 @@ export const useStyles = makeStyles((theme) => ({
     alignItems: 'flex-start',
     justifyContent: 'center',
     gap: '2px',
-    minHeight: '56px',
-    padding: '8px',
+    minHeight: '36px',
+    padding: '6px 8px',
     width: '100%',
     minWidth: 0,
     boxSizing: 'border-box',
@@ -232,10 +297,27 @@ export const useStyles = makeStyles((theme) => ({
       lineHeight: '16px',
     },
   },
+  /* --- visit card text ---------------------------------------------------
+     One type size for the whole card, because that is what every other card on
+     this calendar does: a shift card is three lines of `subtitle4` (10px/12px,
+     weight 500) and it differentiates them with **colour and weight**, not with
+     three font sizes. The visit card used to run 10 / 12 / 11px, which made it
+     the loudest object on a grid where it is the smallest unit of work.
+
+     What survives from the old scale is the *hierarchy* — time and site read as
+     the subject, the route reads as supporting detail — now expressed the way
+     the standard expresses it.
+
+     Bumped one notch (10px/12px → 11px/14px) once the card dropped to two lines
+     (icons and the runsheet line are gone): there is height to spare that used
+     to belong to a third row, so it goes to legibility instead. Still scoped
+     here rather than raised on the shared `subtitle4` variant, which the rest
+     of the app's cards still rely on at its original size. */
   visitSiteName: {
     '&.MuiTypography-root': {
       color: theme.palette.textPrimary,
       fontSize: '12px',
+      // Weight, not size, separates the card's subject from its supporting line.
       fontWeight: 600,
       lineHeight: '16px',
       // The card is only as wide as one day column, so this is the line that
@@ -247,22 +329,31 @@ export const useStyles = makeStyles((theme) => ({
       textOverflow: 'ellipsis',
     },
   },
-  /* Time is the one thing a visit card can never usefully truncate. */
+  /* Time is the one thing a visit card can never usefully truncate. Sized
+     explicitly, rather than left to inherit `subtitle4`'s 10px default, so it
+     grows in step with the rest of the card's text instead of reading small
+     next to it. */
   visitTime: {
     '&.MuiTypography-root': {
+      fontSize: '12px',
+      lineHeight: '16px',
       whiteSpace: 'nowrap',
       flex: '0 0 auto',
     },
   },
-  /* The card's third line: which route is coming for this visit. Quieter than the
-     site name above it, and it ellipsizes — unlike the state label it replaced,
-     which wrapped, because a truncated *state* reads as a different state whereas
-     a truncated route name is still recognisably that route, and the full name is
-     one hover (or one click into the drawer) away. */
+  /* The card's third line: which route is coming for this visit. Same size and
+     colour as the shift card's officer and vehicle lines (`reassignedName`), so
+     the two cards read as one family. It ellipsizes — unlike the state label it
+     replaced, which wrapped, because a truncated *state* reads as a different
+     state whereas a truncated route name is still recognisably that route, and
+     the full name is one hover (or one click into the drawer) away.
+
+     No longer drawn on this card itself — the runsheet line was removed — but
+     kept in step with its siblings' size for the other cards still reading it. */
   visitRouteName: {
     '&.MuiTypography-root': {
-      color: theme.palette.textSecondary1,
-      fontSize: '11px',
+      color: theme.palette.textPlaceholder,
+      fontSize: '12px',
       fontWeight: 500,
       lineHeight: '16px',
       minWidth: 0,
@@ -273,11 +364,16 @@ export const useStyles = makeStyles((theme) => ({
     },
   },
   /* Same line, when nothing is coming. Doubled so it beats `visitRouteName`'s
-     colour at equal specificity whichever order JSS emits them in. */
+     colour at equal specificity whichever order JSS emits them in.
+
+     Relocated to the card's header (top-right, beside the time) now that the
+     footer it used to sit in is gone — an assigned visit no longer draws a
+     footer at all, so there is nowhere left for this to live but the header
+     it now shares with the preferred-day mark. */
   visitUnassignedText: {
     '&&.MuiTypography-root': {
       color: theme.palette.textError || '#B42318',
-      fontSize: '11px',
+      fontSize: '12px',
       fontWeight: 600,
       lineHeight: '16px',
       whiteSpace: 'nowrap',
@@ -285,119 +381,218 @@ export const useStyles = makeStyles((theme) => ({
       textOverflow: 'ellipsis',
     },
   },
+  /* The filters-to-replace count, trailing the site name on the right and set
+     off from it by a leading middle dot (`· 8`) — the same separator glyph
+     used wherever this codebase pairs two short facts on one line. A bare
+     number after the dot, so it stays set apart from the site name by colour
+     and weight alone, never by appending a unit to the text itself. Does not
+     shrink: the site name is the line's subject and gives way first. */
+  visitFilterCount: {
+    '&.MuiTypography-root': {
+      color: theme.palette.textPlaceholder,
+      fontSize: '12px',
+      fontWeight: 600,
+      lineHeight: '16px',
+      flexShrink: 0,
+      whiteSpace: 'nowrap',
+    },
+  },
+  /* The site-name line's own row — no longer sharing `reassignedFooterFlex`
+     with the shift cards' officer/route lines, so its gap can grow independent
+     of theirs. A bit more air than the 4px those cards use, now that the line
+     only ever holds two short facts (site name, filter count) rather than an
+     icon plus a name. */
+  visitSiteLine: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+  },
+  /* The status mark, in the bottom-right corner where every other card on this
+     calendar carries it. The icons are drawn at 20px intrinsic and the shift
+     card's 16px footer row squeezes them to 14; a visit card had no such row, so
+     the same icon rendered at 20px in the header and pushed the card 8px taller
+     than its neighbours. The size is stated here rather than inherited. */
+  visitStatusIcon: {
+    display: 'flex',
+    alignItems: 'center',
+    flexShrink: 0,
+    '& svg': {
+      width: '14px',
+      height: '14px',
+    },
+  },
+  /* The leading glyph on the tour and runsheet lines, in the same 10px slot the
+     shift card gives its runsheet and vehicle icons.
+
+     Two things are stated here that used to be left to the glyph.
+
+     The **slot is a fixed 12px box** rather than shrink-wrapped around whatever is
+     inside it. The site line sits directly above the route line, so their text has
+     to start at the same x; a pin and a runsheet badge do not carry the same amount
+     of ink, and letting each line size its own icon stepped the two apart.
+
+     The **colour is declared**, because FullCalendar's classic theme puts
+     `color: var(--fc-event-contrast-color)` — white — on the inner element that
+     wraps every block event's content. The card's text survives that because each
+     Typography here names its own colour, and the runsheet and unassigned marks
+     survive it because they are inline SVGs with stroke and fill baked into the
+     file. A MUI icon paints with `fill: currentColor`, so it inherited that white
+     and disappeared on a white card. Nothing was overriding the size; the pin was
+     being drawn, in the one colour the card is. */
+  visitRouteIcon: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+    width: '12px',
+    height: '12px',
+    color: theme.palette.textPlaceholder,
+    '& svg': {
+      width: '10px',
+      height: '10px',
+      flexShrink: 0,
+    },
+  },
+  /* The pin, on the site line of a company-grouped card. A MUI glyph inks about
+     four fifths of its box where the runsheet badge fills its own edge to edge, so
+     12px here is what reads the same size as the 10px badge on the line below.
+     Doubled so it beats `visitRouteIcon`'s `& svg` at equal specificity whichever
+     order JSS emits them in. */
+  visitSiteIcon: {
+    '&& svg': {
+      width: '12px',
+      height: '12px',
+    },
+  },
+  /* What this card *is*, top-right of the header row: the hit's own name next to
+     the vehicle glyph, exactly as a hit card carries it on the site schedule
+     ("Hit 1", "Morning visit"). It yields before the time does — a clipped time
+     is unreadable, a clipped name is still recognisable and the drawer has it in
+     full. */
+  visitTypeLabel: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '3px',
+    minWidth: 0,
+    flex: '0 1 auto',
+    overflow: 'hidden',
+    '& svg': {
+      width: '11px',
+      height: '11px',
+      flexShrink: 0,
+    },
+  },
+  visitTypeLabelText: {
+    '&.MuiTypography-root': {
+      color: theme.palette.textPlaceholder,
+      fontSize: '12px',
+      fontWeight: 500,
+      lineHeight: '16px',
+      minWidth: 0,
+      whiteSpace: 'nowrap',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+    },
+  },
+  /* The preferred day, when the visit is *not* on it. Same amber as a site that has
+     fallen off the schedule (`visitsRowNotScheduled`), because both say the same kind
+     of thing: the plan and the customer's expectation have come apart. Grey when the
+     day is honoured — the line still confirms the constraint, quietly.
+     Doubled selector so it beats `visitTypeLabelText` at equal specificity whichever
+     order JSS emits them in. */
+  visitOffPreferredDay: {
+    '&&.MuiTypography-root': {
+      color: '#B54708',
+      fontWeight: 600,
+    },
+  },
 
   /* ------------------------------------------------------------------ *
-   * Visit states — see helper/visitState.js for the encoding.
+   * Visit card fills — the status wash, and nothing else.
    *
-   *   border style  dashed = not on a route · solid = routed
-   *   colour        red needs attention · amber blocked · blue live ·
-   *                 green done · grey void
+   * A visit *is* a patrol hit, so its card used to also carry a left accent
+   * (duty type) and a status badge; both are gone now — the wash alone
+   * carries the state, so the card has no border and no bottom-right mark.
+   * `helper/visitState.js` maps state → status → class.
    *
-   * Every state also carries an icon and a text label on the card, so none
-   * of this is load-bearing on its own. Read in greyscale it still works.
+   * The hues are the calendar's legend, read off the shift cards: amber not
+   * started · blue in progress · green completed · red missed · grey
+   * cancelled (struck through) · plain grey when nothing has claimed the
+   * visit yet. Missed and cancelled used to be hatched rather than flat; both
+   * are flat fills now.
+   *
+   * **Why these are literal hexes and not the `duty*Bg` classes.** `dutyBlueBg`
+   * resolves to `surfaceBrandSubtle` and `dutyBlue` to `borderBrand`, which is
+   * *green* on Filter Go — so borrowing the in-progress wash from the theme
+   * would paint a live visit the same colour as a completed one (§7.25). The
+   * wash has to mean one thing on both tenants, so it is stated outright.
+   *
+   * `borderLeft: none !important` on every fill here beats `dutyBlue` (and
+   * siblings) at the call site — those classes still carry a border-left for
+   * every other card on this calendar, but the visit card no longer shows it.
    * ------------------------------------------------------------------ */
 
-  /* NOTE ON PROPERTY ORDER. `borderColor` must come *before* `borderLeftColor`.
-     Declaring the `borderLeft` shorthand and then `borderColor` silently resets
-     the left edge to the all-sides colour — which is how the "solid blue" live
-     accent ended up rendering as pale blue. Longhand, ordered, no shorthand. */
-
-  /* The baseline: routed, not started. Deliberately the plainest card on the
-     grid — its runsheet name already says everything, and a neutral card is what
-     lets the seven states that need attention actually read as exceptions.
-
-     "Plainest" is not "absent", and it was reading as absent: a white fill on a
-     white lane left the card with nothing but a left tick, while the same card on
-     the runsheet schedule sits on `surfaceGreySubtle`. The baseline visit now
-     takes that same grey, so a routed visit is recognisably the same object on
-     both surfaces. The accent stays slate rather than the runsheet card's brand
-     colour — brand is green on Filter Go and blue on Signal, which are exactly
-     the completed and in-progress accents, so borrowing it here would collide
-     with two states (§D9). */
-  visitStateScheduled: {
-    background: `${theme.palette.surfaceGreySubtle} !important`,
-    borderLeftWidth: '3px !important',
-    borderLeftStyle: 'solid !important',
-    borderLeftColor: '#98A2B3 !important',
+  /* Routed and not begun — the same amber a not-started shift takes
+     (`dutyYellowBg`, whose value is this literal). Most of a planned week is
+     this card, which is why it is a wash and not a colour. */
+  visitFillNotStarted: {
+    background: '#FFF7E1 !important',
+    borderLeft: 'none !important',
   },
 
-  /* Unassigned visits read as demand, not as a booked job.
-     The width is explicit: `borderStyle` alone leaves it on the initial `medium`,
-     which is the browser's value to pick, not ours. */
-  visitStateUnassigned: {
-    background: '#FEF3F2 !important',
-    borderColor: `${theme.palette.textError || '#B42318'} !important`,
-    borderWidth: '1px !important',
-    borderStyle: 'dashed !important',
-  },
-
-  /* Blocked is dashed like unassigned — it is not on a route either — but amber,
-     because the fix is different: give it a tour, then it can be routed. */
-  visitStateBlocked: {
-    background: '#FFFAEB !important',
-    borderColor: '#DC6803 !important',
-    borderWidth: '1px !important',
-    borderStyle: 'dashed !important',
-  },
-
-  /* A live route: solid, blue, with a heavier left edge so an in-flight lane is
-     scannable down a column without reading a single word. */
-  visitStateInProgress: {
+  /* On a route that has left. Semantic blue rather than `dutyBlueBg` — see the
+     tenant note above. */
+  visitFillInProgress: {
     background: '#EFF8FF !important',
-    borderColor: '#B2DDFF !important',
-    borderLeftWidth: '4px !important',
-    borderLeftStyle: 'solid !important',
-    borderLeftColor: '#1570EF !important',
+    borderLeft: 'none !important',
   },
 
-  /* Inserted mid-route: same blue family (it *is* on a live route) but the left
-     edge is broken, because the driver did not leave with this stop. */
-  visitStateInserted: {
-    background: '#EFF8FF !important',
-    borderColor: '#B2DDFF !important',
-    borderLeftWidth: '4px !important',
-    borderLeftStyle: 'dashed !important',
-    borderLeftColor: '#1570EF !important',
-  },
-
-  /* Done is deliberately the quietest state on the grid. It needs no action, so
-     it should not compete with the states that do. */
-  visitStateCompleted: {
-    background: '#F6FEF9 !important',
-    borderColor: '#ABEFC6 !important',
-    borderLeftWidth: '3px !important',
-    borderLeftStyle: 'solid !important',
-    borderLeftColor: '#12B76A !important',
+  /* Done, and the quietest card on the grid: it needs no action, so it should
+     not compete with the ones that do. `surfaceSuccessSubtle` is the same fill a
+     completed shift takes, and it means success rather than brand, so it is safe
+     on both tenants. */
+  visitFillCompleted: {
+    background: `${theme.palette.surfaceSuccessSubtle} !important`,
+    borderLeft: 'none !important',
     '& .MuiTypography-root': {
       color: `${theme.palette.textSecondary1} !important`,
     },
   },
 
-  /* Missed is the loudest, and solid rather than dashed: the visit *was* planned
-     and did not happen. It is also the only state that stays actionable after
-     its date, so it has to survive a scan of a past week. */
-  visitStateMissed: {
-    background: '#FEF3F2 !important',
-    borderColor: '#FDA29B !important',
-    borderLeftWidth: '4px !important',
-    borderLeftStyle: 'solid !important',
-    borderLeftColor: '#B42318 !important',
+  /* Planned and did not happen. Flat red rather than hatched. */
+  visitFillMissed: {
+    background: '#FEE4E2 !important',
+    borderLeft: 'none !important',
   },
 
   /* Void, not absent — a cancelled visit stays on the grid so the gap in a site's
-     service history is visible, but nothing about it invites action. */
-  visitStateCancelled: {
-    background:
-      'repeating-linear-gradient(135deg, #ffffff 0px, #ffffff 16px, #f6f7f9 16px, #f6f7f9 32px) !important',
-    borderColor: '#D0D5DD !important',
-    borderLeftWidth: '4px !important',
-    borderLeftStyle: 'solid !important',
-    borderLeftColor: `${theme.palette.textPlaceholder} !important`,
+     service history is visible, but nothing about it invites action. Flat grey
+     with a strike-through, rather than the hatch a cancelled dedicated shift
+     still gets (`cancelledDedicatedCard`). */
+  visitFillCancelled: {
+    background: '#F6F7F9 !important',
+    borderLeft: 'none !important',
     '& .MuiTypography-root': {
       textDecoration: 'line-through',
       color: `${theme.palette.textSecondary3} !important`,
     },
   },
+
+  /* Nothing has claimed it yet — no route, or no tour to route. The plain card
+     fill, because *unassigned is not a status the schedule tints*: a shift with
+     no officer gets no wash either. The red sits on the `Unassigned` line
+     itself, and the grid pins these cards into their own red-ruled band besides. */
+  visitFillUnrouted: {
+    background: `${theme.palette.surfaceGreySubtle} !important`,
+    borderLeft: 'none !important',
+  },
+
+  /* Inserted into a route that had already left. It is in progress like any
+     other live stop, so it takes that wash. It used to also carry a dashed
+     accent border to mark the insert, but the visit card has no border at all
+     now, so there is nothing left for this class to override — kept as a
+     documented no-op rather than removing the call site's reference to it. */
+  visitAccentInserted: {},
 
   /* The state's name, in the state's colour. Present on every card.
 
@@ -493,6 +688,352 @@ export const useStyles = makeStyles((theme) => ({
     '& [role="gridcell"][data-date]': {
       minHeight: '78px',
     },
+
+    /* --- today ------------------------------------------------------------
+       The month grid had no today at all. FullCalendar does mark its own — the
+       classic theme's `fc-classic-hbn`, which this file paints at 30% of #F5F5F6
+       further down — and at that strength against a white cell it is not a mark,
+       it is a rounding error. Two things are wrong with leaving it as the answer:
+       it cannot be seen, and it is computed in the *browser's* timezone, so for a
+       planner working a franchise several hours away it is on the wrong square.
+
+       So FC's own is cleared wherever the franchise disagrees, and the mark is
+       hung off `data-schedule-today`, which `ScheduleCalendarGrid` stamps from
+       `dayjsWithTimezone()` — the same marker-plus-`:not()` pairing the week
+       header already uses for exactly this reason (see `tableHeaderSticky`).
+
+       **Same grey as the week column, not a second green.** This used to paint
+       a solid brand-green pill around the date number while leaving the cell
+       itself white, reasoned from a fear a whole-cell wash would put a
+       completed-visit colour behind a day's stack. Grey does not carry that
+       risk the way brand green did — it is not one of this calendar's status
+       hues, and the chips sit opaque on top of it regardless of whether a
+       given chip is filled or outlined, so a wash behind them was never really
+       the danger; a *green* wash specifically was. So today gets exactly what
+       the week view already gives it — `TODAY_COLUMN_WASH`, the same faint
+       grey, not a second brand treatment — and the date number takes the week
+       header's own touch, bold and dark, nothing more (`calendarHeaderCellToday`
+       states the identical rule). */
+    '& [role="gridcell"][data-date][aria-current="date"]:not([data-schedule-today])': {
+      background: 'transparent !important',
+      boxShadow: 'none !important',
+    },
+    '& [role="gridcell"][data-schedule-today]': {
+      background: `${TODAY_COLUMN_WASH} !important`,
+      boxShadow: `inset 0 2px 0 ${theme.palette.brandSecondaryLight} !important`,
+    },
+    [`& [role="gridcell"][data-schedule-today] > .${fcClass.rel} > *`]: {
+      color: `${theme.palette.textPrimary} !important`,
+      fontWeight: 600,
+    },
+  },
+
+  /**
+   * The month of the company grouping, where a cell holds visits rather than a
+   * tally of them.
+   *
+   * `monthGridCompact` stops month rows stretching, and its reasoning holds for the
+   * grid it was written against: a counting cell is one line, and a row stretched to
+   * a fifth of the viewport left 120px of white under it. That reasoning does not
+   * transfer to this grid. A cell here stacks up to three chips and a "+N more"
+   * link, so it has four lines of content to hold, and a row sized to its contents
+   * came out 62px tall — five of them ended the table a third of the way down the
+   * page with the rest of the scrollport white below it, while the chips inside
+   * them were packed edge to edge with nothing between them.
+   *
+   * So this grid is sized to the port and not to its contents, which is also where
+   * the space between the chips comes from. Three rules do it:
+   *
+   * - **The port is filled.** The caller passes `monthFillsScrollport`, so the
+   *   shell asks FullCalendar for a `100%` month rather than an `auto` one and
+   *   there is finally height to divide.
+   * - **Weeks are equal.** `flex: 1 1 0` — a zero basis, not the content basis
+   *   `monthGridCompact` forces, so the port is divided evenly instead of being
+   *   handed out on top of whatever each week happens to hold. A calendar whose
+   *   rows change height by how busy they are is a calendar that moves under the
+   *   planner as they page through it.
+   * - **There is a floor.** Below about 116px a cell cannot hold the day number,
+   *   three chips and the more-link, so past that point the grid scrolls instead
+   *   of crushing. `!important` is not decoration here: FullCalendar's own
+   *   `liquid` class is on every day cell and carries `min-height: 0 !important`,
+   *   which is why the floor this replaces — 112px, no `!important` — had never
+   *   once applied.
+   *
+   * **These rules beat `monthGridCompact` on source order, not on specificity** —
+   * the two classes land on the same element with identical selectors, and this one
+   * is declared second. Keep it below `monthGridCompact` in this object.
+   */
+  visitsMonthChipGrid: {
+    '& [role="row"]': {
+      flexGrow: '1 !important',
+      flexBasis: '0 !important',
+    },
+    '& [role="gridcell"][data-date]': {
+      minHeight: '116px !important',
+      /* This padding insets the cell's own box — which is what the day number
+         sits in directly, so it does move over 8px — but it is *not* what the
+         chip stack sits in. FullCalendar absolutely-positions the whole event
+         stack (`fakeBorderS`/`abs`, one layer up from each event's own harness)
+         against the cell's raw column width, outside this element's padding
+         box entirely; a cell's CSS padding was never going to reach something
+         positioned relative to an ancestor above it. The chip's actual inset
+         is the `margin` on `internalEvent` just below — read that comment
+         before assuming this rule controls the chips too.
+
+         `!important`, the same reason `minHeight` above needs it: FullCalendar's
+         own `liquid` class sits on every day cell and ships its own padding
+         alongside that `min-height: 0 !important` — a plain declaration here
+         loses to it silently, which is exactly what happened to this rule's
+         first pass (4px, no `!important`, never visibly applied). */
+      padding: '8px !important',
+    },
+
+    /* The day number. Not sharing an edge with the chips below it any more by
+       virtue of this padding alone — see the note above — but it lines up
+       with them in practice because both this and `internalEvent`'s margin
+       resolve to the same 8px. */
+    [`& [role="gridcell"][data-date] > .${fcClass.rel}`]: {
+      paddingTop: '4px',
+      paddingBottom: '2px',
+    },
+
+    /* The chip's actual inset, and the gap between stacked chips.
+       Both live here rather than on the chip itself because FullCalendar
+       absolutely-positions this element — one per event, computing its own
+       `top` by measuring the stack — against the cell's raw column width, a
+       box the cell's own `padding` above never reaches (see that rule's
+       comment). `margin` on a block box with a JS-driven `width: auto` shrinks
+       what it actually occupies inside that column, which is what padding on
+       an ancestor could not do here — this is the only rule capable of moving
+       the chip in from the cell's edge at all, not merely the one that happens
+       to state the number.
+
+       The doubled class is what gets past the `margin: 0 !important` the
+       shared `calendar` block puts on every FC event to strip its default
+       chrome — same specificity, later in the sheet, so only a stronger
+       selector wins. */
+    [`& .${fcClass.internalEvent}.${fcClass.internalEvent}`]: {
+      margin: '0 8px 4px !important',
+    },
+
+    /* The overflow link, which until now nobody had seen: no day in the demo month
+       held more than three visits, so FullCalendar's own classic styling for it —
+       16px, its own blue, its own hover — had never been on screen to disagree with
+       anything. Drawn as what it is: the last line of a stack of chips, in the
+       chips' type, indented to their text so the column of times still reads
+       straight down past it. */
+    [`& .${fcClass.internalMoreLink}`]: {
+      alignItems: 'center',
+      margin: '2px 0 0',
+      padding: '2px 6px 2px 9px',
+      borderRadius: '4px',
+      color: theme.palette.textSecondary1,
+      fontSize: '12px',
+      fontWeight: 600,
+      lineHeight: '16px',
+      '&:hover': {
+        background: theme.palette.surfaceGreySubtle,
+        color: theme.palette.textPrimary,
+      },
+    },
+  },
+
+  /**
+   * The day popover the "+N more" link opens.
+   *
+   * Global, and it has to be: FullCalendar portals this into `document.body`, so it
+   * is not a descendant of the calendar and no nested rule in this sheet can reach
+   * it. That also means it inherits none of the `--fc-classic-*` values this file
+   * sets on `.fc`, and falls back to the shipped `:root` palette instead — a #ddd
+   * hairline, 16px type and a stock shadow, which is the classic theme wearing none
+   * of this app's clothes.
+   *
+   * The hooks are the popover's own `role`/`data-date` plus FullCalendar's internal
+   * layout classes, read from `protected-styles` rather than typed out: v7 hashes
+   * class names per build and the classic theme's own names change with it, so a
+   * literal `.fc-classic-…` here would be a rule that silently stops matching.
+   *
+   * **Padding, and margin, not a shared border.** Being portalled to `document.body`
+   * cuts both ways: it also means `visitsMonthChipGrid`'s own spacing rules — the
+   * cell's padding, and the `margin` it puts on each `internalEvent` — never reach
+   * in here, because both require a `.visitsMonthChipGrid` ancestor this popover
+   * doesn't have. Nothing filled that gap, so the busiest day on the grid — the one
+   * this popover exists for — opened onto its chips packed flush against each other
+   * and against the popover's own edge.
+   *
+   * This rule's own first attempt at the fix assumed the row list was a flex column
+   * and reached for `gap` on the body wrapper — it is not one. FullCalendar nests an
+   * extra `display: block` wrapper between the body and the row list (confirmed by
+   * walking the live DOM, not by reading the theme's source), so that `gap` had
+   * nothing to space: it had exactly one flex child. Rows are still `display: block`
+   * siblings that only ever respond to their own `margin`, which is why the fix
+   * below restates the grid's own `internalEvent` margin instead of zeroing it. */
+  '@global': {
+    [`[role="dialog"][data-date].${fcClass.internalPopover}`]: {
+      minWidth: '220px',
+      maxWidth: '280px',
+      borderRadius: '10px',
+      border: `1px solid ${theme.palette.borderSubtle1}`,
+      background: theme.palette.surfaceWhite,
+      boxShadow: '0 12px 24px -6px rgba(16, 24, 40, 0.14), 0 4px 8px -4px rgba(16, 24, 40, 0.08)',
+      fontSize: '12px',
+      overflow: 'hidden',
+
+      /* The header — the date, and the close button classic positions absolutely
+         inside it. Sized like the grid's own headers rather than like body copy;
+         at the inherited 16px it was the largest text on the screen.
+
+         **No grey band.** The classic theme's own `dayHeaderClass` only adds
+         `background-color: var(--fc-classic-muted)` when `info.inPopover` is
+         true — this wash is manufactured for this one spot, it is not something
+         the grid's day headers carry too. `.fc` already neutralises
+         `--fc-classic-muted` to `transparent` for exactly this reason (see the
+         `calendar` block further down this file), but a variable set on `.fc`
+         can no more reach this portal than the event colours below can, so the
+         one place that wash still fires is the one place nothing here had yet
+         cleared it. Cleared outright rather than chasing the variable, since
+         this is the only rule that ever reads it.
+
+         **No divider either, on request.** classic's own `borderOnlyB` class
+         ships a `1px solid` bottom border on this element — the line this
+         file used to restate in FilterGo's own hairline colour instead of
+         classic's `#ddd`. Dropped to `none` outright now: the ask was to
+         remove the seam between the date and the chip list, not recolour it.
+         The header's own bottom padding drops from 10px to 8px to match the
+         body wrapper's padding below it, so the header still reads as its own
+         band of whitespace above the list rather than fusing into one block —
+         verified live, not just by the numbers, since padding alone doesn't
+         guarantee that reads right without the line there to confirm it. */
+      [`& > .${fcClass.flexCol}.${fcClass.borderOnlyB}`]: {
+        padding: '10px 12px 8px',
+        backgroundColor: 'transparent',
+        borderBottom: 'none',
+        color: theme.palette.textPrimary,
+        fontSize: '14px',
+        fontWeight: 600,
+        lineHeight: '18px',
+      },
+
+      /* ...and none of the four properties just above ever reach the date text
+         itself. FullCalendar doesn't render a text node into this header — it
+         calls back into `ScheduleCalendarGrid.jsx`'s own day-header generator
+         (search that file for `info.inPopover`), which renders a MUI
+         `Typography variant="subtitle2"` wrapped in a `Box`. That `<h6>` carries
+         its own explicit font-size, font-weight and line-height from the
+         subtitle2 variant, and its own explicit color from that component's
+         `calendarHeaderMonthCellDate` class — all four properties set directly
+         on the leaf, so none of them inherit this wrapper's values no matter
+         what they're set to. Confirmed by walking the live computed-style chain
+         from the `<h6>` up to this wrapper: this wrapper's own fontSize/color
+         never survive past FullCalendar's title container one level down,
+         which already carries an explicit 14px of its own — the 13px this file
+         used to declare above was dead code the whole time it said 13.
+         Pinned here instead, directly on the leaf, rather than left to whatever
+         FullCalendar's title container happens to default to: 14px to match
+         the day-of-month number rendered elsewhere in the grid (see this file's
+         own `fcClass.rel` rule — 14px, regular weight, is FullCalendar's own
+         classic default for that number, untouched by this app's CSS). Weight
+         kept at 600 rather than dropped to that number's plain 400, though —
+         tried live against 500 first, and rejected it once it was clear *why*
+         500 read as flat: the chip rows below this title (`visitMonthChipSite`)
+         are themselves 500, so a 500 title would match the body copy's weight
+         exactly and lean on size and color alone to read as a header. 600
+         gives it a weight step none of the rows underneath share, which
+         matters more now than it used to: the divider above is gone (previous
+         comment), so this is the one remaining cue that separates the date
+         from being read as just the first row of the list below it. */
+      [`& > .${fcClass.flexCol}.${fcClass.borderOnlyB} h6`]: {
+        fontSize: '14px',
+        fontWeight: 600,
+      },
+
+      /* The close button classic absolutely positions 2px off this header's own
+         corner. Every other hook in this block is one of FullCalendar's own
+         structural classes, read from `protected-styles` because those survive
+         a version bump; this button has no such hook — `popoverCloseClass` is
+         only ever the classic theme's own literal, unversioned `fc-classic-…`
+         names, the exact kind of selector the comment above this whole block
+         warns would silently stop matching. So it is found structurally
+         instead: FullCalendar's popover header renders exactly two children,
+         the day-header content div and this button, so `> button` picks it out
+         without naming a single theme class. (Verified against the installed
+         `@fullcalendar/react` package's own popover source, not assumed.)
+
+         This is the other half of what the rejected design got wrong: a bare
+         `<button>` with no author styling at all, so at rest it's invisible and
+         focused it's the browser's own square. `outline-offset` is negative
+         because the popover clips overflow two lines up — a ring drawn outward
+         from a button sitting 2px off a 10px-radius corner would be cut by the
+         corner it's next to. */
+      [`& > .${fcClass.flexCol}.${fcClass.borderOnlyB} > button`]: {
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '2px',
+        borderRadius: '6px',
+        transition: 'background-color 0.1s ease',
+        '&:hover': {
+          background: theme.palette.surfaceGreySubtle,
+        },
+        '&:focus': {
+          outline: 'none',
+        },
+        '&:focus-visible': {
+          outline: `2px solid ${theme.palette.borderBrand}`,
+          outlineOffset: '-2px',
+        },
+      },
+
+      /* The stack itself. Capped and scrolled because the whole point of this
+         popover is the day nobody planned for — the one with eleven visits on it —
+         and a list that runs off the bottom of the window is no more usable than
+         the truncation it was opened to escape.
+
+         **Background cleared for the same reason as the header.** This is
+         classic's `dayCellClass`, and when the popover is open *for today* it
+         carries `fc-classic-hbn` — `background-color: var(--fc-classic-today)`,
+         a translucent yellow — tinting the whole chip stack. Confirmed live: on
+         today's cell this wrapper measured `rgba(250, 204, 21, 0.15)` before this
+         line was added. `.fc` already gives today its own, deliberate mark
+         (`TODAY_COLUMN_WASH`, on the grid cell); the classic default is not that
+         mark, it is what showed through here because nothing had cleared it. */
+      [`& > .${fcClass.flexCol}.${fcClass.borderNone}`]: {
+        maxHeight: '260px',
+        padding: '8px',
+        overflowY: 'auto',
+        overflowX: 'hidden',
+        backgroundColor: 'transparent',
+      },
+
+      /* Strip default FC event chrome here too — the same reset this file
+         already applies to `.${fcClass.internalEvent}` under `.fc` (search
+         "Strip default FC event chrome"), restated because that one can't
+         reach a portal either. Without it the harness under every chip falls
+         back to the classic theme's own event skin: `--fc-classic-event`,
+         unset in this scope, resolves through `:root`'s stock palette to
+         `#3788d8` — the flat blue pill this redesign exists to remove. The
+         chip's own background is deliberately `transparent` now (`visitMonthChip`
+         puts the state on a status fill, not this harness), so this reset is
+         what was supposed to show through it and, in the popover, never did.
+         With it cleared, a chip here is the same `eventContent` output as the
+         grid's own cell, so the two render identically for free — margin
+         *not* included this time, though: `visitsMonthChipGrid` puts `0 8px 4px`
+         on this same class, but that 4px bottom is tuned for a fixed-height day
+         cell with no room to spare. This popover floats free of that constraint,
+         so its own stack gets more room between rows — 8px, restated below
+         rather than left at the cell's tighter value. */
+      [`& .${fcClass.internalEvent}.${fcClass.internalEvent}`]: {
+        border: '0 !important',
+        background: 'transparent !important',
+        boxShadow: 'none !important',
+        margin: '0 8px 8px !important',
+        padding: '0 !important',
+        '&:focus, &:focus-visible': {
+          outline: 'none',
+          boxShadow: 'none',
+        },
+      },
+    },
   },
 
   /* ------------------------------------------------------------------ *
@@ -561,12 +1102,286 @@ export const useStyles = makeStyles((theme) => ({
     },
   },
 
-  /* Where this week's work stops and the rest of the book begins. */
-  visitsQuietGroupStart: {
-    '&.MuiBox-root': {
-      borderTop: `2px solid ${theme.palette.borderSubtle1 || '#EAECF0'}`,
+  /**
+   * Every company row the same height.
+   *
+   * FullCalendar sizes a timeline row to whichever of its two sides has more in it,
+   * so a customer with a visit this week was 56px and a customer with none was 28px
+   * — the column read as a ragged list where the ragging encoded nothing a planner
+   * needs, since the same fact is already told by the cards being there or not. This
+   * sets a floor rather than a clamp: a day cell holding two of a customer's
+   * locations still grows, and clipping a visit to keep a rhythm would be the wrong
+   * trade.
+   *
+   * Attribute selectors, because FC v7's class names are hashed per build (§7.36).
+   *
+   * **68px is measured, not chosen**: a card is 52px, its harness adds a 4px top
+   * margin, and FullCalendar appends a 12px spacer below the event stack inside
+   * every lane. Setting the floor to the height a one-card row actually takes is
+   * what makes the two cases equal — the alternative was suppressing that spacer by
+   * `:last-child`, which is a fight with an FC internal whose class name is hashed
+   * and whose children differ between an empty lane and a full one.
+   *
+   * **Why the floor is on the label's own wrapper and not on the cells.** It was on
+   * `[role="rowheader"], [role="gridcell"]` and did nothing a planner could see,
+   * because a timeline row's height is not decided by its cells: FullCalendar
+   * measures the *inner* element of each resource cell and each lane, takes the
+   * larger of the two, and writes that as an inline `height` on the row. A cell can
+   * be told it is 68px tall and the row it lives in will still be 40 — the cell just
+   * overflows it. That overflow is also what was eating the separators: the rule
+   * between two rows belongs to the row, the resource cell inside it is painted
+   * `surfaceWhite`, and a cell 28px taller than its row covered its own row's bottom
+   * border. Only the rows that already reached 68px — the ones holding a card — kept
+   * a visible line, which is exactly the pattern that was on screen.
+   *
+   * `[role="rowheader"] > *` is the element FullCalendar watches, so flooring it
+   * feeds the measurement instead of fighting it: every row is at least 68px, and a
+   * day cell holding two cards still measures taller and wins. The wrapper is
+   * `flexRow`, so `alignItems` is what keeps the company name optically centred once
+   * the row is taller than the name is.
+   *
+   * **And the lane needs its rule stated where the label column does not.** The
+   * separator down the left comes from the row element, which the classic theme
+   * gives a 1px `--fc-classic-border` (pointed at `borderSubtle1` further down this
+   * file) and which nothing here overrides. The lane's comes from
+   * `resourceLaneClass` — an option the schedule *does* override, to class the
+   * dedicated and overview bands, and a supplied value replaces the theme's default
+   * rather than joining it, so the lanes lost their border width and colour
+   * altogether. That is why those two bands re-declare `borderTop`/`borderBottom`
+   * by hand. Company rows now do the same, at the height FullCalendar puts the
+   * label column's rule, so the line reads straight across the divider. The last row
+   * carries `border: 0 !important` on both sides, so it stays open-ended on both.
+   */
+  companyRowsUniform: {
+    '& [role="rowheader"] > *': {
+      minHeight: '56px',
+      alignItems: 'center',
+    },
+    '& [role="gridcell"]': {
+      borderBottom: `1px solid ${theme.palette.borderSubtle1}`,
     },
   },
+
+  /* A company row's name is a drill-through to that company's year, so it reads as
+     a link rather than as a label — but only on hover, because forty-six blue rows
+     would turn the column into a menu and compete with the cards. It is a real
+     `<button>`, so the row is keyboard-reachable; the reset is because a button
+     inherits none of the label's type. */
+  companyRowLink: {
+    '&&': {
+      appearance: 'none',
+      background: 'none',
+      border: 0,
+      padding: 0,
+      margin: 0,
+      font: 'inherit',
+      textAlign: 'left',
+      cursor: 'pointer',
+      display: 'block',
+      '&:hover, &:focus-visible': {
+        color: theme.palette.textBrand,
+        textDecoration: 'underline',
+      },
+    },
+  },
+
+  /* --- month cell, company grouping: one chip per visit -------------------
+     Back to a full status wash — `visitFillNotStarted` etc, the same fill the
+     week card carries, applied here exactly as it is there — rather than the
+     thin left-line-only treatment this chip carried for a while. A line reads
+     at the scale of one card read in isolation; scanned down a column of many
+     it took a second look to register as "amber" at all, where a filled block
+     of colour reads at a glance without one. There is no separate status glyph
+     any more either — the fill carries the whole signal now, so this chip has
+     no `visitMonthChipStatus`/`visitMonthChipNoPlan` machinery left to draw one
+     (that pair still exists on the week card, which has the width to show a
+     glyph *and* a wash without one competing with the other).
+
+     No duty-coloured accent either, and for the same underlying reason `dutyBlue`
+     was already dropped at the call site: every chip in this cell is a HIT, so a
+     duty accent would only ever be the same colour, and this chip has nothing
+     left to spend it on.
+
+     Content is `company · site` — not the time window, which used to sit here,
+     and no longer the filter count either. The window is still one hover away in
+     the tooltip; a cell that regularly stacks three or four of these did not have
+     room to answer "where" and "how much work" and "when" all in one line, and
+     of the three, the clock is the one a planner is least often scanning the
+     grid for.
+
+     The count went the same way, and for a sharper reason: this is the *company*
+     grouping, and the month is its only view with no company row to inherit the
+     name from (see the hover card's note below). So the one fact the cell could
+     not supply was whose building this is — and with several companies' chips
+     sharing a cell, the customer is also what tells two chips apart at a glance,
+     where the filter count told them apart not at all. Company leads as the
+     subject, the site qualifies it, and how much work is there is a hover away
+     with the clock. */
+  /* `6px` of side padding, not 12: the chip is one seventh of the grid wide — 147px
+     measured — and 24px of horizontal padding was a fifth of it, spent on empty
+     space while both names ellipsized. Two proper nouns in that width will always
+     clip (the hover card is what carries them in full), but the padding was the one
+     part of the squeeze that bought nothing. */
+  visitMonthChip: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '4px',
+    width: '100%',
+    minWidth: 0,
+    padding: '3px 6px',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    overflow: 'hidden',
+  },
+  /* The chip's subject: whose site this is. Dark and legible like the week card's
+     own site line, but `fontWeight: 500` rather than that card's 600 — prominent
+     without being the loudest thing in a column of these.
+
+     `flex: '0 1 auto'`, not `'1 1 auto'` — it may shrink to let the site keep
+     some width, but it must not *grow* to fill the row: a flex item that grows
+     past its own text still occupies that width, which would shove the site to
+     the chip's far edge instead of leaving it sitting right after the dot the way
+     "company · site" reads as one phrase. */
+  visitMonthChipCompany: {
+    '&.MuiTypography-root': {
+      color: theme.palette.textPrimary,
+      fontSize: '12px',
+      fontWeight: 500,
+      lineHeight: '16px',
+      minWidth: 0,
+      flex: '0 1 auto',
+      whiteSpace: 'nowrap',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+    },
+  },
+  /* The dot, as its own element rather than baked into either string: both
+     neighbours can be missing (a visit with no company resolved, a site with no
+     name) and a separator that is part of one of them would then draw with
+     nothing on one side. `flex: '0 0 auto'` — one character, never worth
+     shrinking. */
+  visitMonthChipSeparator: {
+    '&.MuiTypography-root': {
+      color: theme.palette.textSecondary1,
+      fontSize: '12px',
+      fontWeight: 500,
+      lineHeight: '16px',
+      flex: '0 0 auto',
+    },
+  },
+  /* The qualifier: which of the customer's buildings. Quiet grey — the same
+     `textSecondary1` the week card's route line takes for the same supporting
+     role — so a column of chips scans by customer first.
+
+     Also `0 1 auto` with its own `minWidth: 0`, so a long company and a long
+     site each give way rather than one clipping the other out of existence. Both
+     names are carried in full by the hover card, which is why clipping here is
+     cheap. */
+  visitMonthChipSite: {
+    '&.MuiTypography-root': {
+      color: theme.palette.textSecondary1,
+      fontSize: '12px',
+      fontWeight: 500,
+      lineHeight: '16px',
+      minWidth: 0,
+      flex: '0 1 auto',
+      whiteSpace: 'nowrap',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+    },
+  },
+
+  /* ------------------------------------------------------------------ *
+   * The month chip's hover card.
+   *
+   * A chip is one line of a cell one seventh of the grid wide, so it can only
+   * ever carry the pair that identifies a visit — when, and where. Everything
+   * else the planner might be hovering to find out lives here, and the customer
+   * leads it: the whole point of this grouping is *visits by company*, and the
+   * month is the one view in it with no company row to inherit the name from.
+   *
+   * This replaces a `title` attribute that had carried the same five facts for
+   * some time. Nobody had read them. A native tooltip waits a second, then draws
+   * unstyled OS text somewhere near the pointer — on a grid where the answer is
+   * one hover away from fifty chips, that is slow enough to not be worth trying
+   * twice.
+   * ------------------------------------------------------------------ */
+  visitMonthChipTip: {
+    display: 'flex',
+    flexDirection: 'column',
+    // One uniform 4px between every row — lead, site, window·route, officer,
+    // status — rather than the 2px gap plus a second, selective 2px
+    // `marginTop` on just the last two rows this started as. Both read the
+    // same on screen, but one rule is easier to trust than two that have to
+    // agree, and this tip has grown to five rows since that pairing was
+    // written for three.
+    gap: '4px',
+    padding: '1px 0',
+  },
+  /* Never had a colour of its own — every other line in this tooltip states one
+     (`visitMonthChipTipLine` at 72% white, `visitMonthChipTipOfficerName` at
+     92%), but this one relied on inheriting from somewhere, and what it actually
+     inherited was the typography theme's default body colour: `#000`. Black
+     text on this tooltip's black background is invisible, not merely quiet —
+     the lead line was rendering, every time, as a blank line the exact height
+     of the text that should have been there. Full white, brighter than every
+     other line here, since this is the one meant to read as the most
+     prominent. */
+  visitMonthChipTipLead: {
+    '&.MuiTypography-root': {
+      color: '#fff',
+      fontSize: '12px',
+      fontWeight: 600,
+      lineHeight: '16px',
+    },
+  },
+  visitMonthChipTipLine: {
+    '&.MuiTypography-root': {
+      // The tooltip is black; its supporting lines step back rather than change hue.
+      color: 'rgba(255, 255, 255, 0.72)',
+      fontSize: '11px',
+      fontWeight: 500,
+      lineHeight: '16px',
+    },
+  },
+  visitMonthChipTipStatus: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '5px',
+    '& svg': {
+      width: '12px',
+      height: '12px',
+      flexShrink: 0,
+    },
+  },
+  visitMonthChipTipOfficer: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '5px',
+  },
+  visitMonthChipTipAvatar: {
+    '&.MuiAvatar-root': {
+      // Compact to match the tip's own type scale — the week card's avatar
+      // (24-32px) is sized for a card, not a line inside a hover tooltip.
+      width: '16px',
+      height: '16px',
+      flexShrink: 0,
+    },
+  },
+  /* Who is coming is as load-bearing a fact as where and when, so this does not
+     take the same 72%-white step-back every other supporting line here takes —
+     it stays close to full white, the tip's only other line at that weight
+     besides the lead. Same size/weight as `visitMonthChipTipLine` otherwise, so
+     it is a difference of emphasis, not of scale. */
+  visitMonthChipTipOfficerName: {
+    '&.MuiTypography-root': {
+      color: 'rgba(255, 255, 255, 0.92)',
+      fontSize: '11px',
+      fontWeight: 500,
+      lineHeight: '16px',
+    },
+  },
+
   /* No future visit at all. Different in kind from "quiet": the site has dropped
      off the schedule, and nothing else on this screen would tell you.
 
@@ -585,8 +1400,8 @@ export const useStyles = makeStyles((theme) => ({
     alignItems: 'flex-start',
     justifyContent: 'center',
     gap: '2px',
-    minHeight: '56px',
-    padding: '8px',
+    minHeight: '36px',
+    padding: '6px 8px',
     minWidth: 0,
     maxWidth: '100%',
     width: '100%',
@@ -643,9 +1458,15 @@ export const useStyles = makeStyles((theme) => ({
       borderBottom: `1px solid ${theme.palette.borderSubtle1}`,
     },
   },
+  /* Supporting detail, so it is coloured like supporting detail. This was
+     `textSecondary1` (#444446) against a #262527 title — a shade apart, which made
+     "1 this week" read as a second heading and put two dark lines in every row of a
+     column the eye is meant to scan for names. `textPlaceholder` is the same grey the
+     card's own route line uses, and it keeps the column's three tiers distinct:
+     title, then this, then the quiet row's next-due at #8A8A90. */
   resourceLabelSubtitleDedicated: {
     '&.MuiTypography-root': {
-      color: theme.palette.textSecondary1,
+      color: theme.palette.textPlaceholder,
       fontSize: '12px',
       fontWeight: 500,
       lineHeight: '16px',
@@ -714,6 +1535,45 @@ export const useStyles = makeStyles((theme) => ({
       textOverflow: 'ellipsis',
       minWidth: 0,
     },
+  },
+  /* The resource lane is FullCalendar's own flex column (see `ResourceLane` in
+     the scheduler package) sized to the row's shared height, but its events
+     wrapper only ever grows to fit the events it holds — a single ~50-70px
+     card in a taller row was left pinned to the top with the leftover space
+     stranded below it. `justifyContent: 'center'` centers that events block
+     (and any top/bottom lane content, which is empty here) within the row.
+     Scoped to visit-card rows only (`isVisitsWeekView`, both the standalone
+     Visits tab and the Overview tab's company grouping) — Dedicated/Officer/
+     Patrol rows and Overview's own accordion/site-band lanes keep their
+     existing top-aligned stacking, handled by the other branches above. */
+  /* Centers a day's stack of cards within the row's height. The lane is a
+     row-direction flex container (FullCalendar's default), so the cross axis
+     — the one that runs vertically here — is `align-items`, not
+     `justify-content`; `justify-content` centers along the row's own
+     horizontal main axis instead, which does nothing for a lane only one
+     column wide. That mismatch was why cards still hugged the top of a row
+     taller than their content despite this class already being wired up. */
+  /* Centers a day's stack of cards within the row's height — but the row
+     track here is a `flex-direction: column` container (FullCalendar's own
+     markup), so the axis that runs vertically is the **main** axis, not the
+     cross axis. `justify-content` is what centers along the main axis;
+     `align-items` governs the cross axis, which in a column container is
+     *horizontal*.
+
+     That distinction is load-bearing, not academic: the lane this wraps has
+     no normal-flow content of its own (every card inside it is absolutely
+     positioned for FullCalendar's day-offset math), so its intrinsic width
+     collapses to 0. `align-items: center` centers that zero-width box
+     horizontally in the middle of the *entire week*, which becomes the
+     coordinate origin every card's `insetInlineStart` is measured from —
+     every card in the row renders shifted toward the row's horizontal
+     center, off whatever day it actually belongs to. `align-items: stretch`
+     keeps the lane at full row width (i.e. the correct origin at the row's
+     left edge), and `justify-content: center` is what actually centers the
+     content vertically. */
+  visitResourceLane: {
+    justifyContent: 'center',
+    alignItems: 'stretch',
   },
   dedicatedSiteBandResourceLabel: {
     background: '#E6F6FD !important',
@@ -1082,23 +1942,45 @@ export const useStyles = makeStyles((theme) => ({
     },
   },
 
+  /* --- the Day / Week / Month switch -------------------------------------
+     Notion-style segmented pill: a flat grey track with the selected segment
+     drawn as its own lifted white pill on top (see the `&&.Mui-selected` block
+     on `calendarHeaderToolbarToggleBtn` below for that half). Replaces the
+     earlier solid-grey-fill-with-white-text treatment outright, not a tweak of
+     it. The track no longer carries a border — it was only ever there to
+     anchor a *white* shell against a *white* page, and a flat grey fill does
+     that job on its own against the page's white background. */
   calendarHeaderToolbarToggle: {
     gap: '4px',
     '&.MuiToggleButtonGroup-root': {
       borderRadius: '8px',
-      border: `1px solid ${theme.palette.borderSubtle1}`,
-      background: `${theme.palette.surfaceWhite}`,
+      background: theme.palette.surfaceGreySubtle,
       height: '32px',
       display: 'flex',
-      alignItems: 'center',
+      alignItems: 'stretch',
       justifyContent: 'center',
-      padding: '0 2px',
+      /* No inset. The 2px cushion is what put a visible gap between this shell's
+         border and the selected segment's own, so the pair read as two concentric
+         rounded rectangles. With the segment flush to the shell the two edges meet
+         and the control has one outline again. */
+      padding: 0,
 
       '& .MuiToggleButtonGroup-grouped': {
-        padding: '4px 16px',
+        /* Sized for the single letters this control now shows. 16px of side padding
+           was proportionate to "Month"; against "M" it was almost all padding, and
+           the row it sits in has since gained a labelled grouping toggle and two page
+           actions to make room for. `minWidth` keeps the three segments equal — D, W
+           and M are not the same width — so the control does not jog as the selection
+           moves. */
+        padding: '4px 8px',
+        minWidth: '32px',
         border: '0 ',
-        height: '28px',
-        borderRadius: '6px !important',
+        /* Fills the shell rather than floating 2px inside it — `stretch` above plus
+           an inner radius one step down from the shell's 8px, so the corners nest
+           instead of cutting across each other. */
+        height: 'auto',
+        alignSelf: 'stretch',
+        borderRadius: '7px !important',
       },
     },
   },
@@ -1107,8 +1989,15 @@ export const useStyles = makeStyles((theme) => ({
     '&.MuiButtonBase-root': {
       color: `${theme.palette.textPlaceholder}`,
       border: '1px solid transparent',
+      /* Hover needs its own step now the track is grey rather than white —
+         `surfaceGreySubtle` is the track colour itself, so painting the same
+         token on hover used to work only because the shell behind it was
+         white. `borderSubtle2` is the next grey down this app already uses as
+         a wash on light-grey surfaces (see e.g. `optimizeRoute.styles.js`),
+         visibly darker than the track without approaching the selected
+         segment's white. */
       '&:hover': {
-        backgroundColor: `${theme.palette.surfaceGreySubtle}`,
+        backgroundColor: theme.palette.borderSubtle2,
       },
 
       '&:disabled': {
@@ -1117,11 +2006,35 @@ export const useStyles = makeStyles((theme) => ({
         border: `1px solid #A9DEFF`,
       },
 
-      '&.Mui-selected': {
-        backgroundColor: `${theme.palette.surfaceBrand}`,
-        color: `${theme.palette.textOnColor}`,
+      /* The selected segment, drawn as its own white pill lifted off the grey
+         track — the Notion pattern (12h/24h, Table/Board/Chart, etc.) this
+         control now follows in place of the solid-grey-fill-with-white-text
+         treatment it carried before. That treatment is retired outright, not
+         tuned further.
+
+         A soft, small-scale shadow does the lifting instead of a border or a
+         colour change alone. `0px 1px 2px 0px rgba(16, 24, 40, 0.10)` reuses
+         this file's own shadow colour family — `calendarHeaderToolbarDatePickerPopover`
+         is built from the same `rgba(16, 24, 40, …)` — just turned down from
+         popover scale to something proportionate for a 28px pill; the
+         popover's two-layer shadow would be far too heavy here.
+
+         Confirmed product decision, asked for twice: the selected segment's text
+         weight matches the unselected segments'. Do not reintroduce a heavier
+         weight here — `textPrimary` plus the white fill and its lift shadow is
+         the whole signal for "this one is active"; a weight bump on top of that
+         reads as a second, competing signal and was asked to be removed.
+
+         Border is left unset here so it falls through to the base rule's
+         `1px solid transparent` — giving the pill a shadow without a border
+         keeps its box size identical to the unselected state, so nothing
+         shifts by a pixel on selection. */
+      '&&.Mui-selected': {
+        backgroundColor: theme.palette.surfaceWhite,
+        color: theme.palette.textPrimary,
+        boxShadow: '0px 1px 2px 0px rgba(16, 24, 40, 0.10)',
         '&:hover': {
-          backgroundColor: `${theme.palette.surfaceBrandHover}`,
+          backgroundColor: theme.palette.surfaceWhite,
         },
       },
     },
@@ -1278,8 +2191,19 @@ export const useStyles = makeStyles((theme) => ({
     // Franchise today: paint the full timeline slot (marker on header content).
     [`& .${fcClass.tableHeaderSticky} .${fcClass.internalTimelineSlot}:has([data-schedule-header-today])`]:
       {
-        backgroundColor: `${theme.palette.surfaceBrand} !important`,
+        backgroundColor: `${TODAY_COLUMN_WASH} !important`,
+        borderTop: `2px solid ${theme.palette.brandSecondaryLight} !important`,
       },
+
+    /* Today, down the whole column. The header rule above marks where the day
+       starts; this is the faint grey that carries it through the lanes so the eye
+       can follow the column without a saturated fill shouting over the cards in it.
+       `data-schedule-today` is stamped by `ScheduleCalendarGrid` from the *franchise*
+       clock — FullCalendar's own `aria-current` is the browser's, which puts the mark
+       on the wrong column for anyone working a franchise a few timezones away. */
+    '& [data-date][data-schedule-today]': {
+      backgroundColor: TODAY_COLUMN_WASH,
+    },
 
     // Resource column label typography (replaces .fc-datagrid-cell-main).
     '& .fc [role="rowheader"]': {
@@ -1293,13 +2217,33 @@ export const useStyles = makeStyles((theme) => ({
       maxWidth: '100%',
     },
 
-    // Resource timeline column header height (Locations / day slots).
+    /* Resource timeline column header height (Locations / Company / Routes …).
+       In practice this is the *only* column header this rule can move: FullCalendar
+       gives every other one — the day headers, the timeline slot headers, the
+       datagrid's super-header — an `align*` class carrying `align-items: … !important`
+       (`dayHeaderAlign`/`slotHeaderAlign`, both `start` here), and the skeleton's
+       `!important` beats anything declared below. The datagrid's own header cell is
+       the one FullCalendar renders with no align class at all, so it inherits
+       whatever this says.
+
+       `align-items` is the **horizontal** axis here, not the vertical one. FC7 puts
+       `flexCol` on the header cell (`flex-direction: column !important`), so this
+       property sizes the cross axis: `center` was centring the label *across the
+       column*, which read as the header disagreeing with the names under it — the
+       resource cells carry `alignStart` from FullCalendar itself and cannot be
+       centred. `flex-start` is what puts the two on one left edge; the 8px that
+       finishes the alignment is `resourceColumnHeaderInner`'s own padding, matching
+       the label cushions (`resourceLabelContent`, `officerResourceLabel`).
+
+       Vertical centring in the 36px cell is untouched by this — that comes from the
+       classic theme's own `justify-content: center` on the same element, which is the
+       main axis while the direction stays `column`. */
     [`& .${fcClass.tableHeaderSticky} [role="columnheader"]`]: {
       height: '36px !important',
       minHeight: '36px !important',
       maxHeight: '36px !important',
       display: 'flex',
-      alignItems: 'center',
+      alignItems: 'flex-start',
     },
 
     // Day view: location/shift cards live in dayHeaderContent. Size the header to
@@ -1662,7 +2606,8 @@ export const useStyles = makeStyles((theme) => ({
     // Franchise-today slot must win over the columnheader white fill above.
     [`& .${fcClass.tableHeaderSticky} .${fcClass.internalTimelineSlot}:has([data-schedule-header-today])`]:
       {
-        backgroundColor: `${theme.palette.surfaceBrand} !important`,
+        backgroundColor: `${TODAY_COLUMN_WASH} !important`,
+        borderTop: `2px solid ${theme.palette.brandSecondaryLight} !important`,
       },
   },
 
@@ -1724,6 +2669,15 @@ export const useStyles = makeStyles((theme) => ({
     boxSizing: 'border-box',
   },
 
+  /* The resource column's header label ("Company", "Routes", "Locations", …).
+     `margin: 0` clears the classic theme's own 8px on this element — theme and
+     option class names are *joined*, not swapped, so its margin is still on the
+     node — and the 8px comes back as padding instead, which is the number every
+     label cushion in the column below uses (`resourceLabelContent`,
+     `officerResourceLabel`, `unassignedVisitsLabel`). Same 8px on both is what
+     puts the header's text and the resource names on one left edge; the header
+     cell rule in the `calendar` block is what stops it being centred away from
+     them. */
   resourceColumnHeaderInner: {
     margin: '0 !important',
     padding: '0 8px',
@@ -1993,24 +2947,48 @@ export const useStyles = makeStyles((theme) => ({
     },
   },
 
+  /* The card, as tight as its type allows.
+     Cushion and gutter were 8px on every side, which on a two-line card spent
+     more height on air than on text and cost ~4px of the day column's width to
+     each gutter — the column where the route name was truncating. 4px keeps cards
+     visibly separate from the cell edge and from each other without the card
+     reading as padding with words in it. Nothing here changes the type scale: the
+     lines are the same size, there is just less nothing around them. */
   eventContent: {
     backgroundColor: theme.palette.surfaceGreySubtle,
-    padding: '6px 8px',
+    padding: '4px 6px',
     overflow: 'hidden',
     borderRadius: '4px',
     cursor: 'pointer',
     display: 'flex',
     width: '98%',
-    gap: '4px',
-    marginLeft: '8px',
-    marginTop: '8px',
-    marginRight: '8px',
+    gap: '2px',
+    marginLeft: '4px',
+    marginTop: '4px',
+    marginRight: '4px',
     // marginBottom: '5px',
   },
   eventContentWeek: {
     flexDirection: 'column',
-    gap: '4px',
+    gap: '2px',
     minWidth: 0,
+  },
+  /* Visit-card-only breathing room, layered over `eventContent`/`eventContentWeek`
+     — the shell every duty card on this calendar shares — via `!important`,
+     since those two set `padding`/`gap` unconditionally and this only applies
+     at the call sites that draw a visit. A bit more air now that the card's
+     text has grown a step, on a card that is down to two lines at most. */
+  /* Horizontal padding reads wider than the 6px top/bottom suggests once the
+     row is taller than the card: the card is also centered *within* the row
+     (see `centerVisitDayLanes`), so the actual top/bottom whitespace a viewer
+     sees is that 6px plus however much the row exceeds the card's own
+     height — routinely another 6-7px on top. There's no equivalent
+     horizontal centering (the card fills its day column edge to edge), so
+     8px read as noticeably tighter side-to-side than the combined vertical
+     gap. 12px closes that gap without the box itself feeling loose. */
+  visitCardShell: {
+    padding: '6px 12px !important',
+    gap: '4px !important',
   },
 
   eventContentView: {
@@ -2304,6 +3282,22 @@ export const useStyles = makeStyles((theme) => ({
     gap: '4px',
   },
 
+  /* An unassigned officer slot draws `unassigned-officer.svg` in place of the
+     avatar, sized to the avatar's own 16px footprint rather than the 10px
+     `reassignedOfficerFlex` gives every other status glyph it holds
+     (`UnAssignHit`, `RunsheetIcon`, `DispatchIndicator`) — this is an SVG
+     standing in for an `Avatar`, not a small inline icon, so it needs the
+     bigger size back. `!important` is required, not decorative: both rules
+     match the same element at equal specificity (`.reassignedOfficerFlex
+     svg` vs. this class), and only an `!important` declaration can win that
+     tie regardless of source order — the same reason `carIcon` below needs
+     it for the vehicle slot. */
+  unassignedOfficerIcon: {
+    width: '16px !important',
+    height: '16px !important',
+    flexShrink: 0,
+  },
+
   officerAssignTrigger: {
     cursor: 'pointer',
     borderRadius: '4px',
@@ -2357,10 +3351,23 @@ export const useStyles = makeStyles((theme) => ({
     flex: '0 0 36px',
   },
 
+  /**
+   * Today's column header — a **rule**, not a fill.
+   *
+   * This was solid brand with white type, which made the current day the loudest
+   * object on the grid: louder than the unrouted-demand pills and as loud as the
+   * Harmonize CTA, for a fact that is context rather than something to act on. The
+   * column now carries a light-green rule along its top and a faint grey wash down
+   * its whole length (see the slot and lane rules keyed on `data-schedule-today`),
+   * which locates the day without competing with the work in it.
+   *
+   * The type goes back to the page's own colour, weighted rather than inverted, so
+   * the header still reads as the one that matters.
+   */
   calendarHeaderCellToday: {
-    backgroundColor: theme.palette.surfaceBrand,
     '& .MuiTypography-root': {
-      color: `${theme.palette.textOnColor} !important`,
+      color: `${theme.palette.textPrimary} !important`,
+      fontWeight: 600,
     },
   },
 
@@ -2531,13 +3538,13 @@ export const useStyles = makeStyles((theme) => ({
     },
   },
   dayEventContent: {
-    padding: '6px 8px',
+    padding: '4px 6px',
     overflow: 'hidden',
     borderRadius: '4px',
     cursor: 'pointer',
     display: 'flex',
     width: '100%',
-    gap: '4px',
+    gap: '2px',
     alignItems: 'flex-start',
     background: theme.palette.surfaceGreySubtle,
   },
