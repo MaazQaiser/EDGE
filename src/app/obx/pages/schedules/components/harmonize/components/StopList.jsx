@@ -14,6 +14,7 @@ import { formatMiles, formatMinutesLong } from '../durations';
 import { LEG_LINE, STOP_TONES, useStyles } from '../harmonize.styles';
 import { routeSignature } from '../routeMotion';
 import { reorderToSlot } from '../stopOrder';
+import { ChevronDown } from './Glyphs';
 import { StopPinIcon, stopTone } from './StopPinIcon';
 import { DragHandle, StopFigure, StopRow } from './StopRowParts';
 
@@ -44,6 +45,109 @@ const PendingStop = ({ classes }) => (
 );
 
 PendingStop.propTypes = { classes: PropTypes.object.isRequired };
+
+/**
+ * The day's two ends, in the same row grammar as the stops between them.
+ *
+ * **They were a shape of their own, and that put their pins off the list's axis.**
+ * `stopAnchor` was a flex row with `paddingLeft: STOP_GRIP + STOP_PIN_GAP` and a 4px gap
+ * to its marker, where a stop row is a 16px grip, an 8px gap and then the 16px pin
+ * column — 20 + 8 against 16 + 8 + 8. Measured on the built screen, every anchor pin sat
+ * at x 514 against every stop pin's 518. Four pixels, on the single axis this list is read
+ * down, and unfixable in the old shape for the reason the old shape's own note gave: the
+ * offset lives in a padding key, so lining the two up means two numbers agreeing rather
+ * than one number. Building the anchors out of `StopRow` removes the second number.
+ *
+ * What the row gains with it is the thing the design draws on these two lines and the old
+ * shape had nowhere to put: **the dashed track**, grey, running out of the origin's pin and
+ * down to stop 1's. That mark is what replaces the `Drive 7 min` caption the leading
+ * connector used to carry — the design draws a coloured dash and no caption, and the leg's
+ * minutes are already inside stop 1's own figure, so the caption was the second statement
+ * of a number the row below it sums.
+ *
+ * **No chevron, and a ghost in its place.** Every other row's disclosure opens that row's
+ * own arithmetic; an anchor has none to open — the origin is a point on a map, not a visit
+ * with a service time. So the figure keeps the 7px slot the stops' chevrons occupy at
+ * `visibility: hidden` — the same `stopChevronGhost` an open row already uses on its second
+ * and third values — which lands an anchor's figure in the stops' figure column instead of
+ * 7px right of it. Drawn and inert beats drawn and refusing; see the same argument on the
+ * exclusion panel's grip.
+ *
+ * The design's own anchors read `Start Location Here` / `End Location Here`. Ours read the
+ * geocoded address, because there is a real one and a placeholder would be worse.
+ *
+ * **`Route starts here` / `Route ends here` are gone, and they were the row's only tenant
+ * that said nothing.** They were argued for as "what the address cannot say" — but the first
+ * row of a list under a route's name, drawn with a grey unnumbered pin above a dashed rule
+ * running down to stop 1, has already said it, and the last row with a rule that stops has
+ * said the other. What they cost was measurable: the end anchor's line is address + caption +
+ * clock + drive-home figure, and at the routes column's width the four could not fit, so the
+ * `27 min` wrapped to a second line and made that anchor a different height from every stop —
+ * the exact fault `stopAnchorTitle`'s `nowrap` was added to stop, reappearing on the values
+ * side where `nowrap` has no reach. Dropping the caption gives the line back its slack.
+ *
+ * What survives is `meta` as a mechanism and the end anchor's `15:32`, which is a *number the
+ * row is read for* rather than a label. The start anchor now passes no `meta` at all, and
+ * needs no guard for it: the dot is drawn inside the `map`'s fragment, so no entry means no
+ * dot rather than a stray full stop after the address, and a flex line with one child has no
+ * gap to leave behind.
+ */
+const AnchorRow = ({ classes, name, meta = [], duration, lineColor, maskId, flush }) => (
+  <StopRow
+    classes={classes}
+    lineColor={lineColor}
+    rowClassName={flush ? classes.stopLineFlush : undefined}
+    /* The grip column, held open and empty. The design lays out a handle at `opacity: 0`
+       on these two rows, which is the same outcome by the same argument: every pin on one
+       axis. */
+    grip={<Box className={classes.stopGripSpacer} />}
+    pin={
+      /* **The same teardrop as a stop, in grey, and unnumbered.** It was a dashed circle,
+         which the design does not draw and which made the day begin with a different *kind*
+         of mark rather than a different-coloured one — and the map beside this list has
+         always drawn its origin as a pin. Unnumbered because a digit here is a claim about
+         sequence: the numbers in this list are what a planner cross-references against the
+         map's own pins, and the map numbers stops, starting at 1. */
+      <StopPinIcon tone={STOP_TONES.idle} className={classes.stopMarker} maskId={maskId} />
+    }
+    title={
+      <Box className={classNames(classes.stopTitleRow, classes.stopAnchorTitle)}>
+        <Typography className={classes.stopPillName}>{name}</Typography>
+        {meta.map((text) => (
+          <React.Fragment key={text}>
+            <Box className={classes.stopPillDot} />
+            <Typography className={classNames(classes.stopDetailLabel, classes.stopAnchorMeta)}>
+              {text}
+            </Typography>
+          </React.Fragment>
+        ))}
+      </Box>
+    }
+    figure={
+      <Box className={classes.stopFigureRow}>
+        {duration ? <Typography className={classes.stopFigure}>{duration}</Typography> : null}
+        <ChevronDown className={classNames(classes.stopChevronIcon, classes.stopChevronGhost)} />
+      </Box>
+    }
+  />
+);
+
+AnchorRow.propTypes = {
+  classes: PropTypes.object.isRequired,
+  /** The origin as the geocoder gave it, or whatever the caller is waiting on. */
+  name: PropTypes.string,
+  /**
+   * Quiet values after the name, separated by the list's own drawn dot. In practice one —
+   * the end's finish clock. The captions that used to lead it are gone; see above.
+   */
+  meta: PropTypes.arrayOf(PropTypes.string),
+  /** The only figure an anchor can honestly carry: the end's drive home. */
+  duration: PropTypes.string,
+  lineColor: PropTypes.string,
+  maskId: PropTypes.string.isRequired,
+  /** Last in the list: no rule leaves this pin, so it takes no connector gap either. */
+  flush: PropTypes.bool,
+};
 
 /**
  * The ordered day.
@@ -92,6 +196,7 @@ const StopList = ({
   stops = [],
   startLabel,
   endLabel,
+  returnLegMinutes = 0,
   finishMinutes,
   manual = false,
   summary,
@@ -101,7 +206,6 @@ const StopList = ({
   highlightedSiteId,
   onHighlight,
   onReorder,
-  onMoveToOverflow,
   onReoptimize,
 }) => {
   const classes = useStyles();
@@ -221,27 +325,14 @@ const StopList = ({
   const clock = (minutes) => (pendingTimes ? '—:—' : formatMinutesAsClock(minutes));
   const reorderable = stops.filter((stop) => !stop.completed).length > 1;
 
-  /**
-   * `Drive 12m`, or nothing at all.
-   *
-   * **`legAfter` went with the per-stop connector and this stayed, because one caller
-   * outlived the other.** Every stop used to carry a connector box below it with its onward
-   * drive set beside the dashed rule; the design draws no such mark, and a stop's travel time
-   * is the first line of its disclosure now — the same number in the one place it can be
-   * checked against the total it is part of. The **leading** connector is not a stop's row: it
-   * is the run out of the origin into stop 1, it has no disclosure to carry its number, and
-   * nothing else on this screen says how far the day starts from its first call. So it keeps
-   * its label, and this keeps the formatting rules that label needs.
-   *
-   * **While `pendingTimes` there is no number**, and a `Drive —` placeholder is an answer
-   * offered before its question. A 0-minute leg is dropped for a different reason — two stops
-   * at one address, or an origin that already *is* the first site: `Drive 0m` is a line of
-   * type saying nothing happened.
-   */
-  const legLabel = (minutes) =>
-    !pendingTimes && minutes > 0 ? tt('drive', { time: formatMinutesLong(minutes) }) : '';
-
-  const startLeg = legLabel(stops[0]?.travelFromPrevious);
+  /* **`legLabel` and `startLeg` are gone with the leading connector.** They formatted
+     `Drive 12m` for the one rule that still carried a caption — the run out of the origin
+     into stop 1 — and the design draws no caption on any of its dashed rules. The two
+     conditions they encoded are not lost, only relocated: while `pendingTimes` a duration is
+     absent rather than stubbed (`rowFigure` and `AnchorRow`'s own guard both do this), and a
+     0-minute leg prints nothing rather than `0m` (the end anchor's `> 0` test). The `drive`
+     locale key now has no caller in this file; it is left in place because `buildRoute`'s own
+     route timeline is where a planner reads that phrase and this list is not its only user. */
 
   /**
    * How far the van drives to reach stop `index`, in kilometres.
@@ -512,47 +603,22 @@ const StopList = ({
         className={classNames(classes.stopTrack, draggingId && classes.stopTrackDragging)}
         ref={timelineRef}
       >
-        {/* The anchors reserve the grip column with `stopAnchor`'s own `paddingLeft`
-            rather than by rendering a hidden handle. The spec draws the handle at
-            `opacity: 0` on these two rows, which is the same outcome — the space is kept
-            and the mark is not — and rendering one *as well* would indent the anchors by
-            a second grip's width, because the padding is in a style key this pass does
-            not own. Same reason a completed stop keeps its grip and gets
-            `stopGripHidden`: the pins all have to sit on one axis. */}
-        <Box className={classes.stopAnchor}>
-          {/* **The same teardrop as a stop, in grey.** It was a dashed circle, which the
-              mockup does not draw and which made the day begin with a different *kind* of
-              mark rather than with a different-coloured one — and the map beside this list
-              has always drawn its origin as a pin. Grey and unnumbered is the whole of the
-              difference: this is where the day starts, not a stop the planner chose, so
-              there is no number to give it and nothing to open. `StopPinIcon` leaves
-              `number` optional for exactly this. */}
-          <StopPinIcon
-            tone={STOP_TONES.idle}
-            className={classes.stopMarker}
-            maskId={`stopPinStart-${stops[0]?.siteId || 'empty'}`}
-          />
-          <Box className={classes.stopAnchorText}>
-            <Typography className={classes.stopAnchorName}>{startLabel}</Typography>
-            <Box className={classes.stopPillDot} />
-            <Typography className={classes.stopPillMeta}>{tt('routeStarts')}</Typography>
-          </Box>
-        </Box>
+        {/* Where the day starts. Its track is **grey**, where every track between two stops
+            is violet, and the colour is carrying one distinction worth stating: the violet
+            part of the day is the part the planner can *reorder*, and this run is not —
+            wherever the sequence ends up, it still begins at the origin.
 
-        {/* The first leg: out of the start point and into stop 1, which is stop 1's own
-            `travelFromPrevious` and not something the anchor knows.
-
-            Grey, where every connector between two stops is violet. The colour is carrying
-            one distinction and it is worth stating: the violet track is the part of the day
-            the planner can *reorder*, and this run is not — wherever the sequence ends up,
-            it still begins at the origin. */}
-        <Box className={classes.stopConnector} style={{ color: STOP_TONES.idle.line }}>
-          <Box className={classes.stopConnectorSpacer} />
-          <Box className={classes.stopConnectorLine} />
-          {startLeg ? (
-            <Typography className={classes.stopConnectorLeg}>{startLeg}</Typography>
-          ) : null}
-        </Box>
+            **The `Drive 7 min` connector that used to sit under this row is gone with the
+            row's rebuild.** The design draws a coloured dash between rows and no caption on
+            it, and the number was not lost: that leg is `travelFromPrevious` on stop 1,
+            inside stop 1's own figure and broken out as the first line of its disclosure.
+            Printed on the rule as well, it was the same minutes twice, 20px apart. */}
+        <AnchorRow
+          classes={classes}
+          name={startLabel}
+          lineColor={STOP_TONES.idle.line}
+          maskId={`stopPinStart-${stops[0]?.siteId || 'empty'}`}
+        />
 
         {stops.map((stop, index) => {
           const locked = Boolean(stop.completed);
@@ -713,20 +779,23 @@ const StopList = ({
                   </Box>
                 }
               >
-                {/* Under the labels, and only on an open row. The breakdown answers *where did
-                    this stop's time go*; this is the one action that answers *and what can I
-                    do about it*. */}
-                {isOpen && !locked ? (
-                  <Box className={classes.stopDetailActions}>
-                    <button
-                      type="button"
-                      className={classes.linkButton}
-                      onClick={() => onMoveToOverflow?.(stop.siteId)}
-                    >
-                      {tt('moveOut', { site: stop.siteName })}
-                    </button>
-                  </Box>
-                ) : null}
+                {/**
+                 * **Nothing. An open row is a breakdown and nothing else.**
+                 *
+                 * *Move {site} out of this day* used to hang here, on the argument that the
+                 * breakdown answers *where did this stop's time go* and deserved a neighbour
+                 * answering *what can I do about it*. Removed on the user's instruction, and
+                 * the disclosure is better for it: a caret that opens two lines of
+                 * arithmetic is a cheap, reversible press, and a caret that opens two lines
+                 * of arithmetic **and a button that re-plans the day** is not — the row grew
+                 * a consequence at the moment it was only asked to explain itself.
+                 *
+                 * The capability is not gone. Dropping a stop from a day is still
+                 * `dropStop`, still reachable from the map's own stop popup
+                 * (`RouteMap`/`TileRouteMap` call the same handler), and the triage panel
+                 * still offers the exact remedy where a stop was refused. What went is this
+                 * one entry point, not the action.
+                 */}
               </StopRow>
             </Box>
           );
@@ -736,27 +805,33 @@ const StopList = ({
             finish time printed above rows still arriving is an answer offered
             before its question. */}
         {allLanded ? (
-          <Box className={classes.stopAnchor}>
-            {/* The grey pin again, and the day closes the way it opened. */}
-            <StopPinIcon
-              tone={STOP_TONES.idle}
-              className={classes.stopMarker}
-              maskId={`stopPinEnd-${stops[stops.length - 1]?.siteId || 'empty'}`}
-            />
-            <Box className={classes.stopAnchorText}>
-              <Typography className={classes.stopAnchorName}>{endLabel}</Typography>
-              <Box className={classes.stopPillDot} />
-              {/* Always `Route ends here`, never the drive home. This meta *was* the
-                  only place the return leg appeared, which is why it borrowed the slot;
-                  the leg is now on the connector directly above this anchor, where it
-                  reads as the last hop in the sequence rather than as a property of the
-                  depot. Keeping both printed `Drive 25m` twice a row apart, which is
-                  the same duplication the chevron detail just lost. */}
-              <Typography className={classes.stopPillMeta}>{tt('routeEnds')}</Typography>
-              <Box className={classes.stopPillDot} />
-              <Typography className={classes.stopPillMeta}>{clock(finishMinutes)}</Typography>
-            </Box>
-          </Box>
+          /* The grey pin again, and the day closes the way it opened — but this end has a
+             figure and the other does not, which is not an inconsistency.
+
+             **The drive home is back, and this is the one row it can be charged to.** It
+             was on a connector above this anchor and that connector is gone; before that it
+             was in this row's own caption. It is not inside any stop's figure — a stop's
+             figure is its drive *in* plus its work — so unlike the leading leg it is not a
+             second statement of anything, and it is in the card's total whether or not the
+             list says so. The start anchor stays figureless for the mirror-image reason:
+             its only leg is stop 1's, and stop 1 already prints it.
+
+             `transparent`, not a colour: this is the last row, and a dashed rule running
+             out of the final pin points at nothing. */
+          <AnchorRow
+            classes={classes}
+            name={endLabel}
+            /* The clock alone. `Route ends here` led it and was dropped — the dashed rule
+               stopping at this pin is the statement, and the caption was the line's fourth
+               tenant on a row that only had room for three. */
+            meta={[clock(finishMinutes)]}
+            duration={
+              !pendingTimes && returnLegMinutes > 0 ? formatMinutesLong(returnLegMinutes) : ''
+            }
+            lineColor="transparent"
+            flush
+            maskId={`stopPinEnd-${stops[stops.length - 1]?.siteId || 'empty'}`}
+          />
         ) : null}
       </Box>
     </Box>
@@ -767,11 +842,15 @@ StopList.propTypes = {
   stops: PropTypes.array,
   startLabel: PropTypes.string,
   endLabel: PropTypes.string,
-  /* `returnLegMinutes` is no longer taken. It fed `legAfter`, which set the drive home on the
-     last connector — a mark the supplied design does not draw. The run home is still charged to
-     the day and still in the card's own total; what is gone is a duplicate statement of it on a
-     rule. `RouteCard` still passes it, harmlessly, and that is the seam it comes back through
-     if the legs are ever wanted on the track again. */
+  /**
+   * The drive home, and **it is taken again** — this is the seam the last note said it would
+   * come back through. It fed `legAfter`, which printed it on the final connector; the design
+   * draws no captions on its rules, so it was dropped and `RouteCard` went on passing it into
+   * a component that ignored it. It is now the end anchor's own right-hand figure, which is
+   * the design's slot for a row's numbers and the one row this leg belongs to: no stop's
+   * figure contains it, so unlike the leading leg it duplicates nothing.
+   */
+  returnLegMinutes: PropTypes.number,
   finishMinutes: PropTypes.number,
   manual: PropTypes.bool,
   /** The merge disclosure — how many of somebody else's stops this re-solve moved. */
@@ -791,7 +870,6 @@ StopList.propTypes = {
   highlightedSiteId: PropTypes.string,
   onHighlight: PropTypes.func,
   onReorder: PropTypes.func,
-  onMoveToOverflow: PropTypes.func,
   onReoptimize: PropTypes.func,
 };
 

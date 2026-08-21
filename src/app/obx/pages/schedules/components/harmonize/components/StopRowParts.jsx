@@ -159,8 +159,10 @@ export const StopRow = ({
   lineColor,
   /** Value-less lines and actions, appended under the labels. */
   children,
+  /** An override on the row's own frame — the last row in a list takes no connector gap. */
+  rowClassName,
 }) => (
-  <Box className={classes.stopLine}>
+  <Box className={classNames(classes.stopLine, rowClassName)}>
     {grip}
 
     {/* The 16px column: the pin, then the track. `flex: 1` on the line is the whole mechanism
@@ -201,6 +203,7 @@ export const StopRow = ({
 
 StopRow.propTypes = {
   classes: PropTypes.object.isRequired,
+  rowClassName: PropTypes.string,
   grip: PropTypes.node,
   pin: PropTypes.node,
   title: PropTypes.node,

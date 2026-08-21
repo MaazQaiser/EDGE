@@ -69,7 +69,6 @@ const RouteCard = ({
   onHighlight,
   onReorder,
   onReoptimize,
-  onMoveOut,
   onDropSpill,
 }) => {
   const classes = useStyles();
@@ -390,7 +389,6 @@ const RouteCard = ({
             highlightedSiteId={highlightedSiteId}
             onHighlight={onHighlight}
             onReorder={(order) => onReorder?.(index, order)}
-            onMoveToOverflow={(siteId) => onMoveOut?.(index, siteId)}
             onReoptimize={() => onReoptimize?.(index)}
           />
         </Box>
@@ -446,7 +444,6 @@ RouteCard.propTypes = {
   onHighlight: PropTypes.func,
   onReorder: PropTypes.func,
   onReoptimize: PropTypes.func,
-  onMoveOut: PropTypes.func,
   onDropSpill: PropTypes.func,
 };
 

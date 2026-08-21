@@ -123,7 +123,11 @@ const InvoiceDrawer = ({
   const [currentSearchKey, setCurrentSearchKey] = useState('');
   const [discount, setDiscount] = useState(0);
   const [taxAmount, setTaxAmount] = useState(0);
-  const { country: franchiseCountry } = useSelector((state) => state.auth.franchiseInfo);
+  // `franchiseInfo` is null until a franchise is picked in the header, so this
+  // has to tolerate the empty case — destructuring it directly took the whole
+  // app down the moment the drawer opened. Every other consumer guards it the
+  // same way.
+  const { country: franchiseCountry } = useSelector((state) => state?.auth?.franchiseInfo) || {};
   const tenantInfo = useSelector((state) => state.auth?.tenantInfo);
   const invoiceInfo = useSelector((state) => state.auth?.invoiceInfo);
   const franchiseCountryShortCode = franchiseCountry?.shortCode?.toLowerCase() || 'us';

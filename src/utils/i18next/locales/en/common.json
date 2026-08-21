@@ -139,7 +139,6 @@
           "label": "Location",
           "placeHolder": "Enter Location Name"
         },
-
         "name": {
           "label": "Name",
           "placeHolder": "Enter Name"
@@ -181,7 +180,6 @@
           "label": "Country",
           "placeHolder": "Enter your country"
         },
-
         "address": {
           "header": "Address",
           "label": "Address",
@@ -201,7 +199,6 @@
           "label": "Zip/Postal Code",
           "placeHolder": "Enter your Zip/postal Code."
         },
-
         "dailySiteSummaryReceivers": {
           "label": "Daily Site Summary Receivers",
           "placeHolder": "Add the emails that should receive the daily site summary"
@@ -309,8 +306,12 @@
         "visitorType": {
           "placeHolder": "ex. Contractor"
         },
-        "title": { "label": "Title" },
-        "description": { "label": "Description" },
+        "title": {
+          "label": "Title"
+        },
+        "description": {
+          "label": "Description"
+        },
         "site": {
           "label": "Select Site",
           "sites": "Site",
@@ -635,7 +636,6 @@
     "dropdown.base": "{{#label}} can't be empty",
     "any.minWithValue": "{{#label}} must be at least {{#limit}} characters long",
     "any.maxWithValue": "{{#label}} can't be greater than {{#limit}} characters long",
-
     "somethingWentWrong": "Something went wrong!",
     "unauthorized": "Unauthorized Access",
     "access_denied": "Access Denied",
@@ -703,7 +703,6 @@
     "franchiseId": "ID: 1234",
     "tbd": "TBD"
   },
-
   "inProgress": {
     "title": "Work in progress!",
     "text": "This module is currently work in progress."
@@ -731,7 +730,6 @@
     "description": "Description",
     "addDescription": "Add Description",
     "addEmail": "ex: mike@teamsignal.com",
-
     "submit": "Submit",
     "search": "Search",
     "problemsReported": "Problems Reported",
@@ -982,7 +980,11 @@
     "syncApproved": "Sync Approved",
     "syncFailed": "Sync Failed",
     "deleted": "Deleted",
-    "patrol": "Patrol"
+    "patrol": "Patrol",
+    "syncing": "Syncing",
+    "paymentInProgress": "Payment In Progress",
+    "paid": " Paid",
+    "unpaid": "Unpaid"
   },
   "days": {
     "monday": "Monday",

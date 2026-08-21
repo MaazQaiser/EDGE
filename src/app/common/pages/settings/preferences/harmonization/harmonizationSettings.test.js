@@ -21,6 +21,10 @@ import {
   smallestSafeNeedBy,
   unreachableWeekdays,
   weekdaysFromSettings,
+  ZONE_SHAPE,
+  zoneById,
+  zoneCoverage,
+  zoneOfSite,
 } from './harmonizationSettings';
 
 /** ISO weekday numbers, which is what these functions speak. */
@@ -339,8 +343,8 @@ describe('readHarmonizationSettings', () => {
     /* The days survive and each gains the default shift, which is the point of migrating
        rather than resetting: the weekdays are the expensive part of this setting. */
     expect(settings.routeDays).toEqual([
-      { weekday: 1, shiftHours: SHIFT_HOURS_DEFAULT, officers: [] },
-      { weekday: 4, shiftHours: SHIFT_HOURS_DEFAULT, officers: [] },
+      { weekday: 1, shiftHours: SHIFT_HOURS_DEFAULT, officers: [], zoneId: null },
+      { weekday: 4, shiftHours: SHIFT_HOURS_DEFAULT, officers: [], zoneId: null },
     ]);
     /* 40km is 24.85 miles, rounded to 25. */
     expect(settings.radiusMiles).toBe(25);
@@ -381,9 +385,16 @@ describe('readHarmonizationSettings', () => {
   it('round-trips a saved rule through storage unchanged', () => {
     const rule = {
       routeDays: [
-        { weekday: 1, shiftHours: 8, officers: [{ id: '7', name: 'Alex Rivera' }] },
-        { weekday: 4, shiftHours: 6, officers: [] },
+        {
+          weekday: 1,
+          shiftHours: 8,
+          officers: [{ id: '7', name: 'Alex Rivera' }],
+          zoneId: 'north',
+        },
+        { weekday: 4, shiftHours: 6, officers: [], zoneId: null },
       ],
+      zones: DEFAULT_SETTINGS.zones,
+      siteZones: { fenchurch: 'east' },
       radiusMiles: 25,
       startLocation: { address: 'Depot', lat: 28.0, lng: -82.5 },
       planWindowDays: 21,
@@ -634,5 +645,334 @@ describe('officers on a day', () => {
     expect(persisted).toBe(true);
     expect(settings.routeDays[0].officers).toEqual(officers);
     expect(readHarmonizationSettings().routeDays[0].officers).toEqual(officers);
+  });
+});
+
+/**
+ * Zones, and the two things about them that are easy to get wrong.
+ *
+ * The relation is the first: membership lives on the **site**, and the zone stores only
+ * its shape. So the tests that matter are not "does a zone hold four sites" but "what
+ * happens to a site when the zone it named goes away", and "can a boundary that encloses
+ * nothing be stored as though it enclosed something".
+ *
+ * The second is that `isDirty` compares serialised rules, so anything non-deterministic
+ * in here — key order, a fresh default object that stringifies differently — shows up as
+ * a screen that opens claiming unsaved changes. `sanitiseSiteZones` sorts its keys for
+ * exactly that reason and it is pinned below.
+ */
+describe('zones', () => {
+  const seedZones = [
+    { id: 'north', name: 'North', shape: null },
+    { id: 'east', name: 'East', shape: null },
+  ];
+
+  it('assumes the franchise zones when the rule names none, so a day can still have one', () => {
+    /* Empty would mean no day could be given a zone, which would take the demo from
+       "works" to "cannot run" as a side effect of shipping the section. */
+    expect(normaliseSettings({}).zones.map((zone) => zone.id)).toEqual([
+      'north',
+      'east',
+      'south',
+      'west',
+    ]);
+    expect(normaliseSettings({}).zones.every((zone) => zone.shape === null)).toBe(true);
+  });
+
+  it('keeps an explicitly emptied list empty rather than restoring the defaults', () => {
+    /* Deleting every zone is something a planner said. `undefined` is not. */
+    expect(normaliseSettings({ zones: [] }).zones).toEqual([]);
+  });
+
+  it('drops a zone with no id and collapses a duplicated one to the first', () => {
+    const { zones } = normaliseSettings({
+      zones: [
+        { id: 'north', name: 'North' },
+        { name: 'Nameless' },
+        { id: 'north', name: 'North again' },
+      ],
+    });
+
+    expect(zones).toEqual([{ id: 'north', name: 'North', shape: null }]);
+  });
+
+  it('falls back to the id when a zone has lost its name', () => {
+    /* A row reading "north" can still be pointed at; a blank one cannot. */
+    expect(normaliseSettings({ zones: [{ id: 'north' }] }).zones[0].name).toBe('north');
+  });
+
+  describe('shapes', () => {
+    it('keeps a boundary of three or more points', () => {
+      const points = [
+        { lat: 28.1, lng: -82.5 },
+        { lat: 28.2, lng: -82.4 },
+        { lat: 28.0, lng: -82.3 },
+      ];
+      const { zones } = normaliseSettings({
+        zones: [{ id: 'north', name: 'North', shape: { kind: ZONE_SHAPE.BOUNDARY, points } }],
+      });
+
+      expect(zones[0].shape).toEqual({ kind: ZONE_SHAPE.BOUNDARY, points });
+    });
+
+    it('refuses a boundary of two points, because a line encloses nothing', () => {
+      const { zones } = normaliseSettings({
+        zones: [
+          {
+            id: 'north',
+            name: 'North',
+            shape: {
+              kind: ZONE_SHAPE.BOUNDARY,
+              points: [
+                { lat: 28.1, lng: -82.5 },
+                { lat: 28.2, lng: -82.4 },
+              ],
+            },
+          },
+        ],
+      });
+
+      expect(zones[0].shape).toBeNull();
+    });
+
+    it('drops unusable points before counting them', () => {
+      /* Three entries, one of which is not a coordinate, is a two-point boundary. */
+      const { zones } = normaliseSettings({
+        zones: [
+          {
+            id: 'north',
+            name: 'North',
+            shape: {
+              kind: ZONE_SHAPE.BOUNDARY,
+              points: [{ lat: 28.1, lng: -82.5 }, { lat: 'nope', lng: -82.4 }, { lat: 28.0 }],
+            },
+          },
+        ],
+      });
+
+      expect(zones[0].shape).toBeNull();
+    });
+
+    it('keeps a radius shape and clamps its distance to the rule-wide range', () => {
+      const { zones } = normaliseSettings({
+        zones: [
+          {
+            id: 'east',
+            name: 'East',
+            shape: {
+              kind: ZONE_SHAPE.RADIUS,
+              anchor: { address: 'Depot', lat: 28.0, lng: -82.5 },
+              radiusMiles: 5000,
+            },
+          },
+        ],
+      });
+
+      expect(zones[0].shape.radiusMiles).toBe(RADIUS_MAX_MILES);
+    });
+
+    it('refuses a radius drawn around coordinates that are not coordinates', () => {
+      const { zones } = normaliseSettings({
+        zones: [
+          {
+            id: 'east',
+            name: 'East',
+            shape: { kind: ZONE_SHAPE.RADIUS, anchor: { address: 'Nowhere' }, radiusMiles: 10 },
+          },
+        ],
+      });
+
+      expect(zones[0].shape).toBeNull();
+    });
+
+    it('keeps the zone when its shape is unusable, because the sites are the loss', () => {
+      /* Losing a boundary means "draw it again". Losing the zone means its sites
+         silently stop being schedulable. */
+      const { zones } = normaliseSettings({
+        zones: [{ id: 'north', name: 'North', shape: { kind: 'lasso-v2', blob: 'x' } }],
+      });
+
+      expect(zones).toEqual([{ id: 'north', name: 'North', shape: null }]);
+    });
+  });
+
+  describe('a day and its zone', () => {
+    it('stores one zone against a day', () => {
+      const { routeDays } = normaliseSettings({
+        zones: seedZones,
+        routeDays: [{ weekday: MON, shiftHours: 4, zoneId: 'north' }],
+      });
+
+      expect(routeDays[0].zoneId).toBe('north');
+    });
+
+    it('leaves a day unzoned when it names a zone that does not exist', () => {
+      /* Deleting a zone must not leave days pointing at nothing — "no zone" is
+         actionable, a dangling id is not. */
+      const { routeDays } = normaliseSettings({
+        zones: seedZones,
+        routeDays: [{ weekday: MON, shiftHours: 4, zoneId: 'atlantis' }],
+      });
+
+      expect(routeDays[0].zoneId).toBeNull();
+    });
+
+    it('treats a worked day with no zone as legal', () => {
+      /* Refusing to store it would make switching a day on a two-step commit. */
+      const { routeDays } = normaliseSettings({
+        zones: seedZones,
+        routeDays: [{ weekday: MON, shiftHours: 4 }],
+      });
+
+      expect(routeDays[0]).toEqual({
+        weekday: MON,
+        shiftHours: 4,
+        officers: [],
+        zoneId: null,
+      });
+    });
+  });
+
+  describe('zoneOfSite', () => {
+    const settings = normaliseSettings({ zones: seedZones });
+    const site = { id: 'fenchurch', defaultZoneId: 'north' };
+
+    it("reads the site book's own assignment when nothing overrides it", () => {
+      expect(zoneOfSite(settings, site)).toBe('north');
+    });
+
+    it('prefers an override', () => {
+      const moved = normaliseSettings({ zones: seedZones, siteZones: { fenchurch: 'east' } });
+
+      expect(zoneOfSite(moved, site)).toBe('east');
+    });
+
+    it('honours an explicit null as "taken out of every zone"', () => {
+      /* Distinct from a missing key, which would let the book's default put it back. */
+      const removed = normaliseSettings({ zones: seedZones, siteZones: { fenchurch: null } });
+
+      expect(zoneOfSite(removed, site)).toBeNull();
+    });
+
+    it('reports no zone when the site names one that has been deleted', () => {
+      const orphaned = normaliseSettings({ zones: [{ id: 'east', name: 'East' }] });
+
+      expect(zoneOfSite(orphaned, site)).toBeNull();
+    });
+
+    it('discards an override pointing at a deleted zone, so the default applies again', () => {
+      const settingsAfterDelete = normaliseSettings({
+        zones: seedZones,
+        siteZones: { fenchurch: 'atlantis' },
+      });
+
+      expect(settingsAfterDelete.siteZones).toEqual({});
+      expect(zoneOfSite(settingsAfterDelete, site)).toBe('north');
+    });
+
+    it('writes override keys in a stable order, whatever order they arrived in', () => {
+      /* Otherwise reopening the screen claims unsaved changes over an identical rule. */
+      const forwards = normaliseSettings({
+        zones: seedZones,
+        siteZones: { verity: 'east', fenchurch: 'east' },
+      });
+      const backwards = normaliseSettings({
+        zones: seedZones,
+        siteZones: { fenchurch: 'east', verity: 'east' },
+      });
+
+      expect(JSON.stringify(forwards.siteZones)).toBe(JSON.stringify(backwards.siteZones));
+    });
+  });
+
+  describe('zoneCoverage', () => {
+    const sites = [
+      { id: 'a', name: 'A', defaultZoneId: 'north', filters: 3 },
+      { id: 'b', name: 'B', defaultZoneId: 'north', filters: 2 },
+      { id: 'c', name: 'C', defaultZoneId: 'east', filters: 8 },
+      { id: 'd', name: 'D', defaultZoneId: null, filters: 1 },
+    ];
+
+    it('counts filters as well as sites, because filters are what a day costs', () => {
+      const settings = normaliseSettings({
+        zones: seedZones,
+        routeDays: [{ weekday: MON, shiftHours: 4, zoneId: 'north' }],
+      });
+      const north = zoneCoverage({ settings, sites }).byZone.find((e) => e.zone.id === 'north');
+
+      expect(north.sites.map((site) => site.id)).toEqual(['a', 'b']);
+      expect(north.filters).toBe(5);
+      expect(north.weekdays).toEqual([MON]);
+    });
+
+    it('strands a zone that holds work no day covers', () => {
+      const settings = normaliseSettings({
+        zones: seedZones,
+        routeDays: [{ weekday: MON, shiftHours: 4, zoneId: 'north' }],
+      });
+      const { stranded } = zoneCoverage({ settings, sites });
+
+      expect(stranded.map((entry) => entry.zone.id)).toEqual(['east']);
+      expect(stranded[0].filters).toBe(8);
+    });
+
+    it('separates an unused zone that holds nothing from one that strands work', () => {
+      /* Untidy is not broken, and the screen should not warn about both the same way. */
+      const settings = normaliseSettings({
+        zones: [...seedZones, { id: 'south', name: 'South' }],
+        routeDays: [
+          { weekday: MON, shiftHours: 4, zoneId: 'north' },
+          { weekday: TUE, shiftHours: 8, zoneId: 'east' },
+        ],
+      });
+      const { stranded, unusedEmpty } = zoneCoverage({ settings, sites });
+
+      expect(stranded).toEqual([]);
+      expect(unusedEmpty.map((entry) => entry.zone.id)).toEqual(['south']);
+    });
+
+    it('reports a site in no zone as an orphan, with its filters', () => {
+      const settings = normaliseSettings({ zones: seedZones });
+      const { orphanSites, orphanFilters } = zoneCoverage({ settings, sites });
+
+      expect(orphanSites.map((site) => site.id)).toEqual(['d']);
+      expect(orphanFilters).toBe(1);
+    });
+
+    it('reports nothing as stranded when no day is worked at all', () => {
+      /* Otherwise a franchise in the documented off state gets one warning per zone, all
+         of them downstream of the single fact that no day is switched on. */
+      const settings = normaliseSettings({ zones: seedZones });
+      const { stranded, noWorkedDays, zonesHoldingWork } = zoneCoverage({ settings, sites });
+
+      expect(noWorkedDays).toBe(true);
+      expect(stranded).toEqual([]);
+      expect(zonesHoldingWork).toBe(2);
+    });
+
+    it('still reports orphans when no day is worked, because days cannot fix them', () => {
+      const settings = normaliseSettings({ zones: seedZones });
+
+      expect(zoneCoverage({ settings, sites }).orphanSites.map((s) => s.id)).toEqual(['d']);
+    });
+
+    it('names the worked days that nothing can legally land on', () => {
+      const settings = normaliseSettings({
+        zones: seedZones,
+        routeDays: [
+          { weekday: MON, shiftHours: 4, zoneId: 'north' },
+          { weekday: THU, shiftHours: 8 },
+        ],
+      });
+
+      expect(zoneCoverage({ settings, sites }).daysWithoutZone).toEqual([THU]);
+    });
+  });
+
+  it('finds a zone by id, and answers null for one that is gone', () => {
+    const settings = normaliseSettings({ zones: seedZones });
+
+    expect(zoneById(settings, 'east').name).toBe('East');
+    expect(zoneById(settings, 'atlantis')).toBeNull();
   });
 });

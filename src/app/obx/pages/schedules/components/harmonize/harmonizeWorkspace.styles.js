@@ -47,18 +47,16 @@ const ROUTES_W = '30%';
  */
 const pctOf = (value) => Number(String(value).replace('%', ''));
 /**
- * The AI region's two bands, measured, because the map's inset is derived from them.
+ * **`REGION_HEADER_H` and `REGION_FOOTER_H` are gone, with the compensation they served.**
  *
- * `REGION_HEADER_H` is `columnHeader`'s own `minHeight`. `REGION_FOOTER_H` is what `aiFooter`
- * comes to at rest: 12px of padding, a 36px button — the height every variant in
- * `muiButton.js` is set to — 12px more padding, and a 1px rule on top. Both are stated here
- * rather than inside `mapPane` because the map's top inset is the difference between them, and
- * a difference computed from two numbers written down somewhere else is a number that silently
- * stops being true.
+ * They measured the region's two bands — the 44px heading strip and the 61px action bar — so
+ * the map's top inset could be a *difference* between them: first the whole 17px, then half
+ * of it. Both are dead now that the inset is symmetric (see `mapPane` for why), and a pair of
+ * measured constants that nothing reads is a pair of constants which quietly stops being
+ * true. `columnTitle` still declares its own `lineHeight` — that reason is recorded there and
+ * did not depend on this arithmetic.
  */
-const REGION_HEADER_H = 40;
-const REGION_FOOTER_H = 12 + 36 + 12 + 1;
-/** The map panel's inset from its pane, on the three sides that are not compensating. */
+/** The map panel's inset from its pane. One number, four sides — see `mapPane`. */
 const MAP_INSET = 16;
 
 const ROUTES_W_IN_REGION = `${(pctOf(ROUTES_W) / (100 - pctOf(SETUP_W))) * 100}%`;
@@ -425,25 +423,30 @@ export const useStyles = makeStyles((theme) => ({
    * rather than a second region, which is what "the map should feel part of the whole" asks
    * for.
    *
-   * **The vertical padding is deliberately not equal, and that is what makes the map look
-   * centred.** It was 16 on all four sides, argued for as *the map's top edge the same
-   * distance from the heading as its bottom edge is from the bar* — which is true of the
-   * padding and false of the result, because the two things it is measured against are not the
-   * same size. The region's heading strip is 40px; its action bar is 61px, because a 36px
-   * button inside 12px of padding plus a hairline is 61 and no arrangement of a bar with a
-   * button in it is as short as a line of 13px text. Measured with equal padding: **57px of
-   * air above the map and 78px below**.
+   * **The padding is equal on all four sides, and that is now a decision rather than a
+   * default.**
    *
-   * So the top inset carries the difference, and it is written as the arithmetic rather than
-   * as `37` so the next person to change the button height or the bar's padding can see what
-   * depends on it. What the eye is judging is the gap between the *heading* and the map and
-   * between the map and the *bar* — not the padding — and those are now both 77.
+   * This inset has been argued three ways. It was 16 all round; then it carried the whole 17px
+   * difference between the 44px heading strip and the 61px action bar, on the theory that what
+   * the eye judges is *heading-to-map* against *map-to-bar*; then half of that difference, once
+   * the full compensation read as loose on screen.
    *
-   * **The one state this does not hold for** is a footer carrying caveat lines: a stale-plan
-   * note or a re-order warning adds ~17px each, the bar grows, and the map's bottom gap grows
-   * with it. That is the right behaviour — the bar needs the room and the map is what has it
-   * to give — and chasing it would mean either a fixed-height bar that clips its own warnings
-   * or measuring the bar at runtime to pad a sibling, which is a layout that fights itself.
+   * **It is symmetric because the user asked for it twice, looking at it.** The theory the
+   * compensation rested on — that both strips read as air, so the map should hang lower to
+   * balance them — kept losing to what the screen actually looked like, and the theory has a
+   * hole in it: the heading strip is *not* air. It is a 44px band with a label in it, so the eye
+   * reads the map as inset from that band's lower edge rather than from the top of the region,
+   * and every pixel the compensation added was a pixel of visibly empty white above a panel
+   * that already had its gap.
+   *
+   * So: 16px, four sides, no arithmetic. What is above the map equals what is below it. The
+   * next person tempted to reintroduce a compensation should read this paragraph and then go
+   * and look at the screen.
+   *
+   * **The bottom gap still grows when the footer does** — a stale-plan note or a re-order
+   * warning adds ~17px each and the bar takes it from the map. That is the right behaviour, and
+   * it is no longer an exception to anything: the map's own inset is a constant, so what moves
+   * is the bar's height, which is the element that needs the room.
    */
   mapPane: {
     position: 'relative',
@@ -452,7 +455,7 @@ export const useStyles = makeStyles((theme) => ({
     minHeight: 0,
     display: 'flex',
     flexDirection: 'column',
-    padding: `${MAP_INSET + REGION_FOOTER_H - REGION_HEADER_H}px ${MAP_INSET}px ${MAP_INSET}px`,
+    padding: MAP_INSET,
   },
 
   /**
@@ -625,12 +628,16 @@ export const useStyles = makeStyles((theme) => ({
    * longer a specificity contest, and `fontSize` is set as well as the box, because for an
    * `em`-sized icon the font size *is* the size. Same family as the avatar trap in §7.28.
    */
+  /* 16px in `textSecondary1`, tracking the title's own step up: at 15px in `textSecondary3` the
+     glyph was two tiers lighter than the word it introduces, which on a 14px dark heading reads
+     as a mark left over from the previous design rather than as part of the heading. One tier
+     below the ink rather than level with it, so the word still leads. */
   columnIcon: {
-    width: 15,
-    height: 15,
+    width: 16,
+    height: 16,
     flexShrink: 0,
-    color: theme.palette.textSecondary3,
-    '&.MuiSvgIcon-root': { width: 15, height: 15, fontSize: 15 },
+    color: theme.palette.textSecondary1,
+    '&.MuiSvgIcon-root': { width: 16, height: 16, fontSize: 16 },
   },
   /**
    * The region's name, in sentence case.
@@ -639,13 +646,86 @@ export const useStyles = makeStyles((theme) => ({
    * headings that are not labels: they name the halves of the screen, they are the first
    * thing read in each, and set in caps they were shouting the least surprising information
    * on the page.
+   *
+   * **14px/600 in primary ink, up from 13px/600 in `textSecondary2`.** The supplied design
+   * reads this heading as bold dark ink, distinctly heavier and larger than a field label —
+   * and at 13px in a grey two steps down the ramp it *was* a field label, the same size and
+   * the same colour as `FieldLabel`'s own text one region to the left. A heading that is
+   * indistinguishable from the labels below it is not naming the region, it is joining the
+   * list. One step of size and the darkest ink separates them, and the icon beside it moves
+   * with it for the same reason.
+   *
+   * Both region headings wear this class, and deliberately: the design only pictures the
+   * routes column, but the two headings name the two halves of one screen and a screen whose
+   * halves are titled in two different ramps has a reason to be, which this does not.
    */
   columnTitle: {
     '&.MuiTypography-root': {
-      fontSize: 13,
+      fontSize: 14,
       fontWeight: 600,
-      color: theme.palette.textSecondary2,
+      /**
+       * **Stated, so the strip's height is declared rather than inherited.**
+       *
+       * Left alone this is whatever `body1`'s ratio makes of 14px — a number nothing in the
+       * file names and any change to the font size moves. Pinned at 24, the heading strip is
+       * 44px (10 + 24 + 10) because it is declared to be.
+       *
+       * It used to matter more than it does: the map's top inset was a *difference* against a
+       * measured `REGION_HEADER_H`, so a line box that grew two pixels slid the map two pixels
+       * without anything named changing. That inset is symmetric now and reads no constants,
+       * so this is no longer load-bearing — but a declared line height is still the honest way
+       * to own a strip's height, and `columnHeader`'s own `minHeight: 40` is only a floor.
+       */
+      lineHeight: '24px',
+      color: theme.palette.textPrimary,
     },
+  },
+  /**
+   * The link out to the franchise's own settings, in the setup column's heading.
+   *
+   * Quiet on purpose: it is a *reference*, not a step in the flow, and the one press this
+   * column exists to lead to is the green button at its foot. A filled or accent-coloured
+   * control here would compete with that from the opposite corner of the same column.
+   *
+   * The icon is scoped through `.MuiSvgIcon-root` for the reason `columnIcon` records — emotion
+   * sets `font-size: 1.5rem` and `width/height: 1em` on MUI icons and is injected after
+   * makeStyles, so a bare `width` here loses the specificity contest and renders at 24px.
+   */
+  configLink: {
+    flexShrink: 0,
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 4,
+    padding: '3px 6px',
+    marginRight: -6,
+    borderRadius: 6,
+    textDecoration: 'none',
+    color: theme.palette.textSecondary3,
+    transition: 'background 140ms ease, color 140ms ease',
+    '&:hover': {
+      background: theme.palette.surfaceGreySubtle,
+      color: theme.palette.textPrimary,
+    },
+    '&:focus-visible': {
+      outline: `2px solid ${theme.palette.borderBrand}`,
+      outlineOffset: 1,
+    },
+  },
+  configLinkText: {
+    '&.MuiTypography-root': {
+      fontSize: 12,
+      fontWeight: 500,
+      lineHeight: '16px',
+      color: 'inherit',
+      whiteSpace: 'nowrap',
+    },
+  },
+  configLinkIcon: {
+    width: 13,
+    height: 13,
+    flexShrink: 0,
+    color: 'inherit',
+    '&.MuiSvgIcon-root': { width: 13, height: 13, fontSize: 13 },
   },
   columnNote: {
     '&.MuiTypography-root': {
@@ -694,7 +774,22 @@ export const useStyles = makeStyles((theme) => ({
      */
     alignItems: 'flex-end',
     gap: 8,
-    padding: 16,
+    /**
+     * **`12px 16px`, so this footer and `aiFooter` are one line across the surface.**
+     *
+     * It was a flat `16`, which made this bar 69px against the region footer's 61px — two
+     * footers 8px out of step, each with its own hairline, meeting at the seam between the
+     * columns. The whole argument for two footers is that they are a *pair* with their action
+     * in the same corner of each half; a pair whose top edges do not line up reads as one bar
+     * that failed to render rather than as two that belong to two halves.
+     *
+     * The vertical 12 is `aiFooter`'s own, so both come to 12 + 36 + 12 + 1 = 61 at rest and
+     * both grow the same way when a block line appears above the button. The horizontal 16
+     * stays this column's — it is `columnBody`'s inset and `columnHeader`'s, so the button's
+     * right edge lands under the fields it acts on. Matching `aiFooter`'s 20 here would have
+     * aligned the two footers with each other and knocked the button 4px off the column.
+     */
+    padding: '12px 16px',
     borderTop: `1px solid ${theme.palette.borderSubtle1}`,
     background: theme.palette.surfaceWhite,
   },

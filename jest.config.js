@@ -1,7 +1,18 @@
 // jest.config.js
 module.exports = {
-  type: 'module',
-  testEnvironment: 'react',
+  /* `'react'` was here and is not a real environment, so every suite died on
+     `TestEnvironment is not a constructor` before a single test ran. `type:
+     'module'` sat above it and is not a Jest option at all — Jest ignored it,
+     which is the only reason it never surfaced as a second error. */
+  testEnvironment: 'jsdom',
+  /* Discovery is scoped to the app's own source, which is the only tree whose
+     tests are this project's. Without it Jest walks the repo root and collects
+     `build/`, every `.claude/worktrees/*` checkout, and any vendored copy of the
+     frontend sitting in the working directory — ~820 suites instead of 48, plus
+     haste collisions on the duplicated `__mocks__` files. `moduleNameMapper`
+     resolves the real `<rootDir>/__mocks__` by explicit path, so those still
+     load. */
+  roots: ['<rootDir>/src'],
   setupFilesAfterEnv: ['./src/setupTests.js'],
   moduleNameMapper: {
     '^assets/(.*)\\.svg(\\?react)?$': '<rootDir>/__mocks__/svgrMock.js',

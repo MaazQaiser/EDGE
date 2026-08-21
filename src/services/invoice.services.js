@@ -238,6 +238,81 @@ export const deleteInvoice = async (invoiceId) => {
   }
 };
 
+/**
+ * Aging + discrepancy roll-up for the Outstanding tab. Accepts the same filter
+ * params as `getInvoices` so the two tabs can share a filter bar.
+ */
+export const getOutstandingSummary = async (params, config = {}) => {
+  try {
+    const query = queryString.stringify(params, {
+      arrayFormat: 'index',
+      skipEmptyString: true,
+      skipNull: true,
+    });
+    return await getHttpRequest(`${INVOICE_SERVICE}/invoices/outstanding?${query}`, config);
+  } catch (e) {
+    throw throwAPIError(e);
+  }
+};
+
+/**
+ * Reconciliation for a date range: what was billed, what money arrived, and what
+ * is still open. Invoices count by the date they were raised, receipts by the
+ * date they arrived — see `buildPeriodReconciliation` for why those differ.
+ */
+export const getPeriodReconciliation = async (params, config = {}) => {
+  try {
+    const query = queryString.stringify(params, {
+      arrayFormat: 'index',
+      skipEmptyString: true,
+      skipNull: true,
+    });
+    return await getHttpRequest(`${INVOICE_SERVICE}/invoices/reconciliation?${query}`, config);
+  } catch (e) {
+    throw throwAPIError(e);
+  }
+};
+
+export const exportPeriodReconciliation = async (params, config = {}) => {
+  try {
+    const query = queryString.stringify(params, {
+      arrayFormat: 'index',
+      skipEmptyString: true,
+      skipNull: true,
+    });
+    return await getHttpRequest(
+      `${INVOICE_SERVICE}/invoices/reconciliation/export?${query}`,
+      config,
+    );
+  } catch (e) {
+    throw throwAPIError(e);
+  }
+};
+
+/** Ledger entries applied to one invoice. */
+export const getInvoicePayments = async (invoiceId, config = {}) => {
+  try {
+    if (!invoiceId) {
+      throw new Error();
+    }
+    return await getHttpRequest(`${INVOICE_SERVICE}/invoices/${invoiceId}/payments`, config);
+  } catch (e) {
+    throw throwAPIError(e);
+  }
+};
+
+/** Reverses a single receipt. Mis-keyed payments have to be undoable. */
+export const reversePayment = async (paymentId) => {
+  try {
+    if (!paymentId) {
+      throw new Error();
+    }
+    return await deleteHttpRequest(`${INVOICE_SERVICE}/payments/${paymentId}`);
+  } catch (e) {
+    throw throwAPIError(e);
+  }
+};
+
 export const markInvoiceAsPaid = async (invoiceId, data) => {
   try {
     if (!invoiceId) {

@@ -53,20 +53,24 @@ export const useStyles = makeStyles((theme) => ({
     padding: '4px 4px 12px 4px ',
     border: 'none',
     display: 'flex',
+    /* The underline reads `borderBrand`, not a literal. It was `#146DFF` in all three
+       states — Signal's blue — so on a green-branded tenant the label went brand green
+       while the rule under it stayed blue. The label already read `textBrand`, which is
+       what made the mismatch visible rather than merely wrong. */
     '&[aria-selected="true"]': {
       color: theme.palette.textBrand, // Change text color for the selected tab
-      borderBottom: '2px solid #146DFF',
+      borderBottom: `2px solid ${theme.palette.borderBrand}`,
     },
     '&:hover': {
       backgroundColor: 'white',
       color: theme.palette.textBrand,
-      borderBottom: '2px solid #146DFF',
+      borderBottom: `2px solid ${theme.palette.borderBrand}`,
     },
 
     '&:focus': {
       backgroundColor: 'white',
       color: theme.palette.textBrand,
-      borderBottom: '2px solid #146DFF',
+      borderBottom: `2px solid ${theme.palette.borderBrand}`,
     },
   },
   verticalTabsItems: {
@@ -132,7 +136,11 @@ export const useStyles = makeStyles((theme) => ({
     borderRadius: '6px',
     display: 'flex',
     gap: '8px',
-    minWidth: '157px',
+    /* Wide enough for the longest label this list holds on one line — "Roles &
+       Permissions" and "Extra Services Charges" both need ~160px plus the item's own
+       24px of padding. At 157 they wrapped to two lines inside the selected pill,
+       which is the only two-line element on any settings screen. */
+    minWidth: '180px',
     flexDirection: 'column',
     alignContent: 'space-between',
     boxShadow: 'none',

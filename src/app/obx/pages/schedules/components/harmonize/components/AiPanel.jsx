@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 
 import { formatMiles, formatMinutesLong } from '../durations';
 import { STOP_TONES, useStyles } from '../harmonize.styles';
-import { WarningTriangle } from './Glyphs';
+import { WarningDisc } from './Glyphs';
 import { StopPinIcon } from './StopPinIcon';
 import { DragHandle, StopFigure, StopRow } from './StopRowParts';
 
@@ -254,7 +254,13 @@ const AiPanel = ({ groups = [] }) => {
           the left edge and only the total answers to the right one. */}
       <Box className={classes.notIncludedHead}>
         <Box className={classes.notIncludedHeadLeft}>
-          <WarningTriangle className={classes.notIncludedIcon} />
+          {/* **A filled disc, where this was the spill ribbon's outline triangle.** The
+              supplied design draws a solid orange mark at the head of this panel, and the
+              reason to follow it is that the two marks are saying different-sized things: the
+              ribbon's triangle is a footnote on one route's card, this is the header of the
+              one block in the column that reports work with nowhere to go. See `WarningDisc`
+              for why the `!` is punched in the panel's own peach rather than in white. */}
+          <WarningDisc className={classes.notIncludedIcon} />
           {/* `aria-live` here and nowhere else in the panel. The rows below are detail; a
               reader hearing every site name announced would be talked over on the way to
               the count. */}

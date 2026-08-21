@@ -1,0 +1,650 @@
+<meta charset="utf-8">
+<title>Invoicing — Reconciliation &amp; Outstanding · Discovery</title>
+<style>
+  :root {
+    --ink:#0F1D17; --ink-2:#33463D; --slate:#5C6C63;
+    --rule:#DCE3DD; --rule-soft:#EAEFEA;
+    --paper:#FAFBF9; --card:#FFFFFF;
+    --green:#2DA551; --green-deep:#1F7B3C; --green-wash:#EAF6EE;
+    --amber:#96650F; --amber-wash:#FBF2DF;
+    --clay:#A63D28;  --clay-wash:#FAECE8;
+    --blue:#1F5F8B;  --blue-wash:#E7F0F6;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --measure: 68ch;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ink:#E6EDE8; --ink-2:#B4C3BA; --slate:#8A9A90;
+      --rule:#2A3833; --rule-soft:#1E2A25;
+      --paper:#0C1310; --card:#111A16;
+      --green:#4FC776; --green-deep:#7BD99A; --green-wash:#16281D;
+      --amber:#D9A441; --amber-wash:#2A2213;
+      --clay:#E0836C;  --clay-wash:#2C1A15;
+      --blue:#7FB4D6;  --blue-wash:#14222C;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ink:#E6EDE8; --ink-2:#B4C3BA; --slate:#8A9A90;
+    --rule:#2A3833; --rule-soft:#1E2A25;
+    --paper:#0C1310; --card:#111A16;
+    --green:#4FC776; --green-deep:#7BD99A; --green-wash:#16281D;
+    --amber:#D9A441; --amber-wash:#2A2213;
+    --clay:#E0836C;  --clay-wash:#2C1A15;
+    --blue:#7FB4D6;  --blue-wash:#14222C;
+  }
+  :root[data-theme="light"] {
+    --ink:#0F1D17; --ink-2:#33463D; --slate:#5C6C63;
+    --rule:#DCE3DD; --rule-soft:#EAEFEA;
+    --paper:#FAFBF9; --card:#FFFFFF;
+    --green:#2DA551; --green-deep:#1F7B3C; --green-wash:#EAF6EE;
+    --amber:#96650F; --amber-wash:#FBF2DF;
+    --clay:#A63D28;  --clay-wash:#FAECE8;
+    --blue:#1F5F8B;  --blue-wash:#E7F0F6;
+  }
+
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--paper); color:var(--ink); font-family:var(--sans); font-size:16px; line-height:1.6; -webkit-font-smoothing:antialiased; }
+  .wrap { max-width:940px; margin:0 auto; padding:56px 28px 120px; }
+  .prose { max-width:var(--measure); }
+  p { margin:0 0 15px; }
+
+  .masthead { border-bottom:2px solid var(--ink); padding-bottom:22px; margin-bottom:14px; }
+  .kicker { font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--green-deep); margin:0 0 14px; }
+  h1 { font-family:var(--mono); font-size:clamp(28px,4.6vw,42px); line-height:1.07; letter-spacing:-.03em; font-weight:600; margin:0 0 16px; text-wrap:balance; }
+  .standfirst { font-size:17.5px; line-height:1.55; color:var(--ink-2); max-width:60ch; margin:0; }
+  .meta { display:flex; flex-wrap:wrap; gap:8px 22px; font-family:var(--mono); font-size:11.5px; letter-spacing:.05em; color:var(--slate); margin-bottom:44px; }
+  .meta b { color:var(--ink-2); font-weight:600; }
+
+  .section { border-top:2px solid var(--ink); padding-top:16px; margin:60px 0 8px; }
+  .sec-label { font-family:var(--mono); font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--slate); margin:0 0 6px; }
+  .section h2 { font-family:var(--mono); font-size:27px; letter-spacing:-.025em; font-weight:600; margin:0 0 10px; }
+  .section > p { font-size:15px; color:var(--ink-2); max-width:64ch; margin:0; }
+
+  h3 { font-family:var(--mono); font-size:13.5px; font-weight:600; letter-spacing:.03em; text-transform:uppercase; color:var(--slate); margin:40px 0 10px; padding-bottom:7px; border-bottom:1px solid var(--rule); }
+
+  table { width:100%; border-collapse:collapse; margin:14px 0 22px; font-size:14.5px; }
+  th { text-align:left; font-family:var(--mono); font-size:10.5px; letter-spacing:.09em; text-transform:uppercase; color:var(--slate); font-weight:600; padding:0 12px 8px 0; border-bottom:1px solid var(--rule); }
+  td { padding:11px 12px 11px 0; border-bottom:1px solid var(--rule-soft); vertical-align:top; color:var(--ink-2); }
+  td b, td strong { color:var(--ink); font-weight:600; }
+  td.num { font-family:var(--mono); font-size:13px; white-space:nowrap; text-align:right; padding-right:0; }
+  .scroller { overflow-x:auto; }
+
+  code { font-family:var(--mono); font-size:12.5px; background:var(--rule-soft); padding:.1em .36em; border-radius:3px; color:var(--ink-2); }
+
+  .tag { font-family:var(--mono); font-size:9px; letter-spacing:.09em; text-transform:uppercase; font-weight:700; padding:3px 7px; border-radius:9px; white-space:nowrap; display:inline-block; }
+  .tag.block { background:var(--clay-wash); color:var(--clay); }
+  .tag.soon  { background:var(--amber-wash); color:var(--amber); }
+  .tag.later { background:var(--rule-soft); color:var(--slate); }
+  .tag.built { background:var(--green-wash); color:var(--green-deep); }
+  .tag.defer { background:var(--blue-wash); color:var(--blue); }
+
+  ol.qs { list-style:none; margin:0; padding:0; }
+  ol.qs li { display:grid; grid-template-columns:44px 1fr auto; gap:4px 13px; padding:16px 0; border-bottom:1px solid var(--rule-soft); align-items:start; }
+  .qn { font-family:var(--mono); font-size:11px; font-weight:600; color:var(--green-deep); padding-top:3px; letter-spacing:.03em; }
+  .qt { font-size:15.5px; line-height:1.5; color:var(--ink); font-weight:500; }
+  .qwhy { grid-column:2/4; font-size:13.5px; line-height:1.55; color:var(--slate); }
+  .qwhy b { font-family:var(--mono); font-size:10px; letter-spacing:.09em; text-transform:uppercase; color:var(--ink-2); font-weight:600; }
+  @media (max-width:640px){ ol.qs li{ grid-template-columns:34px 1fr; } .tag{ grid-column:2/3; justify-self:start; margin-top:4px; } .qwhy{ grid-column:2/3; } }
+
+  .decision { border-left:3px solid var(--green); background:var(--card); padding:16px 20px; margin:0 0 12px; border-radius:0 6px 6px 0; }
+  .decision .dn { font-family:var(--mono); font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--green-deep); font-weight:700; margin:0 0 5px; }
+  .decision .dt { font-size:15.5px; font-weight:600; color:var(--ink); margin:0 0 6px; line-height:1.45; }
+  .decision .dw { font-size:13.5px; color:var(--slate); margin:0; line-height:1.55; }
+
+  .callout { background:var(--card); border:1px solid var(--rule); border-radius:8px; padding:18px 22px; margin:20px 0; }
+  .callout.warn { border-left:3px solid var(--clay); }
+  .callout p:last-child { margin-bottom:0; }
+  .callout .ct { font-family:var(--mono); font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--slate); font-weight:700; margin:0 0 8px; }
+
+  .kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:14px; margin:20px 0 8px; }
+  .kpi { background:var(--card); border:1px solid var(--rule); border-radius:8px; padding:14px 16px; }
+  .kpi .kl { font-family:var(--mono); font-size:9.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--slate); margin:0 0 6px; }
+  .kpi .kv { font-family:var(--mono); font-size:21px; font-weight:600; color:var(--ink); margin:0; letter-spacing:-.02em; }
+  .kpi .kh { font-size:12px; color:var(--slate); margin:5px 0 0; }
+  .kpi.alert .kv { color:var(--clay); }
+  .kpi.warn .kv { color:var(--amber); }
+
+  ul.plain { margin:8px 0 18px; padding-left:20px; }
+  ul.plain li { margin-bottom:8px; color:var(--ink-2); font-size:15px; }
+
+  .footer { margin-top:70px; border-top:1px solid var(--rule); padding-top:18px; font-family:var(--mono); font-size:11.5px; color:var(--slate); }
+</style>
+
+<div class="wrap">
+
+  <div class="masthead">
+    <p class="kicker">Filter Go · Invoicing · Discovery &amp; first draft</p>
+    <h1>Reconciliation &amp; Outstanding</h1>
+    <p class="standfirst">
+      Giving the back office a straight answer to three questions: what have we billed,
+      what actually came in, and where do those two disagree.
+    </p>
+  </div>
+  <div class="meta">
+    <span><b>Status</b> Second pass — UI refined, period view added</span>
+    <span><b>Date</b> 11 Aug 2026</span>
+    <span><b>Branch</b> feature/scheduler-ui-refresh</span>
+    <span><b>For</b> Client review</span>
+  </div>
+
+  <!-- ─────────────────────────────────────────────── 1 -->
+  <div class="section">
+    <p class="sec-label">Section 1</p>
+    <h2>Where we started</h2>
+    <p>An audit of the invoicing module as it exists today, before anything was designed.</p>
+  </div>
+
+  <div class="prose">
+    <p>
+      The module already does a lot: it lists invoices, creates and edits them with line items
+      pulled from payroll, pushes them to Sage or QuickBooks, previews and downloads the PDF,
+      exports CSV, and merges contracts for combined billing. What it does <em>not</em> do is
+      tell anyone whether the money arrived.
+    </p>
+  </div>
+
+  <h3>Three findings that shaped the design</h3>
+
+  <div class="callout">
+    <p class="ct">Finding 1 — payment state was a single boolean</p>
+    <p>
+      An invoice was either <code>paid</code> or not. Recording a payment meant marking it paid
+      in full, for its exact grand total, by cash or cheque, and only for franchises on
+      QuickBooks. No part payments, no payment history, no reversal, no record of how much
+      actually arrived. <b>You cannot derive an outstanding balance from a boolean</b> — that
+      single fact is why this feature needs a data model change and not just a new screen.
+    </p>
+  </div>
+
+  <div class="callout">
+    <p class="ct">Finding 2 — "status" is not payment status</p>
+    <p>
+      The Status column tracks the <em>accounting-system sync</em>: Pending → In Progress →
+      Sync Approved → Sync Failed. It says nothing about money. So paid-vs-unpaid is a genuinely
+      second, independent axis, and users will conflate the two unless the interface separates
+      them deliberately. It also produces a discrepancy class nobody was tracking: an invoice
+      that was raised but never pushed, and therefore can <em>never</em> be paid, because the
+      customer has never seen it.
+    </p>
+  </div>
+
+  <div class="callout warn">
+    <p class="ct">Finding 3 — there is already a button called "Invoice Reconciliation"</p>
+    <p>
+      It sits in the invoices toolbar. It is a copy of the export modal that calls the
+      <em>payroll</em> CSV endpoint and downloads a payroll file named <code>invoices*.csv</code>.
+      It has never reconciled anything. Whatever we ship either replaces that button or has to
+      live beside a control that already owns the word — worth a decision in the meeting.
+    </p>
+  </div>
+
+  <h3>Defects found along the way</h3>
+  <div class="scroller">
+  <table>
+    <thead><tr><th>What</th><th>Impact</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><b>Invoice drawer crashed the whole app</b><br>It read the selected franchise without a fallback, and no franchise is selected by default.</td>
+        <td>White screen on opening any invoice. Every other consumer in the codebase guards this; this one didn't.</td>
+        <td><span class="tag built">Fixed</span></td>
+      </tr>
+      <tr>
+        <td><b>Site filter was permanently empty</b><br>The sites-dropdown request was being answered with the wrong shape.</td>
+        <td>Filtering invoices by site silently did nothing.</td>
+        <td><span class="tag built">Fixed</span></td>
+      </tr>
+      <tr>
+        <td><b>Credit notes display as $0.00</b><br>The grand-total helper clamps negatives to zero.</td>
+        <td>A −$1,296 credit note reads as a zero-value invoice in the list. The new Outstanding tab shows the true signed figure, so the two surfaces disagree until this is settled.</td>
+        <td><span class="tag block">Needs a decision</span></td>
+      </tr>
+      <tr>
+        <td><b>"Invoice Reconciliation" exported a broken file</b></td>
+        <td>Downloaded a CSV containing the word <code>undefined</code>. The button has been removed &mdash; the always-on period overview replaces it.</td>
+        <td><span class="tag built">Fixed</span></td>
+      </tr>
+      <tr>
+        <td><b>Dead code</b><br>A per-site invoices tab that nothing imports; a preview drawer hard-wired to never open; a debug log firing on every table row.</td>
+        <td>Confusing to anyone reading the module. The per-site tab is the obvious home for a per-customer outstanding view later.</td>
+        <td><span class="tag defer">Noted</span></td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <!-- ─────────────────────────────────────────────── 2 -->
+  <div class="section">
+    <p class="sec-label">Section 2</p>
+    <h2>What "reconciliation" means here</h2>
+    <p>The word covers at least three different products. This is the one we scoped.</p>
+  </div>
+
+  <div class="prose">
+    <p>
+      The brief was <em>insight into payments, and the discrepancies</em>. That is not
+      bank-statement matching and it is not an audit against Sage — it is a view that puts
+      billed money and received money side by side and highlights every place they disagree.
+      Eight situations qualify as a discrepancy. Five are visible from an invoice and its own
+      payment history; three need reasoning across invoices and are deliberately out of the
+      first draft.
+    </p>
+  </div>
+
+  <div class="scroller">
+  <table>
+    <thead><tr><th>#</th><th>Discrepancy</th><th>What the user should do</th><th>Draft</th></tr></thead>
+    <tbody>
+      <tr><td class="num">1</td><td><b>Short paid</b><br>Money arrived, less than invoiced.</td><td>Confirm whether the rest is coming or the invoice is wrong.</td><td><span class="tag built">Built</span></td></tr>
+      <tr><td class="num">2</td><td><b>Overpaid</b><br>More arrived than invoiced.</td><td>Hold as credit, or refund.</td><td><span class="tag built">Built</span></td></tr>
+      <tr><td class="num">3</td><td><b>Unpaid &amp; overdue</b><br>Nothing arrived, due date passed.</td><td>Chase the customer.</td><td><span class="tag built">Built</span></td></tr>
+      <tr><td class="num">4</td><td><b>Paid late</b><br>Settled in full, after the due date.</td><td>Nothing today — it flags habitually late payers.</td><td><span class="tag built">Built</span></td></tr>
+      <tr><td class="num">5</td><td><b>Never issued</b><br>Raised, never pushed to accounting.</td><td>Push it. This one is our fault, not the customer's.</td><td><span class="tag built">Built</span></td></tr>
+      <tr><td class="num">6</td><td><b>Unidentified receipt</b><br>Money arrived that matches no invoice.</td><td>Find the invoice, or park it on account.</td><td><span class="tag defer">Deferred</span></td></tr>
+      <tr><td class="num">7</td><td><b>Duplicate payment</b><br>The same reference applied twice.</td><td>Reverse one.</td><td><span class="tag defer">Deferred</span></td></tr>
+      <tr><td class="num">8</td><td><b>Unapplied credit</b><br>An open credit note sitting against a customer who owes.</td><td>Apply it to an open invoice.</td><td><span class="tag defer">Deferred</span></td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="callout">
+    <p class="ct">Why 6–8 are deferred but the model is not</p>
+    <p>
+      Those three are only expressible if a payment can exist <em>independently of an invoice</em>.
+      So payments were built as records in their own right — a receipt has a customer, an amount,
+      a date, a reference, and an <em>optional</em> invoice — even though the draft always fills the
+      invoice in. That means unidentified receipts, duplicates and credit application can be added
+      later without reworking anything. It costs nothing now and it is the difference between a
+      view that can show five discrepancy types and one that can show eight.
+    </p>
+  </div>
+
+  <!-- ─────────────────────────────────────────────── 3 -->
+  <div class="section">
+    <p class="sec-label">Section 3</p>
+    <h2>Decisions taken</h2>
+    <p>Made to get a first draft on screen. Every one of them is reversible, and each names the reasoning so it can be argued with.</p>
+  </div>
+
+  <div class="decision">
+    <p class="dn">D1 · Scope</p>
+    <p class="dt">Reconciliation means payment insight and discrepancy detection — not bank-statement matching, not a Sage/QuickBooks audit.</p>
+    <p class="dw">Statement matching needs a payment ledger underneath it to match against, so it cannot come first. A system-drift audit only makes sense once we know which system owns payment truth, which is still open (Q1).</p>
+  </div>
+
+  <div class="decision">
+    <p class="dn">D2 · Placement</p>
+    <p class="dt">Outstanding is a second tab inside Invoices, not a new top-level page.</p>
+    <p class="dw">Same records, two different readings — a document list and a money position. Tabs keep both a click apart and reuse the existing filters, search and table. A new sidebar entry would split invoice work across two destinations.</p>
+  </div>
+
+  <div class="decision">
+    <p class="dn">D3 · Data model</p>
+    <p class="dt">Payments are first-class records with a nullable invoice link, not fields on the invoice.</p>
+    <p class="dw">A receipt can arrive that matches no invoice, matches the wrong one, or arrives twice. None of that is expressible if payment lives inside the invoice. Balance, paid state and discrepancy flags are all derived from the ledger, never stored twice.</p>
+  </div>
+
+  <div class="decision">
+    <p class="dn">D4 · Two axes, shown together</p>
+    <p class="dt">Payment state gets its own column, adjacent to the existing sync Status.</p>
+    <p class="dw">The pair is what tells the reader whether an unpaid invoice is the customer's problem or ours. Discrepancy chips sit in the same cell as the payment state, because they only ever qualify it — "paid, but late".</p>
+  </div>
+
+  <div class="decision">
+    <p class="dn">D5 · Aging</p>
+    <p class="dt">Measured from the <b>due date</b>, in bands: not yet due, 1–30, 31–60, 61–90, 90+.</p>
+    <p class="dw">The question is how late the money is, not how old the paperwork is. An invoice raised 90 days ago on 90-day terms is not a problem; one raised 20 days ago on 7-day terms is.</p>
+  </div>
+
+  <div class="decision">
+    <p class="dn">D6 · Payment capture is no longer QuickBooks-only</p>
+    <p class="dt">One "Payments" action on every issued invoice, replacing the QuickBooks-gated "Pay Now" popover.</p>
+    <p class="dw">Recording what a customer sent is bookkeeping every franchise does, whether or not their accounting integration can hear about it. It is disabled until the invoice has actually been issued — money cannot arrive against an invoice the customer has never seen. <b>This one is a real behaviour change and worth confirming (Q3, Q10).</b></p>
+  </div>
+
+  <div class="decision">
+    <p class="dn">D7 · Amounts are editable; overpayment is allowed</p>
+    <p class="dt">The amount field defaults to the outstanding balance and can be changed, with a warning when it exceeds the balance.</p>
+    <p class="dw">Pre-filling keeps the common case one click while making a part payment a deliberate edit. Blocking overpayment would just push the discrepancy off-system, where it can't be seen.</p>
+  </div>
+
+  <div class="decision">
+    <p class="dn">D8 · Reversal, not editing</p>
+    <p class="dt">A mis-keyed receipt is reversed and re-entered rather than edited in place.</p>
+    <p class="dw">Ledgers that can be quietly rewritten cannot be trusted. Reversal keeps the history legible. Whether reversal needs its own permission and an audit trail is open (Q3).</p>
+  </div>
+
+  <div class="decision">
+    <p class="dn">D9 · Credit notes are their own state</p>
+    <p class="dt">A credit note reads as "Credit note", not "Overpaid".</p>
+    <p class="dw">Its negative balance means something different from a customer sending too much: it is money we owe them. Only a genuine surplus counts as an overpayment discrepancy.</p>
+  </div>
+
+  <div class="decision">
+    <p class="dn">D10 · Filters narrow the queue, never the totals</p>
+    <p class="dt">Clicking an aging band or a discrepancy chip filters the customer list below; the headline figures keep describing the whole book.</p>
+    <p class="dw">Otherwise the reader loses the number they were reasoning about the moment they drill into it.</p>
+  </div>
+
+  <div class="decision">
+    <p class="dn">D11 · Frontend only</p>
+    <p class="dt">The whole module now runs on a local mock domain — no backend involved.</p>
+    <p class="dw">31 invoices across 5 customers, dated relative to whenever the demo is opened, hand-tuned so every state on the list above appears on screen. Recording, reversing, approving and editing all persist for the session, so the flows can be demonstrated, not just described.</p>
+  </div>
+
+  <div class="decision">
+    <p class="dn">D12 · Two tabs, two questions</p>
+    <p class="dt">The <b>All Invoices</b> tab is always scoped to a period &mdash; this month by default &mdash; and answers &ldquo;what happened&rdquo;. The <b>Outstanding</b> tab is unscoped and answers &ldquo;where do we stand today&rdquo;. Neither tries to be both.</p>
+    <p class="dw">&ldquo;As of now&rdquo; and &ldquo;between two dates&rdquo; need different arithmetic and a different layout. Scoping the listing to a stated window is also what makes the numbers above it mean anything — an unscoped &ldquo;billed&rdquo; total is a lifetime figure nobody asks for.</p>
+  </div>
+
+  <div class="decision">
+    <p class="dn">D13 · The period overview is a permanent widget, not a drawer</p>
+    <p class="dt">Billed / received / still open / collected for the chosen period, then the period presets and range, then the filter pills that narrow the table. The drawer that used to hold this has been deleted.</p>
+    <p class="dw">The numbers describe the very rows on screen, so hiding them behind a button meant the table's own totals were only ever visible somewhere else. Always-on also makes the scoping honest: the table is always filtered to a window, and now the window is stated rather than implied.</p>
+  </div>
+
+  <div class="decision">
+    <p class="dn">D14 · Aging and exceptions are controls, not readouts</p>
+    <p class="dt">A 6px proportion bar for shape, then a row of buttons to filter by.</p>
+    <p class="dw">They were always filters wearing the costume of a readout, which is most of why the page felt like a dashboard.</p>
+  </div>
+
+  <div class="decision">
+    <p class="dn">D15 · The "unpaid, overdue" chip is gone from the tab</p>
+    <p class="dt">Aging says <em>when</em>, the Unpaid state says <em>whether</em>. A chip saying both is the same fact a third time. It survives as a pill in the period overview, which has no aging rail to say it instead.</p>
+    <p class="dw">A deliberate inconsistency between the two views, justified by context rather than by symmetry.</p>
+  </div>
+
+  <div class="decision">
+    <p class="dn">D16 · No reconciliation button at all</p>
+    <p class="dt">The mislabelled "Invoice Reconciliation" toolbar button is gone. The period overview above the table does its job, permanently and without being asked.</p>
+    <p class="dw">A button that opens a panel of numbers about the table you are already looking at is a button that should not exist. The old payroll-CSV modal is unwired; its file stays because the export modal shares its stylesheet.</p>
+  </div>
+
+  <div class="decision">
+    <p class="dn">D17 · Invoices count by raise date, money by arrival date</p>
+    <p class="dt">In the period view, receipts are split into "settling this period's invoices" and "settling earlier invoices".</p>
+    <p class="dw">Those two sets never line up, and the gap <em>is</em> the reconciliation. In the demo's July: $19,542.60 arrived, but only $691.20 of it belonged to July's billing. Summing them into one figure would hide the only insight the view has.</p>
+  </div>
+
+  <div class="decision">
+    <p class="dn">D18 · Credit notes are reported, not netted</p>
+    <p class="dt">The period view shows credits as their own figure rather than subtracting them from "billed".</p>
+    <p class="dw">Netting made "still open" larger than "billed", which reads as a bug even when the arithmetic is right.</p>
+  </div>
+
+  <div class="decision">
+    <p class="dn">D19 · The app's own idioms, not new ones</p>
+    <p class="dt">Three compositions were copied from elsewhere in the product rather than invented: the divided stat strip from the dashboard, inline filterable counts from the schedule stats footer, and the shared table left exactly as it is — 48px single-line rows, one field per cell, a nested table for the expansion.</p>
+    <p class="dw">Token-level compliance turned out not to be the same thing as looking like the product. An earlier pass used the correct Typography variants and Button variants and still looked foreign, because the compositions were mine: KPI cards where the app uses a divided strip, bordered filter buttons and chips where the app uses inline counts, and two-line table cells where every other table in the app is single-line. Column labels are Title Case to match the module.</p>
+  </div>
+
+  <!-- ─────────────────────────────────────────────── 4 -->
+  <div class="section">
+    <p class="sec-label">Section 4</p>
+    <h2>Two views, and why</h2>
+    <p>The first attempt put everything on one screen and it read as a dashboard. This is the second pass.</p>
+  </div>
+
+  <div class="prose">
+    <p>
+      The original draft stacked four equal-weight KPI cards, then a five-card aging panel, then a
+      five-chip discrepancy panel — three panels of readout before a single actionable row appeared.
+      Worse, two of those panels were secretly <em>filters</em> dressed as readouts. It looked like
+      something to admire rather than something to work through.
+    </p>
+    <p>The fix was almost entirely subtractive:</p>
+  </div>
+
+  <div class="scroller">
+  <table>
+    <thead><tr><th>Was</th><th>Now</th><th>Reason</th></tr></thead>
+    <tbody>
+      <tr><td>Four KPI cards, equal weight</td><td><b>One number</b> — what you're owed — with overdue, credits and collection rate on one line beneath</td><td>There is one subject. The rest qualifies it.</td></tr>
+      <tr><td>Five aging cards with bars</td><td>One 6px proportion bar plus a row of filter buttons</td><td>It was always a filter. Make it look like a control.</td></tr>
+      <tr><td>Five discrepancy chips</td><td>Four exception chips — "unpaid, overdue" removed</td><td>Aging says <em>when</em>; the Unpaid state says <em>whether</em>. A chip saying both was the same fact a third time.</td></tr>
+      <tr><td>Billed / Received / Balance / Attention columns</td><td>Balance dominant; billed and received moved into the expansion</td><td>Collection needs one number per customer, not three.</td></tr>
+      <tr><td>Queue below three panels</td><td>Queue visible immediately, all on one card</td><td>It is the work, not the footnote.</td></tr>
+      <tr><td>One screen for "now" and "a period"</td><td>Two tabs: Outstanding for now, All Invoices scoped to a period</td><td>Different arithmetic, different layout. See D12.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>View 1 · Outstanding tab — the position today</h3>
+  <div class="prose">
+    <p>
+      Reads top to bottom as one sentence: <b>you're owed $109,414.80</b> — $59,551.20 overdue ·
+      20 invoices · 5 customers · $1,652.40 in credits held · 37% collected. Then the aging rail, then
+      the exception row, then the queue. Everything above the queue is a filter; nothing above the
+      queue is a card.
+    </p>
+  </div>
+
+  <div class="scroller">
+  <table>
+    <thead><tr><th>Aging band</th><th>Outstanding</th><th>Invoices</th></tr></thead>
+    <tbody>
+      <tr><td>Not yet due</td><td class="num">$52,466.40</td><td class="num">9</td></tr>
+      <tr><td>1–30 days late</td><td class="num">$16,707.60</td><td class="num">4</td></tr>
+      <tr><td>31–60 days late</td><td class="num">$27,032.40</td><td class="num">5</td></tr>
+      <tr><td>61–90 days late</td><td class="num">$4,309.20</td><td class="num">1</td></tr>
+      <tr><td>90+ days late</td><td class="num">$11,502.00</td><td class="num">2</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p class="prose">
+    Exceptions across the book: <b>short paid 3 · overpaid 1 · paid late 2 · never issued 5</b>.
+    Selecting any band or exception narrows the queue and leaves the headline alone.
+  </p>
+
+  <h3>The end-to-end path</h3>
+  <ul class="plain">
+    <li><b>1 · Narrow</b> — click "31–60 days late", or "Short paid", or neither.</li>
+    <li><b>2 · Pick a customer</b> — the queue is grouped by customer, sorted by balance, showing how late their oldest item is and what is odd about their account.</li>
+    <li><b>3 · Expand</b> — billed / received / credits held for that customer, then each open invoice with its balance ("of $5,378.40 · $4,033.80 received"), its state, and its exceptions.</li>
+    <li><b>4 · Open or record</b> — the invoice number opens the invoice itself; <b>Record payment</b> opens the ledger drawer.</li>
+    <li><b>5 · Record</b> — amount (pre-filled with the balance), method, date received, reference. Part payments and overpayments both allowed; each receipt reversible.</li>
+    <li><b>6 · See it land</b> — close the drawer and the headline has moved. Verified: recording $2,602.80 took the total from $112,017.60 to $109,414.80, dropped open invoices 21 → 20, and moved collection 35% → 37%.</li>
+  </ul>
+
+  <h3>View 2 · All Invoices — a period, always on</h3>
+  <div class="prose">
+    <p>
+      A permanent widget above the invoice table, not a drawer. Four figures for the chosen window,
+      then the period control &mdash; presets (this month &middot; last month &middot; last 3 months &middot;
+      year to date) plus an explicit range &mdash; then the pills that filter the table beneath it.
+      <b>This month is selected by default</b>, and the table is scoped to it from first paint.
+    </p>
+    <p>
+      The pills carry their own counts for the period, so you can see what a filter would leave before
+      clicking it: <em>9 All &middot; 6 Unpaid &middot; 1 Part paid &middot; 2 Paid &middot; 1 Credit note</em>,
+      then the exceptions &mdash; <em>1 Short paid &middot; 4 Unpaid, overdue</em>. They narrow the table and
+      never the figures above, and they reset when the period changes, because the overview only offers
+      pills that have matches.
+    </p>
+  </div>
+
+  <div class="scroller">
+  <table>
+    <thead><tr><th>July 2026</th><th>Amount</th><th>Detail</th></tr></thead>
+    <tbody>
+      <tr><td><b>Billed</b></td><td class="num">$38,718.00</td><td>7 invoices · $1,296.00 credited</td></tr>
+      <tr><td><b>Received</b></td><td class="num">$19,542.60</td><td>7 payments</td></tr>
+      <tr><td><b>Still open</b></td><td class="num">$38,026.80</td><td>2% of this period's billing collected</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="callout">
+    <p class="ct">The number that makes this view worth having</p>
+    <p>
+      Of the $19,542.60 that arrived in July, only <b>$691.20 settled July's invoices</b> — the other
+      <b>$18,851.40 settled earlier ones</b>. Invoices are counted by the date they were raised and
+      money by the date it arrived, so a single "received" figure would quietly conflate this month's
+      cash with last month's billing. The drawer splits them, then lists every receipt with the invoice
+      it settled, tagging the ones that reach back into an earlier period.
+    </p>
+  </div>
+
+  <p class="prose">
+    Below that: the discrepancies among invoices raised in the window, then every receipt (date,
+    customer, invoice, method, reference, amount), then a CSV export of exactly that list.
+  </p>
+
+  <h3>View 3 · All Invoices tab — paid and unpaid at a glance</h3>
+  <ul class="plain">
+    <li>A <b>Payment</b> column: Unpaid · Part paid · Paid · Overpaid · Credit note, plus exception chips.</li>
+    <li>A <b>Balance Due</b> column, open balances emphasised, credits marked as such.</li>
+    <li>A payment-state filter beside the existing status and type filters.</li>
+    <li>CSV export extended with amount paid, balance due, payment state, days overdue and discrepancies.</li>
+  </ul>
+
+  <!-- ─────────────────────────────────────────────── 5 -->
+  <div class="section">
+    <p class="sec-label">Section 5</p>
+    <h2>Open questions</h2>
+    <p>Ordered by how much the answer changes. The first four change the data model or the permissions; the rest change screens.</p>
+  </div>
+
+  <ol class="qs">
+    <li>
+      <span class="qn">Q1</span>
+      <span class="qt">Who owns the truth about payments — Filter Go, or Sage / QuickBooks?</span>
+      <span class="tag block">Blocking</span>
+      <span class="qwhy"><b>Why it matters</b> — If the accounting system owns it, this becomes a read-only mirror plus a drift check, and recording a payment in Filter Go is the wrong affordance entirely. If Filter Go owns it, we need to talk about pushing payments <em>out</em> to the accounting system. The draft assumes Filter Go can record payments, which is the current behaviour, but only for QuickBooks franchises.</span>
+    </li>
+    <li>
+      <span class="qn">Q2</span>
+      <span class="qt">What does a payment actually look like when it reaches the back office? Remittance advice, a bank statement, a cheque in an envelope, a portal notification?</span>
+      <span class="tag block">Blocking</span>
+      <span class="qwhy"><b>Why it matters</b> — This decides whether discrepancies 6–8 (unidentified receipts, duplicates, credit application) are real problems worth building, and whether statement import is a later phase or never. It also decides what the "reference" field should be labelled.</span>
+    </li>
+    <li>
+      <span class="qn">Q3</span>
+      <span class="qt">Should recording or reversing a payment be a separate permission from editing an invoice?</span>
+      <span class="tag block">Blocking</span>
+      <span class="qwhy"><b>Why it matters</b> — Today anyone who can update an invoice can declare that money arrived, and the draft inherits that. For most organisations, touching the money ledger is a different level of trust from fixing a line item. Related: does reversal need an audit trail of who and when?</span>
+    </li>
+    <li>
+      <span class="qn">Q4</span>
+      <span class="qt">Are 30 / 60 / 90-day aging bands right for your terms, and is due-date aging the convention you use?</span>
+      <span class="tag block">Blocking</span>
+      <span class="qwhy"><b>Why it matters</b> — Cheap to change now, awkward once people quote the numbers in meetings. Filter Go terms in the demo run 7 to 30 days, which makes 90+ a genuinely bad place to be — some businesses would rather see 7 / 14 / 30 / 60.</span>
+    </li>
+    <li>
+      <span class="qn">Q5</span>
+      <span class="qt">Credit notes: should the user be able to apply an open credit against an outstanding invoice in-app?</span>
+      <span class="tag soon">Soon</span>
+      <span class="qwhy">The draft shows credits held as a headline figure but has no way to spend them. Also unresolved: the invoice list currently displays credit notes as $0.00 because negatives are clamped, while the Outstanding tab shows the true signed amount.</span>
+    </li>
+    <li>
+      <span class="qn">Q6</span>
+      <span class="qt">Overpayment policy — hold as credit, refund, or refuse the entry?</span>
+      <span class="tag soon">Soon</span>
+      <span class="qwhy">The draft holds it as credit and warns at entry. A refund path implies money going out, which is a different flow with different approvals.</span>
+    </li>
+    <li>
+      <span class="qn">Q7</span>
+      <span class="qt">When a customer part-pays, do you need to record what was promised and when?</span>
+      <span class="tag soon">Soon</span>
+      <span class="qwhy">A "short paid" flag says something is wrong but not what happens next. A promised amount and date would turn the discrepancy list into a genuine follow-up queue.</span>
+    </li>
+    <li>
+      <span class="qn">Q8</span>
+      <span class="qt">Who chases? Does an outstanding invoice need an owner, a chase status, and a last-contacted date?</span>
+      <span class="tag soon">Soon</span>
+      <span class="qwhy">This is the difference between a report and a workflow. It also decides whether the customer row needs a "log a call" action.</span>
+    </li>
+    <li>
+      <span class="qn">Q9</span>
+      <span class="qt">Do customers receive a statement of account, or only individual invoices?</span>
+      <span class="tag soon">Soon</span>
+      <span class="qwhy">Grouping by customer makes a per-customer statement PDF a small addition. Sending it is a bigger conversation.</span>
+    </li>
+    <li>
+      <span class="qn">Q10</span>
+      <span class="qt">German franchises have push-to-accounting hidden entirely. Should they see Outstanding, and can they record payments?</span>
+      <span class="tag soon">Soon</span>
+      <span class="qwhy">The module already branches on this tenant. If their invoices are issued outside Filter Go, "never issued" as a discrepancy is meaningless for them and needs suppressing.</span>
+    </li>
+    <li>
+      <span class="qn">Q11</span>
+      <span class="qt">The invoice list is now 17 columns wide. Drop the tax and line-item subtotals, or add a column picker?</span>
+      <span class="tag soon">Soon</span>
+      <span class="qwhy">Payment and Balance Due earned their place, but the table scrolls horizontally to reach them. Grand total plus balance due may be all the money most readers need in a list.</span>
+    </li>
+    <li>
+      <span class="qn">Q12</span>
+      <span class="qt">Should the period overview also respect the site filter, or is franchise-wide the right scope for a period close?</span>
+      <span class="tag soon">Soon</span>
+      <span class="qwhy">Today the period view covers the whole franchise. A per-customer period statement is a small addition if that is how you actually reconcile.</span>
+    </li>
+    <li>
+      <span class="qn">Q13</span>
+      <span class="qt">Are the four presets right — this month, last month, last 3 months, year to date — and does your billing period run to calendar months?</span>
+      <span class="tag soon">Soon</span>
+      <span class="qwhy">If reconciliation happens on a 4-week cycle or a fiscal calendar, the presets are wrong and the default should change with them.</span>
+    </li>
+    <li>
+      <span class="qn">Q14</span>
+      <span class="qt">Should reminders go out automatically at fixed intervals, or is chasing always a human decision?</span>
+      <span class="tag later">Later</span>
+      <span class="qwhy">Automated dunning changes the tone of the whole feature and needs email templates, per-customer opt-outs and a send log.</span>
+    </li>
+    <li>
+      <span class="qn">Q15</span>
+      <span class="qt">Write-offs: who can declare a debt bad, and what does that leave behind?</span>
+      <span class="tag later">Later</span>
+      <span class="qwhy">Without this, ancient unpaid invoices sit in 90+ forever and quietly poison every total on the page.</span>
+    </li>
+    <li>
+      <span class="qn">Q16</span>
+      <span class="qt">Can one franchise bill in more than one currency?</span>
+      <span class="tag later">Later</span>
+      <span class="qwhy">Everything above sums a single currency per franchise. Mixed currencies would mean the headline totals need either conversion or splitting.</span>
+    </li>
+    <li>
+      <span class="qn">Q17</span>
+      <span class="qt">Is "the customer disputes this invoice" a state you need to record?</span>
+      <span class="tag later">Later</span>
+      <span class="qwhy">Disputed invoices are overdue for a reason that isn't neglect, and mixing them into the chase queue makes the queue less trustworthy.</span>
+    </li>
+    <li>
+      <span class="qn">Q18</span>
+      <span class="qt">Should the per-customer outstanding view also appear inside Site → Billing?</span>
+      <span class="tag later">Later</span>
+      <span class="qwhy">There is already an orphaned per-site invoices tab in the codebase that nothing renders — the obvious home for it, sharing one component with the Outstanding tab.</span>
+    </li>
+  </ol>
+
+  <!-- ─────────────────────────────────────────────── 6 -->
+  <div class="section">
+    <p class="sec-label">Section 6</p>
+    <h2>Deliberately not built</h2>
+    <p>So nobody looks for it in the demo.</p>
+  </div>
+
+  <ul class="plain">
+    <li><b>Bank statement or remittance import</b>, and any automatic matching. Pending Q2.</li>
+    <li><b>Unidentified receipts, duplicate detection, credit application</b> — the model supports them; no screens exist. Pending Q2, Q5.</li>
+    <li><b>Applying a credit note</b> to an open invoice.</li>
+    <li><b>Chase workflow</b> — owner, status, contact log, reminder emails. Pending Q8, Q14.</li>
+    <li><b>Statement of account</b> per customer. Pending Q9.</li>
+    <li><b>Write-offs and disputes.</b> Pending Q15, Q17.</li>
+    <li><b>Pushing recorded payments back to Sage / QuickBooks.</b> Pending Q1.</li>
+    <li><b>A list of individual receipts for a period.</b> It existed in the drawer that the period
+      overview replaced, and no table of <em>invoices</em> can show it. If a cash view is wanted it
+      should be its own tab, not a panel bolted to this one.</li>
+    <li><b>A shared filter bar across both tabs</b> — the Outstanding tab filters itself through the aging and exception controls; the site and date filters apply only to the invoice list.</li>
+    <li><b>Site or customer scoping in the period overview.</b> Pending Q12.</li>
+    <li><b>Comparing two periods</b> side by side. The drawer answers one window at a time.</li>
+  </ul>
+
+  <div class="footer">
+    Filter Go · Invoicing reconciliation · discovery and first draft · 11 Aug 2026<br>
+    Decisions and open questions also recorded in <code>docs/invoicing-reconciliation/README.md</code>
+  </div>
+
+</div>

@@ -1,6 +1,6 @@
 import { Avatar, Box, Chip, Skeleton, Typography } from '@mui/material';
-import { ReactComponent as CheckMark } from 'assets/svg/commonDropdown/checkBox.svg?react';
-import { ReactComponent as NotChecked } from 'assets/svg/commonDropdown/unChecked.svg?react';
+import { ReactComponent as CheckMark } from 'assets/svg/commonDropdown/checkBox.svg';
+import { ReactComponent as NotChecked } from 'assets/svg/commonDropdown/unChecked.svg';
 import classNames from 'classnames';
 import PropTypes from 'prop-types';
 import React from 'react';

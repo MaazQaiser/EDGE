@@ -18,6 +18,8 @@
  * opens this screen is unaffected by it shipping.
  */
 
+import { ZONE_DEFINITIONS, ZONE_SITES } from './zoneSites';
+
 const STORAGE_KEY = 'filtergo.harmonization';
 
 /**
@@ -232,6 +234,64 @@ export const PLAN_WINDOW_MAX_DAYS = PLAN_WINDOW_MONTH_DAYS;
 const emptyLocation = () => null;
 
 /**
+ * **A zone is a name and a shape; membership lives on the site.**
+ *
+ * This is the one modelling decision in the section and it is not the obvious one, so
+ * it is written down. A zone could reasonably hold `siteIds: []` — that is how the
+ * screen reads out loud ("North holds four sites") and it is how the design boards
+ * for this feature described it. It is the wrong side of the relation for this app.
+ * `harmonizeFlow`'s fixture already puts `zoneId` on the *site*, and the franchise's
+ * own `/zones` records already store the same fact as `sites[]` on the zone. Two
+ * stores for one relation is the bug where a site is in North according to North and
+ * in East according to the site.
+ *
+ * So the site is the record of truth and the zone stores only what a site cannot:
+ * its **shape** — the boundary the planner drew, or the anchor and distance they set.
+ * The shape is not the definition of the zone. It is the tool that produced the
+ * assignments, kept so it can be reopened and redrawn rather than re-derived by hand.
+ * A zone with `shape: null` is a perfectly good zone somebody assigned site by site.
+ *
+ * Two consequences worth having in front of you:
+ *
+ * 1. **A site cannot be in two zones.** `zoneId` is one field. E8 in
+ *    `HARMONIZE-CONTEXT.md` — "a site falls in two zone boundaries" — is not an edge
+ *    case to design a warning for, it is structurally impossible here, and two
+ *    overlapping *shapes* just mean whichever was drawn last won the site.
+ * 2. **Deleting a zone orphans its sites rather than deleting them.** `zoneOfSite`
+ *    resolves through the live zone list, so a site pointing at a zone that no longer
+ *    exists reports no zone at all — which is the truthful answer and the one the
+ *    coverage panel can act on.
+ */
+export const ZONE_SHAPE = { BOUNDARY: 'boundary', RADIUS: 'radius' };
+
+const ZONE_NAME_MAX = 40;
+
+/**
+ * A drawn boundary needs three points to enclose anything, and sixty is far past
+ * the point where another click adds information — it is the guard against a stored
+ * shape big enough to make reading the rule slow, not a limit a planner will meet.
+ */
+const ZONE_POINTS_MIN = 3;
+const ZONE_POINTS_MAX = 60;
+
+/**
+ * The zones a franchise has before anybody opens this screen.
+ *
+ * Named rather than empty, and the reasoning is the same as `SHIFT_HOURS_DEFAULT`
+ * being 8: a tenant who never touches this screen should plan what they plan today,
+ * and today the flow's fixture assigns every site to one of these four. An empty
+ * list would mean no day could be given a zone, so shipping the section would take
+ * the demo from "works" to "cannot run" — which is not a default, it is a regression
+ * wearing one.
+ *
+ * They arrive with no shape, which is honest: nobody has drawn them. The first time
+ * a planner opens one in the editor is the first time it acquires a boundary.
+ */
+function defaultZones() {
+  return ZONE_DEFINITIONS.map((zone) => ({ id: zone.id, name: zone.name, shape: null }));
+}
+
+/**
  * The unset rule.
  *
  * Declared in **the same key order `sanitise` returns**, deliberately. Nothing enforces that
@@ -241,6 +301,8 @@ const emptyLocation = () => null;
  */
 export const DEFAULT_SETTINGS = {
   routeDays: [],
+  zones: defaultZones(),
+  siteZones: {},
   radiusMiles: RADIUS_DEFAULT_MILES,
   startLocation: emptyLocation(),
   /**
@@ -295,6 +357,116 @@ const sanitiseLocation = (raw) => {
   if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return null;
 
   return { address: typeof raw.address === 'string' ? raw.address : '', lat, lng };
+};
+
+/**
+ * The shape a planner drew, or nothing.
+ *
+ * Invalid becomes `null` rather than being dropped, and the difference matters: a zone
+ * whose shape failed to parse is still a zone with sites in it, and deleting the record
+ * would take the *assignments* with it. Losing a boundary means "open the editor and
+ * draw it again"; losing the zone means five sites silently stop being schedulable.
+ */
+const sanitiseZoneShape = (raw) => {
+  if (!raw || typeof raw !== 'object') return null;
+
+  if (raw.kind === ZONE_SHAPE.RADIUS) {
+    /* The anchor is a location like any other, so it goes through the same guard — a
+       radius drawn around `NaN, NaN` is the bug `sanitiseLocation` exists to stop, and
+       it would place a circle in the Gulf of Guinea rather than fail loudly. */
+    const anchorPoint = sanitiseLocation(raw.anchor);
+    if (!anchorPoint) return null;
+
+    return {
+      kind: ZONE_SHAPE.RADIUS,
+      anchor: anchorPoint,
+      /* The same clamp the rule-level radius uses, so a zone cannot reach further than
+         the setting elsewhere on this screen allows. One range, stated once. */
+      radiusMiles: clampRadiusMiles(raw.radiusMiles),
+    };
+  }
+
+  if (raw.kind === ZONE_SHAPE.BOUNDARY) {
+    const points = (Array.isArray(raw.points) ? raw.points : [])
+      .map((point) => sanitiseLocation({ address: '', lat: point?.lat, lng: point?.lng }))
+      .filter(Boolean)
+      .slice(0, ZONE_POINTS_MAX)
+      .map(({ lat, lng }) => ({ lat, lng }));
+
+    /* Two points are a line and one is a dot; neither encloses a site, so neither is a
+       boundary. Better to report no shape than a shape that captures nothing. */
+    if (points.length < ZONE_POINTS_MIN) return null;
+
+    return { kind: ZONE_SHAPE.BOUNDARY, points };
+  }
+
+  return null;
+};
+
+/**
+ * The zone list. `undefined` means nobody has saved one, which is not the same as an
+ * empty one — a planner who deletes every zone has said something, and this keeps it
+ * said rather than helpfully restoring the four they just removed.
+ */
+const sanitiseZones = (raw) => {
+  if (!Array.isArray(raw)) return defaultZones();
+
+  const byId = new Map();
+  raw.forEach((entry) => {
+    if (!entry || typeof entry !== 'object') return;
+    const id = typeof entry.id === 'string' ? entry.id.trim() : '';
+    if (!id) return;
+    if (byId.has(id)) return;
+    const name = typeof entry.name === 'string' ? entry.name.trim().slice(0, ZONE_NAME_MAX) : '';
+    /* A zone that lost its name is still usable if it can be called something, and its
+       id is the only other thing it has. Better a row reading "north" than a blank one
+       the planner cannot point at. */
+    byId.set(id, { id, name: name || id, shape: sanitiseZoneShape(entry.shape) });
+  });
+
+  return [...byId.values()];
+};
+
+/**
+ * Which zone each site was moved to, where a planner has moved one.
+ *
+ * Only the *overrides* are stored, not the whole assignment table. The site book ships
+ * its own `defaultZoneId`, so writing all fifteen would mean a rule that has to be
+ * migrated every time a site is added — and a franchise that never opened this screen
+ * would carry a snapshot of an assignment it never made.
+ *
+ * `null` is a real value here and it is not the same as a missing key: `null` means the
+ * planner took a site *out* of every zone, and dropping it would let the book's default
+ * quietly put it back.
+ *
+ * **Keys are written in sorted order**, which is not tidiness. `isDirty` compares
+ * `JSON.stringify` of the normalised form against the stored rule, and object key order
+ * is insertion order — so a planner who assigned two sites in one order and reopened the
+ * screen in the other would find it claiming unsaved changes over an identical rule.
+ */
+const sanitiseSiteZones = (raw, zones) => {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {};
+
+  const live = new Set(zones.map((zone) => zone.id));
+  const out = {};
+  Object.keys(raw)
+    .map((key) => String(key).trim())
+    .filter(Boolean)
+    .sort()
+    .forEach((siteId) => {
+      const value = raw[siteId];
+      if (value === null) {
+        out[siteId] = null;
+        return;
+      }
+      const zoneId = typeof value === 'string' ? value.trim() : '';
+      /* An override naming a deleted zone is discarded rather than kept as a dangling
+         id, which lets the site fall back to its book default instead of reading as
+         permanently unzoned. */
+      if (zoneId && live.has(zoneId)) out[siteId] = zoneId;
+    });
+
+  return out;
 };
 
 /**
@@ -378,6 +550,11 @@ const sanitise = (input) => {
    * expensive part of this setting, and opening the screen to find the week blank would read
    * as the rule having been lost with no way to tell that it had not.
    */
+  /* Before the days, because a day's zone is only meaningful if that zone still exists
+     and this is where that is known. */
+  const zones = sanitiseZones(raw.zones);
+  const liveZoneIds = new Set(zones.map((zone) => zone.id));
+
   const byWeekday = new Map();
   stored.forEach((entry) => {
     const isRecord = typeof entry === 'object' && entry !== null;
@@ -393,6 +570,19 @@ const sanitise = (input) => {
          officers named is a day the planner has not staffed yet, which is different from a
          day staffed by everyone — and there is no `allOfficers` flag to forget to check. */
       officers: sanitiseOfficers(isRecord ? entry.officers : undefined),
+      /* **One zone, and `null` is the off state** (D15 — a day and a runsheet are 1:1,
+         and a day never covers two zones). A day with no zone is legal and means what it
+         says: the crew works that day and no work can legally land on it. That reads as
+         an odd thing to allow until you watch somebody turn Thursday on — refusing to
+         store the day until it also had a zone would make switching a day on a two-step
+         commit, and the coverage panel says the thing out loud anyway.
+
+         Validated against the live list rather than trusted, so deleting a zone leaves
+         the days that used it unzoned instead of pointing at nothing. */
+      zoneId:
+        isRecord && typeof entry.zoneId === 'string' && liveZoneIds.has(entry.zoneId.trim())
+          ? entry.zoneId.trim()
+          : null,
     });
   });
 
@@ -417,6 +607,8 @@ const sanitise = (input) => {
      saved with both keeps its start and loses a value nothing was reading. */
   return {
     routeDays,
+    zones,
+    siteZones: sanitiseSiteZones(raw.siteZones, zones),
     radiusMiles,
     startLocation: sanitiseLocation(raw.startLocation),
     planWindowDays: clampPlanWindow(raw.planWindowDays),
@@ -622,4 +814,113 @@ export const smallestSafeNeedBy = ({ routeDays = [] }) => {
     if (!unreachableWeekdays({ routeDays, needByDays: candidate }).length) return candidate;
   }
   return null;
+};
+
+/**
+ * A zone by id, or null. Reads the rule rather than the site book, because the rule is
+ * where a renamed or deleted zone is known about.
+ */
+export const zoneById = (settings = {}, zoneId) =>
+  (Array.isArray(settings.zones) ? settings.zones : []).find((zone) => zone.id === zoneId) || null;
+
+/**
+ * Which zone a site is in, all three readings in order.
+ *
+ * An explicit `null` override wins — the planner took it out of every zone and that is
+ * an answer. Then a named override, then the site book's own default. The result is
+ * always checked against the live zone list, so a site whose zone was deleted reports
+ * no zone rather than a dangling id: the coverage panel can act on "in no zone" and can
+ * do nothing at all with "in zone `east-old`".
+ */
+export const zoneOfSite = (settings = {}, site) => {
+  const overrides =
+    settings.siteZones && typeof settings.siteZones === 'object' ? settings.siteZones : {};
+  const siteId = site?.id;
+  if (!siteId) return null;
+
+  const override = Object.prototype.hasOwnProperty.call(overrides, siteId)
+    ? overrides[siteId]
+    : undefined;
+
+  const resolved = override === null ? null : override || site.defaultZoneId || null;
+  if (!resolved) return null;
+
+  return zoneById(settings, resolved) ? resolved : null;
+};
+
+/**
+ * What this configuration cannot do, computed before anything runs.
+ *
+ * Every one of these is knowable in Settings. Zone membership is static and each day's
+ * zone is static, so "these two sites have no legal day" does not need the engine — it
+ * needs a set difference. §14.5 of `HARMONIZE-CONTEXT.md` asks the run's scope step to
+ * *predict* rather than describe; this is the same finding one screen earlier, where the
+ * fix actually lives, and it is the same shape as `unreachableWeekdays` already computes
+ * for the need-by window. One idea, two constraints.
+ *
+ * **`stranded` is the finding that matters** — a zone with sites in it that no
+ * installation day covers. An unused *empty* zone is untidy, not broken, so it is
+ * reported separately and the screen can stay quiet about it.
+ *
+ * Filters, not just site counts, because `10 + 20 × filters` is the cost model: two
+ * stranded sites carrying thirteen filters is four hours forty of work, and calling it
+ * "2 sites" is the same mistake §14.4 catches the flow's own headline metric making.
+ */
+export const zoneCoverage = ({ settings = {}, sites = ZONE_SITES } = {}) => {
+  const zones = Array.isArray(settings.zones) ? settings.zones : [];
+  const routeDays = Array.isArray(settings.routeDays) ? settings.routeDays : [];
+
+  const buckets = new Map(
+    zones.map((zone) => [zone.id, { zone, sites: [], filters: 0, weekdays: [] }]),
+  );
+  const orphanSites = [];
+
+  sites.forEach((site) => {
+    const zoneId = zoneOfSite(settings, site);
+    const bucket = zoneId ? buckets.get(zoneId) : null;
+    if (!bucket) {
+      orphanSites.push(site);
+      return;
+    }
+    bucket.sites.push(site);
+    bucket.filters += Number(site.filters) || 0;
+  });
+
+  routeDays.forEach((day) => {
+    const bucket = day?.zoneId ? buckets.get(day.zoneId) : null;
+    if (bucket) bucket.weekdays.push(day.weekday);
+  });
+
+  const byZone = [...buckets.values()];
+
+  /**
+   * **With no installation days at all, nothing is *stranded* — everything is.**
+   *
+   * `routeDays: []` is the documented off state, and a franchise in it would otherwise get
+   * one "this zone is covered by no day" warning per zone: four bands, four remedies, all
+   * of them downstream of the single fact that no day is switched on. Reporting the cause
+   * once beats reporting its consequences four times, so the per-zone finding is suppressed
+   * and `noWorkedDays` lets the screen say the true thing instead.
+   *
+   * Orphans are *not* suppressed the same way: a site in no zone is broken whether or not
+   * any day is worked, and fixing the days will not fix it.
+   */
+  const noWorkedDays = !routeDays.length;
+
+  return {
+    byZone,
+    noWorkedDays,
+    /* Everything a run would have to place, for the no-days message to be able to size it. */
+    zonesHoldingWork: byZone.filter((entry) => entry.sites.length).length,
+    orphanSites,
+    orphanFilters: orphanSites.reduce((total, site) => total + (Number(site.filters) || 0), 0),
+    /* Worked by no day *and* holding work. */
+    stranded: noWorkedDays
+      ? []
+      : byZone.filter((entry) => !entry.weekdays.length && entry.sites.length),
+    /* Worked by no day and holding nothing — reportable, not a problem. */
+    unusedEmpty: byZone.filter((entry) => !entry.weekdays.length && !entry.sites.length),
+    /* An installation day the crew works that nothing can legally land on. */
+    daysWithoutZone: routeDays.filter((day) => !day?.zoneId).map((day) => day.weekday),
+  };
 };

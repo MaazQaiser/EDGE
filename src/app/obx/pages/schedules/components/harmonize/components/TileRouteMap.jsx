@@ -13,6 +13,15 @@ import {
   ROUTE_EASING,
   routeSignature,
 } from '../routeMotion';
+import {
+  fitView,
+  MAX_ZOOM,
+  metresPerPixel,
+  MIN_ZOOM,
+  project,
+  tilesFor,
+  unproject,
+} from '../tileProjection';
 import { PIN_FILL, PIN_RIM, START_BADGE, StartPin, StopPin } from './MapPins';
 
 /**
@@ -35,99 +44,14 @@ import { PIN_FILL, PIN_RIM, START_BADGE, StartPin, StopPin } from './MapPins';
  * moved, which is a fact about the site and not about this route.
  */
 
-const TILE = 256;
-const MIN_ZOOM = 3;
-const MAX_ZOOM = 17;
-/* The margin the fit leaves around a route, per edge. Symmetric; the ring that briefly made
-   this the outer bound is gone, so the content is the stops again. */
-const FIT_PADDING = 48;
-
 /* Long enough to recognise a site, short enough that a label cannot run off a
    240px panel. The stop list carries the full name. */
 const LABEL_MAX = 22;
+
 const truncate = (value = '') =>
-  value.length > LABEL_MAX ? `${value.slice(0, LABEL_MAX - 1)}…` : value;
+  value.length > LABEL_MAX ? `${value.slice(0, LABEL_MAX - 1)}\u2026` : value;
 
-/** How far the pointer may travel and still have ended in a click rather than a pan. */
 const DRAG_SLOP = 4;
-
-/**
- * CARTO's public basemap, on **Voyager** rather than `light_all`.
- *
- * `light_all` is CARTO's "positron" style: near-white ground, grey roads, grey water,
- * almost no colour anywhere. It was chosen so a brand-green route would be the loudest
- * thing on the panel, and it succeeded to a fault — the map read as a wireframe of a
- * city rather than a city, and with the map now half the workspace and the planner
- * reading real geography off it (which cluster is which, what the ring reaches) a
- * drained basemap is withholding the information they came for.
- *
- * Voyager is the same tiles from the same provider under the same attribution, with
- * water in blue, parks in green, built-up land warm, and road classes separated by
- * colour instead of only by width. It is still a *basemap* — nothing in it competes with
- * a 4px saturated stroke, which is the property `light_all` was picked for.
- *
- * **Subdomain `a` on purpose.** CARTO serves `a`–`d`; rotating them was the old trick for
- * beating a browser's per-host connection cap, and over HTTP/2 — which every browser this
- * app supports uses — one host multiplexes the whole viewport on one connection and four
- * hosts mean four TLS handshakes. Attribution is a condition of use, not decoration; it
- * renders bottom-right.
- */
-const TILE_URL = (z, x, y) =>
-  `https://a.basemaps.cartocdn.com/rastertiles/voyager/${z}/${x}/${y}.png`;
-
-const project = (lat, lng, zoom) => {
-  const scale = TILE * 2 ** zoom;
-  const sinLat = Math.sin((lat * Math.PI) / 180);
-  return {
-    x: ((lng + 180) / 360) * scale,
-    y: (0.5 - Math.log((1 + sinLat) / (1 - sinLat)) / (4 * Math.PI)) * scale,
-  };
-};
-
-const unproject = (x, y, zoom) => {
-  const scale = TILE * 2 ** zoom;
-  const n = Math.PI - (2 * Math.PI * y) / scale;
-  return {
-    lng: (x / scale) * 360 - 180,
-    lat: (180 / Math.PI) * Math.atan(0.5 * (Math.exp(n) - Math.exp(-n))),
-  };
-};
-
-/** The largest zoom at which every point still fits inside the viewport. */
-const fitView = (points, width, height) => {
-  const usableW = Math.max(width - FIT_PADDING * 2, 64);
-  const usableH = Math.max(height - FIT_PADDING * 2, 64);
-
-  for (let zoom = MAX_ZOOM; zoom >= MIN_ZOOM; zoom -= 1) {
-    const projected = points.map((point) => project(Number(point.lat), Number(point.lng), zoom));
-    const xs = projected.map((p) => p.x);
-    const ys = projected.map((p) => p.y);
-    const spanX = Math.max(...xs) - Math.min(...xs);
-    const spanY = Math.max(...ys) - Math.min(...ys);
-
-    if (spanX <= usableW && spanY <= usableH) {
-      const centre = unproject(
-        (Math.max(...xs) + Math.min(...xs)) / 2,
-        (Math.max(...ys) + Math.min(...ys)) / 2,
-        zoom,
-      );
-      return { zoom, center: centre };
-    }
-  }
-
-  return { zoom: MIN_ZOOM, center: { lat: Number(points[0].lat), lng: Number(points[0].lng) } };
-};
-
-/**
- * Metres per pixel at a given latitude and zoom, from the Web Mercator constant.
- *
- * 156543.03392 is the equatorial resolution at zoom 0 for a 256px tile; the cosine
- * corrects for the projection stretching east-west as it goes north. This is what
- * turns "10 km" into a radius the ring can actually be drawn at, and it has to be
- * recomputed on every zoom — a circle drawn once in pixels would claim a different
- * distance at every zoom level, which is worse than not drawing it.
- */
-const metresPerPixel = (lat, zoom) => (156543.03392 * Math.cos((lat * Math.PI) / 180)) / 2 ** zoom;
 
 const TileRouteMap = ({
   startPoint,
@@ -443,28 +367,7 @@ const TileRouteMap = ({
   };
 
   // Tiles covering the viewport, wrapped east–west and clamped north–south.
-  const tileCount = 2 ** zoom;
-  const tiles = [];
-  for (
-    let tx = Math.floor(originX / TILE);
-    tx <= Math.floor((originX + size.width) / TILE);
-    tx += 1
-  ) {
-    for (
-      let ty = Math.floor(originY / TILE);
-      ty <= Math.floor((originY + size.height) / TILE);
-      ty += 1
-    ) {
-      if (ty < 0 || ty >= tileCount) continue;
-      const wrappedX = ((tx % tileCount) + tileCount) % tileCount;
-      tiles.push({
-        key: `${zoom}/${tx}/${ty}`,
-        url: TILE_URL(zoom, wrappedX, ty),
-        left: tx * TILE - originX,
-        top: ty * TILE - originY,
-      });
-    }
-  }
+  const tiles = tilesFor({ originX, originY, width: size.width, height: size.height, zoom });
 
   /* A sequence exists only once the solver has produced one. Before that the stops
      are a set, not an order, and joining them would draw a route nobody asked for. */

@@ -105,6 +105,19 @@ const NoInternet = lazy(
   () => import(/* webpackChunkName: "NoServer" */ '../../public/pages/noInternet'),
 );
 const NoInternetWithSuspense = withSuspense(NoInternet);
+/* DEMO — the Harmonization screen on a public path, because the Settings tab that
+   normally holds it filters itself out for a session whose ACL lacks the tab-level
+   `settings.*` children. Sits with the public routes deliberately: no sign-in and no
+   permission check can stand between it and the browser. Delete with its route below
+   once the ACL payload is fixed. */
+const HarmonizationDemo = lazy(
+  () =>
+    import(
+      /* webpackChunkName: "HarmonizationDemo" */ '../../common/pages/settings/preferences/harmonization/demo'
+    ),
+);
+const HarmonizationDemoWithSuspense = withSuspense(HarmonizationDemo);
+
 // // App Main
 const AppMain = lazy(() => import(/* webpackChunkName: "AppMain" */ '../../layout/appMain'));
 const AppMainWithSuspense = withSuspense(AppMain);
@@ -151,6 +164,15 @@ function getRouteConfigs() {
       beforeEnter: authCheckMiddleware,
       meta: {
         title: 'Reset Password',
+      },
+    },
+    {
+      // HARMONIZATION DEMO — public, no auth, no ACL. Delete once the ACL is fixed.
+      path: '/harmonization',
+      exact: true,
+      element: <HarmonizationDemoWithSuspense />,
+      meta: {
+        title: 'Harmonization',
       },
     },
     {
