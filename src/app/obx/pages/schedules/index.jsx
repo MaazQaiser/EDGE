@@ -9,6 +9,7 @@ import {
 } from 'src/utils/constants/schedules';
 
 import Calendar from './calendar';
+import HarmonizeShellSwitch from './calendar/HarmonizeShellSwitch';
 import SchedulerLayoutSwitch from './calendar/SchedulerLayoutSwitch';
 import VisitVariantSwitch from './calendar/VisitVariantSwitch';
 import ScheduleIndicators from './components/scheduleIndicators';
@@ -16,6 +17,7 @@ import ScheduleStatsFooter, {
   SCHEDULE_STATS_FOOTER_VARIANTS,
 } from './components/scheduleStatsFooter';
 import ScheduleStatusIcons from './components/scheduleStatusIcons';
+import { readHarmonizeShell, writeHarmonizeShell } from './config/harmonizeShell';
 import { readSchedulerLayout, writeSchedulerLayout } from './config/schedulerLayout';
 import { getScheduleTabConfig, getScheduleTabFooterVariant } from './config/scheduleTabConfigs';
 import {
@@ -45,6 +47,15 @@ import { useCanViewSummaryStats } from './hooks/useCanViewSummaryStats';
  * out in an unexpected variant: set it here, or flip the flag, pick, and flip it back.
  */
 const SHOW_VARIATION_SWITCHES = false;
+
+/**
+ * Whether the Harmonize shell switch is on screen.
+ *
+ * **On**, while the drawer shell built to `HARMONIZE-CONTEXT.md` is being reviewed
+ * against the shipped workspace. Turn it off — or delete it, the config module and
+ * the losing shell together — once that decision lands.
+ */
+const SHOW_HARMONIZE_SHELL_SWITCH = true;
 
 // Keep paddingBottom equal to footer height so the absolute footer covers it (no white gap).
 // Bump calendar chrome by the same delta so the grid ends flush above the footer.
@@ -265,6 +276,19 @@ export default function Schedules({ selectedSite, officerId, className }) {
     writeSchedulerLayout(next);
   };
 
+  /**
+   * Which shell the Harmonize button opens — see `config/harmonizeShell`.
+   *
+   * Held here rather than in the calendar for the same reason the two switches above
+   * are: the calendar is what the choice reshapes, so it cannot also own it. Persisted,
+   * because a reviewer comparing two shells re-opens this screen many times.
+   */
+  const [harmonizeShell, setHarmonizeShell] = useState(readHarmonizeShell);
+  const handleHarmonizeShellChange = (next) => {
+    setHarmonizeShell(next);
+    writeHarmonizeShell(next);
+  };
+
   const showsVisitCardV2 = isVisitsSubject && visitCardVariant === VISIT_VIEW_VARIANT.V2;
   /* Shown only over a grid of visit cards. Not on the embedded site/user schedules
      (those draw the legacy card, so the choice would change nothing) and not on a tab
@@ -341,6 +365,7 @@ export default function Schedules({ selectedSite, officerId, className }) {
         onStatusControlChange={setStatusControl}
         visitCardVariant={visitCardVariant}
         schedulerLayout={schedulerLayout}
+        harmonizeShell={harmonizeShell}
       />
       {/* Floating over the grid, bottom right, rather than sitting in the toolbar.
           Asked for that way, and it suits what the control is: the toolbar is where
@@ -349,6 +374,25 @@ export default function Schedules({ selectedSite, officerId, className }) {
           of. Anchored above the footer from the same layout constant the footer's own
           height comes from, so it cannot drift onto the legend when the footer
           changes height between views. */}
+      {/**
+       * The Harmonize shell switch, on its own flag rather than under
+       * `SHOW_VARIATION_SWITCHES`.
+       *
+       * That flag is off so the *grid* can be screenshotted without two review pills
+       * floating over its bottom-right corner. This switch changes nothing about the
+       * grid — it decides what a button opens — so it does not have that cost, and
+       * folding it under the same flag would mean un-hiding the card and layout
+       * switches every time somebody wanted to look at the drawer. Separate flags,
+       * because they are hidden for a reason that only applies to two of the three.
+       */}
+      {SHOW_HARMONIZE_SHELL_SWITCH && !isEmbeddedSchedule ? (
+        <Box
+          className={classes.visitVariantFloating}
+          style={{ bottom: `calc(${footerLayout.paddingBottom} + 16px)` }}
+        >
+          <HarmonizeShellSwitch value={harmonizeShell} onChange={handleHarmonizeShellChange} />
+        </Box>
+      ) : null}
       {SHOW_VARIATION_SWITCHES && !isEmbeddedSchedule ? (
         <Box
           className={classes.visitVariantFloating}

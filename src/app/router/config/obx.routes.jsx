@@ -217,6 +217,17 @@ const OBXSetting = lazy(
 );
 const OBXSettingWithSuspense = withSuspense(OBXSetting);
 
+/* DEV PREVIEW — the whole Settings page with permission filtering switched off.
+   A role whose ACL payload comes back empty renders Settings with no tabs at all, so
+   there was no way to look at a settings screen without a working permission set. This
+   route is auth-guarded but not ACL-guarded, and it renders the real page — same tabs,
+   same components — so what you see here is what the permissioned route will show.
+   Lazily imported like every other route here, rather than declared inline: `withSuspense`
+   forwards a `ref` into what it wraps, which a plain arrow function cannot take.
+   Delete this and the route below once the ACL payload is sorted. */
+const OBXSettingPreview = lazy(() => import('../../common/pages/settings/preview'));
+const OBXSettingPreviewWithSuspense = withSuspense(OBXSettingPreview);
+
 const DesignSystem = lazy(
   () => import(/* webpackChunkName: "DesignSystem" */ '../../common/pages/designSystem/index'),
 );
@@ -895,6 +906,16 @@ const route = (franchiseId) => {
         userHasPermission(OBX.ACL_OBX_SETTINGS_VIEW) ? next() : next(routes.PROFILE),
       meta: {
         title: 'Settings',
+        requiresAuth: true,
+      },
+    },
+    /* DEV PREVIEW — see the note beside `OBXSettingPreview` above. */
+    {
+      path: `${routes.COMMON_SETTING}/preview`,
+      exact: true,
+      element: <OBXSettingPreviewWithSuspense />,
+      meta: {
+        title: 'Settings preview',
         requiresAuth: true,
       },
     },

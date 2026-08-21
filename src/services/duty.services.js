@@ -43,6 +43,30 @@ export const allDutyData = async (queryParams, config = {}) => {
   }
 };
 
+/**
+ * Companies tab: companies, their sites, and a rolling year of visits per site.
+ *
+ * Server-side on purpose — twelve months of cadence across a whole book is
+ * arithmetic a database does well and a browser does badly, and projecting on
+ * the client would also put the scheduled/projected boundary in the wrong place.
+ */
+export const getCompanyVisitSchedule = async (queryParams, config = {}) => {
+  try {
+    const query = queryString.stringify(queryParams, {
+      arrayFormat: 'bracket',
+      skipEmptyString: true,
+      skipNull: true,
+    });
+
+    return await getHttpRequest(
+      `${dutyServiceEndPoint}/shiftActivityLog/companies/schedule?${query}`,
+      config,
+    );
+  } catch (e) {
+    return throwAPIError(e);
+  }
+};
+
 /** Overview coverage + top-row KPIs (unfiltered week scope). */
 export const getDutySummaryStats = async (queryParams, config = {}) => {
   try {

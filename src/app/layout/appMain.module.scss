@@ -1,7 +1,15 @@
+// The app never declared a page background, so it inherited the browser canvas.
+// On a machine in dark mode that canvas is black, and the app's own text tokens are
+// near-black — which made the invoice filter labels (#262527) render at 1.4:1 and
+// disappear. The palette is light-only, so the shell says so explicitly: white, which
+// is what a light-scheme browser was already painting, plus `color-scheme` so
+// scrollbars and form controls are drawn light to match.
 .dashboardContainer {
   display: flex;
   height: 100vh;
   overflow: auto;
+  color-scheme: light;
+  background-color: #ffffff;
 
   // // scroll
   // ::-webkit-scrollbar {

@@ -1,3 +1,4 @@
+import OpenInNewOutlinedIcon from '@mui/icons-material/OpenInNewOutlined';
 import RouteOutlinedIcon from '@mui/icons-material/RouteOutlined';
 import { Box, Button, Typography } from '@mui/material';
 import { useJsApiLoader } from '@react-google-maps/api';
@@ -481,6 +482,41 @@ const HarmonizeWorkspace = ({
               <Box className={classes.columnHeader}>
                 <SlidersIcon className={classes.columnIcon} />
                 <Typography className={classes.columnTitle}>{tt('columnSetup')}</Typography>
+
+                <Box className={classes.grow} />
+
+                {/**
+                 * The way out to Config A, in the corner of the column that overrides it.
+                 *
+                 * **§3 of `HARMONIZE-CONTEXT.md` is the reason this belongs here.** There are two
+                 * configuration layers and conflating them is the documented design trap: this
+                 * column is Config B — it seeds from the franchise settings and overrides them
+                 * *for this run only*, writing nothing back. Every field under this heading is
+                 * therefore a temporary answer to a question whose permanent answer lives
+                 * somewhere else, and until now the screen gave no way to get to it.
+                 *
+                 * **A new tab, not a navigation.** Harmonize is a mode holding unsaved work —
+                 * nothing is written until Apply — so following a link in place would discard a
+                 * proposal to go and look at a setting. `target="_blank"` keeps the run on screen,
+                 * which is also why this is drawn as an external link rather than as a tab.
+                 *
+                 * It lands on Settings › Preferences rather than directly on Harmonization,
+                 * because the outer and inner tab strips both read the same `activeTab` query key
+                 * (see `customTabsWithPermissions`), so one parameter cannot address both levels —
+                 * `activeTab=harmonization` would leave the outer strip unmatched and fall back to
+                 * its first tab, which is further from the destination than this is. Deep-linking
+                 * the sub-tab is a change to the settings page, not to this link.
+                 */}
+                <Box
+                  component="a"
+                  className={classes.configLink}
+                  href="/app/settings?activeTab=preferences"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Typography className={classes.configLinkText}>{tt('configureLink')}</Typography>
+                  <OpenInNewOutlinedIcon className={classes.configLinkIcon} />
+                </Box>
               </Box>
               <Box className={classes.columnBody}>
                 <SetupColumn
@@ -572,17 +608,6 @@ const HarmonizeWorkspace = ({
                 )}
               />
 
-              <Box className={classes.columnHeader}>
-                <RouteOutlinedIcon className={classes.columnIcon} />
-                <Typography className={classes.columnTitle}>{tt('columnAi')}</Typography>
-                {/* **No day list here any more.** It read `Mon` — or `Mon & Tue` — in the top
-                    right of the region, and it was the third place this screen stated the same
-                    dates: the top bar carries the scope chip, and every route card titles
-                    itself with its own day. Sitting above the map it also read as a label *on
-                    the map*, which it never was. The `grow` spacer went with it; there is
-                    nothing left to push. */}
-              </Box>
-
               {/**
                * ---------- one pane layout, from open to applied ----------
                *
@@ -617,6 +642,31 @@ const HarmonizeWorkspace = ({
                     the width, the inner one owns the padding and the scroll, and neither has
                     an opinion about the other's flex. */}
                 <Box className={classes.routesPane}>
+                  {/**
+                   * The column's own heading, **and it is inside this pane now rather than
+                   * across the region.**
+                   *
+                   * It used to be a child of `aiRegion`, which made it 1143px wide — the full
+                   * region — with its icon and title at the far left. Nothing was drawn over
+                   * the map, so nothing looked wrong in the tree; what it actually produced was
+                   * **a 44px band of empty white directly above the map**, and no value of
+                   * `mapPane`'s padding could reach it. Three passes tried: 16 all round, then
+                   * the full header/footer compensation, then half of it. All three were tuning
+                   * a 16px inset while a 44px band sat above it, so the map measured centred
+                   * and read high every time. Above the map was 44 + 16; below it was 16.
+                   *
+                   * Titling the pane it describes fixes the arithmetic by deleting it — the map
+                   * pane now starts at the region's top and its 16px inset is the whole of the
+                   * space above it, matching the 16 below. It is also where the heading belongs:
+                   * it names the route list, the supplied design draws it over the route cards,
+                   * and a heading stretched across a map it does not describe is what let a day
+                   * list get added here once and read as a label on the map.
+                   */}
+                  <Box className={classes.columnHeader}>
+                    <RouteOutlinedIcon className={classes.columnIcon} />
+                    <Typography className={classes.columnTitle}>{tt('columnAi')}</Typography>
+                  </Box>
+
                   {!hasRun ? (
                     /**
                      * Before the press: **the empty state, and what the radius currently covers.**

@@ -4,6 +4,8 @@ import {
   Button,
   Checkbox,
   InputAdornment,
+  MenuItem,
+  Select,
   TextField,
   Tooltip,
   Typography,
@@ -57,8 +59,36 @@ import {
   SHIFT_HOURS_MAX,
   SHIFT_HOURS_MIN,
   writeDraft,
+  ZONE_SHAPE,
+  zoneCoverage,
 } from './harmonizationSettings';
 import LocationPickerDialog from './LocationPickerDialog';
+import ZoneEditorDialog from './ZoneEditorDialog';
+import { AlertIcon, BoundaryIcon, NoShapeIcon, RadiusIcon } from './ZoneGlyphs';
+import { ZONE_SITES } from './zoneSites';
+
+/**
+ * A readable id for a new zone, derived from its name.
+ *
+ * A timestamp would also be unique and would make the stored rule unreadable — `zone-north`
+ * says what it is when somebody opens localStorage or a future payload, and a suffix only
+ * appears when a planner genuinely has two zones with one name.
+ */
+const zoneIdFor = (name, existing = []) => {
+  const base =
+    String(name)
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '') || 'zone';
+
+  let id = base;
+  let suffix = 2;
+  while (existing.some((zone) => zone.id === id)) {
+    id = `${base}-${suffix}`;
+    suffix += 1;
+  }
+  return id;
+};
 
 /** ISO weekdays, named by the locale rather than a hardcoded English list. */
 const WEEKDAYS = Array.from({ length: 7 }, (_, index) => ({
@@ -196,10 +226,32 @@ const Harmonization = () => {
    * over it at the button: a value that clamps back to what is stored was never a change,
    * so Save never offers itself and there is nothing to swallow.
    */
+  /* Normalised once and used twice. `isDirty` needs it to compare against the stored rule,
+     and the coverage panel needs it because `zoneOfSite` reads sanitised overrides — a
+     dangling zone id in the raw form would otherwise report a site as assigned to a zone
+     that is not there any more. */
+  const normalised = useMemo(() => normaliseSettings(form), [form]);
+
   const isDirty = useMemo(
-    () => JSON.stringify(normaliseSettings(form)) !== JSON.stringify(saved),
-    [form, saved],
+    () => JSON.stringify(normalised) !== JSON.stringify(saved),
+    [normalised, saved],
   );
+
+  /**
+   * What this configuration cannot do, recomputed as the planner edits it.
+   *
+   * In Settings rather than at run time, because none of it needs the engine: zone
+   * membership and each day's zone are both static, so a stranded zone is a set
+   * difference. §14.5 of `HARMONIZE-CONTEXT.md` asks the run's scope step to predict
+   * rather than describe; this is the same finding one screen earlier, where the fix is.
+   */
+  const coverage = useMemo(
+    () => zoneCoverage({ settings: normalised, sites: ZONE_SITES }),
+    [normalised],
+  );
+
+  /* `null` is closed; `{ zoneId }` edits that zone; `{ zoneId: null }` creates one. */
+  const [zoneEditor, setZoneEditor] = useState(null);
 
   /* Cleared when the form matches what is stored, not only written when it does not:
      an edit typed and then undone by hand would otherwise leave a stale draft behind
@@ -211,6 +263,12 @@ const Harmonization = () => {
 
   /** The record for a weekday, or `undefined` when it is not an installation day. */
   const dayFor = (weekday) => form.routeDays.find((day) => day.weekday === weekday);
+
+  /* Read off the form rather than the coverage buckets: a `Select` renders from the form,
+     and a zone renamed but not yet saved should show its new name in the control that
+     names it. */
+  const zoneNameOf = (zoneId) =>
+    form.zones.find((zone) => zone.id === zoneId)?.name || tt('zoneNonePlaceholder');
 
   /**
    * Switching a day on and off.
@@ -234,9 +292,14 @@ const Harmonization = () => {
       const isOn = previous.routeDays.some((day) => day.weekday === weekday);
       const routeDays = isOn
         ? previous.routeDays.filter((day) => day.weekday !== weekday)
-        : [...previous.routeDays, { weekday, shiftHours: SHIFT_HOURS_DEFAULT, officers: [] }].sort(
-            (a, b) => a.weekday - b.weekday,
-          );
+        : [
+            ...previous.routeDays,
+            /* `zoneId: null` rather than guessing one. A day switched on has not been told
+               which zone it covers, and picking the first zone in the list on the planner's
+               behalf would silently commit them to a territory. The coverage panel says the
+               day cannot receive work until it has one. */
+            { weekday, shiftHours: SHIFT_HOURS_DEFAULT, officers: [], zoneId: null },
+          ].sort((a, b) => a.weekday - b.weekday);
 
       return { ...previous, routeDays };
     });
@@ -289,6 +352,70 @@ const Harmonization = () => {
 
   const blurNeedBy = () => {
     setForm((previous) => ({ ...previous, needByDays: clampNeedBy(previous.needByDays) }));
+  };
+
+  const changeDayZone = (weekday, zoneId) => {
+    setForm((previous) => ({
+      ...previous,
+      routeDays: previous.routeDays.map((day) =>
+        day.weekday === weekday ? { ...day, zoneId: zoneId || null } : day,
+      ),
+    }));
+  };
+
+  /**
+   * Saving a shape rewrites the zone's membership.
+   *
+   * Both halves, and the second is the destructive one: every site the shape caught is
+   * assigned to this zone, and every site that *was* in it and is no longer inside ends up
+   * in no zone. That is what "redraw the boundary" has to mean — a boundary whose sites did
+   * not follow it would be a picture rather than a setting — and it is why the dialog names
+   * the departing sites before this runs rather than leaving them to turn up in the
+   * coverage panel.
+   */
+  const saveZone = ({ name, shape, siteIds, releasing }) => {
+    setForm((previous) => {
+      const editingId = zoneEditor?.zoneId || null;
+      const id = editingId || zoneIdFor(name, previous.zones);
+
+      const zones = editingId
+        ? previous.zones.map((zone) => (zone.id === editingId ? { ...zone, name, shape } : zone))
+        : [...previous.zones, { id, name, shape }];
+
+      const siteZones = { ...previous.siteZones };
+      siteIds.forEach((siteId) => {
+        siteZones[siteId] = id;
+      });
+      /* Explicit `null`, not a deleted key: a missing key falls back to the site book's own
+         default, which would put the site straight back into the zone it just left. */
+      (releasing || []).forEach((siteId) => {
+        siteZones[siteId] = null;
+      });
+
+      return { ...previous, zones, siteZones };
+    });
+
+    setZoneEditor(null);
+  };
+
+  /**
+   * Deleting a zone leaves its sites in no zone, and says so through the coverage panel.
+   *
+   * The days that used it are cleared here rather than left to `sanitise`. Both would end
+   * up storing `null`, but the form is what the `Select` renders from, and a control whose
+   * value is not in its option list is a React warning and an empty box.
+   */
+  const deleteZone = (zoneId) => {
+    setForm((previous) => ({
+      ...previous,
+      zones: previous.zones.filter((zone) => zone.id !== zoneId),
+      routeDays: previous.routeDays.map((day) =>
+        day.zoneId === zoneId ? { ...day, zoneId: null } : day,
+      ),
+      siteZones: Object.fromEntries(
+        Object.entries(previous.siteZones).filter(([, value]) => value !== zoneId),
+      ),
+    }));
   };
 
   const handleSave = () => {
@@ -736,6 +863,168 @@ const Harmonization = () => {
             about all of them. */}
       </Box>
 
+      {/* ZONES ------------------------------------------------------------- */}
+      {/**
+       * The section the day table's third column points at.
+       *
+       * A zone is a name, a shape and the sites that shape caught — and the shape is the
+       * least important of the three. What a run actually reads is site membership
+       * (`zoneOfSite`); the boundary or the distance is kept so the zone can be reopened and
+       * redrawn rather than re-assigned by hand. That is why the middle column states *how*
+       * the zone was defined rather than repeating its name, and why the count says filters
+       * as well as sites: `10 + 20 × filters` is the cost model, so filters are what a zone
+       * costs the day that covers it.
+       */}
+      <Box className={classes.section}>
+        <Box className={classes.sectionHeader}>
+          <Typography variant="h4" className={classes.sectionTitle}>
+            {tt('zones')}
+          </Typography>
+          <Typography variant="body2" className={classes.sectionText}>
+            {tt('zonesText')}
+          </Typography>
+        </Box>
+
+        {form.zones.length ? (
+          <Box className={classes.zoneTable}>
+            <Box className={classes.zoneHeader}>
+              <Typography variant="subtitle3" className={classes.columnLabel}>
+                {tt('columnZone')}
+              </Typography>
+              <Typography variant="subtitle3" className={classes.columnLabel}>
+                {tt('columnDefinition')}
+              </Typography>
+              <Typography variant="subtitle3" className={classes.columnLabel}>
+                {tt('columnUsedOn')}
+              </Typography>
+            </Box>
+
+            {form.zones.map((zone) => {
+              const entry = coverage.byZone.find((candidate) => candidate.zone.id === zone.id);
+              const siteCount = entry?.sites.length || 0;
+              const filterCount = entry?.filters || 0;
+              const weekdays = entry?.weekdays || [];
+
+              const shapeKind = zone.shape?.kind || null;
+              const definition =
+                shapeKind === ZONE_SHAPE.RADIUS
+                  ? tt('zoneDefRadius', {
+                      miles: zone.shape.radiusMiles,
+                      place: zone.shape.anchor?.address || tt('zoneAnchorDropped'),
+                    })
+                  : shapeKind === ZONE_SHAPE.BOUNDARY
+                    ? tt('zoneDefBoundary', { points: zone.shape.points.length })
+                    : tt('zoneDefNone');
+
+              return (
+                <Box key={zone.id} className={classes.zoneRow}>
+                  <Box className={classes.zoneName}>
+                    <Box className={classes.zoneGlyph}>
+                      {shapeKind === ZONE_SHAPE.RADIUS ? (
+                        <RadiusIcon />
+                      ) : shapeKind === ZONE_SHAPE.BOUNDARY ? (
+                        <BoundaryIcon />
+                      ) : (
+                        <NoShapeIcon />
+                      )}
+                    </Box>
+                    <Typography variant="subtitle2" className={classes.zoneNameText}>
+                      {zone.name}
+                    </Typography>
+                  </Box>
+
+                  <Box className={classes.zoneDefinition}>
+                    <Typography variant="body2" className={classes.prefText}>
+                      {definition}
+                    </Typography>
+                    <Typography variant="body3" className={classes.zoneCount}>
+                      {tt('zoneSitesFilters', { sites: siteCount, filters: filterCount })}
+                    </Typography>
+                  </Box>
+
+                  <Box className={classes.zoneUse}>
+                    <Box className={classes.zoneDays}>
+                      {weekdays.length ? (
+                        weekdays.map((weekday) => (
+                          <Typography
+                            key={weekday}
+                            variant="subtitle3"
+                            className={classes.zonePill}
+                          >
+                            {WEEKDAYS.find((day) => day.weekday === weekday)?.short}
+                          </Typography>
+                        ))
+                      ) : (
+                        /* The same fact the coverage panel states, marked on the row it
+                           belongs to: a planner scanning four rows should not have to hold
+                           the warning's wording in their head to find which zone it meant. */
+                        /* Amber only when there were days this zone could have been given.
+                           With no installation days at all, "not used" is not this zone's
+                           problem — it is the screen's, and the panel above says so once. */
+                        <Typography
+                          variant="subtitle3"
+                          className={
+                            coverage.noWorkedDays ? classes.zonePill : classes.zonePillIdle
+                          }
+                        >
+                          {tt('zoneNotUsed')}
+                        </Typography>
+                      )}
+                    </Box>
+
+                    <Box className={classes.zoneRowActions}>
+                      <Button
+                        variant="tertiaryGrey"
+                        onClick={() =>
+                          setZoneEditor({
+                            zoneId: zone.id,
+                            mode: shapeKind || ZONE_SHAPE.BOUNDARY,
+                          })
+                        }
+                      >
+                        {tt('zoneEdit')}
+                      </Button>
+                      <Button variant="tertiaryGrey" onClick={() => deleteZone(zone.id)}>
+                        {tt('zoneRemove')}
+                      </Button>
+                    </Box>
+                  </Box>
+                </Box>
+              );
+            })}
+          </Box>
+        ) : (
+          /* Reachable by deleting the last zone. Bordered rather than filled: the page
+             surface is white, and greying a block to say "empty" makes the empty state
+             heavier than the populated one it replaced. */
+          <Box className={classes.zoneEmpty}>
+            <Box className={classes.zoneEmptyText}>
+              <Typography variant="subtitle2" className={classes.coverageTitle}>
+                {tt('zoneEmptyTitle')}
+              </Typography>
+              <Typography variant="body2" className={classes.sectionText}>
+                {tt('zoneEmptyText')}
+              </Typography>
+            </Box>
+          </Box>
+        )}
+
+        <Box className={classes.zoneAddRow}>
+          <Button
+            variant="secondaryGrey"
+            onClick={() => setZoneEditor({ zoneId: null, mode: ZONE_SHAPE.BOUNDARY })}
+          >
+            {tt('zoneDrawBoundary')}
+          </Button>
+          <Button
+            variant="secondaryGrey"
+            onClick={() => setZoneEditor({ zoneId: null, mode: ZONE_SHAPE.RADIUS })}
+          >
+            {tt('zoneSetRadius')}
+          </Button>
+        </Box>
+      </Box>
+
       {/* INSTALLATION DAYS ------------------------------------------------ */}
       {/**
        * Back to a seven-row table, and back for a reason rather than by reversal.
@@ -756,6 +1045,100 @@ const Harmonization = () => {
             {tt('installationDaysText')}
           </Typography>
         </Box>
+
+        {/**
+         * What this configuration cannot do, said here rather than at run time.
+         *
+         * Placed in this section on purpose: all three findings are about zones, but every
+         * one of them is *fixed* by a day — give a day the stranded zone, give the unzoned
+         * day a zone, put the orphaned site in a zone a day covers. A warning belongs where
+         * its remedy is.
+         */}
+        {coverage.noWorkedDays ||
+        coverage.stranded.length ||
+        coverage.daysWithoutZone.length ||
+        coverage.orphanSites.length ? (
+          <Box className={classes.coverageBandWrap}>
+            {coverage.noWorkedDays ? (
+              <Box className={classes.coverageBand}>
+                <Box className={classes.coverageIcon}>
+                  <AlertIcon />
+                </Box>
+                <Box className={classes.coverageText}>
+                  <Typography variant="subtitle2" className={classes.coverageTitle}>
+                    {tt('coverageNoDays')}
+                  </Typography>
+                  <Typography variant="body2" className={classes.coverageBody}>
+                    {tt('coverageNoDaysText', { zones: coverage.zonesHoldingWork })}
+                  </Typography>
+                </Box>
+              </Box>
+            ) : null}
+
+            {coverage.stranded.map((entry) => (
+              <Box key={entry.zone.id} className={classes.coverageBand}>
+                <Box className={classes.coverageIcon}>
+                  <AlertIcon />
+                </Box>
+                <Box className={classes.coverageText}>
+                  <Typography variant="subtitle2" className={classes.coverageTitle}>
+                    {tt('coverageStranded', { zone: entry.zone.name })}
+                  </Typography>
+                  <Typography variant="body2" className={classes.coverageBody}>
+                    {tt('coverageStrandedText', {
+                      zone: entry.zone.name,
+                      names: entry.sites.map((site) => site.name).join(', '),
+                      sites: entry.sites.length,
+                      filters: entry.filters,
+                    })}
+                  </Typography>
+                </Box>
+              </Box>
+            ))}
+
+            {coverage.daysWithoutZone.length ? (
+              <Box className={classes.coverageBand}>
+                <Box className={classes.coverageIcon}>
+                  <AlertIcon />
+                </Box>
+                <Box className={classes.coverageText}>
+                  <Typography variant="subtitle2" className={classes.coverageTitle}>
+                    {tt('coverageNoZone', {
+                      days: coverage.daysWithoutZone
+                        .map((weekday) => WEEKDAYS.find((day) => day.weekday === weekday)?.label)
+                        .join(', '),
+                    })}
+                  </Typography>
+                  <Typography variant="body2" className={classes.coverageBody}>
+                    {tt('coverageNoZoneText')}
+                  </Typography>
+                </Box>
+              </Box>
+            ) : null}
+
+            {coverage.orphanSites.length ? (
+              <Box className={classes.coverageBand}>
+                <Box className={classes.coverageIcon}>
+                  <AlertIcon />
+                </Box>
+                <Box className={classes.coverageText}>
+                  <Typography variant="subtitle2" className={classes.coverageTitle}>
+                    {tt('coverageOrphans', { sites: coverage.orphanSites.length })}
+                  </Typography>
+                  <Typography variant="body2" className={classes.coverageBody}>
+                    {tt('coverageOrphansText', {
+                      names: coverage.orphanSites
+                        .slice(0, 4)
+                        .map((site) => site.name)
+                        .join(', '),
+                      filters: coverage.orphanFilters,
+                    })}
+                  </Typography>
+                </Box>
+              </Box>
+            ) : null}
+          </Box>
+        ) : null}
 
         {/* The table gets its own box so it can scroll sideways below the breakpoint rather
             than have a column collapse — see `DAY_TABLE_MIN_WIDTH`. */}
@@ -795,6 +1178,11 @@ const Harmonization = () => {
                 {tt('shiftRange', { min: SHIFT_HOURS_MIN, max: SHIFT_HOURS_MAX })}
               </Typography>
             </Box>
+            {/* The third column, and the reason the whole table could move onto the form's
+                grid — there was nothing to put here before. See `FORM_COLUMNS`. */}
+            <Typography variant="subtitle3" className={classes.columnLabel}>
+              {tt('columnZone')}
+            </Typography>
           </Box>
 
           {WEEKDAYS.map(({ weekday, label }) => {
@@ -802,26 +1190,36 @@ const Harmonization = () => {
 
             return (
               <Box key={weekday} className={classes.dayRow}>
-                {/* First in the row and first in the tab order, matching the heading above it.
-                    It sat third, behind the day name, so the eye had to reach past the label to
-                    find the control and back again to read which day it belonged to. */}
-                <Checkbox
-                  className={classes.dayCheckbox}
-                  checked={!!day}
-                  onChange={() => toggleDay(weekday)}
-                  inputProps={{ 'aria-label': tt('dayAria', { day: label }) }}
-                />
+                {/**
+                 * The tick and the weekday, together in the label column.
+                 *
+                 * They were columns 1 and 2 of the table's own four-column template, which is
+                 * what put every weekday name 60px right of every label in the sections above.
+                 * A selection control belongs with the thing it selects, and pairing them is
+                 * what freed the row to use the form's grid.
+                 *
+                 * Tab order is unchanged — the checkbox is still first in the DOM, so the eye
+                 * and the keyboard both meet the control before the name it applies to.
+                 */}
+                <Box className={classes.dayCell}>
+                  <Checkbox
+                    className={classes.dayCheckbox}
+                    checked={!!day}
+                    onChange={() => toggleDay(weekday)}
+                    inputProps={{ 'aria-label': tt('dayAria', { day: label }) }}
+                  />
 
-                {/* The checkbox names the day rather than the row it is in, because a screen
-                    reader hears these controls as a flat list with no table around them: seven
-                    boxes all called "On" would be unusable and silent about what they do. */}
-                <Typography
-                  variant="subtitle2"
-                  component="span"
-                  className={day ? classes.dayName : classes.dayNameOff}
-                >
-                  {label}
-                </Typography>
+                  {/* The checkbox names the day rather than the row it is in, because a screen
+                      reader hears these controls as a flat list with no table around them: seven
+                      boxes all called "On" would be unusable and silent about what they do. */}
+                  <Typography
+                    variant="subtitle2"
+                    component="span"
+                    className={day ? classes.dayName : classes.dayNameOff}
+                  >
+                    {label}
+                  </Typography>
+                </Box>
 
                 <Box className={classes.shiftCell}>
                   {day ? (
@@ -849,6 +1247,42 @@ const Harmonization = () => {
                     </Typography>
                   )}
                 </Box>
+
+                {/**
+                 * The one zone this day covers (D15 — a day and a runsheet are 1:1).
+                 *
+                 * `displayEmpty` with a placeholder rather than a disabled control or an
+                 * error state: a worked day with no zone is legal and means exactly what it
+                 * says — the crew works, and nothing can legally land on them. Refusing to
+                 * store the day until it had a zone would make switching a day on a two-step
+                 * commit. The coverage panel above says the consequence out loud.
+                 */}
+                {day ? (
+                  <Select
+                    value={day.zoneId || ''}
+                    onChange={(event) => changeDayZone(weekday, event.target.value)}
+                    displayEmpty
+                    className={`${classes.zoneSelect} ${day.zoneId ? '' : classes.zoneSelectEmpty}`}
+                    inputProps={{ 'aria-label': tt('zoneAria', { day: label }) }}
+                    renderValue={(value) => {
+                      if (!value) return tt('zoneNonePlaceholder');
+                      return zoneNameOf(value);
+                    }}
+                  >
+                    <MenuItem value="">{tt('zoneNone')}</MenuItem>
+                    {form.zones.map((zone) => (
+                      <MenuItem key={zone.id} value={zone.id}>
+                        {zone.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                ) : (
+                  /* The cell keeps its height whichever child it holds, so switching a day
+                     on cannot shift the rows under it. */
+                  <Typography variant="body2" className={classes.shiftPlaceholder}>
+                    &mdash;
+                  </Typography>
+                )}
               </Box>
             );
           })}
@@ -891,6 +1325,33 @@ const Harmonization = () => {
        * `isDirty` compares serialised and would otherwise read as an edit the instant a
        * point was set.
        */}
+      {/**
+       * The zone editor, mounted once and opened onto whichever zone is being worked on.
+       *
+       * `currentSiteIds` is what lets the dialog warn before it takes sites *out* of a
+       * zone: saving a shape replaces membership, so a planner redrawing North to add one
+       * site would otherwise lose two others off the far edge without being told.
+       */}
+      <ZoneEditorDialog
+        open={Boolean(zoneEditor)}
+        zone={zoneEditor?.zoneId ? form.zones.find((z) => z.id === zoneEditor.zoneId) : null}
+        initialMode={zoneEditor?.mode || ZONE_SHAPE.BOUNDARY}
+        sites={ZONE_SITES}
+        /* The same helper the location row and the map picker use, so the reference mark
+           on the zone map is the point this screen has already promised is the base —
+           `defaultPoint` alone would ignore an address the planner typed and not saved. */
+        basePoint={anchorFor('startLocation')}
+        currentSiteIds={
+          zoneEditor?.zoneId
+            ? (
+                coverage.byZone.find((entry) => entry.zone.id === zoneEditor.zoneId)?.sites || []
+              ).map((site) => site.id)
+            : []
+        }
+        onCancel={() => setZoneEditor(null)}
+        onSave={saveZone}
+      />
+
       <LocationPickerDialog
         open={Boolean(mapPicker)}
         titleId="harmonization-location-dialog-title"

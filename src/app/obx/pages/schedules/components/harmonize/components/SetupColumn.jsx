@@ -64,6 +64,24 @@ const INSTALL_DAYS_LABEL_ID = 'harmonize-install-days-label';
  * changes leaves a screen reader announcing a button instead of a number, which is why the
  * live region below the pair exists — the same arrangement the deleted stepper used, kept
  * because the reason for it did not change with the shape.
+ *
+ * **The number is typeable, and that is why the unit is no longer part of it.** The value was
+ * a `<Typography>` holding a whole formatted phrase — `15 mi`, `± 7` — so the only way to
+ * reach 40 miles from 15 was twenty-five presses of a disc. The discs are right for a nudge
+ * and wrong for a jump, and a planner who knows the answer should be able to say it.
+ *
+ * Making it editable forced the string apart: an input cannot hold `15 mi` and still be a
+ * number, and parsing the unit back out of what the user typed is a guess about a translated
+ * string. So the affixes are drawn *beside* the input as their own quiet text — `mi` after it,
+ * `±` before it — from locale keys of their own, and the input carries nothing but digits.
+ * `radiusValue` / `needByValue` survive for the live region, which still wants the whole
+ * phrase.
+ *
+ * **A draft is held separately from the committed number** so a half-typed value never
+ * reaches the optimizer: `4` on its way to `40` would re-plan the run against a radius the
+ * planner is in the middle of abandoning. The draft commits on blur and on Enter, reverts on
+ * Escape, and clamps rather than refuses — someone who types `99` into a window capped at 7
+ * meant *as wide as it goes*, and the field that silently keeps 7 has answered them.
  */
 const CounterField = ({
   classes,
@@ -71,54 +89,155 @@ const CounterField = ({
   tip,
   hint,
   value,
+  numericValue,
+  prefix,
+  suffix,
+  inputLabel,
+  min,
+  max,
+  onCommit,
   decreaseLabel,
   increaseLabel,
   canDecrease = true,
   canIncrease = true,
   onDecrease,
   onIncrease,
-}) => (
-  <Box className={classes.field}>
-    <Box className={classes.counterField}>
-      <Box className={classes.counterText}>
-        <FieldLabel text={label} tip={tip} className={classes.counterLabel} />
-        {hint ? <Typography className={classes.counterHint}>{hint}</Typography> : null}
+}) => {
+  /**
+   * What is in the box while it is being typed in, or `null` when it is not.
+   *
+   * `null` rather than a mirror of `numericValue`, so there is exactly one source of truth at
+   * any moment: not editing means the committed number is drawn, and no effect has to keep a
+   * copy in step with a prop that the discs also change.
+   */
+  const [draft, setDraft] = useState(null);
+  const shown = draft === null ? String(numericValue) : draft;
+
+  const commit = () => {
+    if (draft === null) return;
+    const parsed = Number.parseInt(draft, 10);
+    setDraft(null);
+    /* An empty box or a stray `-` is someone who changed their mind, not someone asking for
+       zero. Reverting to the committed number is the only answer that cannot lose their
+       previous setting. */
+    if (!Number.isFinite(parsed)) return;
+    const clamped = Math.min(max == null ? parsed : Math.min(parsed, max), Number.MAX_SAFE_INTEGER);
+    const next = Math.max(min, clamped);
+    if (next !== numericValue) onCommit?.(next);
+  };
+
+  return (
+    <Box className={classes.field}>
+      <Box className={classes.counterField}>
+        <Box className={classes.counterText}>
+          <FieldLabel text={label} tip={tip} className={classes.counterLabel} />
+          {hint ? <Typography className={classes.counterHint}>{hint}</Typography> : null}
+        </Box>
+
+        <Box className={classes.counterControl}>
+          <button
+            type="button"
+            className={classes.counterButton}
+            disabled={!canDecrease}
+            aria-label={decreaseLabel}
+            onMouseDown={(event) => event.preventDefault()}
+            onClick={onDecrease}
+          >
+            <MinusIcon className={classes.counterButtonIcon} />
+          </button>
+
+          {/* Affix, input, affix. The box carries the width floor so the discs do not walk as
+              the figure crosses `9 → 10`; the input inside it sizes to its own digits. */}
+          <Box className={classes.counterValueBox}>
+            {prefix ? (
+              <Typography className={classes.counterAffix} aria-hidden="true">
+                {prefix}
+              </Typography>
+            ) : null}
+
+            <input
+              type="text"
+              inputMode="numeric"
+              className={classes.counterInput}
+              value={shown}
+              aria-label={inputLabel}
+              /* The honest role for a number between two steppers, and the reason the discs
+                 need no `aria-live` of their own while focus is in here. */
+              role="spinbutton"
+              aria-valuenow={numericValue}
+              aria-valuemin={min}
+              aria-valuemax={max}
+              /* Sized in `ch` on a `tabular-nums` face, so one character is one digit. Two is
+                 the floor because `± 7` is one digit and a 44px box centred on a 1ch input
+                 puts the caret oddly far from the text. */
+              style={{ width: `${Math.max(2, shown.length)}ch` }}
+              onChange={(event) => setDraft(event.target.value.replace(/[^0-9]/g, ''))}
+              onFocus={(event) => event.target.select()}
+              onBlur={commit}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') {
+                  event.preventDefault();
+                  commit();
+                } else if (event.key === 'Escape') {
+                  /**
+                   * **Escape cancels the draft, and must not reach the workspace.**
+                   *
+                   * `index.jsx` listens for Escape on `document` and closes the whole surface
+                   * outright — correct for a mode you want out of, catastrophic while someone
+                   * is mid-edit in a field: the first version of this typed `4` on the way to
+                   * `40`, pressed Escape to start again, and lost the plan.
+                   *
+                   * So a *dirty* field swallows the key — React dispatches at the root, which
+                   * is inside `document`, so stopping propagation here means the close handler
+                   * never sees it. A *clean* field deliberately lets it through, which is the
+                   * two-stage behaviour every editor has: Escape abandons the edit, Escape
+                   * again leaves the screen.
+                   */
+                  if (draft !== null) {
+                    event.stopPropagation();
+                    setDraft(null);
+                  }
+                } else if (event.key === 'ArrowUp' && canIncrease) {
+                  event.preventDefault();
+                  setDraft(null);
+                  onIncrease?.();
+                } else if (event.key === 'ArrowDown' && canDecrease) {
+                  event.preventDefault();
+                  setDraft(null);
+                  onDecrease?.();
+                }
+              }}
+            />
+
+            {suffix ? (
+              <Typography className={classes.counterAffix} aria-hidden="true">
+                {suffix}
+              </Typography>
+            ) : null}
+          </Box>
+
+          <button
+            type="button"
+            className={classes.counterButton}
+            disabled={!canIncrease}
+            aria-label={increaseLabel}
+            onMouseDown={(event) => event.preventDefault()}
+            onClick={onIncrease}
+          >
+            <PlusIcon className={classes.counterButtonIcon} />
+          </button>
+        </Box>
       </Box>
 
-      <Box className={classes.counterControl}>
-        <button
-          type="button"
-          className={classes.counterButton}
-          disabled={!canDecrease}
-          aria-label={decreaseLabel}
-          onMouseDown={(event) => event.preventDefault()}
-          onClick={onDecrease}
-        >
-          <MinusIcon className={classes.counterButtonIcon} />
-        </button>
-
-        <Typography className={classes.counterValue}>{value}</Typography>
-
-        <button
-          type="button"
-          className={classes.counterButton}
-          disabled={!canIncrease}
-          aria-label={increaseLabel}
-          onMouseDown={(event) => event.preventDefault()}
-          onClick={onIncrease}
-        >
-          <PlusIcon className={classes.counterButtonIcon} />
-        </button>
+      {/* The value, for a screen reader parked on a disc that deliberately does not take
+          focus — see the docstring, and `srOnly`. It states the *committed* phrase, so a
+          draft in the box announces nothing until it lands. */}
+      <Box className={classes.srOnly} aria-live="polite">
+        {value}
       </Box>
     </Box>
-
-    {/* The value, for a screen reader parked on a disc that deliberately does not take
-        focus — see the docstring, and `srOnly`. */}
-    <Box className={classes.srOnly} aria-live="polite">
-      {value}
-    </Box>
-  </Box>
-);
+  );
+};
 
 CounterField.propTypes = {
   classes: PropTypes.object.isRequired,
@@ -126,8 +245,22 @@ CounterField.propTypes = {
   tip: PropTypes.string,
   /** The fact under the name: what this setting currently reaches, or why it is capped. */
   hint: PropTypes.node,
-  /** Drawn with its unit — `15 mi`, `± 7` — so the row states what the number counts. */
+  /** The whole phrase — `15 mi`, `± 7` — for the live region only. Not what is drawn. */
   value: PropTypes.node.isRequired,
+  /** The committed number, which is what the input edits and the discs step. */
+  numericValue: PropTypes.number.isRequired,
+  /** Quiet text before the input — `±`. */
+  prefix: PropTypes.node,
+  /** Quiet text after it — `mi`. */
+  suffix: PropTypes.node,
+  /** Names the input for a screen reader; the visible label belongs to the row, not the box. */
+  inputLabel: PropTypes.string,
+  /** A typed value below this is raised to it. */
+  min: PropTypes.number.isRequired,
+  /** A typed value above this is lowered to it. Omitted where there is no ceiling. */
+  max: PropTypes.number,
+  /** Called with the clamped number when a draft lands. */
+  onCommit: PropTypes.func,
   decreaseLabel: PropTypes.string,
   increaseLabel: PropTypes.string,
   canDecrease: PropTypes.bool,
@@ -451,24 +584,40 @@ const SetupColumn = ({ run, startPoint, startAddress, placesReady }) => {
             </button>
           ) : null}
         </Box>
+      </Box>
+
+      <Box className={workspace.setupGroup}>
+        {/* **The two filters, as a list of two rows.** Every field above this describes the
+            run — its window, its weekday, where the van leaves from. These two decide which
+            visits are *in* it, and they are the only two here whose sub-label is a coverage
+            count, which is why they are the pair the triage panel under the plan sends the
+            planner back to. See the radius block below for why it moved out of the origin's
+            group to stand here. */}
 
         {/**
-         * **The radius is back in the column, and it is in this group rather than beside the
-         * need-by window.**
+         * **The radius, paired with the need-by window rather than tucked under the address.**
          *
-         * The twentieth pass took it out for a good reason: on the happy path every visit is
-         * inside the circle, so the control sat at whatever Settings gave it and was the only
-         * field here whose job was to *exclude* work. What has changed is that the map is now
-         * drawn from the first frame with this ring on it, so the field is no longer a knob
-         * with an invisible consequence — it is one half of a two-part gesture where the other
-         * half is watching the circle grow and the count under it move.
+         * The previous pass put it in the origin's group, arguing that a distance belongs
+         * beside the point it is measured from — which is true of the *arithmetic* and wrong
+         * about the column. What it produced was a borderless stepper row 12px under a 44px
+         * outlined input, and then the only other row of that shape a full group-gap below it:
+         * the two controls that ask the same kind of question, in the same grammar, with the
+         * same kind of sub-label, separated — and each one reading as a field that had lost
+         * its box. Whatever the grouping said, the eye saw two orphans.
          *
-         * It belongs under the origin because that is what it is measured from. §11 of
-         * `harmonization-settings.md` keeps two origins for two questions; this feature
+         * Paired, they are a two-row list at the foot of the column, and the list is honest
+         * about what they have in common: **these are the two filters.** Every field above
+         * describes the run — when it is, which weekday, where the van leaves from. These two
+         * decide *which visits are in it*, they are the only two whose sub-label is a coverage
+         * count, and they are the two the triage panel sends the planner back to. That is a
+         * stronger reason to sit together than the radius's origin is to sit under the address,
+         * and the origin is not lost by it: the ring on the map is drawn around that same
+         * point, from the first frame, which is where the relationship is actually legible.
+         *
+         * §11 of `harmonization-settings.md` keeps two origins for two questions; this feature
          * deliberately has one — the van leaves from here, returns here, and the circle is
-         * drawn around the same point — so the address and the distance from it are one
-         * question asked in two fields, and putting them 28px apart in separate groups said
-         * they were two.
+         * drawn around the same point. That has not changed, only which field the control
+         * stands next to.
          */}
         {/**
          * **The radius, as the supplied design draws a number: a label, its consequence, and
@@ -500,6 +649,14 @@ const SetupColumn = ({ run, startPoint, startAddress, placesReady }) => {
               : tt('radiusCoversHintAll', { count: coversCount })
           }
           value={tt('radiusValue', { mi: radiusMiles })}
+          numericValue={radiusMiles}
+          suffix={tt('radiusUnit')}
+          inputLabel={tt('radiusInput')}
+          /* No `max`, matching the `+` that never stops: nobody has decided the furthest a
+             franchise will drive, and a typed 200 is an unusual answer rather than a wrong
+             one. */
+          min={RADIUS_MIN_MILES}
+          onCommit={setRadiusMiles}
           decreaseLabel={tt('radiusDecrease')}
           increaseLabel={tt('radiusIncrease')}
           canDecrease={radiusMiles > RADIUS_MIN_MILES}
@@ -524,17 +681,7 @@ const SetupColumn = ({ run, startPoint, startAddress, placesReady }) => {
             </button>
           </Box>
         ) : null}
-      </Box>
 
-      <Box className={workspace.setupGroup}>
-        {/* **One knob now, not two.** The radius stepper that used to sit beside this is
-            gone from the panel: on the happy path every visit in the window is inside the
-            circle, so the control spent its life at the value Settings gave it, and it was
-            the only field here whose job was to *exclude* work rather than to describe the
-            run. It has not lost its remedy — where the radius genuinely does refuse
-            something, the triage panel under the plan says so and offers the exact mileage
-            that would let it in, which is the moment the number is worth touching. A
-            setting that only matters in one case belongs where that case is reported. */}
         {/**
          * **The need-by window, in the same row shape as the radius above it.**
          *
@@ -571,6 +718,15 @@ const SetupColumn = ({ run, startPoint, startAddress, placesReady }) => {
                   : tt('needByOfDue')
           }
           value={tt('needByValue', { days: needByDays })}
+          numericValue={needByDays}
+          prefix={tt('needByPrefix')}
+          inputLabel={tt('needByInput')}
+          min={needByFloor}
+          /* The same ceiling the `+` stops at — the narrower of the policy maximum and the
+             width of the Harmonize window. A typed 30 lands on it rather than being refused,
+             because someone who types 30 into a 7-day window means *as wide as it goes*. */
+          max={needByCeiling}
+          onCommit={setNeedByDays}
           decreaseLabel={tt('needByDecrease')}
           increaseLabel={tt('needByIncrease')}
           canDecrease={needByDays > needByFloor}

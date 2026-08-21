@@ -1,4 +1,5 @@
 import CustomTabsWithPermissions from 'commonComponents/customTabsWithPermissions';
+import PropTypes from 'prop-types';
 import React, { lazy, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
@@ -9,6 +10,7 @@ import { useTenantLabel } from 'src/helper/utilityHooks';
 import { dashboardOptions } from 'src/utils/constants';
 
 const BreakRules = lazy(() => import('./preferences/breakRules'));
+const Harmonization = lazy(() => import('./preferences/harmonization'));
 const HolidayGroups = lazy(() => import('./preferences/holidayGroups'));
 const Notifications = lazy(() => import('./preferences/Notifications'));
 const RolesAndPermissions = lazy(() => import('./rolesAndPermissions'));
@@ -132,7 +134,13 @@ const settingsTabs = (t, getLabel) => {
       permission: OBXMODULE.MODULE_OBX_SETTINGS_REPORT_TEMPLATES,
       tabValue: 'reportTemplates',
       activeModule: [dashboardOptions.ops],
-      aclPermission: OBXMODULE.ACL_OBX_SETTINGS_REPORT_TEMPLATES_VIEW,
+      /* WIDENED GATE — was `ACL_OBX_SETTINGS_REPORT_TEMPLATES_VIEW`.
+         Opened to `settings.view` so the tab renders for any role that can open Settings at
+         all, which is what makes the full three-tab strip visible on a tenant whose roles
+         carry none of the per-module `settings.<child>.view` keys. This is deliberately
+         weaker than the module gate it replaces: a role holding only `settings.view` now
+         sees this tab where it previously did not. Restore the line above to undo. */
+      aclPermission: OBXMODULE.ACL_OBX_SETTINGS_VIEW,
       component: (
         <Suspense fallback={null}>
           <Templates />
@@ -153,10 +161,40 @@ const settingsTabs = (t, getLabel) => {
       permission: OBXMODULE.MODULE_OBX_SETTINGS_ROLES_AND_PERMISSIONS,
       tabValue: 'rolesAndPermissions',
       activeModule: [dashboardOptions.ops],
-      aclPermission: OBXMODULE.ACL_OBX_SETTINGS_MAPPING_PREFERENCE_ROLES_PERMISSIONS_VIEW,
+      /* WIDENED GATE — was `ACL_OBX_SETTINGS_MAPPING_PREFERENCE_ROLES_PERMISSIONS_VIEW`.
+         Opened to `settings.view` so the tab renders for any role that can open Settings at
+         all, which is what makes the full three-tab strip visible on a tenant whose roles
+         carry none of the per-module `settings.<child>.view` keys. This is deliberately
+         weaker than the module gate it replaces: a role holding only `settings.view` now
+         sees this tab where it previously did not. Restore the line above to undo. */
+      aclPermission: OBXMODULE.ACL_OBX_SETTINGS_VIEW,
       component: (
         <Suspense fallback={null}>
           <RolesAndPermissions />
+        </Suspense>
+      ),
+    },
+
+    /* Harmonization is a tab of its own, not a vertical item under another tab.
+       It sat under Roles & Permissions, which put a list inside a list — that tab's screen
+       draws its own rail of roles — and, worse, inherited that tab's gate: every other
+       Settings tab is keyed on a `settings.<child>.view` permission, so a role holding only
+       `settings.view` filtered all of them out and landed on an empty page.
+
+       This is gated on `ACL_OBX_SETTINGS_VIEW` (`settings.view`) instead — the same key the
+       sidebar link and the route guard already use, and the weakest honest gate: if you can
+       open Settings at all, this tab is there. That is deliberate, and it is what makes the
+       screen reachable on a tenant whose roles carry none of the child keys. It still needs
+       its own `MODULE_OBX_SETTINGS_HARMONIZATION` once the backend defines one. */
+    {
+      title: `${t('obx.settings.preferences.harmonization.settingTitle')}`,
+      permission: OBXMODULE.MODULE_OBX_SETTINGS_ROLES_AND_PERMISSIONS,
+      tabValue: 'harmonization',
+      activeModule: [dashboardOptions.ops],
+      aclPermission: OBXMODULE.ACL_OBX_SETTINGS_VIEW,
+      component: (
+        <Suspense fallback={null}>
+          <Harmonization />
         </Suspense>
       ),
     },
@@ -224,13 +262,20 @@ const settingsTabs = (t, getLabel) => {
   ];
 };
 
-const ObxSettings = () => {
+/**
+ * `bypassPermissions` is passed only by the dev preview route (`/app/settings/preview`).
+ * Default false, so the real Settings route is unchanged. It exists because a role whose
+ * ACL payload comes back empty renders a Settings page with no tabs at all, and there was
+ * otherwise no way to look at a settings screen without a working permission set.
+ */
+const ObxSettings = ({ bypassPermissions = false }) => {
   const { t } = useTranslation();
   const { getLabel } = useTenantLabel();
   const userRole = useSelector((state) => state.auth.userRole);
 
   const tabs = settingsTabs(t, getLabel)?.filter((tab) => {
     if (
+      !bypassPermissions &&
       !['franchise_owner', 'home_officer'].includes(userRole?.slug) &&
       tab?.tabValue === 'reportTemplates'
     ) {
@@ -238,7 +283,13 @@ const ObxSettings = () => {
     }
     return true;
   });
-  return <CustomTabsWithPermissions data={tabs} defaultTab={0} />;
+  return (
+    <CustomTabsWithPermissions data={tabs} defaultTab={0} bypassPermissions={bypassPermissions} />
+  );
+};
+
+ObxSettings.propTypes = {
+  bypassPermissions: PropTypes.bool,
 };
 
 export default ObxSettings;

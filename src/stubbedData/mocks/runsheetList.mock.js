@@ -1,17 +1,35 @@
+import { ROUTE_NAMES } from 'src/stubbedData/mocks/schedule.mock';
+
+const ASSIGNEES = [
+  'Mike Ross',
+  'Sarah Connor',
+  'David Nguyen',
+  'Priya Shah',
+  'James Okoro',
+  'Elena Ruiz',
+];
+
+/**
+ * The franchise's routes, named from the same list the schedule grid draws from
+ * (`ROUTE_NAMES`). The visit drawer's "move to route" dropdown reads this
+ * endpoint, so a route a planner sees on a card has to be selectable here — with
+ * one hard-coded "Runsheet 1" it never was.
+ *
+ * Ids match `routeForSite`'s scheme (700 + index) so the drawer can recognise the
+ * route a visit is already on rather than prepending a duplicate.
+ */
 export const runsheets = {
-  runsheets: [
-    {
-      id: 1,
-      name: 'Runsheet 1',
-      assignedTo: 'Mike Ross',
-      hits: 5,
-    },
-  ],
+  runsheets: ROUTE_NAMES.map((name, index) => ({
+    id: 700 + index,
+    name,
+    assignedTo: ASSIGNEES[index % ASSIGNEES.length],
+    hits: 4 + (index % 5),
+  })),
   pagination: {
     page: 1,
     perPage: 10,
-    totalCount: 25,
-    search: 'unro',
+    totalCount: ROUTE_NAMES.length,
+    search: '',
   },
 };
 

@@ -75,6 +75,43 @@ export const WarningTriangle = ({ className }) => (
 WarningTriangle.propTypes = { className: PropTypes.string };
 
 /**
+ * The exclusions panel's mark: **a filled disc with the bar knocked out of it.**
+ *
+ * The panel wore `WarningTriangle` — the spill ribbon's outline mark — at 12px, and the
+ * supplied design draws a solid orange disc instead. The difference is not decoration. The
+ * ribbon says *this route overran its day*, on a white card, one line among several; the
+ * panel says *this work has no route at all*, at the head of its own coloured ground, and it
+ * is the loudest thing this column has to say. An outline triangle at 12px on a peach wash is
+ * the quietest available way to say it: same stroke weight as the chevrons, same hairline
+ * family as everything it is trying to stand out from.
+ *
+ * `currentColor` on the disc and the ground's own peach knocked out of it, rather than white:
+ * a white bar and dot on an orange disc sitting on a `#FEF1E8` card is white against
+ * near-white, which at 16px reads as a smudge. Punching the fill in the card's own colour
+ * makes the mark *part of* the surface it sits on. That does tie the glyph to one ground —
+ * hence the note, and hence `#FEF1E8` appearing here as well as in `notIncluded`.
+ *
+ * Not `ErrorOutline`/`Warning` from MUI: this region has twice had to fight
+ * `.MuiSvgIcon-root { font-size: 1.5rem }` for control of an icon's box (§7.28, `columnIcon`),
+ * and a 16px mark that has to agree with a 20px line of type is exactly the case that loses.
+ */
+export const WarningDisc = ({ className }) => (
+  <Box
+    component="svg"
+    viewBox="0 0 16 16"
+    className={className}
+    aria-hidden="true"
+    focusable="false"
+  >
+    <circle cx="8" cy="8" r="8" fill="currentColor" />
+    <path d="M8 4v5" fill="none" stroke="#FEF1E8" strokeWidth="1.8" strokeLinecap="round" />
+    <circle cx="8" cy="11.6" r="1" fill="#FEF1E8" />
+  </Box>
+);
+
+WarningDisc.propTypes = { className: PropTypes.string };
+
+/**
  * The three column headers' marks — sliders, a route, a pin — added so each third of
  * the screen is named by a picture as well as a word once the hairline under the
  * heading came out. Same family as the two above: stroke-only, `currentColor`,

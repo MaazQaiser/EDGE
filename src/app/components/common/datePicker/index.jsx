@@ -127,8 +127,9 @@ const ResponsiveDatePickers = ({
 
   const { dateformat } = useDateTime();
 
-  // Use the format from the hook if no custom format is provided
-  const effectiveFormat = dateformat || format;
+  // An explicit `format` prop is the caller opting out of the tenant's own date format
+  // for this one field, so it wins; otherwise fall back to the tenant's format.
+  const effectiveFormat = format || dateformat;
 
   return (
     <Box className={classes.datePickerContainer}>
@@ -199,8 +200,11 @@ ResponsiveDatePickers.defaultProps = {
   minDate: null,
   maxDate: null,
   disabled: false,
-  format: 'MM/DD/YYYY',
-  inputFormat: 'MM/DD/YYYY',
+  /* No default here any more — `format` had one (`MM/DD/YYYY`) that `effectiveFormat`
+     never actually reached, because a defaulted prop is never `undefined` and always
+     out-ranked the tenant's own `dateformat`. Leaving it unset is what lets a caller's
+     explicit `format` mean something while every other screen still gets the tenant's
+     own setting. */
   placeholder: 'mm/dd/yyyy',
   helperText: '',
   error: false,

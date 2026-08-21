@@ -64,7 +64,6 @@ const RoutesColumn = ({
     setRouteName,
     reorder,
     reoptimize,
-    dropStop,
     dropSpillRoute,
   } = run;
 
@@ -232,7 +231,6 @@ const RoutesColumn = ({
                 onHighlight={onHighlight}
                 onReorder={reorder}
                 onReoptimize={reoptimize}
-                onMoveOut={dropStop}
                 onDropSpill={dropSpillRoute}
               />
             </Box>

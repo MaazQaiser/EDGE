@@ -98,8 +98,11 @@ const STOP_PIN_GAP = 4;
 const PIN_STRIP_SIZE = 16;
 const PIN_STRIP_GAP = 3;
 const STOP_ROW_H = 36;
-const CONNECTOR_GAP = 16;
-const CONNECTOR_H = 22;
+/* `CONNECTOR_GAP` (16) and `CONNECTOR_H` (22) are gone with the standalone connector they
+   positioned — see the note where `stopConnector` used to be. The invariant they were named
+   for still holds and is now enforced by construction rather than by two numbers matching:
+   the pin and the dashed rule are the same 16px flex column, so the rule cannot land off the
+   pin's centre. */
 
 /**
  * The pin and its connector, by what the stop *is*.
@@ -306,9 +309,24 @@ export const useStyles = makeStyles((theme) => ({
    * they can be built independently is that none of them gets to invent a key.
    */
 
-  /* The card, to spec: 16px padding, 12px between its three children, an 8px radius
-     and a `Grey/100` hairline. Three children and no more — the head, the bar, and the
-     scrolling list of stops. */
+  /**
+   * The card: an 8px radius, a `Grey/100` hairline, and three children — the head, the bar,
+   * and the list of stops.
+   *
+   * **20px of padding and 14px between the children, up from the spec's 16 and 12.** The spec
+   * measured this card in isolation; what it is actually doing is holding the only content in
+   * a pane 844px tall, and at 16/12 a six-stop route came to 392px of that — a dense block
+   * pinned to the top of a column with 450px of white under it. Read next to the setup
+   * column's 44px fields and the map's half of the screen, the answer looked like the
+   * cramped part of a screen whose other two thirds were not.
+   *
+   * **Back to the exported 16 and 12.** The pass above raised them to 20 and 14 to fight a
+   * card that read as collapsed — the right diagnosis aimed at the wrong element. The
+   * cramping was the *row pitch*, which the design puts at 60px against the 32 we were
+   * drawing; widening the frame around a dense list only pushed the density inward. With
+   * `stopLine` carrying the air the design asks for, the frame's own numbers are the
+   * exported ones again, and 382 − 32 − 2 border = the 348 every inner frame states.
+   */
   proposedCard: {
     boxSizing: 'border-box',
     display: 'flex',
@@ -340,6 +358,14 @@ export const useStyles = makeStyles((theme) => ({
    * the same 14px as a stop's own name, one weight above. That is the better reading:
    * a route's name is a label for the list beneath it, not a page heading, and at 18px
    * three stacked cards read as three headings competing with the column's own.
+   *
+   * **700 now, not 600, and the size did not move with it.** The supplied design reads the
+   * card's title as *bold* against the figure beside it, and the two ways to buy that are
+   * weight and size. Size is spoken for: 14px is the stop names' own ramp and the whole of
+   * the argument above — a route title larger than the names under it is a heading again, and
+   * three of those in one column compete with the column's own. Weight costs nothing anyone
+   * else has claimed: at 14px, 700 over the stop rows' 500 puts one clear step between the
+   * card and its contents, where 600 over 500 was a step the eye had to look for.
    */
   proposedName: {
     '&.MuiInputBase-root': {
@@ -347,6 +373,9 @@ export const useStyles = makeStyles((theme) => ({
       minWidth: 0,
       fontFamily: 'Inter',
       fontSize: 14,
+      /* 600. It went to 700 last pass on a reading of the mockup image; the export is
+         explicit — `font-weight: 600` on a 14px/20px title — and 700 at this size made the
+         card's own name heavier than any stop name under it by a full step. */
       fontWeight: 600,
       lineHeight: '20px',
       color: '#262527',
@@ -375,7 +404,8 @@ export const useStyles = makeStyles((theme) => ({
     '&.Mui-error': { borderColor: '#DF372B' },
   },
   /* The static form, for a route whose name belongs to the route being merged into.
-     Same ramp as the field so the head does not change height between the two. */
+     Same ramp as the field so the head does not change height between the two — which is
+     why the weight above and the weight here are one edit, never one of the two. */
   proposedNameStatic: {
     '&.MuiTypography-root': {
       flex: 1,
@@ -390,8 +420,22 @@ export const useStyles = makeStyles((theme) => ({
       whiteSpace: 'nowrap',
     },
   },
-  /* `2 hr / 8 hr` — Light 12px, the spec's quietest tier. It is a fact about the card,
-     not its headline; the bar underneath is the same fact drawn. */
+  /**
+   * `2 hr / 8 hr` — 12px, dark ink, on the head's right.
+   *
+   * It is a fact about the card, not its headline; the bar underneath is the same fact drawn.
+   *
+   * **400, not the 300 it was, and 300 was the wrong quiet.** The supplied design reads this
+   * figure at a regular weight — the same weight as body text — where 300 is this sheet's
+   * *label* tier, the ramp `stopDetailLabel` uses for the small print inside an open row. Set
+   * in it, the one number on a shut card that says how full the day is was lighter than the
+   * site names below it and read as a caption on the title rather than as the title's other
+   * half. The size stays at 12: the pair is a comparison, and the bar directly under it is
+   * that comparison at full width, so this does not have to shout to be found.
+   */
+  /* `2 hr / 8 hr` — Light 12px/16px, the export's quietest tier, and back to 300 from the
+     400 the last pass gave it. It is a fact about the card, not its headline; the bar
+     underneath is the same fact drawn. */
   proposedTime: {
     '&.MuiTypography-root': {
       flexShrink: 0,
@@ -602,7 +646,13 @@ export const useStyles = makeStyles((theme) => ({
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'flex-start',
-    padding: 16,
+    /* **20, matching `proposedCard`, so both lists' pins sit on one axis down the column.**
+       It was 16, and the route cards moved to 20 this pass — which put the panel's grip column
+       4px left of every route card's, in a column where the two lists sit one directly above
+       the other and are deliberately built from the same row. The pins inside a list line up
+       because the row makes them; the pins *between* the lists only line up if the two
+       containers agree, and there is no reason for these two to disagree. */
+    padding: 20,
     gap: 12,
     /* The spec's own pair, and warmer than this file's `SPILL_*` trio: `#FEF1E8` on
        `#FFE8C7` is an orange wash where the spill ribbon's is a yellow one. Kept
@@ -610,7 +660,25 @@ export const useStyles = makeStyles((theme) => ({
        route overran* and this marks *these visits have no route at all* — the second is
        the louder fact and the spec gives it the louder ground. */
     background: '#FEF1E8',
-    border: '1px solid #FFE8C7',
+    /**
+     * **No border, and this is the one card in the column that should not have one.**
+     *
+     * It had `1px solid #FFE8C7`. The supplied design draws this panel as a peach fill with no
+     * visible edge — the fill *is* the separation — and that is the correct reading of the
+     * house rule rather than an exception to it: cards get a hairline
+     * ([[filtergo-white-page-background]]) because the page is white and a white card with no
+     * border has no edge against it. This card is not white. Against the same white page a
+     * peach ground separates on its own, and the border was a second edge drawn one shade
+     * apart from the fill it outlined — visible mostly as a slightly muddier rim.
+     *
+     * **`transparent`, not `none`.** The 1px still has to exist, because the route cards above
+     * have one and `border-box` counts it: dropped outright, this card's content box started
+     * 1px further left than theirs, and the two lists' grip columns — which the padding above
+     * was just set to 20 to align — came out at 493 against 494. Kept as a transparent edge,
+     * the box model is identical to a route card's and only the colour is gone, which is all
+     * that was being asked for. `#FFE8C7` is the hex it was, named here as the record.
+     */
+    border: '1px solid transparent',
     borderRadius: 8,
     marginBottom: 12,
   },
@@ -630,7 +698,11 @@ export const useStyles = makeStyles((theme) => ({
     gap: 8,
     minWidth: 0,
   },
-  notIncludedIcon: { width: 12, height: 12, flexShrink: 0, color: '#F57C00', display: 'block' },
+  /* 16, not 12, because the mark changed kind — see `WarningDisc`. A stroked triangle reads at
+     12px because its outline is the same hairline as the type beside it; a solid disc at 12
+     is a dot, and it has to sit against a 20px line of 14px semibold. 16 is the pin's own
+     size, which is the other mark in this panel and the one this should look related to. */
+  notIncludedIcon: { width: 16, height: 16, flexShrink: 0, color: '#F57C00', display: 'block' },
   notIncludedTitle: {
     '&.MuiTypography-root': {
       minWidth: 0,
@@ -705,11 +777,34 @@ export const useStyles = makeStyles((theme) => ({
    * the disc on the right is being pressed to change; as a separate hint line below a boxed
    * field it was the same words three rows away from the control.
    */
+  /**
+   * **A hairline above it, and the boxed fields' own 44px of height.**
+   *
+   * The two of these were the one place in this column where a field had no frame — label and
+   * sub-label on the left, two discs on the right, and nothing saying where the control began
+   * or ended. Under three 44px outlined inputs that read as a field whose box had failed to
+   * render: the row sat 12px under the address input's own border, at 38px, with its discs
+   * floating off to the right, and the pair of them looked like the column had stopped being
+   * designed two thirds of the way down.
+   *
+   * A rule on top is the smallest thing that fixes it. It gives the row a beginning, it makes
+   * the two of them read as *rows of one list* rather than two loose lines, and it is the
+   * house pattern for a setting that is adjusted in place rather than typed into — which is
+   * what these are, and the reason they have no box in the supplied design. The 44px
+   * `minHeight` puts them on the same vertical rhythm as the inputs above; without it a 38px
+   * row between 44px neighbours is a third measure in a column with two.
+   *
+   * Not a full border and not a filled ground: either would make these the *heaviest* fields
+   * here, which inverts the problem instead of fixing it.
+   */
   counterField: {
     display: 'flex',
     alignItems: 'center',
     gap: 12,
     minWidth: 0,
+    minHeight: 44,
+    paddingTop: 12,
+    borderTop: '1px solid #E6E6E7',
   },
   /* The label stack takes the slack, so the discs sit hard right whatever the label says
      and the two fields' controls line up with each other. */
@@ -786,23 +881,85 @@ export const useStyles = makeStyles((theme) => ({
   },
   counterButtonIcon: { width: 12, height: 12, display: 'block' },
   /**
-   * The value between them.
+   * The value between the discs, and it is an `<input>` now.
    *
-   * A fixed minimum width and `tabular-nums`, so the two discs do not walk apart as the
-   * figure crosses `9 → 10` or the unit appears. 44px holds `± 14` and `125 mi`; past that
-   * the cell grows and the discs move once rather than on every press.
+   * **The box holds the width floor; the input holds the digits.** `minWidth: 44` used to sit
+   * on the value itself, so that the two discs did not walk apart as the figure crossed
+   * `9 → 10` or gained a unit. That floor still has to exist and can no longer live on the
+   * input, because an input sized to a floor is an input with dead space either side of the
+   * caret — you click next to the number and nothing focuses. So the floor moved out here and
+   * the input sizes to its own content in `ch`.
+   *
+   * 44px holds `± 14` and `125 mi`; past that the cell grows and the discs move once rather
+   * than on every press.
    */
-  counterValue: {
+  counterValueBox: {
+    minWidth: 44,
+    display: 'flex',
+    alignItems: 'baseline',
+    justifyContent: 'center',
+    gap: 3,
+    flexShrink: 0,
+  },
+  /**
+   * **A borderless input, and deliberately not a field.**
+   *
+   * The design draws a number between two discs, not a box to fill in — and this column
+   * already has three outlined 44px inputs above it, so a fourth outline here would say the
+   * radius is the same kind of thing as an address. What it gets instead is the affordance
+   * without the frame: the text is the control, it takes a caret on click, and hover and focus
+   * are the only two states that draw anything at all.
+   *
+   * `appearance: textfield` with the spin buttons suppressed is *not* needed, because this is
+   * `type="text"` with `inputMode="numeric"` rather than `type="number"` — a number input
+   * brings its own steppers, which is two sets of steppers on one value, and it also lets `e`
+   * and `.` through on the way to a value this field cannot use.
+   */
+  counterInput: {
+    /* Padding is horizontal only and small: it is the caret's breathing room, not a box. */
+    padding: '2px 2px',
+    margin: 0,
+    border: 0,
+    borderRadius: 4,
+    background: 'none',
+    textAlign: 'center',
+    fontFamily: 'Inter',
+    fontSize: 14,
+    fontWeight: 600,
+    lineHeight: '20px',
+    color: theme.palette.textPrimary,
+    /* One character is one digit, which is what makes the `ch` width at the call site exact. */
+    fontVariantNumeric: 'tabular-nums',
+    cursor: 'text',
+    transition: 'background 140ms ease',
+    '&:hover': { background: theme.palette.surfaceGreySubtle },
+    '&:focus': {
+      outline: 'none',
+      background: theme.palette.surfaceGreySubtle,
+    },
+    '&:focus-visible': {
+      outline: `2px solid ${theme.palette.borderBrand}`,
+      outlineOffset: 1,
+    },
+  },
+  /**
+   * `mi` and `±` — the parts of the old formatted string that are not the number.
+   *
+   * A weight below the figure and the same size, so the row still reads as one value rather
+   * than as a number next to a word. `aria-hidden` at the call site: the input's own label
+   * already says *in miles*, and a screen reader that reads the affix as well announces the
+   * unit twice.
+   */
+  counterAffix: {
     '&.MuiTypography-root': {
-      minWidth: 44,
-      textAlign: 'center',
+      flexShrink: 0,
       fontFamily: 'Inter',
       fontSize: 14,
-      fontWeight: 600,
+      fontWeight: 400,
       lineHeight: '20px',
-      color: theme.palette.textPrimary,
-      fontVariantNumeric: 'tabular-nums',
+      color: theme.palette.textSecondary2,
       whiteSpace: 'nowrap',
+      userSelect: 'none',
     },
   },
 
@@ -1679,8 +1836,16 @@ export const useStyles = makeStyles((theme) => ({
      data, and a divider, which is chrome — and the divider made the stop list read as a
      separate panel bolted under the head rather than as the head's own detail. The 12px
      of space says the same thing without drawing anything. */
+  /**
+   * **No padding of its own.**
+   *
+   * The export gives the scrolling stops frame `padding: 8px 0 0` and the list inside it
+   * `padding: 0` — and `proposedBody`, which is that scrolling frame, already carries the 8.
+   * So every value here was being *added* to it: at `14px 0 4px` there were 22px above the
+   * first pin where the design asks for 8, and a trailing 4 the design does not draw at all.
+   */
   routeStops: {
-    padding: '12px 0 8px',
+    padding: 0,
   },
   stopListHeader: { display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 },
   /**
@@ -2141,16 +2306,13 @@ export const useStyles = makeStyles((theme) => ({
     flexShrink: 0,
     background: theme.palette.surfaceGreyStrong1,
   },
-  stopPillMeta: {
-    '&.MuiTypography-root': {
-      fontSize: 14,
-      lineHeight: '20px',
-      color: theme.palette.textPlaceholder,
-      whiteSpace: 'nowrap',
-      flexShrink: 0,
-      fontVariantNumeric: 'tabular-nums',
-    },
-  },
+  /* **`stopPillMeta` is gone, and the anchors were its last caller.** It set `Route starts
+     here` and the finish clock at 14px — the same size as the name they followed, which on a
+     row whose design gives the name the line made the caption a second title. What the anchors
+     still carry sits on `stopDetailLabel` + `stopAnchorMeta`: 12px in `Grey/500`, the design's
+     own quiet-label ramp, one tier under the name instead of level with it. The two `Route
+     starts/ends here` captions themselves were then removed outright — see `AnchorRow` — so the
+     only tenant of that ramp on an anchor now is the end's finish clock. */
   /**
    * The arrival time, in a column of its own.
    *
@@ -2230,7 +2392,25 @@ export const useStyles = makeStyles((theme) => ({
    * instead — 23px of target around a 7px mark, costing nothing in a 16px row. Hover
    * darkens the mark rather than filling a shape behind it.
    */
+  /**
+   * The disclosure caret — **and it was rendering 0px wide, so the whole affordance was
+   * invisible.**
+   *
+   * The button asks for a 7px glyph inside 8px of padding, pulled back by an equal negative
+   * margin: a 23px hit target that costs 7px of layout. That arithmetic is `content-box`
+   * arithmetic, and MUI's CSS baseline sets `box-sizing: border-box` on everything. So
+   * `width: 7` was the *border* box, the 16px of padding ate all of it and then some, the
+   * content box resolved to **zero**, and the caret — a flex child with the default
+   * `flex-shrink: 1` — was squeezed to nothing. The button was still there, still 16×16,
+   * still focusable, still toggling: it just drew no mark. Every stop row looked like a row
+   * with no disclosure at all, which is why the breakdown read as unreachable.
+   *
+   * `content-box` is the fix rather than a bigger `width`, because it restores the three
+   * numbers to meaning what they say. `flexShrink: 0` on the icon below is the belt to this
+   * braces — a zero-width parent should never again be able to erase the glyph silently.
+   */
   stopChevron: {
+    boxSizing: 'content-box',
     width: 7,
     height: 7,
     flexShrink: 0,
@@ -2257,23 +2437,26 @@ export const useStyles = makeStyles((theme) => ({
      an inline path in `currentColor`, so hover still darkens it. */
   /* 7 wide, per the spec's `Vector 436`. The path is a chevron so its drawn height is
      about half its width, which is the 7 × 3.5 the spec measures. */
-  stopChevronIcon: { width: 7, height: 7, display: 'block' },
+  stopChevronIcon: { width: 7, height: 7, flexShrink: 0, display: 'block' },
 
-  /* 34px so the dashed line lands on the pin's centre: grip + gap. Height and
-     padding come from the spec, and the line is `border-left` on a zero-width box
-     rather than a `border` on a 1px one, so it cannot pick up a second edge. */
-  /* **`minWidth`, not `width`.** The connector carries the drive leg again, and a hard
-     34 is narrower than `Drive 12m` — the text was clipped at the pin's axis. 34 is
-     still the floor, because that is the number the dashed line's position depends on;
-     what changes is only that the box may be wider than the line it draws. */
-  stopConnector: {
-    display: 'flex',
-    alignItems: 'stretch',
-    gap: CONNECTOR_GAP,
-    minWidth: STOP_GRIP + CONNECTOR_GAP,
-    padding: '5px 0',
-    flexShrink: 0,
-  },
+  /**
+   * ---------- the standalone connector, deleted ----------
+   *
+   * **`stopConnector`, `stopConnectorSpacer`, `stopConnectorLine` and `stopConnectorLeg` are
+   * gone, and with them the last box in this list that drew a rule of its own.**
+   *
+   * They were the leading run — origin to stop 1 — the one connector that survived the row's
+   * rebuild, kept because it was the only mark carrying its leg's minutes as a caption. Two
+   * things ended it. The design draws no caption on any of its dashed rules; and the minutes
+   * were never this rule's to state, because stop 1's own figure is its drive in plus its
+   * work and its disclosure breaks that drive out by name. So the caption said the same
+   * number as the row 20px below it.
+   *
+   * With the anchors rebuilt out of `StopRow` (see `AnchorRow`) the start row draws its own
+   * grey track down to stop 1, from the same key every other row's track comes from — which
+   * is the point: the list had two ways of drawing one mark, and the one that could drift was
+   * the one whose offsets were restated. `CONNECTOR_GAP` and `CONNECTOR_H` go with them.
+   */
   /**
    * ---------- the stop, as one row ----------
    *
@@ -2299,13 +2482,42 @@ export const useStyles = makeStyles((theme) => ({
     flexDirection: 'row',
     alignItems: 'stretch',
     gap: STOP_PIN_GAP + 4,
-    paddingBottom: 8,
+    /**
+     * **The row is a compact painted box, and the 60px pitch is margin around it.**
+     *
+     * The pitch itself is the export's: a stop is a 20px line, a 32px connector block and 8px
+     * of padding — 60px, stated four times over, since `60 + 60 + 96 + 28` is exactly the 244
+     * it gives the list. This row has guessed at it twice (32, then 40) before reading it.
+     *
+     * **What changed is which box carries it.** It was `paddingBottom: 40`, argued for because
+     * padding is *inside* the box and so the hover and highlight grounds paint through it. That
+     * turned out to be the bug rather than the feature: painting through it made the ground
+     * **60px tall for a 20px line** — a grey slab running from the site name down past the
+     * dashed connector to the next stop, with the dash sitting inside the tint. It read as a
+     * block of the list being selected, not as one row under the pointer.
+     *
+     * So the gap is a margin, outside the painted box, and the box is the row: 20px of line
+     * inside 6px of padding, 32px tall, rounded. The rule still crosses the gap, because
+     * `stopTrackColumn`'s negative margin reaches out of this box — that mechanism never
+     * needed the gap to be padding, only to exist.
+     *
+     * **The horizontal padding is symmetric now too.** It was `0 8px 40px 0`: 8px of room on
+     * the right, because the right inset existed only to stop the ground clipping the chevron,
+     * and none on the left. A hovered row was tight against its grip on one side and loose on
+     * the other. Both sides get 8 and the margin pulls both back out, so the grip and the
+     * figure keep the axes they had and the ground gains an edge of its own.
+     *
+     * **Three numbers have to agree:** this margin, `stopTrackColumn`'s negative twin of it,
+     * and `stopTrackLine`'s bottom margin, which cuts the dash out of the gap. Move one alone
+     * and the rule stops short of the next pin.
+     */
+    padding: '6px 8px',
+    margin: '0 -8px 28px',
     minWidth: 0,
-    /* Reaches past the chevron to the pane's own padding, so a hovered or highlighted row is
-       not clipped 8px short of its own figure. */
-    marginRight: -8,
-    paddingRight: 8,
-    borderRadius: 6,
+    /* 8, matching the card that holds it. At 6 the ground read as a rounded table cell; at 8
+       it reads as a pill lifted out of the list, which is what a hover on a draggable row
+       wants to say. */
+    borderRadius: 8,
     transition: 'background 120ms ease',
     /* Grey, and deliberately not the brand tint — see `stopRowHighlighted`. Twelve rows each
        flashing green as the pointer travels down them makes a pointer position look like a
@@ -2318,6 +2530,25 @@ export const useStyles = makeStyles((theme) => ({
    * `align-items: center` so the 16px pin and the 1.3px rule share one axis — which is the
    * axis every other pin in the list sits on, and the reason the design gives this column a
    * fixed width rather than letting the pin define it.
+   *
+   * **The negative bottom margin is what makes the dashed track exist at all.** Measured on
+   * the built screen, every `stopTrackLine` on a shut row was **0px tall** — so the design's
+   * one structural mark, the coloured dash whose colour carries meaning, was drawing nothing
+   * on the ninety-odd per cent of rows that are not open. The mechanism: `stopLine` stretches
+   * its children to the flex line's cross size, and that size was being set *by this column*
+   * — 16px of pin plus this 8px gap is 24, taller than the 20px title — so the `flex: 1` rule
+   * underneath had 24 − 24 = nothing left to fill. The row was as tall as the pin and the gap,
+   * and the track only appeared once an open row's labels pushed the row past them.
+   *
+   * `marginBottom: -20` takes this column *out* of that contest twice over. Its hypothetical
+   * outer size becomes 24 − 20 = 4, so the title's 20px sets the line and the row is a title
+   * tall; and its used size becomes 20 + 20 = 40, so it spans the row's content box *and*
+   * `stopLine`'s 20px of bottom padding, ending exactly where the next row's pin begins. Pin
+   * 16, gap 8, dash 16, next pin. An open row grows and the dash grows with it, unchanged.
+   *
+   * -20 rather than `100%` or an absolute inset because it has to *equal* that padding: they
+   * are one number in two places, which is the only real cost of doing it this way and is
+   * stated in both.
    */
   stopTrackColumn: {
     width: STOP_PIN,
@@ -2326,6 +2557,11 @@ export const useStyles = makeStyles((theme) => ({
     flexDirection: 'column',
     alignItems: 'center',
     gap: 8,
+    /* The negative twin of `stopLine`'s bottom margin. `align-items: stretch` sizes this
+       column to the row's content height *minus* its own vertical margins, so -28 lets the
+       rule run out of the painted box and across the unpainted gap toward the next row. The
+       two numbers move together or the dash stops short of the next pin. */
+    marginBottom: -28,
   },
   /**
    * The dashed track, growing to whatever the row turns out to be.
@@ -2335,10 +2571,30 @@ export const useStyles = makeStyles((theme) => ({
    * panel. `minHeight: 0` because a `flex: 1` child of a stretch row will otherwise refuse to
    * shrink below its content, and this has no content.
    */
+  /**
+   * The dashed rule, and **it stops short of the next pin on purpose.**
+   *
+   * The export draws `Vector 423` as a bounded 22px segment inside a 32px connector, so on a
+   * shut row there is clear air at both ends: the rule connects two stops without touching
+   * either. Left to `flex: 1` alone it ran the whole 40px gap and butted into the pin below,
+   * which reads as one continuous spine — a different drawing, and a busier one, than a
+   * sequence of linked marks.
+   *
+   * **1px, where it was 13 — the same dash, re-cut for a box that now has padding.** The row's
+   * own 6px of bottom padding already sits between the rule and the gap, so 13 would subtract
+   * twice and leave a stub. The column runs 20 + 28 = 48 from the content top and the pin plus
+   * its gap take 24 of that, so the rule spans 24 → 47 inside the box: 23px long, landing 13px
+   * clear of the next row's pin — the same length and clearance as before, off different
+   * numbers.
+   *
+   * A margin rather than a fixed height, so an *open* row still works: there the rule has to
+   * grow with the disclosure, which `flex: 1` does and a fixed height cannot.
+   */
   stopTrackLine: {
     flex: 1,
     width: 0,
     minHeight: 0,
+    marginBottom: 1,
     borderLeft: '1.3px dashed currentColor',
   },
   /**
@@ -2348,12 +2604,22 @@ export const useStyles = makeStyles((theme) => ({
    * stop's name on the pin's own centre line — top-aligning it would sit the name 2px above
    * the pin it names, at every row, all the way down the list.
    */
+  /**
+   * Labels down the left, **top-aligned with the pin.**
+   *
+   * This was `justifyContent: center`, which centred the stack inside the row — invisible on a
+   * shut row, where stack and row are both 20px, and wrong the moment one opens: a 68px stack
+   * centred in an 88px row put the site name 10px below the pin that marks it, so the two
+   * halves of the row's own top line stopped being a line. The pin sits at the top of its
+   * column because that is where a marker for a row belongs; the name it labels goes with it,
+   * and the breakdown hangs underneath.
+   */
   stopLabels: {
     flex: 1,
     minWidth: 0,
     display: 'flex',
     flexDirection: 'column',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     gap: 8,
     overflow: 'hidden',
   },
@@ -2395,6 +2661,66 @@ export const useStyles = makeStyles((theme) => ({
     minWidth: 0,
   },
   /**
+   * The same line on an anchor, which must not wrap.
+   *
+   * The wrap above is right for a stop and wrong here, and the built screen showed why within
+   * a minute of the anchors joining this grammar: the origin's name is a **geocoded address**,
+   * long enough to fill the row on its own, so `East River Hills Drive, Tampa, Florida` took
+   * the first line, its caption dropped to a second — and the drawn dot *between* them stayed
+   * up on the first, orphaned at the end of the address as a stray full stop. Two lines also
+   * made the anchor rows a different height from every stop, which is the one thing the
+   * anchors were just rebuilt to stop being.
+   *
+   * A stop wraps because its overflow is a `New` badge that must not be shaved, and its name
+   * is short. An anchor's overflow is prose about a name that already truncates with an
+   * ellipsis, so refusing the axis puts the loss where it costs least — the tail of an address
+   * the map is also showing.
+   */
+  stopAnchorTitle: { flexWrap: 'nowrap' },
+  /**
+   * The last row in the list, at the export's 28px rather than 60.
+   *
+   * `Component 235` — the end anchor — is `20px + 8px` of padding and no connector, because a
+   * rule running out of the final pin points at nothing. Every other row's 40px exists to
+   * hold a dash; this one has none, so without this the card ended with 32px of white the
+   * design does not draw, directly above its own 16px of padding.
+   */
+  stopLineFlush: {
+    marginBottom: 0,
+    /**
+     * **And the track column stops reaching, or the card grows a scrollbar.**
+     *
+     * `stopTrackColumn`'s `marginBottom: -40` is sized to the 40px gap every *other* row
+     * carries, so on a row with 8px of padding it hangs 32px below the row's own box. The
+     * rule down there is `transparent` — this is the last pin and a dash leaving it points at
+     * nothing — so there was nothing to *see*, but `proposedBody` has `overflow-x: hidden`,
+     * which CSS resolves `overflow-y` to `auto` behind, and 32px of invisible overflow is
+     * enough to put a scrollbar down the side of a card whose stops all fit.
+     */
+    '& $stopTrackColumn': { marginBottom: 0 },
+  },
+  /**
+   * The quiet value after an anchor's name — now just the end's `15:32`.
+   *
+   * **Kept after the captions went.** `Route starts here` / `Route ends here` were what this
+   * rule was written for, and they are gone; the finish clock still runs through it, and the
+   * argument below still binds — an address is the flexible child on this line and anything
+   * following it has to refuse the axis or the anchor grows a second row.
+   *
+   * **`nowrap` and `flexShrink: 0`, because refusing the row's wrap is only half of it.** With
+   * the line unwrapped the caption stopped dropping below the address and started *breaking
+   * inside itself* instead: `stopDetailLabel` carries no white-space rule, the address is the
+   * flexible child in name, so the caption was handed whatever was left after a 40-character
+   * street name and set `Route starts` over `here` — a two-line anchor again, by a different
+   * route. Held rigid, the deficit lands on the name, which is the child that has an ellipsis
+   * for it and whose tail the map beside it is also showing.
+   *
+   * A modifier on `stopDetailLabel` rather than a rule inside it: those labels are the open
+   * row's breakdown, laid out in a full-width column with nothing beside them, and they have
+   * no reason to refuse an axis they never reach the end of.
+   */
+  stopAnchorMeta: { '&.MuiTypography-root': { whiteSpace: 'nowrap', flexShrink: 0 } },
+  /**
    * The row's top line on the right: `18 mi · 2 hr 12 min ⌃`.
    *
    * `StopFigure` returns its four children loose rather than boxed — the design puts the
@@ -2408,50 +2734,10 @@ export const useStyles = makeStyles((theme) => ({
     justifyContent: 'flex-end',
     gap: 6,
   },
-  stopConnectorSpacer: { width: STOP_GRIP, flexShrink: 0 },
   /* **`stopConnectorDetail` is gone with the box it padded.** It gave the open disclosure more
      vertical air than the connectors between rows, because it was a *separate* connector drawn
      under the row. The row's own `stopLabels` gap does that job now, once, for the name and
      both breakdown labels — which is also why they finally sit on an even pitch. */
-  stopConnectorLine: {
-    width: 0,
-    minHeight: CONNECTOR_H,
-    borderLeft: '1.3px dashed currentColor',
-    flexShrink: 0,
-  },
-  /**
-   * `Drive 12m`, on the connector.
-   *
-   * **Beside the dashed line, not above or below it.** The unit is a measured 36 + 32
-   * and the docs pin those numbers; stacking the leg over the line would have to grow
-   * the connector, and a taller connector under twelve stops is the same compounding
-   * drift the fixed row height exists to prevent. Set against the line, the leg costs
-   * no vertical space at all — and the flex `gap` puts it at 34 + 14 = 48, which is
-   * exactly where the pill's site name starts, so the legs and the names share an edge.
-   *
-   * Typography is `legRow`/`legText` from `buildRoute`'s route timeline, deliberately:
-   * that timeline is where a planner has always read `Drive Xm`, and this list is the
-   * same object in a smaller frame. Copied rather than imported — the two sheets were
-   * kept separate on purpose, and this is four declarations, not a component.
-   *
-   * `color` is explicit because the connector sets `color` inline to the stop's tone so
-   * the dashed line can be `currentColor`. Inheriting it would paint the leg green,
-   * blue or grey by state, and the leg is not a state — it is a duration.
-   *
-   * Tabular figures for the same reason `stopPillTime` has them: read down the column
-   * these are a shape, and proportional digits make `1h 5m` and `1h 15m` different
-   * widths for no information.
-   */
-  stopConnectorLeg: {
-    alignSelf: 'center',
-    '&.MuiTypography-root': {
-      fontSize: 12,
-      lineHeight: '17px',
-      color: theme.palette.textSecondary3,
-      fontVariantNumeric: 'tabular-nums',
-      whiteSpace: 'nowrap',
-    },
-  },
 
   /* The arithmetic, opened. One number on the row, the working one click away — the
      row shows `1h 40m` and this says where it came from. */
@@ -2476,36 +2762,22 @@ export const useStyles = makeStyles((theme) => ({
   },
   stopDetailActions: { display: 'flex', alignItems: 'center', gap: 12, marginTop: 4 },
 
-  /* Start and end, on the same axis as the pins. They are not stops — no number, no
-     badge, nothing to open — so they are a marker and a label and nothing else. */
-  stopAnchor: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: STOP_PIN_GAP,
-    minHeight: 28,
-    paddingLeft: STOP_GRIP + STOP_PIN_GAP,
-  },
-  stopAnchorMark: {
-    width: STOP_PIN,
-    height: STOP_PIN,
-    flexShrink: 0,
-    borderRadius: '50%',
-    border: `1.5px dashed ${theme.palette.borderStrong2}`,
-    boxSizing: 'border-box',
-  },
-  stopAnchorText: { display: 'flex', alignItems: 'center', gap: 6, minWidth: 0, flex: 1 },
-  stopAnchorName: {
-    '&.MuiTypography-root': {
-      fontSize: 13,
-      fontWeight: 500,
-      lineHeight: '18px',
-      color: theme.palette.textSecondary1,
-      overflow: 'hidden',
-      textOverflow: 'ellipsis',
-      whiteSpace: 'nowrap',
-      minWidth: 0,
-    },
-  },
+  /**
+   * ---------- the anchors' own row, deleted ----------
+   *
+   * **`stopAnchor`, `stopAnchorMark`, `stopAnchorText` and `stopAnchorName` are gone. The
+   * anchors are `StopRow`s now** — see `AnchorRow` in `StopList` for the argument. The short
+   * version is a measurement: `stopAnchor` reached the pin with `paddingLeft: 20` and a 4px
+   * gap where a stop row reaches it with a 16px grip and an 8px gap, so on the built screen
+   * every anchor pin sat 4px left of every stop pin, on the one axis this list is read down.
+   * Two numbers were being asked to agree, which is the arrangement that drifts; there is one
+   * number now, and it is the row's.
+   *
+   * `stopAnchorMark` — a 16px dashed circle — had already been dead for a pass: the anchors
+   * have drawn the same grey teardrop as a stop since the pin became a shared component, and
+   * the design draws a teardrop too. `stopAnchorName`'s 13px/500 ramp goes with it; the design
+   * sets an anchor's name in the same 14px as a stop's, and `stopPillName` is that ramp.
+   */
 
   /* ---------- selection list ----------
      The pre-plan view of the same visits. It borrows `stopRow` / `stopBody` /
@@ -2811,7 +3083,19 @@ export const useStyles = makeStyles((theme) => ({
   /* Centred, not baseline-aligned. The remedy stopped being text on this line and became
      a 24px control, and a bordered box sitting on a text baseline hangs low by its own
      descender space. */
-  aiGroupHead: { display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 },
+  /* `marginBottom: 8`, because the caption and the first name it captions were touching. The
+     3px of padding `outsideRow` used to carry was the only thing separating them, and it went
+     when the rows took their height from `stopLine` instead — measured at 0px between the head's
+     box and the first row's. Here rather than back on the row: this is the space *under a
+     heading*, which is not the same quantity as the space between two rows, and the rows are a
+     shared component with a list on the other side of it that has no headings at all. */
+  aiGroupHead: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 10,
+    minWidth: 0,
+    marginBottom: 8,
+  },
   /* The cause, stated with its count. Semibold rather than a size step: three of these
      on one panel at 14px would each be competing with the headline above them. */
   aiGroupTitle: {
@@ -2872,19 +3156,33 @@ export const useStyles = makeStyles((theme) => ({
   /* The disclosure gets its own row rather than sitting inside the header text, so it
      lines up with the list above it instead of hanging off the conclusion. */
   aiWorkingRow: { paddingLeft: 44, marginTop: 6 },
+  /**
+   * The wrapper an excluded row sits in — and it is down to two declarations, because the
+   * two it has lost were drawing marks the design does not have.
+   *
+   * **The hairline is gone, and `:first-child` never suppressed the one it was meant to.**
+   * `AiPanel`'s own note already claimed this border had been removed — "with a dashed track
+   * between them a hairline as well is two dividers for one gap, and every row is now its own
+   * `:first-child`" — and on the built screen all four rows in a group were drawing a 1px
+   * `#E6E6E7` rule across a peach ground, the first row included. The selector was the wrong
+   * test: a row is a child of `aiGroup`, whose *first* child is the group's own heading, so
+   * `:first-child` matched nothing and the reset never fired. Deleted rather than re-selected,
+   * because the note's argument was right — the orange dashed track is the divider.
+   *
+   * **The 3px of vertical padding goes for the same reason the border did.** It was measured
+   * for a 24px row with no track under it; against the route rows above, which are exactly 40px
+   * from pin to pin, it made the panel's rows 45 and the two lists visibly out of step in the
+   * one column that shows them one under the other. `stopLine` owns a row's height now, in both
+   * lists, which is the whole point of their sharing it.
+   */
   outsideRow: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 8,
     minWidth: 0,
-    padding: '3px 8px 3px 0',
+    /* **And the hover ground is not here either.** It was this rule's, on the argument that
+       the tooltip needs advertising — *a row that reacts to the pointer is a row people try
+       hovering* — which still holds and is now `stopLine`'s job, for both lists, at the same
+       tint and 8px wider. Declared in both places it was the same colour painted twice, one
+       box inside the other, with only the corner radius to tell them apart. */
     borderRadius: 4,
-    borderTop: `1px solid ${theme.palette.borderSubtle1}`,
-    '&:first-child': { borderTop: 0 },
-    /* The tooltip's only advertisement. A row that reacts to the pointer is a row people
-       try hovering; one that does not is a row they read past, and the reason a visit is
-       out would then be information nobody ever finds. */
-    '&:hover': { background: theme.palette.surfaceGreySubtle },
   },
   /**
    * The mark that says *a place, and nobody planned it*.
@@ -2923,11 +3221,27 @@ export const useStyles = makeStyles((theme) => ({
     borderRadius: 4,
     '&:focus-visible': { outline: `2px solid ${theme.palette.borderBrand}`, outlineOffset: 2 },
   },
+  /**
+   * An excluded visit's name — **14px/20, which is a stop's name, because that is the point.**
+   *
+   * It was 13px on an 18px line, from the pass where these rows were a plain list under a
+   * heading. They are not that any more: `ExcludedRow` is built from the same `StopRow` as a
+   * planned stop, on the argument that these visits are weighed *against* the routes above them
+   * and a footnote written in a different vocabulary makes the reader translate before they can
+   * compare. One pixel of type size was the last thing still translating, and it was visible as
+   * geometry rather than as typography — an 18px line box against the routes' 20 made the
+   * panel's rows 38px from pin to pin against the routes' 40, so the two lists in one column
+   * ran at two different rhythms.
+   *
+   * The name is *dimmed*, not shrunk, and that distinction is the whole of how this row says
+   * *not in the plan*: see `outsideRowExcluded`, which steps the tone down and changes nothing
+   * else.
+   */
   outsideName: {
     '&.MuiTypography-root': {
-      fontSize: 13,
+      fontSize: 14,
       fontWeight: 500,
-      lineHeight: '18px',
+      lineHeight: '20px',
       color: theme.palette.textPrimary,
       overflow: 'hidden',
       textOverflow: 'ellipsis',

@@ -62,6 +62,7 @@ function TableComponent({
   rowsPerPage,
   hasTBody,
   tableBodyClass,
+  scrollRegionLabel,
 }) {
   const [orderState, setOrderState] = useState(order);
   const classes = useStyles();
@@ -102,7 +103,17 @@ function TableComponent({
 
   return (
     <>
-      <TableContainer className={classNames(classes.dataTable, classNameTable)} component={Box}>
+      {/* A container that scrolls sideways has to be reachable by keyboard, or the
+          columns beyond the fold are unreadable without a mouse. Opt in by passing
+          `scrollRegionLabel`; tables that fit their viewport should not become tab
+          stops for no reason. */}
+      <TableContainer
+        className={classNames(classes.dataTable, classNameTable)}
+        component={Box}
+        {...(scrollRegionLabel
+          ? { role: 'region', tabIndex: 0, 'aria-label': scrollRegionLabel }
+          : {})}
+      >
         <Table stickyHeader>
           <TableHead>
             {tableHead ? (
@@ -175,6 +186,7 @@ TableComponent.propTypes = {
   onChangeRowsPerPage: PropTypes.func,
   hasTBody: PropTypes.bool,
   tableBodyClass: PropTypes.string,
+  scrollRegionLabel: PropTypes.string,
 };
 
 // Set default values for optional props
@@ -185,6 +197,7 @@ TableComponent.defaultProps = {
   classNameTable: '',
   hasTBody: false,
   tableBodyClass: '',
+  scrollRegionLabel: '',
 };
 
 export default TableComponent;

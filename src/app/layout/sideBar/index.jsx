@@ -18,7 +18,7 @@ import classNames from 'classnames';
 // import ToggleModule from 'commonComponents/ToggleModule';
 import userHasPermissionSideBar from 'globalUtils/auth/userHasPermissionSideBar';
 import PropTypes from 'prop-types';
-import React, { Children, useState } from 'react';
+import React, { Children, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link, useHistory, useLocation } from 'react-router-dom';
@@ -66,6 +66,7 @@ import {
 import { setDashboardActive } from '../../../redux/store/slices/auth';
 import { rolesEnumWithName } from '../../../utils/constants/index';
 import { useStyles } from './sideBar';
+import { useSidebarInset } from './sidebarChrome';
 
 // const SALES_TOGGLE = process.env.REACT_APP_SALES_TOGGLE;
 
@@ -77,6 +78,10 @@ const Sidebar = ({
   className,
 }) => {
   const classes = useStyles();
+  /* The sidebar states its own width, live, for the full-screen surfaces that have to
+     begin where it ends. See `sidebarChrome`. */
+  const sidebarRef = useRef(null);
+  useSidebarInset(sidebarRef);
   const isMobile = useMediaQuery('(max-width:786px)');
   const { t } = useTranslation();
   const ActiveDashboard = useSelector((state) => state.auth.dashboardActive);
@@ -547,6 +552,7 @@ const Sidebar = ({
         <Box className={classes.backdropOverlay} onClick={toggleSidebar}></Box>
       )}
       <Box
+        ref={sidebarRef}
         className={classNames(
           classes.sidebarOverlay,
           className,

@@ -59,9 +59,9 @@ import { formatNumber } from 'src/utils/regexField/regexFiledForm';
 import { toaster } from 'src/utils/toast';
 
 import formValidatorJoi from '../../../../../utils/formValidator/formValidator.requiredCheck';
-import DrawerHeader from '../../../../components/salesComponents/components/drawerHeader';
 import ExternalContactsComponent from '../../../../components/common/externalContacts/index.jsx';
 import MapComponent from '../../../../components/common/geoFencing/index';
+import DrawerHeader from '../../../../components/salesComponents/components/drawerHeader';
 import * as routes from '../../../../router/constant/ROUTE';
 import { HO_SITES_DETAIL_ROUTE } from '../../../../router/constant/ROUTE';
 import history from '../../../../router/utils/history';
@@ -757,19 +757,120 @@ const Update = ({ embedded = false, onClose, siteId: siteIdProp } = {}) => {
           {/* Client — linked from the connected application. Identity fields are
               read-only here; only site-specific fields are editable. */}
           {SHOW_CLIENT_DETAILS && (
+            <Box className={classes.sitesFieldsWrapper}>
+              <Box className={classes.sectionHead}>
+                <Typography variant="subtitle1" className={classes.sitesFieldsTitle}>
+                  {t('form.input.textField.site.clientDetailsHeader')}
+                </Typography>
+              </Box>
+
+              <Box className={classes.formBox}>
+                <Box className={classes.flexControl}>
+                  <InputLabel>
+                    {t('form.input.textField.site.clientPickerLabel')}
+                    <RequiredAsterik />
+                  </InputLabel>
+                  <Autocomplete
+                    className={classes.clientPicker}
+                    options={clientOptions}
+                    value={selectedClientOption}
+                    getOptionLabel={(o) =>
+                      `${o?.firstName || ''} ${o?.lastName || ''}`.trim() ||
+                      `${formData?.firstName || ''} ${formData?.lastName || ''}`.trim()
+                    }
+                    isOptionEqualToValue={(o, v) => String(o?.id) === String(v?.id)}
+                    onChange={(_e, option) => handleClientSelect(option)}
+                    renderOption={(props, option) => (
+                      <li {...props} key={option.id}>
+                        <Box className={classes.optionRow}>
+                          <span className={classes.optionName}>
+                            {`${option.firstName || ''} ${option.lastName || ''}`.trim()}
+                          </span>
+                          <span className={classes.optionMeta}>{option.primaryEmail}</span>
+                        </Box>
+                      </li>
+                    )}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        error={!!errorMessages?.clientId}
+                        placeholder={t('form.input.textField.site.placeHolderClients')}
+                        helperText={errorMessages?.clientId || null}
+                      />
+                    )}
+                  />
+                </Box>
+              </Box>
+
+              {isClientLinked && (
+                <Box className={classes.infoCard}>
+                  <Box className={classes.infoDetailGrid}>
+                    <Box className={classes.readOnlyItem}>
+                      <span className={classes.readOnlyLabel}>
+                        {t('obx.form.input.textField.firstName.label')}
+                      </span>
+                      <span className={classes.readOnlyValue}>{formData?.firstName || '—'}</span>
+                    </Box>
+                    <Box className={classes.readOnlyItem}>
+                      <span className={classes.readOnlyLabel}>
+                        {t('obx.form.input.textField.lastName.label')}
+                      </span>
+                      <span className={classes.readOnlyValue}>{formData?.lastName || '—'}</span>
+                    </Box>
+                    <Box className={classes.readOnlyItem}>
+                      <span className={classes.readOnlyLabel}>
+                        {t('obx.sites.table.listing.columns.company')}
+                      </span>
+                      <span className={classes.readOnlyValue}>{formData?.company || '—'}</span>
+                    </Box>
+                    <Box className={classes.readOnlyItem}>
+                      <span className={classes.readOnlyLabel}>
+                        {t('obx.form.input.textField.primaryEmail.label')}
+                      </span>
+                      <span className={classes.readOnlyValue}>{formData?.primaryEmail || '—'}</span>
+                    </Box>
+                    <Box className={classes.readOnlyItem}>
+                      <span className={classes.readOnlyLabel}>
+                        {t('obx.form.input.textField.phoneNumber.label')}
+                      </span>
+                      <span className={classes.readOnlyValue}>{formData?.phoneNumber || '—'}</span>
+                    </Box>
+                    <Box className={classes.readOnlyItem}>
+                      <span className={classes.readOnlyLabel}>
+                        {t('obx.sites.siteInformation.customerId')}
+                      </span>
+                      <span className={classes.readOnlyValue}>{formData?.customerId || '—'}</span>
+                    </Box>
+                    <Box className={classes.readOnlyItem}>
+                      <span className={classes.readOnlyLabel}>
+                        {t('obx.sites.siteInformation.secondaryEmail')}
+                      </span>
+                      <span className={classes.readOnlyValue}>{formData?.email || '—'}</span>
+                    </Box>
+                    <Box className={classes.readOnlyItem}>
+                      <span className={classes.readOnlyLabel}>
+                        {t('form.input.textField.site.localWorked')}
+                      </span>
+                      <span className={classes.readOnlyValue}>{formData?.localWorked || '—'}</span>
+                    </Box>
+                  </Box>
+                </Box>
+              )}
+            </Box>
+          )}
+
+          {/* Site details — owned by this application (incl. location). */}
           <Box className={classes.sitesFieldsWrapper}>
             <Box className={classes.sectionHead}>
               <Typography variant="subtitle1" className={classes.sitesFieldsTitle}>
-                {t('form.input.textField.site.clientDetailsHeader')}
+                {t('obx.sites.createSite.siteDetails')}
               </Typography>
             </Box>
 
+            {/* Client picker — linked from the connected application. */}
             <Box className={classes.formBox}>
               <Box className={classes.flexControl}>
-                <InputLabel>
-                  {t('form.input.textField.site.clientPickerLabel')}
-                  <RequiredAsterik />
-                </InputLabel>
+                <InputLabel>{t('form.input.textField.site.clientPickerLabel')}</InputLabel>
                 <Autocomplete
                   className={classes.clientPicker}
                   options={clientOptions}
@@ -802,6 +903,7 @@ const Update = ({ embedded = false, onClose, siteId: siteIdProp } = {}) => {
               </Box>
             </Box>
 
+            {/* Read-only client identity, pulled from the selected client. */}
             {isClientLinked && (
               <Box className={classes.infoCard}>
                 <Box className={classes.infoDetailGrid}>
@@ -856,52 +958,6 @@ const Update = ({ embedded = false, onClose, siteId: siteIdProp } = {}) => {
                 </Box>
               </Box>
             )}
-          </Box>
-          )}
-
-          {/* Site details — owned by this application (incl. location). */}
-          <Box className={classes.sitesFieldsWrapper}>
-            <Box className={classes.sectionHead}>
-              <Typography variant="subtitle1" className={classes.sitesFieldsTitle}>
-                {t('obx.sites.createSite.siteDetails')}
-              </Typography>
-            </Box>
-
-            {/* Client picker — linked from the connected application. */}
-            <Box className={classes.formBox}>
-              <Box className={classes.flexControl}>
-                <InputLabel>{t('form.input.textField.site.clientPickerLabel')}</InputLabel>
-                <Autocomplete
-                  className={classes.clientPicker}
-                  options={clientOptions}
-                  value={selectedClientOption}
-                  getOptionLabel={(o) =>
-                    `${o?.firstName || ''} ${o?.lastName || ''}`.trim() ||
-                    `${formData?.firstName || ''} ${formData?.lastName || ''}`.trim()
-                  }
-                  isOptionEqualToValue={(o, v) => String(o?.id) === String(v?.id)}
-                  onChange={(_e, option) => handleClientSelect(option)}
-                  renderOption={(props, option) => (
-                    <li {...props} key={option.id}>
-                      <Box className={classes.optionRow}>
-                        <span className={classes.optionName}>
-                          {`${option.firstName || ''} ${option.lastName || ''}`.trim()}
-                        </span>
-                        <span className={classes.optionMeta}>{option.primaryEmail}</span>
-                      </Box>
-                    </li>
-                  )}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      error={!!errorMessages?.clientId}
-                      placeholder={t('form.input.textField.site.placeHolderClients')}
-                      helperText={errorMessages?.clientId || null}
-                    />
-                  )}
-                />
-              </Box>
-            </Box>
 
             <Box className={classes.formBox}>
               <Box className={classes.flexControl}>
@@ -1097,24 +1153,24 @@ const Update = ({ embedded = false, onClose, siteId: siteIdProp } = {}) => {
           ) : null}
 
           {SHOW_ADDITIONAL_CONTACTS && (
-          <Box className={classes.sitesFieldsWrapper}>
-            <Box className={classes.sectionHead}>
-              <Typography variant="subtitle1" className={classes.sitesFieldsTitle}>
-                {t('obx.form.input.textField.additionalContacts.header')}
-              </Typography>
-            </Box>
-            <Box className={classes.sitesDynamicContent} ref={contactRef}>
-              <ExternalContactsComponent
-                errorMessages={errorMessages}
-                formDataKey="contacts"
-                formData={formData}
-                updateFormHandler={updateFormHandler}
-                setErrorMessages={setErrorMessages}
-                options={contactOptions}
-              />
-            </Box>
+            <Box className={classes.sitesFieldsWrapper}>
+              <Box className={classes.sectionHead}>
+                <Typography variant="subtitle1" className={classes.sitesFieldsTitle}>
+                  {t('obx.form.input.textField.additionalContacts.header')}
+                </Typography>
+              </Box>
+              <Box className={classes.sitesDynamicContent} ref={contactRef}>
+                <ExternalContactsComponent
+                  errorMessages={errorMessages}
+                  formDataKey="contacts"
+                  formData={formData}
+                  updateFormHandler={updateFormHandler}
+                  setErrorMessages={setErrorMessages}
+                  options={contactOptions}
+                />
+              </Box>
 
-            {/* <Box ref={contactRef}>
+              {/* <Box ref={contactRef}>
               <DynamicFormComponent
                 errorMessages={errorMessages}
                 formDataKey="emergencyContacts"
@@ -1124,83 +1180,83 @@ const Update = ({ embedded = false, onClose, siteId: siteIdProp } = {}) => {
                 onlyPhone={false}
               />
             </Box> */}
-          </Box>
+            </Box>
           )}
 
           {/* Reports Distribution — the email recipients each report should be
               sent to. Top-level section, sits below Additional Contacts. */}
           {SHOW_REPORTS_DISTRIBUTION && (
-          <Box className={classes.sitesFieldsWrapper}>
-            <Box className={classes.sectionHead}>
-              <Typography variant="subtitle1" className={classes.sitesFieldsTitle}>
-                {t('form.input.textField.reportsDistribution.header')}
-              </Typography>
-            </Box>
-            <Box className={classes.formBox}>
-              <Box className={classes.flexControl}>
-                <InputLabel>{`${t('form.input.textField.dailySiteSummaryReceivers.label')}`}</InputLabel>
-                <AutoCompleteCommon
-                  handleChange={inputChangedHandler}
-                  name="dailySiteSummaryReceivers"
-                  value={formData?.dailySiteSummaryReceivers || []}
-                  placeholder={t('form.input.textField.dailySiteSummaryReceivers.placeHolder')}
-                  errorMessages={errorMessages}
-                  errorMessage={t('errors.string.email', {
-                    '#label': 'Email',
-                  })}
-                />
+            <Box className={classes.sitesFieldsWrapper}>
+              <Box className={classes.sectionHead}>
+                <Typography variant="subtitle1" className={classes.sitesFieldsTitle}>
+                  {t('form.input.textField.reportsDistribution.header')}
+                </Typography>
+              </Box>
+              <Box className={classes.formBox}>
+                <Box className={classes.flexControl}>
+                  <InputLabel>{`${t('form.input.textField.dailySiteSummaryReceivers.label')}`}</InputLabel>
+                  <AutoCompleteCommon
+                    handleChange={inputChangedHandler}
+                    name="dailySiteSummaryReceivers"
+                    value={formData?.dailySiteSummaryReceivers || []}
+                    placeholder={t('form.input.textField.dailySiteSummaryReceivers.placeHolder')}
+                    errorMessages={errorMessages}
+                    errorMessage={t('errors.string.email', {
+                      '#label': 'Email',
+                    })}
+                  />
+                </Box>
+              </Box>
+              <Box className={classes.formBox}>
+                <Box className={classes.flexControl}>
+                  <InputLabel>{`${t('form.input.textField.incidentReportReceivers.label')}`}</InputLabel>
+                  <AutoCompleteCommon
+                    handleChange={inputChangedHandler}
+                    name="incidentReportReceivers"
+                    value={formData?.incidentReportReceivers || []}
+                    placeholder={t('form.input.textField.incidentReportReceivers.placeHolder')}
+                    errorMessages={errorMessages}
+                    errorMessage={t('errors.string.email', {
+                      '#label': 'Email',
+                    })}
+                  />
+                </Box>
+              </Box>
+              <Box className={classes.dispatchReportField}>
+                <Box className={classes.flexControl}>
+                  <InputLabel>{`${t('form.input.textField.dispatchReportReceivers.label')}`}</InputLabel>
+                  <AutoCompleteCommon
+                    handleChange={inputChangedHandler}
+                    name="dispatchReportReceivers"
+                    value={formData?.dispatchReportReceivers || []}
+                    placeholder={t('form.input.textField.dispatchReportReceivers.placeHolder')}
+                    errorMessages={errorMessages}
+                    errorMessage={t('errors.string.email', {
+                      '#label': 'Email',
+                    })}
+                  />
+                  <FormControlLabel
+                    className={classes.sendImmediatelyCheck}
+                    control={
+                      <Checkbox
+                        className={classes.checkBoxCustom}
+                        name="sendDispatchReportImmediately"
+                        checked={!!formData?.sendDispatchReportImmediately}
+                        onChange={(e) =>
+                          inputChangedHandler({
+                            target: {
+                              name: 'sendDispatchReportImmediately',
+                              value: e.target.checked,
+                            },
+                          })
+                        }
+                      />
+                    }
+                    label={t('form.input.textField.dispatchReportReceivers.sendImmediately')}
+                  />
+                </Box>
               </Box>
             </Box>
-            <Box className={classes.formBox}>
-              <Box className={classes.flexControl}>
-                <InputLabel>{`${t('form.input.textField.incidentReportReceivers.label')}`}</InputLabel>
-                <AutoCompleteCommon
-                  handleChange={inputChangedHandler}
-                  name="incidentReportReceivers"
-                  value={formData?.incidentReportReceivers || []}
-                  placeholder={t('form.input.textField.incidentReportReceivers.placeHolder')}
-                  errorMessages={errorMessages}
-                  errorMessage={t('errors.string.email', {
-                    '#label': 'Email',
-                  })}
-                />
-              </Box>
-            </Box>
-            <Box className={classes.dispatchReportField}>
-              <Box className={classes.flexControl}>
-                <InputLabel>{`${t('form.input.textField.dispatchReportReceivers.label')}`}</InputLabel>
-                <AutoCompleteCommon
-                  handleChange={inputChangedHandler}
-                  name="dispatchReportReceivers"
-                  value={formData?.dispatchReportReceivers || []}
-                  placeholder={t('form.input.textField.dispatchReportReceivers.placeHolder')}
-                  errorMessages={errorMessages}
-                  errorMessage={t('errors.string.email', {
-                    '#label': 'Email',
-                  })}
-                />
-                <FormControlLabel
-                  className={classes.sendImmediatelyCheck}
-                  control={
-                    <Checkbox
-                      className={classes.checkBoxCustom}
-                      name="sendDispatchReportImmediately"
-                      checked={!!formData?.sendDispatchReportImmediately}
-                      onChange={(e) =>
-                        inputChangedHandler({
-                          target: {
-                            name: 'sendDispatchReportImmediately',
-                            value: e.target.checked,
-                          },
-                        })
-                      }
-                    />
-                  }
-                  label={t('form.input.textField.dispatchReportReceivers.sendImmediately')}
-                />
-              </Box>
-            </Box>
-          </Box>
           )}
 
           {/* Integrations — its own top-level section. */}
@@ -1208,64 +1264,64 @@ const Update = ({ embedded = false, onClose, siteId: siteIdProp } = {}) => {
           {/* geofencingEnabled is the site level geofencing enabled status */}
           {SHOW_INTEGRATIONS &&
             (!isProductionEnvironment || isEUInstance() || formData?.isGeofencingEnabled) && (
-            <Box className={classes.sitesFieldsWrapper}>
-              <Box className={classes.sectionHead}>
-                <Typography variant="subtitle1" className={classes.sitesFieldsTitle}>
-                  {t('obx.form.input.textField.integrations.header')}
-                </Typography>
+              <Box className={classes.sitesFieldsWrapper}>
+                <Box className={classes.sectionHead}>
+                  <Typography variant="subtitle1" className={classes.sitesFieldsTitle}>
+                    {t('obx.form.input.textField.integrations.header')}
+                  </Typography>
+                </Box>
+                <Box className={classes.grayBackgroundWrapper}>
+                  {(!isProductionEnvironment || isEUInstance()) && (
+                    <Box className={classes.integrationsCheck}>
+                      <Box className={classes.integrationRowText}>
+                        <Typography variant="subtitle1">
+                          {t('obx.form.input.textField.offlineSyncing.title')}
+                        </Typography>
+                        <Typography variant="body3">
+                          {t('obx.form.input.textField.offlineSyncing.description')}
+                        </Typography>
+                      </Box>
+                      <Box className={classes.switchWrapper}>
+                        <Switch
+                          name="allowOfflineSyncing"
+                          inputProps={{ 'aria-label': 'offline syncing' }}
+                          checked={formData.allowOfflineSyncing}
+                          onChange={(e) =>
+                            inputChangedHandler({
+                              target: { name: 'allowOfflineSyncing', value: e.target.checked },
+                            })
+                          }
+                        />
+                      </Box>
+                    </Box>
+                  )}
+                  {formData?.isGeofencingEnabled && (
+                    <Box className={classes.integrationsCheck}>
+                      <Box className={classes.integrationRowText}>
+                        <Typography variant="subtitle1">
+                          {t('obx.form.input.textField.geofencing.title')}
+                        </Typography>
+                        <Typography variant="body3">
+                          {t('obx.form.input.textField.geofencing.description')}
+                        </Typography>
+                      </Box>
+                      <Box className={classes.switchWrapper}>
+                        <Switch
+                          name="geofencingEnabled"
+                          inputProps={{ 'aria-label': 'visitor management' }}
+                          checked={formData.geofencingEnabled}
+                          onChange={(e) =>
+                            inputChangedHandler({
+                              target: { name: 'geofencingEnabled', value: e.target.checked },
+                            })
+                          }
+                        />
+                      </Box>
+                    </Box>
+                  )}
+                </Box>
               </Box>
-              <Box className={classes.grayBackgroundWrapper}>
-                {(!isProductionEnvironment || isEUInstance()) && (
-                  <Box className={classes.integrationsCheck}>
-                    <Box className={classes.integrationRowText}>
-                      <Typography variant="subtitle1">
-                        {t('obx.form.input.textField.offlineSyncing.title')}
-                      </Typography>
-                      <Typography variant="body3">
-                        {t('obx.form.input.textField.offlineSyncing.description')}
-                      </Typography>
-                    </Box>
-                    <Box className={classes.switchWrapper}>
-                      <Switch
-                        name="allowOfflineSyncing"
-                        inputProps={{ 'aria-label': 'offline syncing' }}
-                        checked={formData.allowOfflineSyncing}
-                        onChange={(e) =>
-                          inputChangedHandler({
-                            target: { name: 'allowOfflineSyncing', value: e.target.checked },
-                          })
-                        }
-                      />
-                    </Box>
-                  </Box>
-                )}
-                {formData?.isGeofencingEnabled && (
-                  <Box className={classes.integrationsCheck}>
-                    <Box className={classes.integrationRowText}>
-                      <Typography variant="subtitle1">
-                        {t('obx.form.input.textField.geofencing.title')}
-                      </Typography>
-                      <Typography variant="body3">
-                        {t('obx.form.input.textField.geofencing.description')}
-                      </Typography>
-                    </Box>
-                    <Box className={classes.switchWrapper}>
-                      <Switch
-                        name="geofencingEnabled"
-                        inputProps={{ 'aria-label': 'visitor management' }}
-                        checked={formData.geofencingEnabled}
-                        onChange={(e) =>
-                          inputChangedHandler({
-                            target: { name: 'geofencingEnabled', value: e.target.checked },
-                          })
-                        }
-                      />
-                    </Box>
-                  </Box>
-                )}
-              </Box>
-            </Box>
-          )}
+            )}
 
           <Box className={classes.buttonGroupLast}>
             <Button variant="secondaryGrey" onClick={handleBack}>

@@ -330,7 +330,10 @@ export default function DateRangePickerWithButtons({
   const classes = useStyles();
   const { dateformat } = useDateTime();
 
-  const dateRangePlaceholder = `${dateformat} - ${dateformat}`;
+  // An explicit `format` prop is the caller opting out of the tenant's own date format
+  // for this one field, so it wins; otherwise fall back to the tenant's format.
+  const effectiveFormat = format || dateformat;
+  const dateRangePlaceholder = `${effectiveFormat} - ${effectiveFormat}`;
 
   /**
    * @description handle single date selection
@@ -411,7 +414,7 @@ export default function DateRangePickerWithButtons({
             selectedVal={getPlaceholderSelectedValue(
               startDate,
               endDate,
-              dateformat || format || 'MM/DD/YYYY',
+              effectiveFormat || 'MM/DD/YYYY',
               formatDate,
             )}
             disabled={disabled}
