@@ -18,6 +18,7 @@ import DutyIndicator from 'src/app/components/obxComponents/dutyIndicator';
 import CalendarOfficerAssignPopover from 'src/app/obx/pages/schedules/calendar/CalendarOfficerAssignPopover';
 import LegacyCalendarCardContent from 'src/app/obx/pages/schedules/calendar/LegacyCalendarCardContent';
 import PatrolCardBody from 'src/app/obx/pages/schedules/calendar/PatrolCardBody';
+import RouteMonthChipContent from 'src/app/obx/pages/schedules/calendar/RouteMonthChipContent';
 import VisitCardContentV2 from 'src/app/obx/pages/schedules/calendar/VisitCardContentV2';
 import VisitMonthChipContent from 'src/app/obx/pages/schedules/calendar/VisitMonthChipContent';
 import {
@@ -795,6 +796,17 @@ const ScheduleCalendarGrid = ({
           }
         }
 
+        /* The routes reading's month cell holds named runs now, not a day's tally, so
+           the same argument applies one level up: a click has a subject and opens it.
+           Drilling into the day view instead would throw away the run the planner
+           actually pointed at and re-ask the question the cell had already answered.
+           `openVisitTarget` is the same funnel the week's route card goes through, so
+           a chip and its week card open the same drawer. */
+        if (isRouteGrouping) {
+          openVisitTarget({ ...(info.event.extendedProps || {}), id: info.event?.id });
+          return;
+        }
+
         const updatedViewType = DAY_GRID.DAY;
         const API = calendarRef.current?.getApi?.();
         if (!API) return;
@@ -835,7 +847,14 @@ const ScheduleCalendarGrid = ({
         openVisitTarget({ ...data, id: info.event?.id });
       }
     },
-    [setQueryParams, openVisitTarget, selectionMode, onToggleShiftSelect, isCompanyGrouping],
+    [
+      setQueryParams,
+      openVisitTarget,
+      selectionMode,
+      onToggleShiftSelect,
+      isCompanyGrouping,
+      isRouteGrouping,
+    ],
   );
 
   const onClickListViewEvent = useCallback(
@@ -1130,6 +1149,50 @@ const ScheduleCalendarGrid = ({
                 />
               </Box>
             </VisitMonthChipTooltip>
+          );
+        }
+
+        /* Grouped by route, a month cell holds that day's **runs** rather than a
+           tally of the visits on them — the same move the company grouping's month
+           makes one level down, and for the same reason: a cell that says `12 Visits`
+           cannot say which routes are out.
+
+           The week's route card is four lines and this cell is a seventh of the grid
+           wide, so the chip keeps the pair that was asked for — the route's name and
+           that run's visit count — and drops the window, the officer and the notes /
+           split marks. `RouteMonthChipContent` owns that argument and the test for
+           it. FullCalendar's own `dayMaxEvents` (3, on the month view's config)
+           supplies the "+N more" when a day runs more routes than fit.
+
+           **The status convention is the week's, read from the same place.**
+           `getValuesWrtStatuses` is the one resolver the week's route card calls, and
+           it answers out of `EVENT_BG_COLOR_CLASSES` in `calendarStatusWash.js` — so
+           the wash is not restated here, it is the same class object the week card
+           takes. Only three statuses have a wash; the badge is what tells the other
+           three apart, so it comes along too (see the component). `visitWashClassFor`
+           is deliberately *not* used: its yellow-only-on-today rule is the visit
+           path's, and a route card is not a visit — the shift cards on every other
+           surface read `EVENT_BG_COLOR_CLASSES` directly and nobody has asked for
+           that rule here.
+
+           The count is `routeVisitCountProps` — the very expression the week card is
+           fed from, over `buildRouteVisitCounts`. There is no second derivation. */
+        if (isRouteGrouping) {
+          const { statusIcon, eventBgColorClass } = getValuesWrtStatuses({ shift, t });
+
+          return (
+            <Box
+              className={`${classes.routeMonthChip} ${
+                eventBgColorClass ? classes[eventBgColorClass] : ''
+              }`}
+            >
+              <RouteMonthChipContent
+                classes={classes}
+                shift={shift}
+                statusIcon={statusIcon}
+                {...routeVisitCountProps(shift)}
+              />
+            </Box>
           );
         }
 
@@ -2084,8 +2147,19 @@ const ScheduleCalendarGrid = ({
      The slot itself is live again, carrying the Routes/Visits switch — a *view*
      control, so it belongs with Day/Week/Month rather than among the filters. */
 
-  /** The one month grid whose cells hold visits rather than a count of them. */
-  const isVisitsMonthView = isCompanyGrouping && queryParams.selectedView?.type === DAY_GRID.MONTH;
+  /**
+   * A month grid whose cells hold **records** rather than a count of them.
+   *
+   * Two of them now: the company grouping stacks a chip per visit, and the routes
+   * grouping stacks one per run. Both need the same two things the counting months do
+   * not — a scrollport-filling month so there is height to divide between five equal
+   * weeks, and a cell floor tall enough for three chips and a "+N more" — so the gate
+   * is the property they share rather than either grouping's name. See
+   * `visitsMonthChipGrid` in `calendar.styles.js` for why a counting cell's tight
+   * floor cannot be reused here.
+   */
+  const isStackedMonthView =
+    (isCompanyGrouping || isRouteGrouping) && queryParams.selectedView?.type === DAY_GRID.MONTH;
 
   return (
     <>
@@ -2114,14 +2188,14 @@ const ScheduleCalendarGrid = ({
         calendarClassName={
           isCompanyGrouping && queryParams.selectedView?.type === DAY_GRID.WEEK
             ? classes.companyRowsUniform
-            : isVisitsMonthView
+            : isStackedMonthView
               ? classes.visitsMonthChipGrid
               : ''
         }
         /* A stack of chips needs the height an aggregate count does not — the
            other half of `visitsMonthChipGrid`, which can divide the port only
            once the shell has asked FullCalendar to fill it. */
-        monthFillsScrollport={isVisitsMonthView}
+        monthFillsScrollport={isStackedMonthView}
         showListSwitch={showListSwitch}
         resourceColumnHeader={resourceAreaHeader}
         resourceOrder={hasCustomResourceLabels ? 'sortOrder' : undefined}

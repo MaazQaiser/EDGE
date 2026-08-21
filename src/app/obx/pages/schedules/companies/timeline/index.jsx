@@ -69,11 +69,28 @@ const CompaniesTimeline = ({
      default, which is the right answer for a set that grows. */
   const [collapsedIds, setCollapsedIds] = useState(() => new Set());
 
-  /* One noun for the physical address, taken from the plural label and
-     singularised — asking `getLabel` for both forms returns "Sites" and "Location"
-     on this tenant, so the header and the filters would name it two ways. */
-  const locationsTerm = getLabel('terms', 'sites', t) || 'Locations';
-  const locationTerm = locationsTerm.replace(/s$/i, '') || locationsTerm;
+  /**
+   * **Property, not Site** — this view's own word for the physical address.
+   *
+   * It asked the tenant (`getLabel('terms', 'sites')`) and rendered "Sites". Changed
+   * on request, and the change is narrower than it looks: this is the one surface whose
+   * design record already speaks this way. `docs/visits-feature/07-consolidated-visits-view.html`
+   * is written in "property" throughout — *the year is property-major*, *visit count per
+   * property*, *property with no recurring service* — so the screen and the document
+   * describing it now use one noun.
+   *
+   * Deliberately **not** pushed into the tenant label set. `terms.sites` is read by the
+   * sites module, the scheduler's own filters and half the app besides; renaming it there
+   * to suit this table would rename it on twenty screens nobody asked about. The cost of
+   * keeping it local is that a tenant who calls these something else third thing will not
+   * see it here — noted, and cheaper than the alternative.
+   *
+   * The **header takes the singular**, which also settles a small inconsistency it had
+   * with its neighbour: the first column has always been "Company", not "Companies", and
+   * "Sites" beside it was the odd one. Counts keep the plural.
+   */
+  const locationsTerm = t('obx.schedules.calendar.companies.propertyPlural');
+  const locationTerm = t('obx.schedules.calendar.companies.propertySingular');
 
   const searchTerm = `${scope.query ?? ''}`.trim();
   /* Search wins over the grain: a planner who typed something and got nothing back

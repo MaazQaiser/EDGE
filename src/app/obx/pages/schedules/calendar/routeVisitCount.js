@@ -81,14 +81,19 @@ const keyFor = (routeName, dayKey) => {
  *
  * **`null`, not an empty map, for an empty list** — the difference between "no
  * visits" and "no answer" is the difference between a card that can honestly print
- * `0` and one that must print nothing. Three live paths hand over `[]` without
- * meaning "the week is empty": the routes reading's month is an aggregate with no
- * per-visit records at all, the day view and the embedded grids never fetch one, and
- * the week's own visits call swallows its failures (`harmonizeVisitsPromise`
- * `.catch(() => [])`) so a grid that loaded is not blanked by a list that did not.
- * Printing `0 Visits` across a grid in any of those cases would be inventing a fact.
- * The cost is that a genuinely empty week also shows no counts, which is the safe
- * side of the same ambiguity.
+ * `0` and one that must print nothing. Two live paths hand over `[]` without meaning
+ * "the window is empty": the day view and the embedded grids never fetch a visit
+ * list, and both windows that do fetch one — the week (`harmonizeVisitsPromise`) and
+ * the month (`getRoutesByMonth`) — swallow that call's failures with
+ * `.catch(() => [])` so a grid that loaded is not blanked by a list that did not.
+ * Printing `0 Visits` across a grid in either case would be inventing a fact. The
+ * cost is that a genuinely empty window also shows no counts, which is the safe side
+ * of the same ambiguity.
+ *
+ * The month used to be a third such path, and is deliberately no longer one: the
+ * routes reading's month asks for the very list the week asks for, so a route card
+ * carries the same count in both views rather than a count in one and a blank in the
+ * other.
  *
  * Unrouted visits are skipped, not bucketed: a visit with no route belongs to no
  * card on this grid. They are counted in the header's own total, which is why the

@@ -39,7 +39,7 @@ import { capitalizeFirstLetter } from 'src/utils/string/common';
  *    line is free; the count takes the slot rather than leaving it empty, and the
  *    marks keep the exact position they hold on every other card.
  * 3. **the routes reading with no count to show** — officer and marks share one row.
- *    The window has no visit list (the month aggregate, a visits fetch that failed),
+ *    The window has no visit list (a visits fetch that failed, an embedded grid),
  *    so there is nothing to fill the second line with, and a line holding only the
  *    corner marks is a gap where something was taken out.
  *

@@ -28,9 +28,12 @@ import SideDrawer from 'src/app/components/common/sideDrawer';
 import StyledMenuButton from 'src/app/components/common/styledMenuButton';
 import { siteStatusEnum } from 'src/app/homeOffice/pages/franchise/utils/enums';
 import HarmonizeWorkspace from 'src/app/obx/pages/schedules/components/harmonize';
+import HarmonizeDrawer from 'src/app/obx/pages/schedules/components/harmonizeFlow';
+import { zoneName } from 'src/app/obx/pages/schedules/components/harmonizeFlow/model/fixtures';
 import MissedHitsDrawer from 'src/app/obx/pages/schedules/components/missedHitsDrawer';
 import { ACL_OBX_SITE_EXTRA_JOB_CREATE } from 'src/app/router/constant/OBXMODULE';
 import {
+  COMMON_SETTING,
   HO_SITES_DETAIL,
   OBX_SCHEDULES_CREATE_EXTRA_DUTY,
   OBX_SITES,
@@ -68,6 +71,7 @@ import CompanySiteSearch from '../components/companySiteSearch';
 import ScheduleCalendarFilters from '../components/scheduleCalendarFilters';
 import ScheduleErrorBoundary from '../components/scheduleErrorBoundary';
 import { SCHEDULE_STATS_FOOTER_VARIANTS } from '../components/scheduleStatsFooter';
+import { HARMONIZE_SHELL } from '../config/harmonizeShell';
 import { SCHEDULER_LAYOUT } from '../config/schedulerLayout';
 import {
   canGroupMainViewByCompany,
@@ -1098,8 +1102,11 @@ const ScheduleCalendar = (props) => {
    * without the footer beneath it moving too.
    *
    * `null` where a payload genuinely has no counts to give — the day view, the
-   * embedded grids, the routes reading's month `/aggregate` — and the total simply
-   * does not render there, rather than inventing a number the footer cannot show.
+   * embedded grids, and every month still answered by `/aggregate` — and the total
+   * simply does not render there, rather than inventing a number the footer cannot
+   * show. The two months that fetch records rather than tallies (the company
+   * grouping's, and the routes reading's since `getRoutesByMonth`) do have counts, and
+   * report them like the week does.
    */
   const [windowFooterStats, setWindowFooterStats] = useState(null);
   const onFooterStatsChange = props.onFooterStatsChange;
@@ -1163,6 +1170,85 @@ const ScheduleCalendar = (props) => {
        grid's `footerStats` — they were simply being dropped on the floor while the
        footer below rendered a row of labels with nothing in them. */
     return { shifts, footerStats: data?.footerStats || null };
+  };
+
+  /**
+   * A month of **route cards**, for the routes reading of the main tab.
+   *
+   * ── Why this exists rather than an extended `/aggregate` ──
+   *
+   * `/aggregate` answers one tally per day per service — no per-route records at all,
+   * not even an id — so it can say `12 Visits` on a Tuesday and nothing about which
+   * routes were out. Naming them needs records, and there were two ways to get them:
+   * teach the aggregate a per-route breakdown, or ask for the grid the week already
+   * draws from. This is the second.
+   *
+   * The aggregate was the cheaper fetch and the worse answer. A per-route breakdown
+   * would be a **second shape for the same fact** — the week's route cards and the
+   * month's route entries built by different code from different payloads — and the
+   * two would then have to be kept saying the same thing by hand. This feature has
+   * already shipped one instance of exactly that failure (a missed-visits pill reading
+   * 3 over a grid drawing 2), which is why the count on these cards is a lookup into
+   * the week's own visit list rather than a field. Asking for the *same two payloads
+   * the routes week asks for* makes the month and the week agree by construction: same
+   * endpoint, same `mapGridV2WeekData`, same `buildRouteVisitCounts`. A route reads
+   * the same in both views because it is the same object drawn twice.
+   *
+   * It is also not expensive. Two calls, where the routes week already makes three
+   * (KPI stats, the patrol grid, the visits list — see the overview branch below);
+   * `/aggregate` keeps every other month it serves — the patrol and dedicated tabs,
+   * the multi-service overview, the site and user embeds, the visits tab — because
+   * none of those has a route to name and a tally is the right answer there. This is
+   * the one reading whose cards are routes.
+   *
+   * ── The two calls ──
+   *
+   * The grid is `view: 'patrol'`, which is the only service this reading can be on
+   * (`canGroupMainViewByCompany` gates it to a single-service patrol tenant), so
+   * unlike the week's accordion there is no second service to fetch and merge.
+   * `responseVersion: 'grid-v2'` because `mapGridV2WeekData` reads `sections[]` — the
+   * rows are thrown away (a month grid has no resource column) and only the mapped
+   * shifts are kept, which is precisely what makes these the week's own cards: the
+   * same mapper normalises `start` to a bare `YYYY-MM-DD` and falls a card's route
+   * back to its row title. `schedule: true` for the same reason the week and the
+   * visits month both send it — this is a grid fetch, not a list one.
+   *
+   * **No second reading of the response**, deliberately. A payload with no `sections`
+   * maps to nothing and the month draws empty, which is a loud failure; the
+   * alternative — a fallback that normalises the flat pre-revamp `shifts` by hand —
+   * would be a second way of turning this payload into cards, and one shape per fact
+   * is the whole argument above. The sections shape is the contract.
+   *
+   * The visits list is the week's `harmonizeVisitsPromise`, verbatim — same query,
+   * and the same swallowed failure, so a grid that loaded is not blanked by a list
+   * that did not. It is what `routeVisitCounts` counts, and lighting up Harmonize on
+   * this combination is a deliberate consequence rather than a side effect: it was
+   * only ever disabled here because the aggregate had no visits to give it, and the
+   * *visits* month next door has offered it since the day it was built.
+   *
+   * `sortKey` for the same reason `getVisitsByMonth` stamps one: the month view's
+   * `eventOrder` is `sortKey`, and with `end` dropped and `start` flattened to a date
+   * every chip in a cell ties on FullCalendar's default keys.
+   */
+  const getRoutesByMonth = async (query, config) => {
+    const [gridRes, monthVisits] = await Promise.all([
+      getAllDuties(
+        { ...query, view: 'patrol', responseVersion: 'grid-v2', schedule: true },
+        config,
+        { applyFooterStats: false },
+      ),
+      getAllDuties({ ...query, view: 'visits', groupBy: 'company', schedule: true }, config, {
+        applyFooterStats: false,
+      })
+        .then((visitsRes) => visitsRes?.shifts || [])
+        .catch(() => []),
+    ]);
+
+    const shifts = mapGridV2WeekData(gridRes)
+      .shifts.map((shift) => ({ ...shift, sortKey: visitStartValue(shift) }))
+      .sort(compareVisitsByStart);
+
+    return { shifts, visits: monthVisits, footerStats: gridRes?.footerStats || null };
   };
 
   const getAllDuties = async (query, config, { applyFooterStats = true } = {}) => {
@@ -1320,18 +1406,19 @@ const ScheduleCalendar = (props) => {
       let listShifts = undefined;
       let dayViewShifts = {};
       let weekViewLocations = [];
-      /* Stays `[]` for any branch that does not explicitly set it — day view,
-         the embedded grid, and (for now) the routes reading's month aggregate,
-         none of which hand back a real visit list. See `visitsForHarmonize`. */
+      /* Stays `[]` for any branch that does not explicitly set it — day view, the
+         embedded grid, and the months still answered by `/aggregate`, none of which
+         hand back a real visit list. See `visitsForHarmonize`. */
       let harmonizeVisits = [];
 
       const config = { signal: apiController.signal };
       if (type == DAY_GRID.MONTH) {
         /* The month used to clear the footer unconditionally, which is why it drew
-           a stats bar with no stats. The visits month calls the grid endpoint and
-           carries the same counts the week does; the aggregate month genuinely has
-           none to give — its payload is one tally per day per service — so that
-           path still clears, and the footer falls back to the legend. */
+           a stats bar with no stats. Both months that call a grid endpoint — the
+           company grouping's visits, and the routes reading's runs — carry the same
+           counts the week does; the aggregate month genuinely has none to give (its
+           payload is one tally per day per service), so that path still clears and
+           the footer falls back to the legend. */
         let monthFooterStats = null;
 
         if (isCompanyGrouping) {
@@ -1340,15 +1427,32 @@ const ScheduleCalendar = (props) => {
           monthFooterStats = visitsMonth.footerStats;
           // Already the real per-visit list — see `visitsForHarmonize`.
           harmonizeVisits = shifts;
+        } else if (isRouteGrouping) {
+          /* The routes reading's month used to be `/aggregate` too — a count per
+             day per service, no per-route records at all — which is why its cells
+             could only say how much work a day held and never which routes were
+             out, and why Harmonize was dark here. It now asks for the same grid
+             and the same visit list the routes *week* asks for, so both readings
+             draw the same cards from the same payload; see `getRoutesByMonth` for
+             why that beats teaching the aggregate a per-route breakdown. */
+          const routesMonth = await getRoutesByMonth(query, config);
+          shifts = routesMonth.shifts;
+          monthFooterStats = routesMonth.footerStats;
+          /* The real per-visit list, which is what `routeVisitCounts` counts — so a
+             month card's count is the week's own number, not a month derivation of
+             it. Cancelled visits are cut from it below, the same as everywhere. */
+          harmonizeVisits = routesMonth.visits;
+          /* Read off the footer, like the week's own routes reading does, rather
+             than from a second field — the pill and the stats bar under the grid
+             cannot then disagree. */
+          setRequireAttentionJobs(getUnassignedCount({ footerStats: routesMonth.footerStats }));
         } else {
           query.offset = getOffsetWithStandardTime();
           shifts = await getDutiesByMonth(query, config);
-          /* The routes reading's month is `/aggregate` — a count per day per
-             service, no per-visit records at all (not even an `id`) — so there
-             is nothing here `harmonizableVisits` could use. Harmonize is left
-             disabled on this specific combination (routes grouping + month)
-             rather than paying for a second month fetch just to light it up;
-             the week reading below is where the button is actually used. */
+          /* Still the aggregate, and rightly: the patrol and dedicated tabs, the
+             multi-service overview and both embeds have no route to name in a
+             cell, so a tally per day per service is the answer there — and it
+             carries no per-visit records, so Harmonize stays disabled on those. */
         }
         if (isStaleFetch()) return;
         reportFooterStats(monthFooterStats);
@@ -2489,7 +2593,7 @@ const ScheduleCalendar = (props) => {
    * Read off the footer rather than counted from `allDuties` — see
    * `sumScheduleWindowTotal` for why, and for why cancelled records are already out
    * of it. `null` whenever the footer has no numbers (the day view, the embedded
-   * grids, the routes reading's month aggregate), which is the honest answer there:
+   * grids, the months answered by `/aggregate`), which is the honest answer there:
    * no total rather than a total of nothing.
    *
    * **`null` on the routes reading too, and that is the point.** It used to read
@@ -2812,23 +2916,103 @@ const ScheduleCalendar = (props) => {
           )}
         </ScheduleErrorBoundary>
 
-        <HarmonizeWorkspace
-          open={harmonizeOpen}
-          onClose={() => setHarmonizeOpen(false)}
-          weekVisits={harmonizableVisits}
-          routeTerm={getLabel('terms', 'runsheet', t)}
-          onPreviewChange={setHarmonizePreview}
-          onApplied={(result) => {
-            exitSelection();
+        {/**
+         * Two shells, one trigger — see `config/harmonizeShell`.
+         *
+         * The drawer is not a reskin of the workspace: it implements a different
+         * domain model (a range of worked days, one zone each, no radius, no
+         * installers) against its own engine, so it takes none of the workspace's
+         * props and shares none of its state. That is why this is a branch rather
+         * than a `variant` prop — there is nothing for the two to hold in common
+         * beyond the fact that a button opened them.
+         *
+         * `weekVisits` is deliberately not threaded into the drawer. It runs on its
+         * own fixture while the endpoints in HARMONIZE-CONTEXT §5 are unbuilt; feeding
+         * it this page's visits would produce a proposal with no zones, no need-by
+         * windows and no filter counts, which is a worse demonstration than an honest
+         * one over data shaped like the payload it is waiting for.
+         */}
+        {props.harmonizeShell === HARMONIZE_SHELL.DRAWER ? (
+          <HarmonizeDrawer
+            open={harmonizeOpen}
+            onClose={() => setHarmonizeOpen(false)}
+            onOpenSettings={() => history.push(`${COMMON_SETTING}?activeTab=harmonization`)}
+            /**
+             * **The calendar is this flow's terminal state.**
+             *
+             * The drawer has no "Applied" screen: it closes and hands the plan here, and
+             * what the planner watches is the week actually rearranging — every visit
+             * card settles, then the moved ones land on their new days in route order
+             * (`useApplyMotion`). Scattered work collapsing onto two or three trips is
+             * the one thing this feature exists to demonstrate, and a summary panel
+             * describes it where the grid can simply show it. No toast either, for the
+             * same reason: a sentence claiming the week changed, over a week visibly
+             * changing, is the same fact twice.
+             *
+             * **Matched by site name, not by id.** The drawer runs on its own fixture
+             * while the endpoints in HARMONIZE-CONTEXT §5 are unbuilt, so its visit ids
+             * are its own and mean nothing to the grid. The site *names* are shared —
+             * the fixture was built from this demo book — so that is the join. It is a
+             * demo-grade seam and it goes the moment the drawer is reading real visits;
+             * a route whose sites do not resolve simply contributes no moves rather
+             * than throwing.
+             */
+            onApplied={(plan) => {
+              exitSelection();
 
-            /* The grid, not the toast, is where this lands. Every visit card
+              /* `site`, with `siteName` behind it: this list arrives in the raw shift
+                 shape on the routes reading and in the mapped visit shape elsewhere, and
+                 the two spell the site differently. Keyed on the wrong one the map has a
+                 single `undefined` entry and every route resolves to zero visits — which
+                 is exactly what it did, and it fails silently because a route with no
+                 visits is dropped rather than throwing. Normalised so a stray case or a
+                 trailing space cannot cost a match either. */
+              const key = (name) =>
+                String(name || '')
+                  .trim()
+                  .toLowerCase();
+              const byName = new Map(
+                (harmonizableVisits || [])
+                  .map((visit) => [key(visit.site || visit.siteName), visit.id])
+                  .filter(([name]) => name),
+              );
+
+              applyMotion.start(
+                (plan?.runsheets || [])
+                  .map((sheet) => ({
+                    dayKey: sheet.date,
+                    /* Named for the zone it covers, because that is the only thing that
+                       distinguishes one of these runsheets from another — one per worked
+                       day, one zone each (D15). The generic term alone left three
+                       identical "Route" labels on the grid. §14.6 notes the real naming
+                       rule is still undefined; this is a legible stand-in, not that rule. */
+                    name: `${getLabel('terms', 'runsheet', t)} · ${zoneName(sheet.zoneId)}`,
+                    visitIds: sheet.stops
+                      .map((stop) => byName.get(key(stop.site?.name)))
+                      .filter((id) => id != null),
+                  }))
+                  .filter((route) => route.visitIds.length),
+              );
+            }}
+          />
+        ) : (
+          <HarmonizeWorkspace
+            open={harmonizeOpen}
+            onClose={() => setHarmonizeOpen(false)}
+            weekVisits={harmonizableVisits}
+            routeTerm={getLabel('terms', 'runsheet', t)}
+            onPreviewChange={setHarmonizePreview}
+            onApplied={(result) => {
+              exitSelection();
+
+              /* The grid, not the toast, is where this lands. Every visit card
                settles, then the moved ones reappear stacked on their own route's
                day — so the payoff of the feature is watched rather than described.
                Started before the toast so the two are not competing for the same
                first second of attention. */
-            applyMotion.start(result.routes || []);
+              applyMotion.start(result.routes || []);
 
-            /* One line per route the apply touched, because "12 visits routed" over
+              /* One line per route the apply touched, because "12 visits routed" over
                two days hides the thing the planner will be asked about tomorrow:
                which day, and whose route.
 
@@ -2837,21 +3021,22 @@ const ScheduleCalendar = (props) => {
                `obx.runsheet.harmonize.appliedRoute` — the raw key, in front of the planner,
                at the one moment the feature is supposed to be reporting success. The key
                that does exist takes exactly these three interpolations. */
-            toaster.success({
-              text: (result.routes || [])
-                .map((route) =>
-                  t('obx.runsheet.harmonize.appliedToast', {
-                    count: route.visitCount,
-                    day: route.day,
-                    runsheet: route.worker ? `${route.worker} · ${route.name}` : route.name,
-                  }),
-                )
-                .join(' · '),
-              position: 'top-right',
-              autoClose: toastSettings.AUTO_CLOSE,
-            });
-          }}
-        />
+              toaster.success({
+                text: (result.routes || [])
+                  .map((route) =>
+                    t('obx.runsheet.harmonize.appliedToast', {
+                      count: route.visitCount,
+                      day: route.day,
+                      runsheet: route.worker ? `${route.worker} · ${route.name}` : route.name,
+                    }),
+                  )
+                  .join(' · '),
+                position: 'top-right',
+                autoClose: toastSettings.AUTO_CLOSE,
+              });
+            }}
+          />
+        )}
       </Box>
 
       {[
@@ -2952,6 +3137,9 @@ ScheduleCalendar.propTypes = {
       parent, which also renders the switch that sets it, so the control survives the
       layout change it causes. */
   schedulerLayout: PropTypes.oneOf(Object.values(SCHEDULER_LAYOUT)),
+  /** Which Harmonize shell the button opens — see `config/harmonizeShell`. Owned by
+      the page above, so the switch survives on screen while the shell changes. */
+  harmonizeShell: PropTypes.oneOf(Object.values(HARMONIZE_SHELL)),
 };
 
 export default ScheduleCalendar;

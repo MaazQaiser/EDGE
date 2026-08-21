@@ -744,6 +744,12 @@ export const useStyles = makeStyles((theme) => ({
    * The month of the company grouping, where a cell holds visits rather than a
    * tally of them.
    *
+   * **And now the routes reading's month too**, which stacks route chips in the same
+   * way for the same reason — see `isStackedMonthView` in `ScheduleCalendarGrid.jsx`.
+   * Every rule below is about a cell holding *a stack of records* rather than a single
+   * line, so none of it is specific to visits; the name is kept because renaming it
+   * would be churn across this sheet's cross-references, not because it is accurate.
+   *
    * `monthGridCompact` stops month rows stretching, and its reasoning holds for the
    * grid it was written against: a counting cell is one line, and a row stretched to
    * a fifth of the viewport left 120px of white under it. That reasoning does not
@@ -1317,6 +1323,76 @@ export const useStyles = makeStyles((theme) => ({
       overflow: 'hidden',
       textOverflow: 'ellipsis',
     },
+  },
+
+  /* ------------------------------------------------------------------ *
+   * The month chip of the **routes** reading: a route, and its run's count.
+   *
+   * Same box as `visitMonthChip` above and deliberately so — one seventh of the grid
+   * is one seventh of the grid whichever reading is on it, so the two month grids
+   * share a chip geometry (3px/6px, 4px radius, `overflow: hidden`) and only their
+   * contents differ. It is restated rather than shared through a `composes` because
+   * the two differ in one rule: the visits chip pins its status mark with a nested
+   * `& $visitStatusIcon` selector, and this chip pins mark *and* count together in
+   * `routeMonthChipMeta` below.
+   *
+   * **The chip states no duty accent of its own.** The week's route card puts
+   * `DUTY_COLOR_CLASS`'s left border on its shell as well, which separates patrol from
+   * dedicated from dispatch on a grid that holds all three; this reading is a
+   * single-service patrol tenant's own tab (`canGroupMainViewByCompany`), so every
+   * chip in every cell would take the same stripe — 3px of a 147px cell spent
+   * distinguishing nothing. The status wash is the whole colour signal here, exactly as
+   * on the visits month chip. (`eventMounted` still stamps the duty class on
+   * FullCalendar's event *harness* for every event in every view — that is the shared
+   * grid's business, not this chip's, and it is untouched here.)
+   * ------------------------------------------------------------------ */
+  routeMonthChip: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '4px',
+    width: '100%',
+    minWidth: 0,
+    padding: '3px 6px',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    overflow: 'hidden',
+  },
+  /* The chip's subject: which route this is. The week grid carries this as the row
+     label and the month has no rows, so here it leads the chip in the same dark ink
+     and the same `fontWeight: 500` the visit chip's company takes — prominent without
+     being the loudest thing in a column of these.
+
+     `flex: '1 1 auto'`, unlike either half of `Company · Site`: there is only one
+     name on this chip, so it may take every pixel the count and the mark do not,
+     and it is the only thing here worth clipping. The full name is in the drawer the
+     chip opens. */
+  routeMonthChipName: {
+    '&.MuiTypography-root': {
+      color: theme.palette.textPrimary,
+      fontSize: '12px',
+      fontWeight: 500,
+      lineHeight: '16px',
+      minWidth: 0,
+      flex: '1 1 auto',
+      whiteSpace: 'nowrap',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+    },
+  },
+  /* The count and the status mark, pinned to the chip's trailing edge as one group.
+     Grouped rather than pinned individually so the gap between them stays 4px while
+     the pair as a whole sits at the edge — `marginLeft: auto` on each in turn would
+     push the mark to the edge and leave the count floating in the middle of whatever
+     width the route name gave up.
+
+     `flexShrink: 0`: two glyph-widths and a digit or two, nothing worth clipping —
+     the same call `patrolVisitCount` makes on the week card for the same reason. */
+  routeMonthChipMeta: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '4px',
+    flexShrink: 0,
+    marginLeft: 'auto',
   },
 
   /* ------------------------------------------------------------------ *

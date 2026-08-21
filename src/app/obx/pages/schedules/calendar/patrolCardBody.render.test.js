@@ -215,8 +215,8 @@ describe('the patrol card body', () => {
 
     it('draws nothing at all where there is no count to show', () => {
       // Every surface other than the routes reading, and that reading too whenever
-      // the window has no visit list (the month aggregate, a failed visits fetch) —
-      // which is also when the card keeps its compressed two-line shape.
+      // the window has no visit list (a failed visits fetch) — which is also when the
+      // card keeps its compressed two-line shape.
       const noCount = renderBody({ showVehicle: false }).container;
       expect(noCount.querySelectorAll('.visit-count')).toHaveLength(0);
       expect(noCount.querySelector('.row.row-new')).toHaveTextContent('Priya Raman');

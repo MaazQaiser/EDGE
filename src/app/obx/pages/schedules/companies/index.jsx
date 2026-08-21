@@ -99,15 +99,33 @@ const SchedulesCompanies = ({
     writeMatrixDensity(next);
   }, []);
 
-  /* One noun for the physical address, taken from the plural label and
-     singularised — asking `getLabel` for both forms returned "Sites" and
-     "Location" on this tenant, so the column header and the search box named the
-     same thing two different ways. */
-  const locationsTerm = getLabel('terms', 'sites', t) || 'Locations';
-  const locationTerm = locationsTerm.replace(/s$/i, '') || locationsTerm;
+  /**
+   * **Property, not Site** — this view's own word for the physical address.
+   *
+   * It asked the tenant (`getLabel('terms', 'sites')`) and rendered "Sites". Changed
+   * on request, and the change is narrower than it looks: this is the one surface whose
+   * design record already speaks this way. `docs/visits-feature/07-consolidated-visits-view.html`
+   * is written in "property" throughout — *the year is property-major*, *visit count per
+   * property*, *property with no recurring service* — so the screen and the document
+   * describing it now use one noun.
+   *
+   * Deliberately **not** pushed into the tenant label set. `terms.sites` is read by the
+   * sites module, the scheduler's own filters and half the app besides; renaming it there
+   * to suit this table would rename it on twenty screens nobody asked about. The cost of
+   * keeping it local is that a tenant who calls these something else third thing will not
+   * see it here — noted, and cheaper than the alternative.
+   *
+   * The **header takes the singular**, which also settles a small inconsistency it had
+   * with its neighbour: the first column has always been "Company", not "Companies", and
+   * "Sites" beside it was the odd one. Counts keep the plural.
+   */
+  const locationsTerm = t('obx.schedules.calendar.companies.propertyPlural');
+  const locationTerm = t('obx.schedules.calendar.companies.propertySingular');
 
-  /* The tenant's own words for the two facts the tooltip adds — the same reason the
-     location column asks `getLabel` rather than hardcoding "Sites".
+  /* The tenant's own words for the two facts the tooltip adds. These two *do* ask the
+     tenant, unlike the property vocabulary above — a route and the person on it are the
+     tenant's own objects, named differently per franchise, where "property" is this
+     view's own noun for the thing every tenant has.
 
      The **fallbacks are the generic nouns, not Filter Go's**. They read `Route` and
      `Technician` first, which are that tenant's words, so a tenant with no label set
@@ -409,7 +427,7 @@ const SchedulesCompanies = ({
                   scope="col"
                   className={`${classes.headCell} ${classes.stickyLocation}`}
                 >
-                  {locationsTerm}
+                  {locationTerm}
                 </TableCell>
                 {/* **Collapsed drops the month headings.** They are the axis, and
                     the axis is what this reading trades away — twelve headings over

@@ -799,6 +799,66 @@ the part worth remembering — **conditioned on the slot actually being filled**
 grouping toggle (`canSwitchGrouping` false) or an embedded site/user schedule passes nothing into
 that slot, and a rule dividing the filters from empty space would have been worse than no rule.
 
+### D34 — The routes month names its routes, fetched like the week rather than tallied
+
+Asked for as *"each day cell should show its routes — the route name and that route's visit count,
+same legend / colour / status convention as the routes weekly view."*
+
+**The blocker was the payload, not the rendering.** The routes reading's month called
+`/shiftActivityLog/aggregate`, which answers one tally per day per service — no per-route records
+at all, not even an id. A cell fed that can say `12 Visits` on a Tuesday and nothing about which
+routes were out, which is also why Harmonize was dark on exactly this combination.
+
+**Chosen: fetch the grid, not extend the aggregate.** `getRoutesByMonth` now makes the same two
+calls the routes *week* makes — the patrol grid at `responseVersion: 'grid-v2'`, and the
+`view: 'visits'` list — and maps the first through `mapGridV2WeekData` (rows discarded, a month has
+no resource column) and counts the second with `buildRouteVisitCounts`. Teaching the aggregate a
+per-route breakdown was the cheaper fetch and the worse answer: it would be **a second shape for
+the same fact**, kept in step with the week by hand, and this feature has already shipped one
+instance of that failure (a missed-visits pill reading 3 over a grid drawing 2). Asking for the
+week's own payloads makes the two views agree by construction — same endpoint, same mapper, same
+count function, so a route *is* the same object drawn twice. It is not expensive either: two calls
+where the week already makes three, and `/aggregate` keeps every month it serves that has no route
+to name — the patrol and dedicated tabs, the multi-service overview, the visits tab, both embeds.
+
+Two consequences, both deliberate. The month reports the grid's `footerStats` (the stats bar under
+it stops being empty, and the assignment pill reads off the footer as the week's does), and
+**Harmonize lights up here** — it was only ever disabled because the aggregate had no visits to
+give it, and the *visits* month next door has offered it since it was built.
+
+**The cell: route name, then count, then the status badge.** The week's route card is four lines
+and a month cell is one seventh of the grid, so the chip keeps the pair that was asked for and
+drops the window, the officer and the notes / split marks — all one click away in the drawer the
+chip opens, and the chip *is* clickable now (a click has a subject, so it opens the run instead of
+drilling into the day view). The route name is promoted onto the chip because in the week it is the
+row label, inherited by position, and the month has no rows — exactly the argument D27 makes for
+the visit chip naming its customer.
+
+**The status convention is shared, not restated.** The wash comes from `getValuesWrtStatuses`, the
+one resolver the week's route card calls, which reads `EVENT_BG_COLOR_CLASSES` in
+`calendarStatusWash.js`. `visitWashClassFor` is deliberately not used: its yellow-only-on-today
+rule is the *visit* path's, and a route card is not a visit. The badge is drawn on **every** state,
+unlike the visits chip's one-state mark — three shift statuses (unassigned, missed, cancelled) take
+no wash at all, so the badge is the only thing between them, and the week's card marks every state
+too.
+
+**D29 constrained the count and nothing was allowed past it.** A figure on every route in every day
+cell is a lot of new numbers on one screen, so each is the week card's own treatment and nothing
+louder: the same `patrolVisitCount*` classes, an 11px/700 tabular numeral beside
+`hits-runsheet.svg`'s native `#6A6A70`, no pill, no colour, no noun — the word lives only in the
+native tooltip. The one red count this chrome allows itself is still the header's assignment pill.
+
+*Two demo-data gaps, left alone and flagged.* `buildSection` places its four shifts per row at day
+offsets **relative to the window start** and never repeats them, so it answers a 35-day window with
+one week's worth of runs — the August 2026 month grid draws its twelve cards in Aug 1–7 and four
+weeks of empty cells. And the patrol grid is built from a 3-entry `SITES` list while the visits book
+uses 46 `VISIT_SITES`, so in that window no card shares a day with a listed visit and every count
+reads `0`. Both are generator facts, not wiring: the counts are proven against the real payloads in
+`routeVisitCount.test.js`, which asserts the month and the week never disagree on a shared
+route-day. Anchoring `buildSection` to absolute day indices the way `isSiteDueOn` already does would
+fix both — and would move the routes *week*'s cards too, which is a demo-data change of its own
+rather than a side effect of this one.
+
 ## What I would resolve first
 
 1. **D2 — bulk add.** Decided (skip the un-templated, name what was skipped) but **not built**.
