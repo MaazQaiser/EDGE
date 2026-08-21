@@ -31,22 +31,20 @@ import { useCanViewSummaryStats } from './hooks/useCanViewSummaryStats';
 /**
  * Whether the design-variation switches are on screen.
  *
- * **Off, so the scheduler can be screenshotted.** `VisitVariantSwitch` and
- * `SchedulerLayoutSwitch` are review controls — they exist to compare two drawings of a
- * visit card and two shapes of the scheduler while a decision is still open — and they
- * float over the bottom right corner of the grid, which is exactly where they land in
- * every screenshot of it. Nothing about them is for an end user.
+ * **On**, while the two decisions they serve are still open: `VisitVariantSwitch`
+ * compares two drawings of a visit card, `SchedulerLayoutSwitch` two shapes of the
+ * scheduler. Both are review controls — nothing about them is for an end user — and
+ * they float over the bottom right corner of the grid, which is where they land in
+ * every screenshot of it. That is the cost of having them, and the reason this is a
+ * flag: turn it off for a clean screenshot, and delete it along with the config
+ * modules and the losing variants once the choices land.
  *
- * A flag rather than a deletion, because the decisions they serve are not settled yet and
- * both controls are new. Flip this to `true` to get them back; nothing else has to change.
- *
- * **Hiding them does not change what is drawn.** Both values are persisted and read
- * independently of the switches (`readSchedulerLayout`, and the visit-card variant beside
- * it), so the grid keeps whichever variation was last chosen — the switches are only the
- * way to change it, not the reason it is what it is. Worth knowing if the screenshots come
- * out in an unexpected variant: set it here, or flip the flag, pick, and flip it back.
+ * **Toggling it does not change what is drawn.** Both values are persisted and read
+ * independently of the switches (`readSchedulerLayout`, and the visit-card variant
+ * beside it), so the grid keeps whichever variation was last chosen — the switches are
+ * only the way to change it, not the reason it is what it is.
  */
-const SHOW_VARIATION_SWITCHES = false;
+const SHOW_VARIATION_SWITCHES = true;
 
 /**
  * Whether the Harmonize shell switch is on screen.
@@ -54,6 +52,10 @@ const SHOW_VARIATION_SWITCHES = false;
  * **On**, while the drawer shell built to `HARMONIZE-CONTEXT.md` is being reviewed
  * against the shipped workspace. Turn it off — or delete it, the config module and
  * the losing shell together — once that decision lands.
+ *
+ * Its own flag rather than folding under `SHOW_VARIATION_SWITCHES`, because it is
+ * hidden for a different reason: that flag governs controls that reshape the *grid*,
+ * this one only decides what a button opens, so the two are worth retiring separately.
  */
 const SHOW_HARMONIZE_SHELL_SWITCH = true;
 
@@ -294,6 +296,13 @@ export default function Schedules({ selectedSite, officerId, className }) {
      (those draw the legacy card, so the choice would change nothing) and not on a tab
      that renders its own pane, whose content this switch does not reach. */
   const showsVisitVariantSwitch = isVisitsSubject && !isEmbeddedSchedule && !tabRendersOwnPane;
+  /* Whether the floating shell is drawn at all. Each pill answers for itself inside it,
+     so this only has to be true when at least one of them will be — an empty shell is
+     still a bordered, shadowed pill floating over the grid. Embedded site and user
+     schedules are excluded wholesale: these are reviewer controls for the scheduler
+     page, and neither variant they choose between exists on an embedded grid. */
+  const showsAnyReviewSwitch =
+    !isEmbeddedSchedule && (SHOW_HARMONIZE_SHELL_SWITCH || SHOW_VARIATION_SWITCHES);
 
   /**
    * Day and month show the legend, because neither carries status counts — with one
@@ -375,39 +384,34 @@ export default function Schedules({ selectedSite, officerId, className }) {
           height comes from, so it cannot drift onto the legend when the footer
           changes height between views. */}
       {/**
-       * The Harmonize shell switch, on its own flag rather than under
-       * `SHOW_VARIATION_SWITCHES`.
+       * All three review pills share **one** floating shell.
        *
-       * That flag is off so the *grid* can be screenshotted without two review pills
-       * floating over its bottom-right corner. This switch changes nothing about the
-       * grid — it decides what a button opens — so it does not have that cost, and
-       * folding it under the same flag would mean un-hiding the card and layout
-       * switches every time somebody wanted to look at the drawer. Separate flags,
-       * because they are hidden for a reason that only applies to two of the three.
+       * Two shells would be two absolutely-positioned boxes with the same `right` and
+       * the same `bottom`, stacked exactly on top of each other — which is what the
+       * Harmonize switch got away with only while `SHOW_VARIATION_SWITCHES` was off.
+       * The flags stay separate because the controls retire separately; the *shell* is
+       * shared because there is only one bottom-right corner to park them in.
        */}
-      {SHOW_HARMONIZE_SHELL_SWITCH && !isEmbeddedSchedule ? (
+      {showsAnyReviewSwitch ? (
         <Box
           className={classes.visitVariantFloating}
           style={{ bottom: `calc(${footerLayout.paddingBottom} + 16px)` }}
         >
-          <HarmonizeShellSwitch value={harmonizeShell} onChange={handleHarmonizeShellChange} />
-        </Box>
-      ) : null}
-      {SHOW_VARIATION_SWITCHES && !isEmbeddedSchedule ? (
-        <Box
-          className={classes.visitVariantFloating}
-          style={{ bottom: `calc(${footerLayout.paddingBottom} + 16px)` }}
-        >
-          {showsVisitVariantSwitch ? (
+          {SHOW_HARMONIZE_SHELL_SWITCH ? (
+            <HarmonizeShellSwitch value={harmonizeShell} onChange={handleHarmonizeShellChange} />
+          ) : null}
+          {SHOW_VARIATION_SWITCHES && showsVisitVariantSwitch ? (
             <VisitVariantSwitch value={visitCardVariant} onChange={handleVisitCardVariantChange} />
           ) : null}
-          {/* Unconditional inside this shell, unlike the card switch beside it. The
-              card variant only means something over a grid of visit cards, so it
-              comes and goes with one; the layout variation decides whether the
-              Companies *tab* exists at all, and a control that vanished on the
-              surfaces it governs would be unreachable from half of what it changes —
-              including, on Var 1, the Companies tab itself. */}
-          <SchedulerLayoutSwitch value={schedulerLayout} onChange={handleSchedulerLayoutChange} />
+          {/* Unconditional under its flag, unlike the card switch beside it. The card
+              variant only means something over a grid of visit cards, so it comes and
+              goes with one; the layout variation decides whether the Companies *tab*
+              exists at all, and a control that vanished on the surfaces it governs
+              would be unreachable from half of what it changes — including, on Var 1,
+              the Companies tab itself. */}
+          {SHOW_VARIATION_SWITCHES ? (
+            <SchedulerLayoutSwitch value={schedulerLayout} onChange={handleSchedulerLayoutChange} />
+          ) : null}
         </Box>
       ) : null}
       {showLegendFooter ? (

@@ -1,7 +1,7 @@
 import { Box, Skeleton, TableCell, TableRow, Tooltip, Typography, useTheme } from '@mui/material';
 import dayjs from 'dayjs';
 import PropTypes from 'prop-types';
-import { useCallback, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { visitCardLegend } from 'src/app/obx/pages/schedules/helper/visitCardInk';
 import { useTenantLabel } from 'src/helper/utilityHooks';
@@ -9,13 +9,13 @@ import { calendarShiftStatusEnum } from 'src/utils/constants/schedules';
 
 import { dayjsWithStandardOffset } from '../helper';
 import { COMPANIES_COLUMNS, useStyles } from './companies.styles';
-import CompaniesCollapseButton from './CompaniesCollapseButton';
 import CompaniesFilters from './CompaniesFilters';
 import { COMPANIES_VIEW } from './companiesViewRange';
 import CompaniesViewSwitch from './CompaniesViewSwitch';
 import { narrowCompanies, visitsInDateOrder } from './companyVisitFilters';
+import { isCollapsed, MATRIX_DENSITY } from './matrixDensity';
+import { siteTerms } from './siteTerm';
 import { visitCardClassFor } from './visitCardClass';
-import { isCollapsed, readMatrixDensity, writeMatrixDensity } from './matrixDensity';
 
 /**
  * What a card says: **the date, carrying its year, and nothing else.**
@@ -70,6 +70,7 @@ const SchedulesCompanies = ({
   onOpenVisit,
   view,
   onViewChange,
+  groupingSwitch = null,
 }) => {
   const classes = useStyles();
   const theme = useTheme();
@@ -80,24 +81,24 @@ const SchedulesCompanies = ({
   const legend = useMemo(() => visitCardLegend(theme), [theme]);
 
   /**
-   * Expanded or collapsed — owned here, not by the pane.
+   * **Collapsed, always.** Asked for directly: the packed reading is the view, and
+   * the expand/collapse button is gone from the toolbar with it.
    *
-   * The pane owns what is true of the *tab*: the scope and the one fetch that
-   * serves it, because every view reads them. This is true of one view only — the
-   * grouped list has no month axis to drop — so lifting it would put a piece of
-   * this component's own layout in a parent that cannot use it, and hand it to the
-   * grouped list as a prop it would have to ignore.
+   * So this is a constant rather than the persisted, switchable state it was — no
+   * `useState`, no storage read, no writer, and no control. The month axis was the
+   * thing the two readings disagreed about, and the sparse case it loses to is the
+   * common one: a location serviced quarterly fills three columns in twelve and
+   * rules whitespace through the other nine (see `matrixDensity.js`, which still
+   * states the trade in full).
    *
-   * Persisted rather than held in state alone: the pane is remounted on every
-   * scheduler tab round-trip. See `matrixDensity.js`.
+   * `MATRIX_DENSITY` and both branches below stay. The expanded path is a dozen
+   * lines of `renderMonthCells` reached by one boolean, and keeping it costs a
+   * constant where deleting it costs the ability to look at the axis again — which
+   * is the sort of thing that gets asked for once the packed rows have been lived
+   * with. Flip this to `MATRIX_DENSITY.EXPANDED`, or restore the button, and both
+   * readings are back.
    */
-  const [density, setDensity] = useState(readMatrixDensity);
-  const collapsed = isCollapsed(density);
-
-  const handleDensityChange = useCallback((next) => {
-    setDensity(next);
-    writeMatrixDensity(next);
-  }, []);
+  const collapsed = isCollapsed(MATRIX_DENSITY.COLLAPSED);
 
   /**
    * **Property, not Site** — this view's own word for the physical address.
@@ -119,8 +120,9 @@ const SchedulesCompanies = ({
    * with its neighbour: the first column has always been "Company", not "Companies", and
    * "Sites" beside it was the odd one. Counts keep the plural.
    */
-  const locationsTerm = t('obx.schedules.calendar.companies.propertyPlural');
-  const locationTerm = t('obx.schedules.calendar.companies.propertySingular');
+  /* The tenant's word, so this column and the filter dropdown above it cannot disagree
+     — see `siteTerm.js`, which is also where the retired `Property` is explained. */
+  const { singular: locationTerm, plural: locationsTerm } = siteTerms(getLabel, t);
 
   /* The tenant's own words for the two facts the tooltip adds. These two *do* ask the
      tenant, unlike the property vocabulary above — a route and the person on it are the
@@ -329,11 +331,13 @@ const SchedulesCompanies = ({
       companies={data?.filterOptions?.companies}
       view={view}
       viewSwitch={<CompaniesViewSwitch value={view} onChange={onViewChange} />}
-      /* Beside the filters rather than out at the trailing end with the grain
-         switch. The grain pill is a *reading of the period* and belongs against the
-         date range it moves; this changes nothing about the period, so it sits with
-         the controls that shape what you are looking at, behind their separator. */
-      filterAction={<CompaniesCollapseButton value={density} onChange={handleDensityChange} />}
+      leadingSwitch={groupingSwitch}
+      /* No `filterAction`. It carried `CompaniesCollapseButton`, beside the filters
+         and behind their separator — the density choice is pinned to collapsed now
+         (see `collapsed` above), so there is nothing for that slot to hold and
+         `CompaniesFilters` draws neither the button nor the rule that fenced it off.
+         The slot itself stays: it is the shape any future view-local control takes,
+         and the grouped list already threads nothing into it. */
     />
   );
 
@@ -561,6 +565,12 @@ SchedulesCompanies.propTypes = {
   view: PropTypes.oneOf(Object.values(COMPANIES_VIEW)).isRequired,
   /** Handed to the view switch; owned by `CompaniesPane`, not this view. */
   onViewChange: PropTypes.func.isRequired,
+  /**
+   * The scheduler's grouping switch, threaded straight through to
+   * `CompaniesFilters`'s leading slot. Owned by the calendar, not by this view or the
+   * pane — see `CompaniesPane`.
+   */
+  groupingSwitch: PropTypes.node,
 };
 
 export default SchedulesCompanies;

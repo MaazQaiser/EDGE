@@ -25,18 +25,35 @@ export const SCHEDULER_LAYOUT_LABELS = {
 };
 
 /**
- * **The incumbent leads.** Companies is a tab today, so that is what the page opens
- * on and Var 2 is the thing you opt *into* — the reverse of the card-variant switch,
- * which inverts the rule deliberately because a card is judged by living with it.
- * A layout decides where whole surfaces live, and defaulting to the shape the rest
- * of the app already assumes is what keeps a stale stored key from hiding a tab.
+ * **Var 2 leads — the choice has been made.** Asked for directly: the company
+ * reading stays, as the toggle's third segment rather than as a tab of its own.
+ *
+ * This reverses the incumbent-leads rule this module opened with. That rule was
+ * right while the question was open — a layout decides where whole surfaces live,
+ * and defaulting to the shape the rest of the app assumes is what keeps a stale key
+ * from hiding a tab — but it is an argument about which way to *lean*, and it is
+ * spent once somebody has picked. Var 1 stays reachable from the switch so the two
+ * are still comparable; it is now the thing you opt into.
  *
  * A stored value that no longer parses also lands here.
  */
-export const DEFAULT_SCHEDULER_LAYOUT = SCHEDULER_LAYOUT.TABBED_COMPANIES;
+export const DEFAULT_SCHEDULER_LAYOUT = SCHEDULER_LAYOUT.UNIFIED_TOGGLE;
 
-/** Where the choice is remembered between sessions. */
-export const SCHEDULER_LAYOUT_STORAGE_KEY = 'schedules.layoutVariation';
+/**
+ * Where the choice is remembered between sessions.
+ *
+ * **Suffixed, which retires every value written under the old key.** Changing the
+ * default above does nothing for anyone who has already been on this screen: their
+ * `tabbedCompanies` is a *valid* stored value, so the reader honours it and the new
+ * default never runs. Since the point of the change is that Var 2 is what the
+ * scheduler now is, the old answers have to go rather than being migrated — there is
+ * no "their preference" to preserve here, only a review switch's last position.
+ *
+ * Bumping the key rather than clearing the old one on read: a one-line rename that
+ * cannot half-fail, against a delete that has to run before the read, in a `try` that
+ * swallows storage errors anyway.
+ */
+export const SCHEDULER_LAYOUT_STORAGE_KEY = 'schedules.layoutVariation.v2';
 
 /**
  * Read/write pair modelled on `config/visitViewVariant.js`: validate against the

@@ -593,7 +593,7 @@
         "label": "Show the schedule as",
         "routes": "{{runsheets}}",
         "visits": "{{hits}} by company",
-        "companyTimeline": "Company timeline · 12 months",
+        "companyTimeline": "Every {{site}}'s next 12 months",
         "searchCompany": "Search company",
         "searchCompanyOrSite": "Search company or site",
         "searchAllLocations": "Every location ({{count}})",
@@ -606,12 +606,10 @@
         "searchClearSelection": "Clear this selection and show every company",
         "visitsShort": "Visits",
         "routesShort": "Routes",
-        "companiesShort": "Companies"
+        "companiesShort": "Plan"
       },
       "companies": {
         "companyColumn": "Company",
-        "propertySingular": "Property",
-        "propertyPlural": "Properties",
         "visitsColumn": "Visits",
         "openCompany": "Open {{company}}'s schedule",
         "filters": {
@@ -684,7 +682,7 @@
       },
       "tabs": {
         "overview": "Overview",
-        "companies": "Companies"
+        "companies": "Plan"
       },
       "resourceHeaders": {
         "locations": "Locations"

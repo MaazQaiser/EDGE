@@ -21,9 +21,9 @@ import useCompanyVisitSchedule, { defaultCompanyScope } from './useCompanyVisitS
 const STORAGE_KEY = 'schedules.companies.view';
 
 const useStyles = makeStyles(() => ({
-  /* No gap and no chrome: the view switch now renders inside whichever view is
-     mounted (each view threads it into its own `CompaniesFilters` row via the
-     `viewSwitch` slot), so the pane itself is nothing but that view. */
+  /* No gap and no chrome: both switches now render inside whichever view is mounted
+     — the grain switch through the `viewSwitch` slot, the scheduler's grouping switch
+     through `leadingSwitch` — so the pane itself is nothing but that view. */
   pane: {
     display: 'flex',
     flexDirection: 'column',
@@ -126,7 +126,7 @@ const VIEWS = {
  * breaking: giving the grains distinct `key`s would remount and silently reopen
  * everything.
  */
-const CompaniesPane = ({ onOpenVisit, initialCustomerId = null }) => {
+const CompaniesPane = ({ onOpenVisit, initialCustomerId = null, groupingSwitch = null }) => {
   const classes = useStyles();
   const [view, setView] = useState(readStoredView);
   /* Seeded from the *restored* view, not from the tab's default one. The window is
@@ -206,6 +206,12 @@ const CompaniesPane = ({ onOpenVisit, initialCustomerId = null }) => {
         onOpenVisit={onOpenVisit}
         view={view}
         onViewChange={handleChange}
+        /* Passed through, unread. The pane holds no opinion about the calendar's
+           grouping — it does not know what the other segments are — it only knows
+           that the switch has to land in the mounted view's filter row rather than
+           in a row of its own above it, which is a fact about layout and therefore
+           the pane's to route. Same shape as `viewSwitch`, for the same reason. */
+        groupingSwitch={groupingSwitch}
       />
     </Box>
   );
@@ -216,6 +222,16 @@ CompaniesPane.propTypes = {
   onOpenVisit: PropTypes.func,
   /** Company clicked through from the week grid — preselects the company filter. */
   initialCustomerId: PropTypes.string,
+  /**
+   * The scheduler's Routes / Visits / Companies switch, to be drawn at the head of
+   * the mounted view's filter row.
+   *
+   * Threaded in rather than built here because it is the *calendar's* control, wired
+   * to the calendar's grouping state — the pane is what it switches away from, so it
+   * cannot also be what owns it. Only Var 2 passes one: under Var 1 this pane is a
+   * tab, the tab row is the way back out, and the head of the filter row stays empty.
+   */
+  groupingSwitch: PropTypes.node,
 };
 
 export default CompaniesPane;

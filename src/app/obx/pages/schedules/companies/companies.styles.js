@@ -116,20 +116,43 @@ export const useStyles = makeStyles((theme) => {
     },
 
     /* --- Head --- */
+    /**
+     * **The scheduler's own column header, matched.**
+     *
+     * Every other reading on this page — Routes, Visits, the per-service tabs — heads
+     * its resource column through two rules in `calendar.styles.js`: the cell is
+     * `[role="columnheader"]` at a hard **36px**, and the label inside it is
+     * `resourceColumnHeaderInner` at **14px / 500 / `textPrimary`**. This header was
+     * 52px of 12px `textSecondary2`, so switching to Companies dropped the heading a
+     * size and two shades lighter and grew the row 16px taller in the same click.
+     * Reported directly, against all three toggle positions side by side.
+     *
+     * Copied in values rather than imported, for the reason this whole sheet already
+     * gives: the scheduler's version is bound to FullCalendar's own header skeleton and
+     * to the `classes` object the calendar threads down, neither of which exists for a
+     * plain `<table>`. Keep them in step by hand — the two are meant to read as one
+     * screen, not as two headers that happen to match today.
+     *
+     * **Horizontal padding is the one value that does not copy.** The reference runs
+     * 8px, matching the label cushions in its own rows; this table's body cells run
+     * 12px (`bodyRow`), and a header has to line up with the column under it before it
+     * lines up with another view. It was 20px, which lined up with neither — the
+     * heading sat 8px right of every name beneath it.
+     */
     headCell: {
       '&.MuiTableCell-root': {
         position: 'sticky',
         top: 0,
         zIndex: 3,
-        height: '52px',
-        padding: '0 20px',
+        height: '36px',
+        padding: '0 12px',
         background: theme.palette.surfaceWhite,
         borderBottom: `1px solid ${theme.palette.borderSubtle1}`,
         borderTop: 0,
-        fontSize: '12px',
+        fontSize: '14px',
         fontWeight: 500,
-        lineHeight: '18px',
-        color: theme.palette.textSecondary2,
+        lineHeight: '20px',
+        color: theme.palette.textPrimary,
         whiteSpace: 'nowrap',
         textAlign: 'left',
       },
@@ -143,17 +166,21 @@ export const useStyles = makeStyles((theme) => {
       },
     },
 
-    /* The first month column lands directly against the frozen pane's own seam
-     (`stickyLocation`'s right border), and every header up to that seam runs
-     20px of padding — so this one column dropping straight to 12px read as a
-     pinch exactly where the eye is comparing the two halves. Left only: the
-     right edge keeps the normal 12px rhythm every later month-to-month gap
-     uses, so only the seam is rebalanced. */
-    headCellMonthFirst: {
-      '&.MuiTableCell-root': {
-        paddingLeft: '20px',
-      },
-    },
+    /**
+     * **A no-op now, and left in place deliberately.**
+     *
+     * It added 20px of left padding to the first month column, to stop it reading as a
+     * pinch against the frozen pane's seam — which was a fault of `headCell` running
+     * 20px while `headCellMonth` ran 12px. `headCell` is 12px now, so the whole row
+     * shares one inset and there is no seam to rebalance.
+     *
+     * Kept rather than deleted because the only branch that applies it is the expanded
+     * month axis, which no reading currently reaches (see `collapsed` in `./index`).
+     * Deleting it would mean editing a `months.map` nobody can see to prove a style
+     * nobody can see; restating it as 12px would be the same value twice. If the axis
+     * comes back, take this and its `className` with it.
+     */
+    headCellMonthFirst: {},
 
     headCellCurrent: {
       '&.MuiTableCell-root': { color: theme.palette.textPrimary, fontWeight: 600 },

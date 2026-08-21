@@ -14,6 +14,7 @@ import { calendarShiftStatusEnum } from 'src/utils/constants/schedules';
 import CompaniesFilters from '../CompaniesFilters';
 import { COMPANIES_VIEW, isExecutionGrain } from '../companiesViewRange';
 import CompaniesViewSwitch from '../CompaniesViewSwitch';
+import { siteTerms } from '../siteTerm';
 import { narrowCompanies, visitsInDateOrder } from '../companyVisitFilters';
 import { visitCardClassFor } from '../visitCardClass';
 import { useStyles } from './companiesTimeline.styles';
@@ -54,6 +55,7 @@ const CompaniesTimeline = ({
   onOpenVisit,
   view,
   onViewChange,
+  groupingSwitch = null,
 }) => {
   const classes = useStyles();
   const theme = useTheme();
@@ -89,8 +91,8 @@ const CompaniesTimeline = ({
    * with its neighbour: the first column has always been "Company", not "Companies", and
    * "Sites" beside it was the odd one. Counts keep the plural.
    */
-  const locationsTerm = t('obx.schedules.calendar.companies.propertyPlural');
-  const locationTerm = t('obx.schedules.calendar.companies.propertySingular');
+  /* One word for the address, the tenant's — see `../siteTerm`. */
+  const { singular: locationTerm, plural: locationsTerm } = siteTerms(getLabel, t);
 
   const searchTerm = `${scope.query ?? ''}`.trim();
   /* Search wins over the grain: a planner who typed something and got nothing back
@@ -197,6 +199,7 @@ const CompaniesTimeline = ({
       companies={data?.filterOptions?.companies}
       view={view}
       viewSwitch={<CompaniesViewSwitch value={view} onChange={onViewChange} />}
+      leadingSwitch={groupingSwitch}
     />
   );
 
@@ -395,6 +398,12 @@ CompaniesTimeline.propTypes = {
   view: PropTypes.oneOf(Object.values(COMPANIES_VIEW)).isRequired,
   /** Handed to the view switch; owned by `CompaniesPane`, not this view. */
   onViewChange: PropTypes.func.isRequired,
+  /**
+   * The scheduler's grouping switch, threaded straight through to
+   * `CompaniesFilters`'s leading slot. Owned by the calendar, not by this view or the
+   * pane — see `CompaniesPane`.
+   */
+  groupingSwitch: PropTypes.node,
 };
 
 export default CompaniesTimeline;

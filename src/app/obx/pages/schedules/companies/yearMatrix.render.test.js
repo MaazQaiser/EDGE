@@ -6,21 +6,27 @@ import { theme } from 'src/theme';
 
 import { COMPANIES_VIEW } from './companiesViewRange';
 import SchedulesCompanies from './index';
-import { MATRIX_DENSITY_STORAGE_KEY } from './matrixDensity';
 
 /**
- * The year matrix, drawn both ways.
+ * The year matrix — **one reading now**, the packed one.
  *
- * The invariant worth a test is the **cell count**: the `colgroup` commits to
- * twelve columns expanded and one collapsed, and a body row that disagrees does not
- * throw — it silently slides every border out of line with the header, a row at a
- * time, which is a failure that only shows up to a human looking at the right part
- * of a wide table. Counting `<td>`s costs nothing and pins both readings.
+ * It used to be drawn both ways and this file drove the pair with the toolbar's
+ * density button. That button is gone and the density is pinned to collapsed (see
+ * `collapsed` in `./index`), so the tests that clicked it have gone with it and
+ * `offers no way to expand the axis` stands in their place: the removal is the thing
+ * that can regress now, and it regresses by a control reappearing.
  *
- * The toolbar is stubbed to its `viewSwitch` and `filterAction` slots. It is the one thing in this view
+ * The invariant still worth a test is the **cell count**: the `colgroup` commits to
+ * two frozen columns plus one strip, and a body row that disagrees does not throw —
+ * it silently slides every border out of line with the header, a row at a time, which
+ * is a failure that only shows up to a human looking at the right part of a wide
+ * table. Counting `<td>`s costs nothing.
+ *
+ * The toolbar is stubbed to its `viewSwitch` slot. It is the one thing in this view
  * that reaches for the dropdown, date-picker and search components, none of which
- * this test is about — and keeping the slot means the density pill it threads in is
- * still real and still clickable, which is what drives the two readings apart.
+ * this test is about. The `filterAction` slot is still rendered by the stub even
+ * though this view no longer fills it — that is what lets the density assertion
+ * below mean something rather than passing because the slot is not drawn at all.
  *
  * Structure, not copy: `i18next` is uninitialised in tests, so `useTranslation`
  * returns the key. The card's own text is asserted literally, because the format is
@@ -95,7 +101,7 @@ const SCOPE = { from: '2026-08-01', to: '2026-10-31', customerIds: [], siteIds: 
 
 /* `useTenantLabel` reads tenant labels off the store, and this view asks it for the
    word it heads the location column with. An empty label set is the real fallback
-   path — it lands on the `Locations` default. */
+   path — it lands on `siteTerms`' own `Sites`/`Site` default. */
 const STATE = { tenantConfigs: { labels: {} } };
 const store = {
   /* The *same* object every call. `useSelector` compares snapshots by identity, so
@@ -123,10 +129,6 @@ const draw = (props = {}) =>
     </Provider>,
   );
 
-/* One button, labelled with the action it performs — so "Collapse" is what you
-   press while expanded, and "Expand" is what stands there afterwards. */
-const collapse = () => fireEvent.click(screen.getByText(`${KEY}.density.collapse`));
-
 /**
  * A location's row, found by the name in its frozen cell.
  *
@@ -136,30 +138,47 @@ const collapse = () => fireEvent.click(screen.getByText(`${KEY}.density.collapse
  */
 const rowFor = (site) => screen.getByText(site.name).closest('tr');
 
-beforeEach(() => window.localStorage.removeItem(MATRIX_DENSITY_STORAGE_KEY));
-
-describe('the year matrix, expanded', () => {
-  it('opens expanded, with a column per month', () => {
+describe('the year matrix', () => {
+  it('opens packed: no month headings, and the strip named instead', () => {
     draw();
 
-    /* Expanded, so the button offers the other direction. */
-    expect(screen.getByText(`${KEY}.density.collapse`)).toBeInTheDocument();
-    expect(screen.queryByText(`${KEY}.density.expand`)).not.toBeInTheDocument();
-    expect(screen.getByText('Aug 2026')).toBeInTheDocument();
-    expect(screen.getByText('Oct 2026')).toBeInTheDocument();
-    expect(screen.queryByText(`${KEY}.visitsColumn`)).not.toBeInTheDocument();
+    expect(screen.queryByText('Aug 2026')).not.toBeInTheDocument();
+    expect(screen.queryByText('Oct 2026')).not.toBeInTheDocument();
+    expect(screen.getByText(`${KEY}.visitsColumn`)).toBeInTheDocument();
   });
 
-  it('gives the row one cell per month', () => {
+  /**
+   * The removal, pinned.
+   *
+   * Neither label, in either direction — the button was labelled with the *action*,
+   * so "Expand" is what a collapsed-by-default view would have shown and "Collapse"
+   * is what the expanded one did. Asserting both is what makes this fail if the
+   * control comes back in either state.
+   */
+  it('offers no way to expand the axis', () => {
     draw();
 
-    /* Location + three months. The company cell is not on this row — it is spanned
-       down from the group's first, and sites sort A–Z, so that is Anvil Yard. */
-    expect(rowFor(SERVICED).querySelectorAll('td')).toHaveLength(4);
-    /* Company + location + three months, being the group's first row. */
-    expect(rowFor(PROJECTED).querySelectorAll('td')).toHaveLength(5);
-    /* Location + the one cell that spans all three months. */
+    expect(screen.queryByText(`${KEY}.density.expand`)).not.toBeInTheDocument();
+    expect(screen.queryByText(`${KEY}.density.collapse`)).not.toBeInTheDocument();
+  });
+
+  it('gives every row the two frozen columns and one strip', () => {
+    draw();
+
+    /* Location + strip. The company cell is not on this row — it is spanned down
+       from the group's first, and sites sort A–Z, so that is Anvil Yard. */
+    expect(rowFor(SERVICED).querySelectorAll('td')).toHaveLength(2);
+    /* Company + location + strip, being the group's first row. */
+    expect(rowFor(PROJECTED).querySelectorAll('td')).toHaveLength(3);
     expect(rowFor(UNSCHEDULED).querySelectorAll('td')).toHaveLength(2);
+  });
+
+  it('packs a row of visits into that one cell, in date order', () => {
+    draw();
+
+    const cells = rowFor(SERVICED).querySelectorAll('td');
+    /* Both visits, in date order, in the strip. */
+    expect(cells[1].textContent).toBe("19 Aug '2614 Oct '26");
   });
 
   it('states the date with its year and no clock window', () => {
@@ -170,55 +189,18 @@ describe('the year matrix, expanded', () => {
     /* The window that used to follow the date. `8a`/`1:30p` were its two forms. */
     expect(screen.queryByText(/\d(:\d\d)?[ap]\b/)).not.toBeInTheDocument();
   });
-});
 
-describe('the year matrix, collapsed', () => {
-  it('drops the month headings and names the strip instead', () => {
-    draw();
-    collapse();
-
-    expect(screen.queryByText('Aug 2026')).not.toBeInTheDocument();
-    expect(screen.queryByText('Oct 2026')).not.toBeInTheDocument();
-    expect(screen.getByText(`${KEY}.visitsColumn`)).toBeInTheDocument();
-    /* And the button now offers the way back. */
-    expect(screen.getByText(`${KEY}.density.expand`)).toBeInTheDocument();
-  });
-
-  it('packs the same visits into one cell, in date order', () => {
-    draw();
-    collapse();
-
-    const cells = rowFor(SERVICED).querySelectorAll('td');
-    /* Location + one strip — the single column the `colgroup` now commits to,
-       against three a moment ago. */
-    expect(cells).toHaveLength(2);
-
-    /* Both visits, in date order, in that one cell. */
-    expect(cells[1].textContent).toBe("19 Aug '2614 Oct '26");
-  });
-
-  it('says in words what the expanded reading says with a grey fill', () => {
+  /**
+   * Said in words, not with a grey fill.
+   *
+   * The expanded reading spelled this out with a spanning cell whose *colour* was the
+   * message, named only for assistive tech; packed, there is no span to colour, so the
+   * strip carries the sentence and every reader gets the same fact.
+   */
+  it('says in words that a location is not scheduled', () => {
     draw();
 
-    /* Expanded: the spanning cell carries no text — the fill is the message, named
-       only for assistive tech, which cannot see it. (Cell counts for this row live in
-       the test above.) */
-    expect(screen.getByLabelText(`${KEY}.notScheduled`)).toBeInTheDocument();
-    expect(screen.queryByText(`${KEY}.notScheduled`)).not.toBeInTheDocument();
-
-    collapse();
     expect(screen.getByText(`${KEY}.notScheduled`)).toBeInTheDocument();
-  });
-
-  it('remembers the choice for the next mount', () => {
-    draw();
-    collapse();
-
-    expect(window.localStorage.getItem(MATRIX_DENSITY_STORAGE_KEY)).toBe('collapsed');
-
-    /* A fresh mount, as after a scheduler tab round-trip. */
-    draw();
-    expect(screen.getAllByText(`${KEY}.visitsColumn`)).not.toHaveLength(0);
   });
 });
 

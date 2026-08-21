@@ -19,6 +19,7 @@ import {
   stepRange,
 } from './companiesViewRange';
 import { isScopeNarrowed, STATUS_FILTER_ALL, statusFilterOptions } from './companyVisitFilters';
+import { siteTerms } from './siteTerm';
 
 const useStyles = makeStyles((theme) => ({
   /**
@@ -193,6 +194,29 @@ const useStyles = makeStyles((theme) => ({
     background: theme.palette.borderSubtle1,
   },
 
+  /**
+   * The rule that fences the **leading** switch off from the filter run.
+   *
+   * Same job, and the same drawing, as `calendarHeaderToolbarLeadingDivider` in the
+   * scheduler's own toolbar: what leads this row re-groups the whole surface rather
+   * than narrowing it, and flush against a run of borderless dropdowns it reads as
+   * the first of them.
+   *
+   * **32px, not the 28 of `toolbarDivider` above and not the reference's
+   * `alignSelf: stretch`.** It is measured against the thing it fences off — a 32px
+   * segmented pill — where that one is measured against the 28px controls it sits
+   * between; the two separators in this row answer different questions and the
+   * heights follow from what is on either side of each. Stretching it, which is what
+   * the reference does inside a taller shell, would make it the tallest mark in a row
+   * whose tallest control is 32.
+   */
+  toolbarLeadingDivider: {
+    width: '1px',
+    height: '32px',
+    flex: '0 0 auto',
+    background: theme.palette.borderSubtle1,
+  },
+
   dateNavigatorToday: {
     '&.MuiButtonBase-root': {
       height: '28px',
@@ -258,14 +282,16 @@ const CompaniesFilters = ({
   companies = [],
   view,
   viewSwitch = null,
+  leadingSwitch = null,
   filterAction = null,
 }) => {
   const classes = useStyles();
   const { t } = useTranslation();
   const { getLabel } = useTenantLabel();
 
-  const locationsTerm = getLabel('terms', 'sites', t) || 'Locations';
-  const locationTerm = locationsTerm.replace(/s$/i, '') || locationsTerm;
+  /* Was the same two lines inline, with `Locations` as the no-label fallback — a third
+     word for the object, on a screen that already had two. See `./siteTerm`. */
+  const { singular: locationTerm } = siteTerms(getLabel, t);
 
   const companyOptions = useMemo(
     () =>
@@ -418,6 +444,27 @@ const CompaniesFilters = ({
 
   return (
     <Box className={classes.toolbar}>
+      {/* The grouping switch, when this pane is a *segment* of the scheduler rather
+          than a tab of its own — Var 2's Routes / Visits / Companies.
+
+          It leads this row for the same reason it leads the grid's, and it is in this
+          row at all because it used to be in one of its own: a bare toolbar above the
+          pane, so the toggles and the filters that came with them stacked into two
+          rows where every other surface reads them as one. Reported directly. The slot
+          is a `node` rather than the switch itself because the switch is the
+          *calendar's* control, wired to the calendar's grouping state — this row only
+          decides where it sits.
+
+          The rule is drawn with it, so a caller that threads in nothing (Var 1, where
+          Companies is a tab and there is no toggle to come back through) gets no stray
+          line at the head of the row. */}
+      {leadingSwitch ? (
+        <>
+          {leadingSwitch}
+          <Box className={classes.toolbarLeadingDivider} aria-hidden />
+        </>
+      ) : null}
+
       {/* **No search box here.** This row had one, added because `scope.query` was
           wired end to end with nothing on screen setting it — and it was the wrong
           answer to that. Both dropdowns below are `searchable`, so a planner hunting
@@ -599,6 +646,12 @@ CompaniesFilters.propTypes = {
   view: PropTypes.oneOf(Object.values(COMPANIES_VIEW)).isRequired,
   /** The grain switch, rendered at the trailing end of this row beside the date. */
   viewSwitch: PropTypes.node,
+  /**
+   * The scheduler's grouping switch, rendered at the *leading* end behind a rule.
+   * Threaded down from the calendar when this pane is mounted as a grouping segment;
+   * omitted when it is a tab, where the tab row is the way back out.
+   */
+  leadingSwitch: PropTypes.node,
   /**
    * One control belonging to the mounted view, rendered after the filters behind a
    * separator — the year matrix's collapse button. Omitted, neither it nor its

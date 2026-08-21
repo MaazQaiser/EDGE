@@ -1,13 +1,5 @@
 import { ArrowDropDown, AutoAwesome as AutoAwesomeIcon } from '@mui/icons-material';
-import {
-  Box,
-  Button,
-  Skeleton,
-  ToggleButton,
-  ToggleButtonGroup,
-  Tooltip,
-  Typography,
-} from '@mui/material';
+import { Box, Button, Skeleton, ToggleButton, ToggleButtonGroup, Tooltip } from '@mui/material';
 import dayjs from 'dayjs';
 import PropTypes from 'prop-types';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -44,7 +36,12 @@ import {
 import history from 'src/app/router/utils/history';
 import { AddBlueIcon, AlertIcon, ForecastTrendIcon } from 'src/assets/svg';
 import { ReactComponent as RouteGroupingIcon } from 'src/assets/svg/ACLRunsheet.svg?react';
-import { ReactComponent as CompanyGroupingIcon } from 'src/assets/svg/CompanyGroupingIcon.svg?react';
+/* Staggered bars, not the building this segment used to carry — the segment is
+   "Plan" now, and a building named the rows where the label names the horizon. Drawn
+   in the same 20×20 / 1.2 stroke / round-cap style as its two neighbours, and it is
+   the lightest of the three at the 16px they render at. `CompanyGroupingIcon.svg` is
+   left in `assets/` with no importer. */
+import { ReactComponent as PlanGroupingIcon } from 'src/assets/svg/PlanGroupingIcon.svg?react';
 import { ReactComponent as VisitGroupingIcon } from 'src/assets/svg/VisitGroupingIcon.svg?react';
 import { useApiControllers } from 'src/helper/axios';
 import { useTenantLabel } from 'src/helper/utilityHooks';
@@ -67,6 +64,7 @@ import { toaster } from 'src/utils/toast';
 import SuppliesForecastingDrawer from '../../../../components/obxComponents/suppliesForecasting';
 import AssignmentSideDrawer from '../../sites/detail/components/jobs/assignmentSideDrawer';
 import SchedulesCompanies from '../companies/CompaniesPane';
+import { siteTerms } from '../companies/siteTerm';
 import CompanySiteSearch from '../components/companySiteSearch';
 import ScheduleCalendarFilters from '../components/scheduleCalendarFilters';
 import ScheduleErrorBoundary from '../components/scheduleErrorBoundary';
@@ -119,7 +117,6 @@ import DedicatedSplitShift from '../shiftDetail/components/dedicatedSplitShift/i
 import { buildRouteVisitCounts } from './routeVisitCount';
 import { useStyles } from './scheduleCalendar.styles';
 import ScheduleCalendarGrid from './ScheduleCalendarGrid';
-import { resolveScheduleWindowTerm, sumScheduleWindowTotal } from './scheduleWindowTotal';
 import { useApplyMotion } from './useApplyMotion';
 
 export { DUTY_COLORS } from '../helper/scheduleColors';
@@ -541,7 +538,22 @@ const ScheduleCalendar = (props) => {
         getLabel,
         t,
         shiftTypes,
-        includeOfficerTab: false,
+        /**
+         * **On.** Asked for directly — "add a new tab at top, Installers".
+         *
+         * Nothing here is new but the flag. `SCHEDULE_TAB_CONFIGS.officer` has always
+         * been live (`apiView: 'officer'`, a resource column headed with the tenant's
+         * plural term), the view model has an `isOfficerWeekView` branch, and the grid
+         * draws that branch as an avatar, a name and the hours booked on the row —
+         * which is the design this was asked to match. It was gated "until the view is
+         * ready for all tenants", and it has been ready.
+         *
+         * Still a flag rather than an unconditional push, because that caveat is the
+         * honest one: the rows and their hours come from `view=officer` on the grid
+         * endpoint, so a tenant whose backend does not answer that call gets an empty
+         * tab, and turning it off is the one-line way back.
+         */
+        includeOfficerTab: true,
         /* The one structural difference between the two layouts. Var 2 retires the
            Companies **tab** — `SCHEDULE_TAB_CONFIGS.companies` stays live either way
            and is still what mounts the pane, reached there from the grouping toggle's
@@ -1091,28 +1103,23 @@ const ScheduleCalendar = (props) => {
     data.unassignedCount ?? data.footerStats?.statuses?.unassigned ?? 0;
 
   /**
-   * The window's counts, kept **here as well as handed up**.
+   * The window's counts, handed **up** to the page that draws the legend.
    *
-   * The page above draws the legend from them; the header total above the grid sums
-   * them. Two readers, one object — deliberately, because the alternative is a
-   * header that counts the cards itself, and two counts of one fact drift: this
-   * feature has already shipped a missed-visits pill reading 3 over a grid that drew
-   * 2. Every branch reports through `reportFooterStats`, so there is no path that can
-   * update the footer and leave the total stale, and none that can update the total
-   * without the footer beneath it moving too.
+   * They were also held here, for a `9 Visits` total in the header cluster. That total
+   * has been removed, and the local copy went with it: the page above is the only
+   * reader now, so keeping a second copy in this component would be state nothing
+   * renders — and the next person to find it would have to work out which of the two
+   * was authoritative.
    *
-   * `null` where a payload genuinely has no counts to give — the day view, the
-   * embedded grids, and every month still answered by `/aggregate` — and the total
-   * simply does not render there, rather than inventing a number the footer cannot
-   * show. The two months that fetch records rather than tallies (the company
-   * grouping's, and the routes reading's since `getRoutesByMonth`) do have counts, and
-   * report them like the week does.
+   * Every branch still reports through `reportFooterStats` rather than calling the prop
+   * directly, which is what keeps the legend from going stale on any one path.
+   *
+   * `null` where a payload genuinely has no counts to give — the day view, the embedded
+   * grids, and every month still answered by `/aggregate`.
    */
-  const [windowFooterStats, setWindowFooterStats] = useState(null);
   const onFooterStatsChange = props.onFooterStatsChange;
   const reportFooterStats = useCallback(
     (footerStats) => {
-      setWindowFooterStats(footerStats || null);
       onFooterStatsChange?.(footerStats || null);
     },
     [onFooterStatsChange],
@@ -2204,7 +2211,26 @@ const ScheduleCalendar = (props) => {
      alone would be one word away from `{{hits}} by company` and the two segments
      would differ only in a preposition. This one is the twelve-month cadence view,
      and the year is the thing that distinguishes it. */
-  const timelineGroupingLabel = t('obx.schedules.calendar.grouping.companyTimeline');
+  /**
+   * **"Plan"**, and the tooltip carries what one word cannot.
+   *
+   * The segment was "Companies", which did not discriminate: the *Visits* segment
+   * beside it is already grouped by company (`MAIN_VIEW_GROUPING.COMPANIES`, tooltip
+   * "{{hits}} by company"), so the pair read as a difference of subject where there is
+   * none. What actually changes when this is pressed is the **horizon** — Routes and
+   * Visits are two readings of the week in front of you, this one leaves the week for a
+   * rolling year and swaps the grid for a table.
+   *
+   * Not "Sites", which was the other candidate and is the better *subject* word now
+   * that the term is settled: it would sit about 20px from this row's own `Site` filter
+   * dropdown, one word for a control that picks a view and a control that narrows rows.
+   *
+   * The tooltip names the rows and the span, in the tenant's word for the row, because
+   * "Plan" says neither.
+   */
+  const timelineGroupingLabel = t('obx.schedules.calendar.grouping.companyTimeline', {
+    site: siteTerms(getLabel, t).singular.toLowerCase(),
+  });
 
   /**
    * The book the search offers, assembled from what the client already holds.
@@ -2484,7 +2510,7 @@ const ScheduleCalendar = (props) => {
             value={TIMELINE_PANE_GROUPING}
             aria-label={timelineGroupingLabel}
           >
-            <CompanyGroupingIcon />
+            <PlanGroupingIcon />
             {t('obx.schedules.calendar.grouping.companiesShort')}
           </ToggleButton>
         </Tooltip>
@@ -2587,28 +2613,6 @@ const ScheduleCalendar = (props) => {
     />
   );
 
-  /**
-   * The window's **visit total**, for the top-right cluster.
-   *
-   * Read off the footer rather than counted from `allDuties` — see
-   * `sumScheduleWindowTotal` for why, and for why cancelled records are already out
-   * of it. `null` whenever the footer has no numbers (the day view, the embedded
-   * grids, the months answered by `/aggregate`), which is the honest answer there:
-   * no total rather than a total of nothing.
-   *
-   * **`null` on the routes reading too, and that is the point.** It used to read
-   * `12 Routes` there — a count of cards already on screen, in a unit nobody plans
-   * in — and it was asked to go. The unit that matters on that reading is visits, and
-   * that number is now written per run on the cards themselves, where a planner can
-   * act on it. The gate is inside `sumScheduleWindowTotal`, keyed on the footer's
-   * subject, so nothing here decides it a second time.
-   */
-  const windowTotal = useMemo(
-    () => sumScheduleWindowTotal(windowFooterStats, footerVariant),
-    [windowFooterStats, footerVariant],
-  );
-  const windowTotalTerm = resolveScheduleWindowTerm({ count: windowTotal, getLabel, t });
-
   const createMenu = (
     <RenderIfHasPermission name={ACL_OBX_SITE_EXTRA_JOB_CREATE}>
       <Tooltip
@@ -2675,44 +2679,6 @@ const ScheduleCalendar = (props) => {
         )}
 
         <Box className={classes.scheduleCalendarHeaderRight}>
-          {/* The volume, then the exception, then the actions — general to specific,
-              left to right, which is also loud-to-louder-to-quiet in weight.
-
-              **Quiet on purpose, and not a pill.** D29 settled this row on *one* red
-              count, and it is the one a planner can act on from here; a second
-              filled chip beside it would ask them to hold two numbers and then
-              decide which the morning was about, which is exactly the pair of red
-              pills D29 removed. So the total is set in type rather than in a
-              container: a number and its noun, the same two-weight idiom the visits
-              month cell uses for the same fact (`visitsMonthCount` /
-              `visitsMonthTerm`), so a total reads the same wherever it is written.
-              It is also the row's only non-interactive element, which is the honest
-              signal — it is context for the count beside it, not a filter.
-
-              Nothing is gated on the *view* here: the total exists exactly where the
-              footer has numbers *and its cards are visits*, so it cannot appear over a
-              grid whose counts the page cannot show — nor over the routes reading,
-              which no longer has a total at all (`sumScheduleWindowTotal`). */}
-          {windowTotal === null ? null : (
-            <Box
-              className={classes.scheduleWindowTotal}
-              /* Same scope statement the pill's tooltip makes, for the same reason:
-                 the number describes the dates fetched, which in month is the whole
-                 grid — trailing cells of the next month included — and not the month
-                 in the title. */
-              title={t('obx.schedules.calendar.windowTotal', {
-                count: windowTotal,
-                hits: windowTotalTerm,
-              })}
-            >
-              <Typography component="span" className={classes.scheduleWindowTotalCount}>
-                {windowTotal}
-              </Typography>
-              <Typography component="span" className={classes.scheduleWindowTotalTerm}>
-                {windowTotalTerm}
-              </Typography>
-            </Box>
-          )}
           {/* **On every grouping, including company.** Asked for directly — "we will
               have assignment message instead of missed" — and the removal of the
               Missed pill is what makes it necessary rather than merely consistent.
@@ -2824,18 +2790,26 @@ const ScheduleCalendar = (props) => {
                date navigator and Day/Week/Month belong to a grid this surface does
                not have, so none of the real toolbar comes with it. */
             <Box className={classes.scheduleOwnPane}>
-              {/* …except the grouping switch, which is the way back out. Under Var 2
-                  this pane is a *segment*, not a tab, so the page's tab row is not a
-                  route out of it — dropping the toggle here would make selecting
-                  Companies a one-way door with nothing on screen to undo it. Repeated
-                  in a bare row rather than moved, because the branch below hands the
-                  same element to the grid's own toolbar and only one of the two
-                  branches ever renders. */}
-              {showsCompanyTimeline && groupingSwitch ? (
-                <Box className={classes.scheduleOwnPaneToolbar}>{groupingSwitch}</Box>
-              ) : null}
               <SchedulesCompanies
                 initialCustomerId={selectedCompanyId}
+                /**
+                 * …except the grouping switch, which is the way back out. Under Var 2
+                 * this pane is a *segment*, not a tab, so the page's tab row is not a
+                 * route out of it — dropping the toggle would make selecting Companies
+                 * a one-way door with nothing on screen to undo it.
+                 *
+                 * **Handed to the pane, not drawn above it.** It used to render in a
+                 * bare row of its own here, which put the toggles and the pane's own
+                 * filters on two stacked rows — where every other surface in the
+                 * scheduler reads them as one, because the grid's toolbar takes the
+                 * same element as its `toolbarLeadingContent` (see the branch below).
+                 * Reported directly. The pane routes it into the mounted view's filter
+                 * row, so both layouts now spend the same one row on it.
+                 *
+                 * Still the same element in both branches, and still only ever one of
+                 * them rendering.
+                 */
+                groupingSwitch={showsCompanyTimeline ? groupingSwitch : null}
                 onOpenVisit={(visit, site) =>
                   setShowDrawer({
                     open: DRAWER_TYPE.DETAIL,

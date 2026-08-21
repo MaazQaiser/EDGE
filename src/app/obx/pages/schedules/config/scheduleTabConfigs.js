@@ -37,6 +37,26 @@ export const getScheduleHeaderTabs = ({
      pane either way. */
   includeCompaniesTab = true,
 } = {}) => {
+  /**
+   * The **person** tab — "Installers" on Filter Go, whatever the tenant calls its
+   * field staff everywhere else.
+   *
+   * Named from the *plural* term, unlike every other tab in this row. The others name
+   * a service ("Filter replacement") or a reading ("Overview"), which are singular
+   * nouns for one thing; this one names the rows it draws, and a column of people
+   * reads as a plural — which is also the word the resource-area header beside it
+   * already uses (`resolveResourceAreaHeader`, `terms.officers`). Asked for as
+   * "Installers".
+   *
+   * Built once and used by both branches below so the two cannot drift: the tab
+   * existed only in the multi-service branch, where it was singular, and it was
+   * unreachable in the single-service one — which is where Filter Go lives.
+   */
+  const officerTab = () => ({
+    id: 'officer',
+    label: resolveTerm('officers', 'Officers'),
+  });
+
   const resolveTerm = (key, fallback) => {
     const fromShiftTypes =
       shiftTypes?.[key]?.label || (typeof shiftTypes?.[key] === 'string' ? shiftTypes[key] : '');
@@ -72,6 +92,16 @@ export const getScheduleHeaderTabs = ({
       },
     ];
 
+    /* **After the service tab, not before it.** The multi-service branch puts this
+       second too, but there it lands behind Overview — here the service tab *is* the
+       overview-backed one, and `calendar/index.jsx` opens the page on
+       `scheduleHeaderTabs[0]`. Leading with people would quietly move the scheduler's
+       landing surface off the schedule, which is not what adding a tab was asked to
+       do. */
+    if (includeOfficerTab) {
+      tabs.push(officerTab());
+    }
+
     if (services?.patrol === true && includeCompaniesTab) {
       tabs.push(companiesTab);
     }
@@ -82,9 +112,9 @@ export const getScheduleHeaderTabs = ({
     { id: 'overview', label: t?.('obx.schedules.calendar.tabs.overview') || 'Overview' },
   ];
 
-  // Officer tab stays opt-in until the view is ready for all tenants.
+  // Officer tab stays opt-in — see the flag's own note in `calendar/index.jsx`.
   if (includeOfficerTab) {
-    tabs.push({ id: 'officer', label: resolveTerm('officer', 'Officer') });
+    tabs.push(officerTab());
   }
 
   if (services?.dedicated === true) {
@@ -455,8 +485,36 @@ export const SCHEDULE_TAB_CONFIGS = {
   officer: {
     id: 'officer',
     apiView: 'officer',
-    // Tall Overview stats (Coverage + 6 + 9) are Overview-tab only.
-    footerVariant: null,
+    /**
+     * The **shift** vocabulary, short form — duty types on the left, statuses on the
+     * right, no coverage ring.
+     *
+     * This was `null`, which drew no footer at all, on the note that "tall Overview
+     * stats (Coverage + 6 + 9) are Overview-tab only". That is still true and it is
+     * still the reason this is not `OVERVIEW`: that variant's mapper returns a
+     * `metrics` array unconditionally, so it would light the tall footer and print a
+     * 0% coverage ring over a payload that carries no KPI block. But "not the tall
+     * footer" is not the same as "no footer", and the design this tab was asked to
+     * match has one.
+     *
+     * `PATROL` is the honest short variant here: its status row is `STATUS_STATS`,
+     * the shift vocabulary — including **Split**, which is a fact about a *person's*
+     * day and belongs on the one surface whose rows are people — and its duty row
+     * only lists services the tenant actually sells. The mapper's `PATROL` branch
+     * returns no `metrics`, so the footer stays short on its own.
+     *
+     * Fed by the officer fetch's own `footerStats`: that branch calls `getAllDuties`
+     * with `applyFooterStats` left at its default, so the numbers are this tab's, not
+     * a neighbour's.
+     *
+     * **One label reads differently from the reference**: the patrol presentation
+     * spells the extra bucket `${extra} ${runsheet}` — "Extra Route" on Filter Go —
+     * because on the patrol tab an extra *runsheet* is the thing being distinguished
+     * from a regular one. On a row that is a person, that distinction is not being
+     * drawn and the plain "Extra" of the reference is the better word. Left alone
+     * because `patrolDutyStats` is shared with the tab it was written for.
+     */
+    footerVariant: SCHEDULE_STATS_FOOTER_VARIANTS.PATROL,
     resourceAreaHeaderKey: RESOURCE_AREA_HEADER_KEYS.OFFICERS,
     isOverviewTab: false,
     filters: {

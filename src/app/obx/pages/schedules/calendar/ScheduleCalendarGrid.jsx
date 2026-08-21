@@ -1797,7 +1797,12 @@ const ScheduleCalendarGrid = ({
                 </Typography>
                 {officerHours ? (
                   <Typography variant="subtitle3" className={classes.resourceLabelSubtitle}>
-                    ${officerHours}
+                    {/* No `$`. This read `${officerHours}` — in JSX children that is a
+                        literal dollar text node followed by the expression, so every
+                        row printed its hours as a price: `$24.5 hours this week`.
+                        Invisible until now only because the tab this renders on was
+                        behind a flag. */}
+                    {officerHours}
                     <span className={classes.resourceLabelSubtitleWrite}>hours this week</span>
                   </Typography>
                 ) : null}

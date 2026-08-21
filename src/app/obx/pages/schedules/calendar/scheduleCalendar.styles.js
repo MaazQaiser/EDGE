@@ -219,22 +219,10 @@ export const useStyles = makeStyles((theme) => ({
     minHeight: 0,
   },
 
-  /* The grouping switch's row when the pane has replaced the grid. Not a toolbar —
-     it holds one control and has no date navigator or view toggle to balance — so it
-     is a bare row rather than a copy of `calendarHeaderToolbar`'s chrome. `0 0 auto`
-     keeps it out of the pane's scroll below it. */
-  /* Padded on **both** sides. This carried only a `paddingBottom`, so the toggle sat
-     flush against the tab row's bottom border directly above it — the control read as
-     part of that row's chrome rather than as the first thing in the pane below it.
-     16px above matches the gap the calendar's own toolbar leaves under the same
-     border, so the two layouts start at the same height. */
-  scheduleOwnPaneToolbar: {
-    display: 'flex',
-    alignItems: 'center',
-    flex: '0 0 auto',
-    paddingTop: '16px',
-    paddingBottom: '12px',
-  },
+  /* No `scheduleOwnPaneToolbar`. The grouping switch used to get a bare row of its
+     own here, above the pane; it now leads the pane's own filter row instead
+     (`CompaniesFilters`'s `leadingSwitch`), which is the one row the other layouts
+     spend on the same pair of clusters. */
 
   /* --- the Routes / Visits / Companies switch ------------------------------
      Geometry mirrored from `calendarHeaderToolbarToggle` in
@@ -248,9 +236,29 @@ export const useStyles = makeStyles((theme) => ({
       borderRadius: '8px',
       background: theme.palette.surfaceGreySubtle,
       height: '32px',
-      display: 'flex',
+      /**
+       * **Grid, so the three segments are equal.**
+       *
+       * They used to be `flex` and content-sized, which meant each segment was as wide
+       * as its own word: `Routes` and `Visits` are six characters and `Plan` is four, so
+       * the selected pill changed size as you moved along the control and the run read
+       * as three unrelated buttons rather than one switch with three positions.
+       *
+       * `gridAutoColumns: 1fr` is what equalises. Flex cannot: `flex: 1` distributes the
+       * *free* space, and an auto-width container has none — its intrinsic size is the
+       * sum of the children, so a `flex-basis: 0` child ends up with `sum / 3`, which is
+       * less than the widest word needs and clips it. A `1fr` track set instead reports
+       * `3 × the widest column` as its own max-content, so the pill grows to fit the
+       * longest label and every segment gets that width. About 12px wider overall.
+       *
+       * `gridAutoFlow: column` rather than a fixed `gridTemplateColumns`, because the
+       * count is not fixed — Var 1 draws two segments and Var 2 draws three, and the
+       * rule has to equalise whichever it gets without being told how many.
+       */
+      display: 'grid',
+      gridAutoFlow: 'column',
+      gridAutoColumns: '1fr',
       alignItems: 'stretch',
-      justifyContent: 'center',
       padding: 0,
       // Must keep its own width at the head of the row, not be squeezed by the
       // filter run that follows it.
@@ -258,12 +266,18 @@ export const useStyles = makeStyles((theme) => ({
 
       '& .MuiToggleButtonGroup-grouped': {
         border: 0,
-        /* Labelled, so the segments are as wide as their words — the `minWidth` is
-           only a floor for the narrowest of them, not the equalising rule the
-           single-letter D/W/M switch needs. */
-        width: 'auto',
+        /* `100%` of the track, not `auto`. A grid item stretches by default, but MUI's
+           own `grouped` rule sets an explicit width and this has to win it. `minWidth`
+           stays as the floor for a two-segment Var 1 pill. */
+        width: '100%',
         minWidth: '32px',
         height: 'auto',
+        /* MUI collapses grouped buttons with `marginLeft: -1px`, which is why the 4px
+           `gap` above has always drawn as 3. Harmless while the segments were ragged
+           anyway; under equal columns it offsets two of the three by a pixel against
+           their own track, which is exactly the kind of thing this change is meant to
+           remove. */
+        marginLeft: '0 !important',
         alignSelf: 'stretch',
         borderRadius: '7px !important',
       },
@@ -274,6 +288,10 @@ export const useStyles = makeStyles((theme) => ({
     '&.MuiButtonBase-root': {
       display: 'inline-flex',
       alignItems: 'center',
+      /* Explicit, now that the segment is wider than its content: the glyph and the
+         word centre in the track together, so the three labels sit on one rhythm
+         instead of each hugging its own left edge. */
+      justifyContent: 'center',
       gap: '6px',
       padding: '0 10px',
       fontSize: '12px',
@@ -353,42 +371,6 @@ export const useStyles = makeStyles((theme) => ({
 
   /* Unrouted demand. This one is *meant* to be alert-coloured — it counts work
      nobody is coming for. */
-  /* The window total, opening the top-right cluster.
-
-     Deliberately **not** `TOOLBAR_PILL`: that shape belongs to the row's filter
-     chips, and this is neither a filter nor an action — it is the context the red
-     count beside it is an exception to. D29 allows one loud count in this row, so
-     this one is carried by type alone. Same two-weight idiom as the visits month
-     cell (`visitsMonthCount` / `visitsMonthTerm`), one step up in size because it
-     sits beside a 28px pill rather than inside a calendar cell. */
-  scheduleWindowTotal: {
-    display: 'flex',
-    alignItems: 'baseline',
-    gap: '4px',
-    minWidth: 0,
-    flexShrink: 0,
-  },
-  scheduleWindowTotalCount: {
-    '&.MuiTypography-root': {
-      color: theme.palette.textPrimary,
-      fontSize: '16px',
-      fontWeight: 700,
-      lineHeight: '20px',
-      /* So the number does not shift the noun sideways as the window changes
-         width — the same reason the month cell's count is tabular. */
-      fontVariantNumeric: 'tabular-nums',
-    },
-  },
-  scheduleWindowTotalTerm: {
-    '&.MuiTypography-root': {
-      color: theme.palette.textSecondary1,
-      fontSize: '12px',
-      fontWeight: 500,
-      lineHeight: '18px',
-      whiteSpace: 'nowrap',
-    },
-  },
-
   scheduleAssignmentActionButton: {
     '&.MuiButtonBase-root': {
       ...TOOLBAR_PILL,
