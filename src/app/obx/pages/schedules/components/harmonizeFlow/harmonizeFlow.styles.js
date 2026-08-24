@@ -196,6 +196,25 @@ export const useStyles = makeStyles((theme) => {
       color: theme.palette.textSecondary2,
     }),
 
+    /**
+     * Takes a scrollbar out of layout, wherever one turns up.
+     *
+     * A utility rather than a property on one rule, because the panels that hold visit rows
+     * nest **two** scroll containers: the shell's own body, and the workspace's
+     * `proposedBody` inside it. In the drawer only the outer one ever scrolls; in Split the
+     * column is height-constrained and `proposedBody` scrolls instead — so hiding the outer
+     * bar fixed the drawer and left Split's rows still 8px short on the right.
+     *
+     * Composed onto `proposedBody` at the call site (`DayPane`) rather than overriding that
+     * key outright: the class belongs to `harmonize.styles.js` and carries the layout both
+     * shells' route lists depend on, so copying it here to add two declarations would be a
+     * fork that drifts. See the note on `body` for why the bar goes at all.
+     */
+    noScrollbar: w({
+      scrollbarWidth: 'none',
+      '&::-webkit-scrollbar': { display: 'none' },
+    }),
+
     /* ── The day tabs ──────────────────────────────────────────────────────────
        The app's own tab language, copied by value from `customTabsWithPermissions`:
        14px/500 in `textPlaceholder`, `4px 4px 12px`, and the selected tab takes
@@ -345,6 +364,29 @@ export const useStyles = makeStyles((theme) => {
       minHeight: 0,
       overflowY: 'auto',
       padding: '20px 24px 24px',
+      /**
+       * **The scrollbar is taken out of layout, so a row's fill never depends on it.**
+       *
+       * A classic scrollbar narrows its scroll container's *content box*, so every visit row
+       * inside this panel measured 8–16px narrower than the identical row in the issues
+       * accordion — whose scrollbar is already hidden — and the hover fill's right edge moved
+       * depending on whether the list happened to overflow. The row's padding is a constant
+       * 12px either way; what shifted was the box that padding sits in, which is the same
+       * thing to a reader and worse for being conditional.
+       *
+       * Hiding it is the only option that makes the row genuinely scrollbar-independent:
+       * reserving a gutter still costs the width (and its size is browser-dependent), and
+       * showing one everywhere re-breaks the accordion's total-vs-figure alignment, whose
+       * bar sits outside the scroll box. Scrolling itself is untouched — wheel, trackpad,
+       * keyboard and programmatic scrolling all still work; only the painted bar is gone,
+       * exactly as `tabRow` and `spillBody` in this same sheet already do it.
+       *
+       * The cue for "there is more" is the row cut off at the fold. If that proves too
+       * quiet, add `tabRowScrollable`'s fade turned vertical — never the scrollbar back,
+       * or this drifts again.
+       */
+      scrollbarWidth: 'none',
+      '&::-webkit-scrollbar': { display: 'none' },
     }),
     /**
      * The route row's wrapper — **and it paints nothing at all now.**
@@ -1437,8 +1479,28 @@ export const useStyles = makeStyles((theme) => {
       flexDirection: 'row',
       alignItems: 'stretch',
       gap: 8,
-      padding: '8px 10px',
-      margin: '0 -10px 28px',
+      /**
+       * **The padding is spent *inside* the fill now, not bleeding it outward.**
+       *
+       * This is the fault three previous passes kept missing, and measuring the box is what
+       * hid it: the padding was always there — 12px — but an equal *negative horizontal
+       * margin* was cancelling it, so the numbers looked right while the pixels did not.
+       * Measured against the drawer's paper edge: the fill started **12px** in and the
+       * content **24px** in. So the 12px of padding was being spent pushing the fill
+       * *outward* into the 24px gutter, which put the grey band almost flush with the
+       * drawer's own edge and left the text sitting exactly where unpadded text would sit.
+       * A band that reaches the panel edge reads as a full-width row, and the padding it
+       * technically has is invisible because it is on the wrong side of the content.
+       *
+       * Dropping the negative margin flips it: the fill now stops at the container's
+       * content edge (24px from the paper) and the row's content is inset 12px *within* it
+       * (36px). The pill is visibly a pill, and the padding is visibly padding.
+       *
+       * The 12px indent relative to the route header above is deliberate and is the other
+       * half of it — a list nested inside a padded region, which is what this is.
+       */
+      padding: '10px 12px',
+      margin: '0 0 28px',
       minWidth: 0,
       borderRadius: 6,
       transition: 'background 120ms ease',
@@ -1780,8 +1842,12 @@ export const useStyles = makeStyles((theme) => {
        */
       textAlign: 'left',
       borderRadius: 6,
-      padding: '8px 10px 4px',
-      margin: '0 -10px',
+      /* Identical to `flowStopLine`'s, including dropping the outward bleed — see the long
+         note there for why a negative margin equal to the padding makes real padding
+         invisible. The old `8px 10px 4px` was also asymmetric; symmetric reads better as a
+         pill and matches the route rows exactly, which is the point. */
+      padding: '10px 12px',
+      margin: 0,
       cursor: 'grab',
       transition: 'background 120ms ease, opacity 140ms ease',
       '&:hover': { background: theme.palette.surfaceGreySubtle },
@@ -1812,8 +1878,10 @@ export const useStyles = makeStyles((theme) => {
       flexDirection: 'row',
       alignItems: 'stretch',
       gap: 8,
-      padding: '0 10px',
-      margin: '0 -10px',
+      /* Nothing horizontal at all. This was a matched padding/negative-margin pair that
+         cancelled to zero — harmless, but it is exactly the trick that made the row's real
+         padding invisible one level up, and leaving a second copy of it here is leaving a
+         trap. `spillRow` outside is the only thing that insets a tray row. */
       minWidth: 0,
     }),
     /**

@@ -16,6 +16,7 @@ import {
   getDedicatedShiftTypeOptions,
   getPatrolShiftTypeOptions,
 } from '../../config/scheduleTabConfigs';
+import { shiftKindOptions } from './shiftKindFilter';
 
 const getAllShiftsOption = (t) => ({
   value: '',
@@ -257,6 +258,23 @@ const ScheduleCalendarFilters = ({
             searchable
             clearAll
             additionalOption={<Box className={classes.scheduleCalendarFilterSearchDivider} />}
+          />
+        )}
+
+        {/* **After Sites, and only where the cards are visits.** Asked for in that position,
+            and it belongs there: Company → Site → Shift reads outward from the customer to
+            the work, where putting it beside Status would have paired it with the one
+            dropdown it is most easily confused for — status is *how the shift is going*,
+            this is *what kind of shift it is*. Hidden on the surfaces whose cards are
+            rosters rather than visits, where neither of its two answers means anything. */}
+        {!isSitesModule && !isUsersModule && (
+          <CustomDropDown
+            name="shift"
+            label={t('obx.schedules.filters.shift.label')}
+            className={classes.scheduleCalendarFilterDropdown}
+            options={shiftKindOptions(t)}
+            selectedValues={toSingleSelectValue(queryParams.filter.selectedShiftKind)}
+            handleChange={(event) => onSelectFilter(event, 'selectedShiftKind')}
           />
         )}
 

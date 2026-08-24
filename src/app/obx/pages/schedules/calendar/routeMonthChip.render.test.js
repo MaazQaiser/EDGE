@@ -65,7 +65,6 @@ const draw = (props = {}) =>
         shift={routeCard()}
         statusIcon={calendarIndicatorIcons[calendarShiftStatusEnum.IN_PROGRESS]}
         visitCount={3}
-        visitCountTitle="3 Visits on this Runsheet on this day"
         {...props}
       />
     </ThemeProvider>,
@@ -83,15 +82,22 @@ describe('the routes month chip', () => {
     expect(count.querySelector('.visit-count-icon svg')).not.toBeNull();
   });
 
-  it('carries the noun in the tooltip only — a bare figure on the face', () => {
+  it('carries no noun of its own — not on the face, and no longer in a native title', () => {
     const { container } = draw();
 
-    expect(container.querySelector('.visit-count').getAttribute('title')).toBe(
-      '3 Visits on this Runsheet on this day',
-    );
-    // No word beside the figure. `Visit`/`Visits` is the tenant's own term and the
-    // chip is 147px wide; the count is a glyph and a number, as on the week card.
+    /* No word beside the figure. `Visit`/`Visits` is the tenant's own term and the chip is
+       147px wide; the count is a glyph and a number, as on the week card. */
     expect(container.textContent).not.toMatch(/visits?/i);
+
+    /* **And no `title` attribute either, which is a change.** The count used to carry one,
+       and it was the only thing on this chip that said the noun — to a reader who rested on
+       a 14px glyph for a second. Both nouns now come from `RouteMonthChipTooltip`, which
+       covers the whole chip and says what the card is as well as what the number counts.
+       Asserted as absent rather than simply dropped from the test: leaving the attribute in
+       place under a MUI tooltip fires both, one over the other, saying nearly the same
+       sentence — the duplication `FieldLabel` documents avoiding by refusing `describeChild`.
+       If somebody restores it, this is the line that should object. */
+    expect(container.querySelector('.visit-count').getAttribute('title')).toBeNull();
   });
 
   it('says `0` for an empty run, and nothing at all when there is no list', () => {

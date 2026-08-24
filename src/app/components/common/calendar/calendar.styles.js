@@ -1,6 +1,7 @@
 import fcClass from '@fullcalendar/react/protected-styles';
 import { makeStyles } from '@mui/styles';
 import {
+  DUTY_ACCENT_BLUE,
   statusFillInProgressRule,
   visitFillInProgressRule,
 } from 'src/app/components/common/calendar/calendarStatusWash';
@@ -888,8 +889,15 @@ export const useStyles = makeStyles((theme) => ({
    * below restates the grid's own `internalEvent` margin instead of zeroing it. */
   '@global': {
     [`[role="dialog"][data-date].${fcClass.internalPopover}`]: {
-      minWidth: '220px',
-      maxWidth: '280px',
+      /* **260/360, up from 220/280.** A visit chip here is `Company · Site`, and at 280
+         the chip measured 230px — enough to truncate *both* halves at once
+         (`Downtown Hol… · Fairmont Office …`), which is the one width where the pattern
+         stops working: a reader can identify a visit from either half alone, and neither
+         survived. The popover floats free of the grid's column width, so nothing forced
+         it to stay near a cell's size. 360 is still comfortably inside the narrowest
+         viewport this grid supports. */
+      minWidth: '260px',
+      maxWidth: '360px',
       borderRadius: '10px',
       border: `1px solid ${theme.palette.borderSubtle1}`,
       background: theme.palette.surfaceWhite,
@@ -923,7 +931,7 @@ export const useStyles = makeStyles((theme) => ({
          verified live, not just by the numbers, since padding alone doesn't
          guarantee that reads right without the line there to confirm it. */
       [`& > .${fcClass.flexCol}.${fcClass.borderOnlyB}`]: {
-        padding: '10px 12px 8px',
+        padding: '12px 12px 10px',
         backgroundColor: 'transparent',
         borderBottom: 'none',
         color: theme.palette.textPrimary,
@@ -963,6 +971,34 @@ export const useStyles = makeStyles((theme) => ({
       [`& > .${fcClass.flexCol}.${fcClass.borderOnlyB} h6`]: {
         fontSize: '14px',
         fontWeight: 600,
+      },
+
+      /**
+       * The date's own wrapper, whose padding does not belong to this popover.
+       *
+       * `calendarHeaderMonthCell` is this sheet's rule for a day header in the **grid's
+       * column row**, where `12px 0` is what gives that row its height. The popover reuses
+       * the same generator (`ScheduleCalendarGrid`'s `info.inPopover` branch), so it
+       * inherits that padding into a context that has no such row to fill — measured live
+       * at **54px of header band around a 20px line**, which is the dead space between the
+       * date and the first chip.
+       *
+       * Zeroed here only. The grid's own header is untouched: this rule cannot match
+       * outside `[role="dialog"][data-date]`.
+       *
+       * Matched on a *substring* of the generated class rather than a JSS `$ruleRef`,
+       * because this block is inside `@global` where a rule reference does not resolve —
+       * the same failure `harmonizeFlow.styles.js` records paying for. `makeStyles-…-N`
+       * only varies in its numeric suffix, so the stem is stable in a way FullCalendar's
+       * per-build hashed classes are not.
+       */
+      '& [class*="calendarHeaderMonthCell"]': {
+        /* `height: 32px` as well as the padding. The rule sets both, and zeroing the padding
+           alone left the band exactly as tall — measured, not assumed: the wrapper stayed 32px
+           around a 20px line because the fixed height, not the padding, was holding it open.
+           `auto` lets it collapse onto its own text. */
+        height: 'auto',
+        padding: 0,
       },
 
       /* The close button classic absolutely positions 2px off this header's own
@@ -1044,7 +1080,13 @@ export const useStyles = makeStyles((theme) => ({
         border: '0 !important',
         background: 'transparent !important',
         boxShadow: 'none !important',
-        margin: '0 8px 8px !important',
+        /* **`0 0 8px`, not `0 8px 8px`.** The 8px sides pushed every chip to x=1075 while
+           the header's date sat at x=1067 — an 8px stagger between the popover's title and
+           the list it heads, which is what read as unbalanced. The body wrapper's own 8px
+           and its inner wrapper's 8px already inset the list; this was a third inset on top
+           of them. The bottom 8px stays: that is the row rhythm, and it is the one part of
+           this margin doing a job. */
+        margin: '0 0 8px !important',
         padding: '0 !important',
         '&:focus, &:focus-visible': {
           outline: 'none',
@@ -3208,8 +3250,10 @@ export const useStyles = makeStyles((theme) => ({
     borderColor: theme.palette.borderAlert,
   },
   dutyBlue: {
-    borderLeft: `3px solid ${theme.palette.borderBrand}`,
-    borderColor: theme.palette.borderBrand,
+    /* The literal, not `palette.borderBrand` — that token is green on Filter Go, so this
+       accent used to change what it meant per tenant. See `DUTY_ACCENT_BLUE`. */
+    borderLeft: `3px solid ${DUTY_ACCENT_BLUE}`,
+    borderColor: DUTY_ACCENT_BLUE,
   },
   dutyPurple: {
     borderLeft: `3px solid ${theme.palette.borderPurple}`,

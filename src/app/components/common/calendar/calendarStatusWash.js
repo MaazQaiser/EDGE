@@ -20,6 +20,23 @@ import { calendarShiftStatusEnum } from 'src/utils/constants/schedules';
 export const IN_PROGRESS_WASH = '#EFF8FF';
 
 /**
+ * **The card's left accent, blue on every tenant.**
+ *
+ * `dutyBlue` — the accent a patrol shift and a visit card carry — was
+ * `theme.palette.borderBrand`, and that token is `#146DFF` on Signal and a **green** on
+ * Filter Go. So the one line on the card that is supposed to say *what kind of work this
+ * is* said something different per tenant, and on Filter Go it said green: the colour this
+ * product uses for a completed dedicated shift. Asked for directly, against the route and
+ * visit views: make that line brand blue.
+ *
+ * Same argument as the wash above, one field over: an accent that names a *duty type* is
+ * not branding, so it does not follow the brand. `dutyGreen` and the rest are already
+ * literals-by-semantics (success, alert, warning) and are left alone — green there means
+ * dedicated, and it means it on both tenants.
+ */
+export const DUTY_ACCENT_BLUE = '#146DFF';
+
+/**
  * The declaration itself, exported so the emitted rule can be asserted on.
  *
  * `calendar.styles.js` cannot be imported from a test — it reaches FullCalendar's

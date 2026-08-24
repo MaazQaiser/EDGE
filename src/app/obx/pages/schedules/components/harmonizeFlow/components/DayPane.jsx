@@ -305,7 +305,7 @@ const DayPane = ({
               })}
         </Typography>
       ) : (
-        <Box className={route.proposedBody}>
+        <Box className={classNames(route.proposedBody, classes.noScrollbar)}>
           <Box className={route.stopTrack} role="list">
             {anchor(BASE.name, null, `flowStart-${sheet.date}`, 0)}
 

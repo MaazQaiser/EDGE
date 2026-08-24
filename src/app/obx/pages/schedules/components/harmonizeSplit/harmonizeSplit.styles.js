@@ -12,8 +12,8 @@ import { makeStyles } from '@mui/styles';
  * the map's chrome, and nothing that already exists next door.
  *
  * The one exception is the handful of `flow*` overrides at the bottom, which exist because
- * a component built for a 475px drawer is being asked to sit in a 460px column inside a
- * full-screen surface — see their own note.
+ * a component built for a drawer is being asked to sit in a column inside a full-screen
+ * surface — see their own note.
  */
 
 /** `textPrimary` at 6%, the same lift the drawer's own bands use. */
@@ -51,6 +51,22 @@ const WARNING_INK = '#B54708';
  * than they were drawn for.
  */
 const FLOW_COLUMN = 'clamp(480px, 44%, 660px)';
+
+/**
+ * The surface's gutter — **one number, and everything in the left column is on it.**
+ *
+ * It was two. The top bar sat on 32px, copied from `navBar.jsx` on the argument that the
+ * surface's first band should line up with the page band it replaces; the column under it
+ * sat on 20px. Nothing lines up with a page band that is covered by this surface, and what
+ * a reader can actually see is the title starting twelve pixels to the right of the `Range`
+ * field directly beneath it. A header that does not begin where its content begins is the
+ * whole of "the heading looks out of place".
+ *
+ * **24 rather than 20**, because it is also what the borrowed parts want: `DayPane`,
+ * `SpillTray` and `ExitPanel` were composed against the drawer's own 24px gutter, and this
+ * column had been giving them 20.
+ */
+const GUTTER = 24;
 
 /* `MAP_INSET` is gone. The map panel carried 16px of padding, copied from the Workspace's
    `mapPane`, and on this shell it was 16px of white framing a raster basemap that has its own
@@ -167,26 +183,17 @@ export const useStyles = makeStyles((theme) => {
       display: 'flex',
       alignItems: 'center',
       gap: 14,
-      /* **16px vertical, not 12.** The bar holds a 20px title now; at 12 the cap-height
-         sat 4px from the rule under it and the band read as clipped rather than as a
-         header. The horizontal 32 is `navBar.jsx`'s own, so the surface's first band still
-         lines up with the page band it replaced. */
-      padding: '16px 32px',
+      /* `12px` vertical is the Workspace's own, and with the title back at 16px there is
+         no longer a 20px cap-height to clear — the 16px band this replaced was propping up
+         a heading a size too large. Horizontal is `GUTTER`; see its note. */
+      padding: `12px ${GUTTER}px`,
       borderBottom: `1px solid ${theme.palette.borderSubtle1}`,
       flex: '0 0 auto',
       /* Above the ② wash, which is a child of the surface and paints to its edges. */
       position: 'relative',
       background: theme.palette.surfaceWhite,
     }),
-    /**
-     * **`h3`, matching the drawer's own title — it was `h6`, which is 12px.**
-     *
-     * `h6` in this scale is the *smallest* heading, one step under a body paragraph, and
-     * it was carrying the name of a full-screen surface: the title read smaller than the
-     * scope chip on the opposite side of the same bar, so the row had no anchor and the
-     * chip won an emphasis contest it should not have entered. The drawer states its own
-     * title at `h3` and this is the same title on a larger surface.
-     */
+
     /**
      * The title and its summary, as one group.
      *
@@ -204,7 +211,26 @@ export const useStyles = makeStyles((theme) => {
       minWidth: 0,
       flex: '0 1 auto',
     }),
-    title: w({ ...theme.typography.h3, color: theme.palette.textPrimary, flex: '0 0 auto' }),
+    /**
+     * **16/600 — the Workspace's own title, copied by value.**
+     *
+     * This has now been `h6` (12px, far too small — it lost an emphasis contest to the
+     * summary beside it) and `h3` (20/700, which overshot). The right answer was already
+     * written down one folder over: the *other* full-screen surface in this feature states
+     * its title at 16/600/22, and two full-screen shells of the same feature naming
+     * themselves at different sizes is the kind of difference a reviewer reads as a mistake
+     * rather than as a variation.
+     *
+     * Not `subtitle1` (16/500/24) even though it is nearly this: the sibling's 600 and 22
+     * are what is on screen next door, and matching it exactly is the whole point.
+     */
+    title: w({
+      fontSize: 16,
+      fontWeight: 600,
+      lineHeight: '22px',
+      color: theme.palette.textPrimary,
+      flex: '0 0 auto',
+    }),
     grow: w({ flex: 1 }),
     /**
      * The run's summary, beside the title.
@@ -231,6 +257,23 @@ export const useStyles = makeStyles((theme) => {
       textOverflow: 'ellipsis',
       whiteSpace: 'nowrap',
     }),
+    /**
+     * The close, and **the reason it looked as heavy as the title.**
+     *
+     * `close.svg` hard-codes `fill="#323232"` on its path. So every colour rule this button
+     * had was inert: `textSecondary3` never applied, the hover never darkened anything, and
+     * what actually rendered was a near-black cross at the asset's own 24px — the same
+     * visual weight as the 20px bold heading at the other end of the bar, on a control that
+     * is supposed to be the quietest thing in it.
+     *
+     * Overriding the path to `currentColor` is what hands the button back its own states.
+     * 16px is the Workspace's own glyph size for the same icon in the same position — it
+     * sizes the svg down for exactly this reason and never had to fight the fill, because
+     * at 16px near-black reads as a control rather than as a second heading.
+     *
+     * Done here rather than by editing the asset, which a dozen other screens draw at its
+     * intended weight.
+     */
     closeButton: w({
       display: 'inline-flex',
       alignItems: 'center',
@@ -246,6 +289,8 @@ export const useStyles = makeStyles((theme) => {
       cursor: 'pointer',
       border: 'none',
       transition: 'background 120ms ease, color 120ms ease',
+      '& svg': { width: 16, height: 16, display: 'block' },
+      '& svg path': { fill: 'currentColor' },
       '&:hover': {
         background: theme.palette.surfaceGreySubtle,
         color: theme.palette.textPrimary,
@@ -324,7 +369,7 @@ export const useStyles = makeStyles((theme) => {
     scopeSection: w({
       flex: '0 0 auto',
       position: 'relative',
-      padding: '16px 20px 0',
+      padding: `16px ${GUTTER}px 0`,
       background: theme.palette.surfaceWhite,
     }),
     /**
@@ -559,7 +604,7 @@ export const useStyles = makeStyles((theme) => {
        * **There is no rule under the Scope box, and that is the audit's answer rather than
        * a preference.**
        *
-       * It began as a full-width `borderTop` on this region, was inset to the 20px gutter to
+       * It began as a full-width `borderTop` on this region, was inset to the column gutter to
        * stop it disagreeing with the day tabs' underline, and measuring it then showed the
        * inset was fixing the wrong thing. Two numbers settled it: the hairline sat **0px**
        * from the Scope box's own bottom edge — the same pixel row — and the next hairline,
@@ -635,7 +680,7 @@ export const useStyles = makeStyles((theme) => {
      */
     planTrail: w({
       flex: '0 0 auto',
-      padding: '0 20px 10px',
+      padding: `0 ${GUTTER}px 10px`,
       position: 'relative',
       '&::before': {
         content: '""',
@@ -653,14 +698,37 @@ export const useStyles = makeStyles((theme) => {
        something towards it is not a target. Transparent, so the wash runs behind them rather than starting under them —
        rather than starting under them: the tabs are part of the generated region, not a
        lid on it. */
-    planTabBand: w({ flex: '0 0 auto', padding: '0 20px', position: 'relative' }),
+    planTabBand: w({ flex: '0 0 auto', padding: `0 ${GUTTER}px`, position: 'relative' }),
     planBody: w({
       flex: '1 1 auto',
       minHeight: 0,
       overflowY: 'auto',
       overflowX: 'hidden',
-      padding: '0 20px',
+      padding: `0 ${GUTTER}px`,
       position: 'relative',
+      /**
+       * **The scrollbar is taken out of layout, so a row's fill never depends on it.**
+       *
+       * A classic scrollbar narrows its scroll container's *content box*, so every visit row
+       * inside this panel measured 8–16px narrower than the identical row in the issues
+       * accordion — whose scrollbar is already hidden — and the hover fill's right edge moved
+       * depending on whether the list happened to overflow. The row's padding is a constant
+       * 12px either way; what shifted was the box that padding sits in, which is the same
+       * thing to a reader and worse for being conditional.
+       *
+       * Hiding it is the only option that makes the row genuinely scrollbar-independent:
+       * reserving a gutter still costs the width (and its size is browser-dependent), and
+       * showing one everywhere re-breaks the accordion's total-vs-figure alignment, whose
+       * bar sits outside the scroll box. Scrolling itself is untouched — wheel, trackpad,
+       * keyboard and programmatic scrolling all still work; only the painted bar is gone,
+       * exactly as `tabRow` and `spillBody` in the drawer's sheet already do it.
+       *
+       * The cue for "there is more" is the row cut off at the fold. If that proves too
+       * quiet, add `tabRowScrollable`'s fade turned vertical — never the scrollbar back,
+       * or this drifts again.
+       */
+      scrollbarWidth: 'none',
+      '&::-webkit-scrollbar': { display: 'none' },
     }),
 
     /* ── The route card before there is a route ────────────────────────────────
@@ -688,20 +756,31 @@ export const useStyles = makeStyles((theme) => {
      */
     previewMetricRow: w({ minHeight: 28, alignItems: 'center' }),
     /**
-     * The empty gauge.
+     * The empty gauge — **reserved, and not drawn.**
      *
-     * `proposedBar`'s own trough is `#EEF5FF` — the brand blue at its palest, chosen so a
-     * filled bar and its unfilled remainder are one colour at two strengths. That works on
-     * the white card it was drawn for and disappears completely on this region's green
-     * wash, which is how an empty bar came to read as *no bar*. A neutral hairline grey
-     * has contrast against both, and it is the right colour for the state anyway: nothing
-     * has been measured, so nothing should be tinted with the colour of a measurement.
+     * ## Why it was visible, and why it is not any more
      *
-     * No fill element inside it at all. A `scaleX(0)` child is an invisible thing that
-     * still exists, and the next person to touch this would reasonably wonder what it was
-     * for.
+     * An earlier pass made this a neutral hairline grey. The argument was sound as far as
+     * it went: `proposedBar`'s own trough is `#EEF5FF`, the brand blue at its palest, which
+     * vanishes against this region's green wash — so an empty bar read as *no bar*.
+     *
+     * What that missed is that the tab row twelve pixels above ends in a `borderSubtle1`
+     * hairline, and this resolved to **the same `#E6E6E7` at the same full width**. Two
+     * indistinguishable rules ninety pixels apart, with two same-coloured grey captions
+     * loose between them: the header stopped reading as a header and started reading as a
+     * gap between two dividers. Making the empty bar *more* visible had made the region
+     * less legible.
+     *
+     * It is transparent now, and that is also the more honest state: a trough is the frame
+     * of a measurement, and asserting a scale before anything has been measured is the same
+     * class of overclaim as printing the forecast here would be (see `RoutePreview`). The
+     * bar appears with the number it belongs to.
+     *
+     * **The element still renders**, because its 4px is 4px everything below it would jump
+     * by when the answer arrives — which is the whole reason `RoutePreview` exists. Space
+     * reserved, ink withheld.
      */
-    previewTrack: w({ background: theme.palette.borderSubtle1 }),
+    previewTrack: w({ background: 'transparent' }),
     previewTitle: w({
       ...theme.typography.subtitle1,
       flex: '1 1 auto',
@@ -823,7 +902,7 @@ export const useStyles = makeStyles((theme) => {
       position: 'relative',
       /* Even top and bottom now that the note above the buttons is gone — it was carrying
          the extra 4px the note's own descender needed. */
-      padding: '16px 20px',
+      padding: `16px ${GUTTER}px`,
       borderTop: `1px solid ${theme.palette.borderSubtle1}`,
       background: theme.palette.surfaceWhite,
       boxShadow: `0 -6px 16px ${EDGE_SHADOW}`,
@@ -861,8 +940,6 @@ export const useStyles = makeStyles((theme) => {
        `harmonizeFlow`'s own class sheet with these keys swapped in. Two things
        differ between a 475px drawer and this column, and only two:
 
-       - the drawer's parts sit on a **24px gutter** and this column's is 20px, so
-         anything that drew its own edge-to-edge band needs to lose the difference;
        - the tray is the **last** thing above a footer in the drawer, and here it is
          the last thing above a footer *that also carries the apply note*, so its
          upward shadow would stack with the footer's own.

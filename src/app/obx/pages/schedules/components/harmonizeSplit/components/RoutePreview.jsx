@@ -84,32 +84,43 @@ const RoutePreview = ({ classes, day, filterCount, visitCount, children }) => {
         </Box>
 
         {/**
-         * The shift, stated plainly — **no em dash, and no "of".**
+         * The shift — **as a figure with a label, not as one grey sentence.**
          *
-         * This slot used to read `— of 4h shift`: an em dash at the duration's own size,
-         * then the shift as its denominator. The dash was the house sign for *not known*
-         * and the reasoning behind it still stands (see the note above on why the forecast
-         * must not be printed here). It was removed on instruction anyway, and reading the
-         * two together the instruction is right: a dash is a placeholder that a reader has
-         * to interpret, and `of 4h shift` with no numerator in front of it is a fragment.
-         * `4h shift` is a whole fact, true before the run and worth knowing — it is the
-         * budget the answer will be measured against.
+         * ## What was wrong with `4h shift`
          *
-         * **The row keeps the height the dash was holding**, which is the only reason that
-         * dash was defensible in the first place. `previewMetricRow` pins the h3 line box,
-         * so the shift sits where it sits now and the duration replaces it in place when
-         * the run lands. Measured drift across the press stays 0px; without the pin the
-         * header would rise 8px at the moment of the press, which is the exact fault
-         * `RoutePreview` exists to prevent.
+         * It was a single 14px string in `flowRouteMetricOf`, the *denominator* style. So
+         * this rank — the one the solved card gives to a 20px/700 duration — held nothing
+         * but a caption, and the header had no anchor anywhere below its title. Measured:
+         * the metric read 14px/400 in `#5B5B5F` and the caption under it 12px/500 in
+         * `#5B5B5F`, the **same colour** at almost the same size. Two interchangeable grey
+         * lines with a rule between them is what "scattered" was describing, and it is a
+         * hierarchy problem rather than a spacing one — no amount of gap-tuning fixes a
+         * rank with nothing in it that outranks anything.
+         *
+         * So the rank gets its figure back: `4h` in the duration's own `flowRouteMetricValue`,
+         * `shift` beside it in the qualifier style. The solved card then reads `3h48m` +
+         * `of 4h shift` — the same shape, the same anchor position, the number swapped for
+         * the one the run produced. Before the run the only number that exists is the
+         * budget, so the budget is what leads.
+         *
+         * ## The height is still pinned, and now by construction
+         *
+         * `previewMetricRow`'s `minHeight: 28` was compensating for a 20px line box in a
+         * slot the solved state fills with a 28px one (`h3` is 20px/28px — checked, not
+         * assumed). With a real `h3` figure here the line box *is* 28, so the rank matches
+         * across the press because the two states are typeset the same, not because a
+         * magic number happens to equal the other side. The pin stays as a floor.
          */}
         <Box className={classNames(classes.flowRouteMetric, classes.previewMetricRow)}>
-          <Typography className={classes.flowRouteMetricOf}>
-            {tt('shiftBudget', { shift: formatCompact(day.shiftMins) })}
+          <Typography className={classes.flowRouteMetricValue}>
+            {formatCompact(day.shiftMins)}
           </Typography>
+          <Typography className={classes.flowRouteMetricOf}>{tt('shiftLabel')}</Typography>
         </Box>
 
-        {/* The trough, empty. Drawn rather than omitted: it is 4px, and 4px that appears
-            when the answer does is 4px everything below it jumps by. */}
+        {/* The trough's **space**, with no trough drawn in it — see `previewTrack`. Still
+            rendered rather than omitted: it is 4px, and 4px that appears when the answer
+            does is 4px everything below it jumps by. */}
         <Box className={classNames(route.proposedBar, classes.previewTrack)} aria-hidden="true" />
 
         {/* Where the solved card prints `3 stops · 6 filters · drive 1h18m`. Two of those

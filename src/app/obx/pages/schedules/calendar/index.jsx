@@ -2980,22 +2980,23 @@ const ScheduleCalendar = (props) => {
              * order and the two layouts stay comparable in the thing being compared.
              */
             <CalendarToolbarArrangementContext.Provider
-              value={
-                /* **Toggles-first only where there are toggles to lead with.**
-                 *
-                 * The arrangement was asked for against Var 2's toolbar, whose leading
-                 * slot carries a three-segment grouping switch — with the date ahead of
-                 * the toggles that row read as two view clusters split by a date. Keyed
-                 * on the layout alone, it also applied to Var 2 tabs that have *no*
-                 * grouping switch, where it moved the date behind the toggles for no
-                 * reason and against the reference. The person tab is that case.
-                 *
-                 * `groupingSwitch` is the same value the leading slot receives, so the
-                 * ordering and the thing it is ordering around cannot disagree. */
-                isUnifiedToggleLayout && groupingSwitch
-                  ? CALENDAR_TOOLBAR_ARRANGEMENT.TOGGLES_FIRST
-                  : CALENDAR_TOOLBAR_ARRANGEMENT.DATE_FIRST
-              }
+              /**
+               * **Date first, then Day/Week/Month — everywhere now.**
+               *
+               * This reverses the Var 2 arrangement, on the same authority that asked for
+               * it: *"the daily, weekly and monthly filter should be on the right side
+               * after the selection"*. It used to lead the right cluster with the toggles
+               * on the argument that a row already leading with a three-segment grouping
+               * switch read as two view clusters split by a date. Lived with, the date
+               * ended up buried between two segmented controls instead — and the toggles
+               * are the last thing you touch, so they belong at the end of the row.
+               *
+               * `TOGGLES_FIRST` stays in the shell: it is the other consumer-facing
+               * arrangement and nothing about it was wrong, it is just not what this
+               * toolbar wants. Deleting it would take the choice away from the next
+               * caller to need it.
+               */
+              value={CALENDAR_TOOLBAR_ARRANGEMENT.DATE_FIRST}
             >
               <ScheduleCalendarGrid
                 onAssignmentSuccess={handleCalendarOfficerAssignSuccess}

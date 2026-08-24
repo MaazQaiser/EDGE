@@ -18,7 +18,9 @@ import DutyIndicator from 'src/app/components/obxComponents/dutyIndicator';
 import CalendarOfficerAssignPopover from 'src/app/obx/pages/schedules/calendar/CalendarOfficerAssignPopover';
 import LegacyCalendarCardContent from 'src/app/obx/pages/schedules/calendar/LegacyCalendarCardContent';
 import PatrolCardBody from 'src/app/obx/pages/schedules/calendar/PatrolCardBody';
-import RouteMonthChipContent from 'src/app/obx/pages/schedules/calendar/RouteMonthChipContent';
+import RouteMonthChipContent, {
+  routeNameOf,
+} from 'src/app/obx/pages/schedules/calendar/RouteMonthChipContent';
 import VisitCardContentV2 from 'src/app/obx/pages/schedules/calendar/VisitCardContentV2';
 import VisitMonthChipContent from 'src/app/obx/pages/schedules/calendar/VisitMonthChipContent';
 import {
@@ -1414,10 +1416,14 @@ const ScheduleCalendarGrid = ({
 
       return {
         visitCount: count,
-        visitCountTitle: t('obx.schedules.calendar.routeVisitCount', {
+        /* The tooltip's second line, not a native `title` any more — see
+           `RouteMonthChipTooltip`. `routeMonthChipTip` rather than the week card's
+           `routeVisitCount`: that string ends "on this {{runsheet}} on this day", and in a
+           tooltip whose first line is already the route's name, naming the runsheet again is
+           the third mention of the same thing in two lines. */
+        visitCountTitle: t('obx.schedules.calendar.routeMonthChipTip', {
           count,
           hits: resolveScheduleWindowTerm({ count, getLabel, t }),
-          runsheet: getLabel('terms', 'runsheet', t),
         }),
       };
     },
@@ -1530,20 +1536,29 @@ const ScheduleCalendarGrid = ({
            fed from, over `buildRouteVisitCounts`. There is no second derivation. */
         if (isRouteGrouping) {
           const { statusIcon, eventBgColorClass } = getValuesWrtStatuses({ shift, t });
+          const { visitCount = null, visitCountTitle = '' } = routeVisitCountProps(shift);
 
           return (
-            <Box
-              className={`${classes.routeMonthChip} ${
-                eventBgColorClass ? classes[eventBgColorClass] : ''
-              }`}
+            <RouteMonthChipTooltip
+              classes={classes}
+              route={routeNameOf(shift)}
+              /* With no count for this window there is still a noun worth saying — the card
+                 is a route either way, and that is half of what was unclear. */
+              countLine={visitCountTitle || t('obx.schedules.calendar.routeMonthChipTipPlain')}
             >
-              <RouteMonthChipContent
-                classes={classes}
-                shift={shift}
-                statusIcon={statusIcon}
-                {...routeVisitCountProps(shift)}
-              />
-            </Box>
+              <Box
+                className={`${classes.routeMonthChip} ${
+                  eventBgColorClass ? classes[eventBgColorClass] : ''
+                }`}
+              >
+                <RouteMonthChipContent
+                  classes={classes}
+                  shift={shift}
+                  statusIcon={statusIcon}
+                  visitCount={visitCount}
+                />
+              </Box>
+            </RouteMonthChipTooltip>
           );
         }
 
@@ -2825,6 +2840,66 @@ VisitMonthChipTooltip.propTypes = {
   route: PropTypes.string,
   officer: PropTypes.object,
   reassignedOfficer: PropTypes.object,
+  children: PropTypes.node,
+};
+
+/**
+ * The month **route** chip's tooltip.
+ *
+ * ## The reported problem, and what it actually was
+ *
+ * *"It is not clear what the card conveys. It conveys routes. And the count on the right is
+ * visits."* The chip prints a route's name and, beside a 14px glyph, a bare numeral. Nothing
+ * on it says either noun. In the *week* view neither is missing: the route is the row label,
+ * inherited by position, and the count sits in a four-line card that gives it context. The
+ * month has no rows and no room, so both nouns went and nothing replaced them.
+ *
+ * So this says both, in one line under the name: **`Route · 3 Visits on this day`**. The lead
+ * is the route's own name, from the shared `routeNameOf` so the tooltip and the chip cannot
+ * disagree about what a route is called.
+ *
+ * ## Why it replaces the count's native `title` rather than joining it
+ *
+ * The count carried a `title` attribute — the only thing on the chip that said "Visits", and
+ * only to a reader who rested on a 14px glyph for a second. Leaving it in place under this
+ * tooltip would fire both: MUI's card and the browser's own, overlapping, saying nearly the
+ * same sentence. That is the duplication `harmonize/components/FieldLabel` documents avoiding
+ * by refusing `describeChild`, and a peer session hit the same thing on the Settings screens
+ * the same day. One tooltip, on the whole chip, covering both nouns.
+ *
+ * Dressed as `VisitMonthChipTooltip` exactly — same classes, same placement, same delay, same
+ * −16 offset — because the two chips sit in the same grid and a planner should not meet two
+ * tooltip treatments in one month view. The offset is that component's finding: the theme
+ * gives every tooltip a 20px margin, which on a 24px chip in a stack of them lands the card
+ * two chips away from the one being hovered.
+ */
+const RouteMonthChipTooltip = ({ classes, route, countLine, children }) => (
+  <Tooltip
+    arrow
+    placement="top"
+    enterDelay={120}
+    slotProps={{ popper: { modifiers: [{ name: 'offset', options: { offset: [0, -16] } }] } }}
+    title={
+      <Box className={classes.visitMonthChipTip}>
+        <Typography component="span" className={classes.visitMonthChipTipLead}>
+          {route}
+        </Typography>
+        <Typography component="span" className={classes.visitMonthChipTipLine}>
+          {countLine}
+        </Typography>
+      </Box>
+    }
+  >
+    {children}
+  </Tooltip>
+);
+
+RouteMonthChipTooltip.propTypes = {
+  classes: PropTypes.object.isRequired,
+  /** The route's name, from `routeNameOf` — never recomputed here. */
+  route: PropTypes.string,
+  /** Already resolved: the kind, and the count with the tenant's own term for a visit. */
+  countLine: PropTypes.string,
   children: PropTypes.node,
 };
 

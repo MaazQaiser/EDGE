@@ -37,10 +37,19 @@ import { ReactComponent as RunsheetHitsIcon } from 'src/assets/svg/hits-runsheet
  *
  * ── The count is the week card's count, not a second one ──
  *
- * Same figure, same glyph, same classes (`patrolVisitCount*`), same native tooltip
- * text, and the same number: it is `getRouteVisitCount` over `buildRouteVisitCounts`,
- * resolved by the caller's `routeVisitCountProps` — the one expression the week card
- * is fed from. There is no month derivation of this fact to drift from the week's.
+ * Same figure, same glyph, same classes (`patrolVisitCount*`) and the same number: it is
+ * `getRouteVisitCount` over `buildRouteVisitCounts`, resolved by the caller's
+ * `routeVisitCountProps` — the one expression the week card is fed from. There is no month
+ * derivation of this fact to drift from the week's.
+ *
+ * **The count no longer carries a native `title`.** It had one, and it was the only thing on
+ * this chip that said the noun — which was the problem reported: the chip shows a route's
+ * name and a bare numeral, and nothing said that the card *is* a route or that the number
+ * counts *visits*, unless you rested on the 14px glyph long enough for the OS tooltip. That
+ * answer now comes from `RouteMonthChipTooltip`, which covers the whole chip and says both
+ * facts. The native attribute is removed rather than left alongside it: MUI's tooltip and the
+ * browser's would both fire, one over the other, saying nearly the same sentence — the exact
+ * duplication `FieldLabel` documents avoiding by refusing `describeChild`.
  *
  * Quiet by construction, per **D29**. The count on every route in every day cell is a
  * lot of new figures on one screen, so each is the week card's own treatment and
@@ -69,46 +78,52 @@ import { ReactComponent as RunsheetHitsIcon } from 'src/assets/svg/hits-runsheet
  * inside a chip that is already one of three in a cell buys nothing the legend and
  * the drawer do not already give.
  */
-const RouteMonthChipContent = memo(
-  ({ classes, shift, statusIcon, visitCount = null, visitCountTitle = '' }) => {
-    const { runsheetName, name } = shift || {};
-    /* `runsheetName` first, `name` second — the same order `PatrolCardBody` uses. On a
-       mapped grid card the two are usually both filled (`mapShiftToCalendarEvent`
-       falls the route back to the row's own title), and the route is the subject here
-       while `name` is the run's window label. */
-    const routeName = runsheetName || name || '';
+/**
+ * The route's display name, exported because two things need it and they must agree.
+ *
+ * `runsheetName` first, `name` second — the same order `PatrolCardBody` uses. On a mapped
+ * grid card the two are usually both filled (`mapShiftToCalendarEvent` falls the route back
+ * to the row's own title), and the route is the subject here while `name` is the run's
+ * window label.
+ *
+ * The chip prints it and the chip's tooltip leads with it. Recomputing it at the call site
+ * would be a second definition of "what is this route called", free to drift from this one.
+ */
+export const routeNameOf = (shift) => shift?.runsheetName || shift?.name || '';
 
-    /* `!= null` and not a truthiness test: `0` is a count this window can honestly
+const RouteMonthChipContent = memo(({ classes, shift, statusIcon, visitCount = null }) => {
+  const routeName = routeNameOf(shift);
+
+  /* `!= null` and not a truthiness test: `0` is a count this window can honestly
        report — a run with nothing on it — and it is a reading a planner wants. Only
        "no visit list for this window" hides the number. */
-    const hasVisitCount = visitCount != null;
+  const hasVisitCount = visitCount != null;
 
-    return (
-      <>
-        <Typography component="span" className={classes.routeMonthChipName}>
-          {routeName}
-        </Typography>
-        <Box component="span" className={classes.routeMonthChipMeta}>
-          {hasVisitCount ? (
-            <Box className={classes.patrolVisitCount} title={visitCountTitle || undefined}>
-              <Box className={classes.patrolVisitCountIcon}>
-                <RunsheetHitsIcon />
-              </Box>
-              <Typography component="span" className={classes.patrolVisitCountValue}>
-                {visitCount}
-              </Typography>
+  return (
+    <>
+      <Typography component="span" className={classes.routeMonthChipName}>
+        {routeName}
+      </Typography>
+      <Box component="span" className={classes.routeMonthChipMeta}>
+        {hasVisitCount ? (
+          <Box className={classes.patrolVisitCount}>
+            <Box className={classes.patrolVisitCountIcon}>
+              <RunsheetHitsIcon />
             </Box>
-          ) : null}
-          {statusIcon ? (
-            <Box component="span" className={classes.visitStatusIcon} aria-hidden="true">
-              {statusIcon}
-            </Box>
-          ) : null}
-        </Box>
-      </>
-    );
-  },
-);
+            <Typography component="span" className={classes.patrolVisitCountValue}>
+              {visitCount}
+            </Typography>
+          </Box>
+        ) : null}
+        {statusIcon ? (
+          <Box component="span" className={classes.visitStatusIcon} aria-hidden="true">
+            {statusIcon}
+          </Box>
+        ) : null}
+      </Box>
+    </>
+  );
+});
 
 RouteMonthChipContent.displayName = 'RouteMonthChipContent';
 RouteMonthChipContent.propTypes = {
@@ -122,12 +137,6 @@ RouteMonthChipContent.propTypes = {
    * `buildRouteVisitCounts` decides that once, above every chip.
    */
   visitCount: PropTypes.number,
-  /**
-   * Native tooltip: the count's noun and its scope — this route, this day. The only
-   * place the word appears, passed in already resolved, exactly as the week card
-   * takes it (`routeVisitCountProps`).
-   */
-  visitCountTitle: PropTypes.string,
 };
 
 export default RouteMonthChipContent;
