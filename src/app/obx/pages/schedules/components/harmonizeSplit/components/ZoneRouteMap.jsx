@@ -400,15 +400,25 @@ const useMapStyles = makeStyles((theme) => ({
  *
  * The hover state grows the pin by 15% about its own tip. Growing it about its centre would
  * slide the point off the place it is marking, which is the one thing a pin must not do.
+ *
+ * `dulled` is a pin outside the open day's territory. It keeps its hue and its size — it is
+ * still real work at a real address, and greying it would make it look excluded rather than
+ * subordinate — and loses about half its presence to a group opacity. Without this the circles
+ * grey and the pins inside them do not, which reads as the emphasis having failed rather than
+ * as a hierarchy: a pale grey ring full of saturated orange pins says *look here* twice.
  */
-const SitePin = ({ at, color, hovered, hollow }) => {
+const SitePin = ({ at, color, hovered, hollow, dulled }) => {
   const scale = (SITE_PIN_SIZE / PIN_ART_BOX) * (hovered ? 1.15 : 1);
   const transform = `translate(${at.x - (PIN_ART_BOX * scale) / 2}, ${
     at.y - PIN_ART_BOX * scale
   }) scale(${scale})`;
 
   return (
-    <g transform={transform} style={{ pointerEvents: 'none' }}>
+    <g
+      transform={transform}
+      opacity={dulled && !hovered ? 0.45 : 1}
+      style={{ pointerEvents: 'none', transition: 'opacity 200ms ease' }}
+    >
       <path d={STOP_PIN_PATH} fill="#FFFFFF" stroke="#FFFFFF" strokeWidth={4.5} />
       <path
         d={STOP_PIN_PATH}
@@ -430,9 +440,10 @@ SitePin.propTypes = {
   color: PropTypes.string.isRequired,
   hovered: PropTypes.bool,
   hollow: PropTypes.bool,
+  dulled: PropTypes.bool,
 };
 
-SitePin.defaultProps = { hovered: false, hollow: false };
+SitePin.defaultProps = { hovered: false, hollow: false, dulled: false };
 
 const ZoneRouteMap = ({
   zones,
@@ -1119,6 +1130,10 @@ const ZoneRouteMap = ({
                   at={at}
                   color={zone?.color || '#6A6A70'}
                   hovered={site.id === hoverSiteId}
+                  /* Everything outside the open day's zone is subordinate, including the
+                     sites of a zone no day works — those have no circle at all now, so
+                     their pins are the only thing left saying they are in scope. */
+                  dulled={emphasisFor(site.zoneId) !== 'open'}
                 />
               );
             })
