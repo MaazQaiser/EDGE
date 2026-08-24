@@ -134,7 +134,7 @@ const DayRadiusDialog = ({
 
       <DialogContent className={classes.dayRadiusDialogContent}>
         <Box className={classes.zoneRadiusInputs}>
-          <Box className={classes.zoneField}>
+          <Box className={`${classes.zoneField} ${classes.zoneFieldAnchored}`}>
             <Box className={classes.zoneFieldLabel}>
               <Typography variant="subtitle2" className={classes.zoneFieldLabelText}>
                 {tt('zoneCentreLabel')}

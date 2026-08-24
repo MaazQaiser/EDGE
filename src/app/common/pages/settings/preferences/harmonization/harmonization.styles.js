@@ -2628,12 +2628,33 @@ export const useStyles = makeStyles((theme) => ({
     },
   },
 
-  /* The distance's reserved line. Height held whether or not there is a centre, so placing
-     the first pin fills this slot rather than pushing the map down by a line of text. */
+  /**
+   * The distance line, hung below the field rather than stacked under it.
+   *
+   * It was a reserved 18px row inside the field block, held whether or not there was a
+   * centre so that placing the first pin could not push the map down. That solved the jump
+   * and bought a **50px** gap between the field and the map to do it — 18px of empty slot
+   * plus the field block's own 8px gap on top of the content's 24px — which read as the map
+   * having drifted away from the controls.
+   *
+   * Out of flow it costs nothing when empty and still cannot move anything when it fills: it
+   * hangs in the 24px gap the content already leaves between the two. `pointerEvents: none`
+   * because it overlaps the top edge of nothing the planner clicks, and should stay that way
+   * if the gap ever tightens.
+   */
   centreDistanceSlot: {
-    display: 'flex',
-    alignItems: 'center',
-    minHeight: '18px',
+    position: 'absolute',
+    top: '100%',
+    left: 0,
+    marginTop: '4px',
+    whiteSpace: 'nowrap',
+    pointerEvents: 'none',
+  },
+
+  /* The positioning context `centreDistanceSlot` hangs from. A modifier rather than a change
+     to `zoneField` itself, which the boundary panel's own fields also use. */
+  zoneFieldAnchored: {
+    position: 'relative',
   },
 
   centreEmptyText: {
