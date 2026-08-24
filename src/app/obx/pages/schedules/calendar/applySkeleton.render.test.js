@@ -38,8 +38,6 @@ const renderAt = (phase, routeCount = 3) =>
 
 describe('the apply skeleton', () => {
   it('draws nothing at all when idle', () => {
-    /* Not merely invisible. It is an opaque, `pointer-events: all` overlay across the whole
-       grid — one left mounted at `opacity: 0` would be a schedule nobody could click. */
     const { container } = renderAt(APPLY_PHASE.IDLE);
     expect(container).toBeEmptyDOMElement();
   });
@@ -58,35 +56,55 @@ describe('the apply skeleton', () => {
     expect(saving).not.toEqual(loading);
   });
 
-  it('announces the caption politely and hides the bars', () => {
+  it('announces the caption politely, and keeps the spinner out of the announcement', () => {
     const { getByRole, container } = renderAt(APPLY_PHASE.SAVING, 1);
     expect(getByRole('status')).toHaveAttribute('aria-live', 'polite');
 
-    /* The grid of bars is decoration. Announcing it would read the shape of a schedule to
-       somebody who is waiting to be told there is one. */
-    const bars = container.querySelectorAll('[aria-hidden="true"]');
-    expect(bars.length).toBeGreaterThan(0);
+    /* The ring is decoration. Announcing it would read a shape to somebody who is waiting to
+       be told what is happening. */
+    expect(container.querySelectorAll('[aria-hidden="true"]').length).toBeGreaterThan(0);
   });
 
-  it('draws a skeleton with more than one row of cards', () => {
-    /* The pattern is fixed rather than derived — see `ROWS` — so this is really asserting
-       that a skeleton is a *shape* and not a spinner on a white sheet. If the bars ever
-       stop rendering, the overlay becomes an opaque blank rectangle over the grid, which
-       reads as a crash rather than as loading. */
+  /**
+   * **These three replace the assertions that pinned the old overlay** — that it drew more
+   * than ten bars, and that their animation delays differed so the sweep crossed the grid.
+   *
+   * Both were true of the thing this used to be: an opaque `inset: 0` cover over the stage
+   * drawing an invented skeleton of the week. That was removed on instruction because it hid
+   * the day columns, the company column and the row headings along with the cards, so an
+   * apply looked like the whole scheduler reloading. The skeleton now happens on the **real**
+   * visit cards, via `[data-applying]` in `scheduleCalendar.styles.js`, which is CSS on a
+   * grid this component never renders — so there is nothing here to count any more, and
+   * asserting a bar count would only pin the mistake back in place.
+   *
+   * What is worth pinning is the *inverse*: that this no longer covers or blocks anything.
+   */
+  it('renders only the caption — no skeleton grid of its own', () => {
     const { container } = renderAt(APPLY_PHASE.LOADING, 3);
-    const bars = container.querySelectorAll('[class*="bar"]');
-    expect(bars.length).toBeGreaterThan(10);
+    expect(container.querySelectorAll('[class*="bar"]').length).toBe(0);
+    /* One pill: the ring and the sentence, and nothing else. */
+    expect(container.querySelector('[role="status"]').children.length).toBe(2);
   });
 
-  it('staggers the bars rather than pulsing them in unison', () => {
-    const { container } = renderAt(APPLY_PHASE.LOADING, 3);
-    const delays = [...container.querySelectorAll('[class*="bar"]')]
-      .map((node) => node.style.animationDelay)
-      .filter(Boolean);
+  it('does not cover the grid', () => {
+    const { container } = renderAt(APPLY_PHASE.SAVING, 3);
+    const pill = container.querySelector('[role="status"]');
+    const style = window.getComputedStyle(pill);
+    /* An `inset: 0` cover is what this stopped being. It is pinned to the bottom of the stage
+       now, clear of the grid's own headings, which is the half of the change this file can
+       actually observe. */
+    expect(style.position).toBe('absolute');
+    expect(style.top).not.toBe('0px');
+  });
 
-    /* One delay repeated is a set of placeholders breathing together, which reads as a
-       single object flashing. The sweep has to cross the grid. */
-    expect(new Set(delays).size).toBeGreaterThan(3);
+  it('reports without blocking', () => {
+    const { container } = renderAt(APPLY_PHASE.SAVING, 3);
+    /* The old overlay was `pointer-events: all` and deliberately ate clicks. Disabling the
+       cards is `[data-applying]`'s job now, so the toolbar and tabs stay live and this must
+       not intercept anything. */
+    expect(window.getComputedStyle(container.querySelector('[role="status"]')).pointerEvents).toBe(
+      'none',
+    );
   });
 });
 
