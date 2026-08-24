@@ -185,6 +185,10 @@ const HarmonizeSplit = ({ open, onClose, onApplied }) => {
       tabRow: classes.splitTabRow,
       tab: classes.splitTab,
       tabSelected: classes.splitTabSelected,
+      /* The card's two lines. `tabDay` and `tabCountRow` have no equivalent in the drawer's
+         sheet — its tab is one line — so they exist only here and only Split's row reads them. */
+      tabDay: classes.splitTabDay,
+      tabCountRow: classes.splitTabCountRow,
       tabCount: classes.splitTabCount,
       tabAdd: classes.splitTabAdd,
       tabDropLegal: classes.splitTabDropLegal,

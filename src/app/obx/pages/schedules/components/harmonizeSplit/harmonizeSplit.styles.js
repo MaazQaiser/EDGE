@@ -384,7 +384,10 @@ export const useStyles = makeStyles((theme) => {
      *
      * The spacing stays. It was never the rule that was carrying the separation here.
      */
-    rangeRow: w({ paddingBottom: 4, marginBottom: 14 }),
+    /* 8, not 14. The drawer's `statRow` brings its own `marginTop: 12`, so 14 here stacked to
+       26px above the figures against 18px below them — the block read as hanging off the field
+       rather than sitting between it and the list. 8 + 12 = 20 above, 18 below. */
+    rangeRow: w({ paddingBottom: 4, marginBottom: 8 }),
     rangePicker: w({ width: '100%' }),
 
     /**
@@ -409,7 +412,9 @@ export const useStyles = makeStyles((theme) => {
      * So no fill, no border, and no radius. What separates it from the list is the list's own
      * header rule plus the space above it, which is one separator doing one job.
      */
-    scopeBox: w({ paddingBottom: 18 }),
+    /* 6, not 18. `statRow`'s own `marginBottom: 12` is already below the figures, so 18 here
+       stacked to 30 and opened a gap wider than the one between the field and the figures. */
+    scopeBox: w({ paddingBottom: 6 }),
 
     /* `sectionHead` and `sectionHeading` are **gone**, and with them the `Scope` word and
        the `Configuration` link that sat opposite it. Both removed on instruction; the
@@ -503,23 +508,40 @@ export const useStyles = makeStyles((theme) => {
      * once there is a plan, so at ③ this is the first thing under the summary box and the
      * control the planner reaches for first.
      */
+    /**
+     * **A compact card: the day, then what is on it.**
+     *
+     * The shape comes from a supplied reference — a rounded card with the weekday over the
+     * date over an `N Visits` line, the selected one filled solid. The instruction with it was
+     * *"use somewhat this design… These are too big. reduce them a little bit"*, so the
+     * structure is taken and the scale is not:
+     *
+     * - **Weekday and date share one line.** The reference stacks them, which is most of what
+     *   makes its card tall; `Mon 17` on one line loses nothing a planner reads.
+     * - **13.5/600 and 11.5/400**, against the reference's ~20px and ~15px.
+     * - **`8px 13px` of padding** and a 3px gap, giving a card about 88×54 rather than the
+     *   reference's ~250×340 at its own zoom.
+     *
+     * This is the third size this row has been: a 14px underlined label, then a 16px box at
+     * `10px 15px` (42px tall, one line), now a two-line card at 54px. The middle one grew on
+     * the instruction to make the tabs prominent and was overshot; what actually reads as
+     * prominent here is the **filled card**, not the type size.
+     */
     splitTab: w({
-      ...theme.typography.subtitle1,
-      /* **Lighter, on instruction.** `subtitle1` ships at 500; a row of three dates does not
-         need semibold to be found once each one is a box you can see. The boxes carry the
-         weight now, so the type does not have to. */
-      fontWeight: 400,
       display: 'flex',
+      flexDirection: 'column',
+      /* Centred, as the reference has it — a card's content sits in the card rather than
+         hanging off its left edge, and centring is what stops a two-line block from reading as
+         a list item with an indent. */
       alignItems: 'center',
-      gap: 8,
+      justifyContent: 'center',
+      gap: 3,
       flex: '0 0 auto',
+      minWidth: 84,
       whiteSpace: 'nowrap',
       cursor: 'pointer',
-      /* 8px, `scopeBox`'s radius at a smaller box. Not fully rounded: a pill reads as a filter
-         chip — something switched on and off independently — and these are mutually exclusive
-         positions of one control, which is what a slightly-rounded rectangle says. */
       borderRadius: 10,
-      padding: '10px 15px',
+      padding: '8px 13px',
       /**
        * **`borderSubtle2` on a transparent ground, and both halves of that were measured.**
        *
@@ -527,14 +549,11 @@ export const useStyles = makeStyles((theme) => {
        * it says. **There is no `surface` token** — the white in this palette is `surfaceWhite`
        * — so the declaration resolved to the tenant theme's own fallback and painted the
        * resting tabs a grey slab. Worse, `borderSubtle1` (`#e6e6e7`) against that grey measured
-       * **1.08:1**: the bordered container had no visible border at all, which is the whole
-       * idea of the design gone.
+       * **1.08:1**: the bordered container had no visible border at all.
        *
-       * Transparent is also the right answer rather than merely a correct one — *unfilled* is
-       * what an unselected segment should be, and at ③ it lets the plan region's own wash
-       * through, so the row belongs to the band it sits in. On that ground `borderSubtle2`
-       * (`#d0cfd2`) reads at about 1.6:1, which is how every card edge in this product reads;
-       * `borderSubtle1` does not, and the note on `previewTrack` records the same trap.
+       * Transparent is also right rather than merely correct — *unfilled* is what an unselected
+       * segment should be, and at ③ it lets the plan region's own wash through, so the row
+       * belongs to the band it sits in.
        */
       border: `1px solid ${theme.palette.borderSubtle2}`,
       background: 'transparent',
@@ -550,64 +569,64 @@ export const useStyles = makeStyles((theme) => {
       '&:focus-visible': { outline: `2px solid ${theme.palette.borderBrand}`, outlineOffset: 2 },
     }),
 
-    /**
-     * The selected day — **a filled container, and filled *subtly*.**
-     *
-     * A solid brand fill with white text was the other candidate, and it loses on this screen
-     * for a reason that has nothing to do with taste: the column footer already carries a
-     * solid green `Harmonize`, and a second solid green block 300px above it makes the row look
-     * like it holds the primary action. Subtle brand ground + brand border + brand ink is
-     * unmistakably *the selected one* and still reads as a state rather than as a button.
-     *
-     * The border is what does most of the work — a fill this pale is a hint, and the 1px edge
-     * going from `borderSubtle1` to `borderBrand` is the part that reads at a glance.
-     */
-    splitTabSelected: w({
-      /**
-       * **Solid brand fill, on instruction** — *"give the selected one primary green fill."*
-       *
-       * This reverses the subtle-fill pass, whose argument was that a second solid green block
-       * 300px above the footer's `Harmonize` would make the row look like it held the primary
-       * action. That argument is weaker now than when it was made: at ③ the footer's button is
-       * `Apply 3 routes`, the row is the first thing under the summary, and a segmented control
-       * whose selected segment is *filled* is the plainest statement of "this one" there is.
-       *
-       * The ink goes white with it, which also settles the contrast problem the subtle fill had
-       * — brand-on-brand-subtle measured 2.87:1 and had to borrow `textPrimary`. White on
-       * `surfaceBrand` is a standard button pairing and needs no workaround.
-       */
-      background: theme.palette.surfaceBrand,
-      borderColor: theme.palette.surfaceBrand,
-      /**
-       * **`textPrimary`, not `textBrand` — and this is a measurement, not a preference.**
-       *
-       * A brand label on a brand-subtle ground measures **2.87:1** on the FilterGo tenant
-       * (`#2DA551` on `#E8F7ED`, computed in the browser). That is under the 4.5:1 a 14px label
-       * needs, and it made the *selected* tab the hardest text in the row to read — the exact
-       * inversion of what a selected state is for. The drawer's own `tabDropLegal` hit this
-       * same pair and made the same call for the same reason; the figure even matches.
-       *
-       * Nothing is lost by it. The ground and the 1px edge going brand carry the state on
-       * their own — a `borderBrand` box against a `borderSubtle2` one is unmistakable — and the
-       * label going from `textSecondary1` to `textPrimary` at 600 is a third cue that survives
-       * greyscale, which a hue never does.
-       */
-      color: theme.palette.surfaceWhite,
-      fontWeight: 500,
+    /* Line one. 600 rather than 700: the card is doing the emphasis. */
+    splitTabDay: w({
+      ...theme.typography.subtitle2,
+      fontSize: 13.5,
+      fontWeight: 600,
+      lineHeight: '18px',
+      color: 'inherit',
     }),
 
-    /* The stop count, inside a box. **Plain text, not the drawer's grey pill** — a pill inside
-       a bordered container is a box in a box, and the container has already done the job the
-       pill's ground was doing. Colour inherits from the tab, so it goes brand with the
-       selected one instead of staying grey inside a brand container. */
+    /* Line two, and the overrun dot rides with it rather than beside the date. */
+    splitTabCountRow: w({ display: 'flex', alignItems: 'center', gap: 5 }),
+
+    /**
+     * The count — **`3 visits`, spelled out, and no longer a pill.**
+     *
+     * It was a grey `surfaceGreySubtle` pill beside the date. A pill inside a bordered card is
+     * a box in a box, and on the filled selected card its grey ground fought the brand. Plain
+     * inheriting text on its own line is what the reference does and it costs nothing.
+     *
+     * `opacity` rather than a colour, so one value works on both cards: white ink over the
+     * brand fill and grey ink over white are the *same relationship* — a count subordinate to
+     * the date above it — and a second colour token would have to be picked twice.
+     */
     splitTabCount: w({
-      ...theme.typography.subtitle3,
-      fontWeight: 600,
+      ...theme.typography.body2,
+      fontSize: 11.5,
+      lineHeight: '15px',
+      fontWeight: 400,
       color: 'inherit',
-      /* 0.7 on white ink over the brand fill, 0.75 on grey — one value reads correctly on both
-         because it is the *same* relationship: a count is secondary to the date beside it. */
       opacity: 0.72,
       fontVariantNumeric: 'tabular-nums',
+    }),
+
+    /**
+     * The selected day — **a solid brand card.**
+     *
+     * Asked for directly: *"give the selected one primary green fill."* It reverses an earlier
+     * subtle-fill pass, whose argument was that a second solid green block above the footer's
+     * primary button would make the row look like it held the primary action. That argument is
+     * weaker at ③, where the footer reads `Apply 3 routes` and this row is the first thing under
+     * the figures — and a segmented control whose selected segment is *filled* is the plainest
+     * statement of "this one" there is.
+     *
+     * The white ink settles a contrast problem the subtle fill had as a side effect:
+     * brand-on-brand-subtle measured **2.87:1** on this tenant and had to borrow `textPrimary`
+     * to be readable at all. White on `surfaceBrand` is a standard button pairing.
+     *
+     * **This rule was accidentally deleted once** — swallowed by an edit that replaced the block
+     * from `splitTab` up to the count's comment — and the symptom was quiet: the selected card
+     * rendered identical to the unselected ones, with no error, because `DayTabRow` composes
+     * `classes.tabSelected` and an undefined class is simply absent. `splitTab`'s own
+     * `:hover:not($splitTabSelected)` also silently loses its guard. If the selected tab ever
+     * looks unstyled again, check that this key still exists before anything else.
+     */
+    splitTabSelected: w({
+      background: theme.palette.surfaceBrand,
+      borderColor: theme.palette.surfaceBrand,
+      color: theme.palette.surfaceWhite,
     }),
 
     /* The `+` tab: the same box, dashed and unlabelled. Dashed because it does not *select* a
@@ -669,17 +688,30 @@ export const useStyles = makeStyles((theme) => {
        The rows are the *route's* rows, imported — see `VisitPickList`, which owns the
        reasoning. What lives here is the section around them and the three `stop*` keys that
        had to be overridden because this list has no sequence in it. */
-    pickSection: w({ paddingTop: 4 }),
+    pickSection: w({ paddingTop: 0 }),
 
     /* ② — the orb's own slot, now that it no longer runs inside a route card. Centred in
        whatever height the body has, which is what the card's `previewBody` was doing for it. */
+    /**
+     * ② — the orb's slot, **filling the body so it centres in it.**
+     *
+     * `minHeight: 260` with `justify-content: center` centred the orb in 260px at the *top* of
+     * a 480px body, which put it about a third of the way down and left a field of green
+     * beneath it. Asked for directly: *"fix the mascot's positioning. Place it in the middle."*
+     *
+     * `position: absolute; inset: 0` rather than a height percentage: `planBody` is a
+     * `overflowY: auto` block, so a `height: 100%` child resolves against a container whose
+     * height is content-derived and the centring goes back to being relative to nothing.
+     * `planBody` already carries `position: relative`, so filling it is exact — and while ②
+     * runs there is nothing else in that box to overlap.
+     */
     computingSlot: w({
+      position: 'absolute',
+      inset: 0,
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
-      minHeight: 260,
-      paddingTop: 8,
     }),
 
     /* Heading left, the one column label right, on a shared baseline. `space-between` on a
@@ -977,7 +1009,15 @@ export const useStyles = makeStyles((theme) => {
        something towards it is not a target. Transparent, so the wash runs behind them rather than starting under them —
        rather than starting under them: the tabs are part of the generated region, not a
        lid on it. */
-    planTabBand: w({ flex: '0 0 auto', padding: `0 ${GUTTER}px`, position: 'relative' }),
+    /* The band's own top and bottom, where it had none and inherited whatever the region's
+       edge and the route header happened to leave. 14 above sits the row off the wash's edge;
+       10 below is deliberately tighter than that, so the row reads as belonging to the route
+       under it rather than floating between two things. */
+    planTabBand: w({
+      flex: '0 0 auto',
+      padding: `14px ${GUTTER}px 10px`,
+      position: 'relative',
+    }),
     planBody: w({
       flex: '1 1 auto',
       minHeight: 0,

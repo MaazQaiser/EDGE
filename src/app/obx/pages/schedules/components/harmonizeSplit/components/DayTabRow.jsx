@@ -159,25 +159,39 @@ const DayTabRow = ({
               onDropOn(day.date);
             }}
           >
-            {dayjs(day.date).format('ddd D')}
+            {/**
+             * **Two lines: the day, then what is on it.**
+             *
+             * The date used to sit on one line with a grey count pill beside it. Restructured
+             * to a stacked card on instruction, from a reference showing the weekday over the
+             * date over an `N Visits` line — *"use somewhat this design for the tabs. These are
+             * too big. reduce them a little bit."*
+             *
+             * So the structure is the reference's and the scale is not: the weekday and the
+             * date share **one** line rather than stacking into three, which is most of what
+             * makes the reference card tall. What is kept is the part that matters — the count
+             * as its own quiet line underneath, rather than a pill competing with the date on
+             * the same one.
+             */}
+            <Typography component="span" className={classes.tabDay}>
+              {dayjs(day.date).format('ddd D')}
+            </Typography>
 
-            {/* **The count only once there is one.** The drawer prints `0` for an empty
-                day and argues for it, correctly: a solved day that took nothing is a real
-                and unusual answer, and a blank there would be indistinguishable from a
-                count that failed to draw. That argument needs the day to have been solved.
-                Before the press nothing has been, so a `0` on every tab would be three
-                confident zeroes about work that has not been looked at. */}
+            {/* **The count only once there is one.** Academic in this shell now — the row does
+                not exist before the press — but kept, because the tab's second line is what
+                gives it its height and a tab that lost a line would resize. */}
             {planned && sheet ? (
-              <Typography component="span" className={classes.tabCount}>
-                {sheet.stops.length}
-              </Typography>
-            ) : null}
-
-            {planned && sheet?.overrunMins > 0 ? (
-              <Box
-                className={classNames(classes.tabDot, isAccepted && classes.tabDotSettled)}
-                aria-hidden="true"
-              />
+              <Box className={classes.tabCountRow}>
+                <Typography component="span" className={classes.tabCount}>
+                  {tt('count.visit', { count: sheet.stops.length })}
+                </Typography>
+                {sheet.overrunMins > 0 ? (
+                  <Box
+                    className={classNames(classes.tabDot, isAccepted && classes.tabDotSettled)}
+                    aria-hidden="true"
+                  />
+                ) : null}
+              </Box>
             ) : null}
           </Box>
         );
