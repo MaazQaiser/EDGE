@@ -106,7 +106,7 @@ const filterGoMocks = {
    * unit of work — what Signal calls a hit.
    */
   terms: {
-    patrol: 'Filter Replacement Service',
+    patrol: 'Filter Replacement',
     /* A runsheet is a **Route** here. The word the planner uses for an ordered
        day of driving is "route", and every screen that talks about one — the
        schedule, the optimizer, the visit drawer — reads this term rather than

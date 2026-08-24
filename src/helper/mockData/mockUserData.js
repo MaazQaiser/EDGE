@@ -122,7 +122,7 @@ export function getMockUserDataResponse() {
 
 /**
  * Stands in for the tenant labels API. Vocabulary is per-tenant — Filter Go calls
- * patrol "Filter Replacement Service" and hits "Visits" — so the terms live
+ * patrol "Filter Replacement" and hits "Visits" — so the terms live
  * alongside the rest of that tenant's mock data.
  */
 export function getMockTenantLabels() {

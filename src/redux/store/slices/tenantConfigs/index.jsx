@@ -3,12 +3,13 @@ import { createSlice } from '@reduxjs/toolkit';
 /**
  * Bump when the shape **or the content** of the labels payload changes — adding
  * the `roles` category was a shape change; Filter Go's runsheet becoming a
- * "Route", and its officer becoming an "Installer", are content ones. Persisted
+ * "Route", its officer becoming an "Installer", and its patrol service dropping
+ * the trailing "Service" to read just "Filter Replacement", are content ones. Persisted
  * caches written before the change are
  * otherwise kept forever, so a returning session keeps the old vocabulary and
  * only a fresh login sees the new word.
  */
-export const TENANT_LABELS_VERSION = 5;
+export const TENANT_LABELS_VERSION = 6;
 
 const initialState = {
   labels: null,
