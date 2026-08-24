@@ -525,45 +525,6 @@ const DutyDetail = ({
     setIsReassignHitToRunsheet(false);
   };
 
-  /**
-   * Switches the open drawer from a visit to the route it is on — the same
-   * `setShowDrawer` plumbing the grid already uses to open a route drawer from a
-   * click, fired here from inside the visit's own panel instead. `runsheetId`
-   * is the one this drawer was opened with (`drawerData`), not a field off the
-   * fetched hit — the hit response is not guaranteed to echo it back. The
-   * visit's own window doubles as the date context the runsheet fetch needs,
-   * since a visit always falls on the same day as the route carrying it.
-   *
-   * `cameFromVisit` carries this visit's own click-open data (`rest`, the exact
-   * shape `setShowDrawer` already expects) through to the route drawer, so its
-   * header can offer a way back — see `handleBackFromRoute`.
-   */
-  const openRouteDrawer = () => {
-    if (!runsheetId) return;
-    setShowDrawer({
-      open: DRAWER_TYPE.DETAIL,
-      data: {
-        id: runsheetId,
-        shiftId: runsheetId,
-        shiftType: SCHEDULE_DUTIES.PATROL,
-        startsAt,
-        endsAt,
-        cameFromVisit: rest,
-      },
-      activeIndex: 0,
-    });
-  };
-
-  /** Reopens the visit whose route link led here — see `openRouteDrawer`. */
-  const handleBackFromRoute = () => {
-    if (!rest?.cameFromVisit) return;
-    setShowDrawer({
-      open: DRAWER_TYPE.DETAIL,
-      data: rest.cameFromVisit,
-      activeIndex: 0,
-    });
-  };
-
   const showSideDrawer = (value) => (data) => {
     setShowTourDrawer({ open: value, data: value ? data : null });
   };
@@ -752,7 +713,6 @@ const DutyDetail = ({
                 shiftData={shiftData}
                 closeDrawer={closeDrawer}
                 shiftType={shiftType}
-                handleBackBtn={rest?.cameFromVisit ? handleBackFromRoute : undefined}
                 headerTitle={composeDrawerTitle(shiftData?.name, shiftData?.site?.name)}
                 editButtons={
                   <RenderIfHasPermission name={ACL_OBX_SCHEDULES_UPDATE}>
@@ -841,13 +801,12 @@ const DutyDetail = ({
                     {shiftType === SCHEDULE_DUTIES.HIT ? (
                       <Box>
                         <Suspense fallback={null}>
-                          {/* No assignment callout — that state now lives in the route link's
-                              click-through and the header's kebab, not a panel of its own. */}
+                          {/* No assignment callout — that state now lives in the header's
+                              kebab, not a panel of its own. */}
                           <HitDetail
                             shiftData={shiftData}
                             loading={loading}
                             callbackUponAssignment={() => getHitDetail(shiftId)}
-                            onOpenRoute={openRouteDrawer}
                           />
                         </Suspense>
                       </Box>

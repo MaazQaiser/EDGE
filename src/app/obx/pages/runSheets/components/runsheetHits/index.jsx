@@ -22,6 +22,7 @@ const RunsheetHits = ({
   readOnly = false,
   extraFields = null,
   belowFields = null,
+  hideCheckpoints = false,
 }) => {
   const classes = useStyles();
   const { t } = useTranslation();
@@ -106,8 +107,20 @@ const RunsheetHits = ({
             {extraFields}
           </Box>
           {belowFields}
+          {/* The filters this visit is there to replace — a site's own product/quantity
+              breakdown, the same one a submitted report states in prose ("Filter Size:
+              100*100*2 * Quantity: 1"). Independent of `hitDetails?.tour`: a visit can
+              know what it's replacing before any tour or report exists for it. */}
+          {hitDetails?.filters?.length > 0 && (
+            <Box className={classes.filtersWrapper}>
+              <Typography variant="h6" className={classes.title}>
+                {t('obx.runsheet.filtersSection')}
+              </Typography>
+              <FiltersList filters={hitDetails.filters} />
+            </Box>
+          )}
           {/* //checkpoints? */}
-          {hitDetails?.tour && (
+          {!hideCheckpoints && hitDetails?.tour && (
             <Box className={classes.checkPointsWrapper}>
               <Typography variant="h6" className={classes.title}>
                 {t('obx.runsheet.checkpointsSection')}
@@ -196,6 +209,7 @@ RunsheetHits.propTypes = {
   readOnly: PropTypes.bool,
   extraFields: PropTypes.node,
   belowFields: PropTypes.node,
+  hideCheckpoints: PropTypes.bool,
 };
 
 RunsheetHits.defaultProps = {
@@ -206,6 +220,7 @@ RunsheetHits.defaultProps = {
   readOnly: false,
   extraFields: null,
   belowFields: null,
+  hideCheckpoints: false,
 };
 
 export default RunsheetHits;
@@ -319,4 +334,40 @@ CheckPoints.propTypes = {
 
 CheckPoints.defaultProps = {
   checkpoints: [],
+};
+
+/**
+ * The filters a visit is there to replace, one line per size — a grey chip
+ * naming the size, the count beside it rather than inside it. Read the way a
+ * submitted report already prints it ("Filter Size: 100*100*2 * Quantity: 1"),
+ * as a stack of lines instead of a paragraph.
+ */
+const FiltersList = ({ filters = [] }) => {
+  const classes = useStyles();
+
+  return (
+    <Box className={classes.filtersList}>
+      {filters.map((filter, index) => (
+        <Box key={`${filter?.dimension}-${index}`} className={classes.filterRow}>
+          <Box className={classes.filterChip}>
+            <Typography component="span" className={classes.filterChipDimension}>
+              {filter?.dimension}
+            </Typography>
+          </Box>
+          <Typography component="span" className={classes.filterQty}>
+            ×{filter?.quantity}
+          </Typography>
+        </Box>
+      ))}
+    </Box>
+  );
+};
+
+FiltersList.propTypes = {
+  filters: PropTypes.arrayOf(
+    PropTypes.shape({
+      dimension: PropTypes.string,
+      quantity: PropTypes.number,
+    }),
+  ),
 };

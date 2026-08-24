@@ -133,6 +133,21 @@ export const buildRouteVisitCounts = (visits) => {
  * which `buildRouteVisitCounts` decides once, above every card.
  */
 export const getRouteVisitCount = (counts, shift) => {
+  /**
+   * **The card's own `totalHits` wins, whenever the payload sends one.**
+   *
+   * Asked for directly: the badge must read exactly what the route drawer reads. The
+   * drawer's number is the route's stop list; the map below is a different question —
+   * visits from the week's list that fall on this route *this day* — and the two
+   * legitimately disagree, which is what put `0` on a card whose drawer listed three
+   * stops. Where the card knows its own total there is nothing to reconcile, so the
+   * join is not consulted at all.
+   *
+   * `!= null` so a genuine `0` from the payload is honoured rather than falling
+   * through to a second derivation that might contradict it.
+   */
+  if (shift?.totalHits != null) return shift.totalHits;
+
   if (!counts) return null;
 
   const key = keyFor(shift?.runsheetName || shift?.runsheet?.name, dayKeyOf(shift));

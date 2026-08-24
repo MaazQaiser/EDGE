@@ -288,16 +288,19 @@ const SchedulesCompanies = ({
    */
   const renderVisitCells = (site) => {
     if (collapsed) {
-      /* No cadence on file. The grey fill the expanded reading uses says this
-         across twelve columns; across one it would be a small grey box that reads
-         as "nothing due this year" instead, so the fact is stated in words. */
+      /* **Blank, like the expanded reading** — asked for directly. This branch used
+         to state the fact in words, on the argument that a single narrow grey box
+         reads as "nothing due this year" where twelve columns of fill read as "no
+         cadence". In a column of dated chips the sentence was the only prose in the
+         table and drew the eye to the one row with nothing to say. An empty row says
+         it well enough; the name is still there for assistive tech, which cannot see
+         that the row is empty. */
       if (!site.intervalMonths) {
         return (
-          <TableCell className={classes.collapsedCell}>
-            <Typography className={classes.notScheduledText}>
-              {t('obx.schedules.calendar.companies.notScheduled')}
-            </Typography>
-          </TableCell>
+          <TableCell
+            className={classes.collapsedCell}
+            aria-label={t('obx.schedules.calendar.companies.notScheduled')}
+          />
         );
       }
 

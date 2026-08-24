@@ -210,16 +210,19 @@ describe('the year matrix', () => {
   });
 
   /**
-   * Said in words, not with a grey fill.
+   * **Left blank, and named only for assistive tech** — asked for directly, and it
+   * brings this reading into line with the expanded one, which already dropped the
+   * sentence.
    *
-   * The expanded reading spelled this out with a spanning cell whose *colour* was the
-   * message, named only for assistive tech; packed, there is no span to colour, so the
-   * strip carries the sentence and every reader gets the same fact.
+   * The copy used to run here on the argument that a packed row has no spanning cell
+   * to colour, so the fact had to be words. In a column of dated chips it was the
+   * table's only prose and drew the eye to the one row with nothing to say.
    */
-  it('says in words that a location is not scheduled', () => {
+  it('leaves an unscheduled location`s row blank, but still names it', () => {
     draw();
 
-    expect(screen.getByText(`${KEY}.notScheduled`)).toBeInTheDocument();
+    expect(screen.queryByText(`${KEY}.notScheduled`)).not.toBeInTheDocument();
+    expect(document.querySelector(`[aria-label="${KEY}.notScheduled"]`)).not.toBeNull();
   });
 });
 

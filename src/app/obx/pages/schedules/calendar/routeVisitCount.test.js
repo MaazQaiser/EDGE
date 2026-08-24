@@ -336,21 +336,39 @@ describe('the routes month of August 2026', () => {
     expect(getRouteVisitCount(buildRouteVisitCounts(visits), key)).toBe(0);
   });
 
-  it('reads 0 on every card, because of the demo`s two disjoint site books', () => {
-    /* Correct wiring, honest zeroes — and worth pinning so nobody reads a grid of
-       noughts as a broken join. The patrol grid is built from a 3-entry `SITES` list
-       and the visits book from a 46-entry `VISIT_SITES`, so the two agree on only
-       three route *names* and, in this window, never on a route and a day together:
-       the grid's runs are all in Aug 1–7 while the list's stops on those three routes
-       start on Aug 7 and run to Aug 31. */
+  /**
+   * **This used to pin "0 on every card", and that is exactly what changed.**
+   *
+   * The grid and the visits book are built from two disjoint site lists (a 3-entry
+   * `SITES` against a 46-entry `VISIT_SITES`), so the name-and-day join agreed on
+   * nothing in this window and every card honestly read `0` — over a drawer that
+   * listed four stops. Asked for directly: the card must read what the drawer reads,
+   * so the payload now carries the route's own `totalHits` and that wins outright.
+   */
+  it('reports the card`s own totalHits, which is what the drawer lists', () => {
     const { cards, visits } = routesMonth();
     const counts = buildRouteVisitCounts(visits);
 
-    expect(cards.map((card) => getRouteVisitCount(counts, card))).toEqual(Array(12).fill(0));
-    /* `0` and not `null`, which is the distinction that matters here: the month *has*
-       a visit list, so every card is entitled to state that its run is empty. Before
-       `getRoutesByMonth` there was no list on this reading at all and no card could
-       have printed anything. */
-    expect(counts).not.toBeNull();
+    /* Every card carries one now (`routeStopTotals` in the mock), and none of them is
+       the 0 the join would have produced — which is the whole point of the change. */
+    cards.forEach((card) => {
+      expect(card.totalHits).toEqual(expect.any(Number));
+      expect(getRouteVisitCount(counts, card)).toBe(card.totalHits);
+    });
+    expect(cards.some((card) => card.totalHits > 0)).toBe(true);
+  });
+
+  it('falls back to the join only for a card that carries no total', () => {
+    const { visits } = routesMonth();
+    const counts = buildRouteVisitCounts(visits);
+    const [sample] = visits;
+    const key = { runsheetName: sample.runsheetName, start: sample.start };
+
+    // Same key, with and without a total on it.
+    expect(getRouteVisitCount(counts, key)).toBeGreaterThan(0);
+    expect(getRouteVisitCount(counts, { ...key, totalHits: 0 })).toBe(0);
+    /* `0` on the payload is honoured rather than falling through — an empty run is a
+       fact the card is entitled to state, and re-deriving it could contradict it. */
+    expect(getRouteVisitCount(null, { ...key, totalHits: 3 })).toBe(3);
   });
 });

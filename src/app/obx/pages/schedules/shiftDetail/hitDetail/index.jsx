@@ -6,7 +6,6 @@ import { getVisitActionRules } from 'src/app/obx/pages/schedules/helper/visitSta
 
 import RunsheetHits from '../../../runSheets/components/runsheetHits';
 import { useStyles as useRunsheetHitsStyles } from '../../../runSheets/components/runsheetHits/runsheetHits.style';
-import RouteLink from './RouteLink';
 
 /**
  * The customer a visit belongs to, read the same defensive chain
@@ -47,14 +46,7 @@ Field.propTypes = {
   value: PropTypes.node,
 };
 
-/**
- * Company, site, location and filter count — four facts the design's three-field
- * row (service time, visit type, status) leaves out. `Site` names the building,
- * `Location` names the part of it this visit is for — the same relationship the
- * product's own Sites > Locations feature has, and a checkpoint's own
- * `location.locationName` a floor below it — and `Filter Count` is what the visit
- * is there to replace.
- */
+/** Company and site — who the visit is for, and where. */
 const VisitExtraFields = ({ shiftData }) => {
   const { t } = useTranslation();
 
@@ -65,11 +57,6 @@ const VisitExtraFields = ({ shiftData }) => {
         value={resolveCompanyName(shiftData)}
       />
       <Field label={t('obx.schedules.dutyDetail.detail.site')} value={shiftData?.siteName} />
-      <Field label={t('obx.schedules.dutyDetail.detail.location')} value={shiftData?.location} />
-      <Field
-        label={t('obx.schedules.dutyDetail.detail.filterCount')}
-        value={shiftData?.filterCount}
-      />
     </>
   );
 };
@@ -82,16 +69,15 @@ VisitExtraFields.propTypes = {
  * One visit, opened from the visits grid or a route's stop list.
  *
  * `RunsheetHits` is the work itself — service time, visit type, status, company,
- * site, location, filter count, checkpoints, report, instructions — the same
- * summary a route's own stop list reads a hit through. `RouteLink` sits beneath
- * the fields, naming the route the visit is on and doubling as the way back to
- * it.
+ * site, the filters this visit is there to replace, report and instructions.
+ * Checkpoints are hidden here: a filter-replacement visit is read by what it
+ * replaces, not by a device tour, and the route's own stop list is where that
+ * still belongs.
  *
- * No assignment callout: the state it used to name now lives in the route link's
- * click-through and the header's kebab, which is where the visit's other actions
- * already were.
+ * No assignment callout, and no route link: both used to answer "is this on a
+ * route", which the header's kebab and the visits grid already answer.
  */
-const HitDetail = ({ shiftData, loading, callbackUponAssignment, onOpenRoute }) => (
+const HitDetail = ({ shiftData, loading, callbackUponAssignment }) => (
   <RunsheetHits
     hitDetails={shiftData}
     hitStatus={shiftData?.scheduleStatus}
@@ -99,7 +85,7 @@ const HitDetail = ({ shiftData, loading, callbackUponAssignment, onOpenRoute }) 
     refetchData={callbackUponAssignment}
     readOnly={getVisitActionRules(shiftData || {}).isReadOnly}
     extraFields={<VisitExtraFields shiftData={shiftData} />}
-    belowFields={<RouteLink shiftData={shiftData} loading={loading} onOpenRoute={onOpenRoute} />}
+    hideCheckpoints
   />
 );
 
@@ -109,5 +95,4 @@ HitDetail.propTypes = {
   shiftData: PropTypes.object,
   loading: PropTypes.bool,
   callbackUponAssignment: PropTypes.func,
-  onOpenRoute: PropTypes.func,
 };

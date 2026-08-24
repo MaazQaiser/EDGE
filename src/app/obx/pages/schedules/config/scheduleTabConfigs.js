@@ -36,6 +36,14 @@ export const getScheduleHeaderTabs = ({
      caller keeps it — `SCHEDULE_TAB_CONFIGS.companies` is still what mounts the
      pane either way. */
   includeCompaniesTab = true,
+  /**
+   * **Var 1 only.** That layout has no grouping toggle, so the two readings the
+   * toggle offered — routes and visits-by-company — are top-level tabs there
+   * instead: the service tab keeps the routes reading and this one takes the
+   * visits reading. Defaults to off so Var 2, and every other caller, is
+   * unchanged.
+   */
+  includeVisitsTab = false,
 } = {}) => {
   /**
    * The **person** tab — "Installers" on Filter Go, whatever the tenant calls its
@@ -83,6 +91,21 @@ export const getScheduleHeaderTabs = ({
     label: t?.('obx.schedules.calendar.tabs.companies') || 'Companies',
   };
 
+  /**
+   * The visits reading as a tab — Var 1's replacement for the toggle's own Visits
+   * segment, and it borrows that segment's word (`grouping.visitsShort`) rather than
+   * inventing a second one: it is the same view, so calling it something else here
+   * would make the two layouts disagree about what it is called.
+   *
+   * The id resolves to the overview config through `getScheduleTabConfig`'s fallback,
+   * which is what it wants — `isOverviewTab` is the flag `canGroupMainViewByCompany`
+   * tests, so this tab is allowed the company grouping the calendar then forces on it.
+   */
+  const visitsByCompanyTab = {
+    id: VISITS_BY_COMPANY_TAB_ID,
+    label: t?.('obx.schedules.calendar.grouping.visitsShort') || 'Visits',
+  };
+
   if (isSingleServiceTenant(services)) {
     const serviceKey = services?.patrol === true ? 'patrol' : 'dedicated';
     const tabs = [
@@ -98,6 +121,14 @@ export const getScheduleHeaderTabs = ({
        `scheduleHeaderTabs[0]`. Leading with people would quietly move the scheduler's
        landing surface off the schedule, which is not what adding a tab was asked to
        do. */
+    /* Ahead of Installers, so the tab row reads in the same order the toggle it
+       replaces did: routes, then visits, then the company reading. Patrol only —
+       the visits reading is the company grouping, which `canGroupMainViewByCompany`
+       only ever grants a single-service *patrol* tenant. */
+    if (includeVisitsTab && services?.patrol === true) {
+      tabs.push(visitsByCompanyTab);
+    }
+
     if (includeOfficerTab) {
       tabs.push(officerTab());
     }
@@ -223,6 +254,21 @@ export const VISITS_SCHEDULE_TAB_ID = 'visits';
  * is hidden because a rolling twelve months is not a FullCalendar view type.
  */
 export const COMPANIES_SCHEDULE_TAB_ID = 'companies';
+
+/**
+ * Var 1's Visits tab — the visits-by-company reading the grouping toggle offers
+ * under Var 2.
+ *
+ * **Deliberately not in `SCHEDULE_TAB_CONFIGS`.** It is not a fourth kind of grid:
+ * it is the main service tab's own config read with the company grouping applied,
+ * so it leans on `getScheduleTabConfig`'s fallback to `overview` and the calendar
+ * forces the grouping from the active tab. Giving it a config of its own would mean
+ * maintaining a duplicate of `overview` that has to be kept in step with it.
+ *
+ * Distinct from `VISITS_SCHEDULE_TAB_ID` above, which is the retired site-grouped
+ * tab and a different view entirely.
+ */
+export const VISITS_BY_COMPANY_TAB_ID = 'visitsByCompany';
 
 export const EMBEDDED_SCHEDULE_TAB_ID = 'embedded';
 

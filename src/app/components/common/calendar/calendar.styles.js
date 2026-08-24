@@ -3847,6 +3847,17 @@ export const useStyles = makeStyles((theme) => ({
     flexShrink: 0,
     minWidth: 0,
   },
+  /* The same pair, in the card's top-right corner instead of its own line —
+     `eventDetailHeaderWrapper` is a `space-between` row, so `marginLeft: auto` is
+     what pins it right when the time is the only thing to its left. `flexShrink: 0`
+     keeps the figure whole on a narrow day column; the time truncates first. */
+  patrolVisitCountCorner: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '3px',
+    flexShrink: 0,
+    marginLeft: 'auto',
+  },
   /* 12px, down from the asset's native 14: it sits in a 16px row beside 10px text,
      and the marks it shares that row with are 10-12px glyphs. */
   patrolVisitCountIcon: {

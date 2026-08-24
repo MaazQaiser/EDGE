@@ -313,19 +313,6 @@ export const useStyles = makeStyles((theme) => {
       gap: '8px',
     },
 
-    /* The collapsed row's quiet state. `notScheduledCell`'s grey fill runs the full
-       twelve columns to say "no cadence here", and across one strip-width cell it
-       would be a small grey box with nothing in it — indistinguishable from a cell
-       that simply has no visits this year. A word does the job the fill did. */
-    notScheduledText: {
-      '&.MuiTypography-root': {
-        fontSize: '12px',
-        fontWeight: 400,
-        lineHeight: '16px',
-        color: theme.palette.textSecondary3,
-      },
-    },
-
     /* Same seam as `headCellMonthFirst`, at body-row scale: `bodyRow` runs 12px
      of padding on the Location cell right up to the seam, and this column's
      own 8px picked up immediately after it — the first card in the book sat

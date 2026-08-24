@@ -26,7 +26,6 @@ import HarmonizeSplit from 'src/app/obx/pages/schedules/components/harmonizeSpli
 import MissedHitsDrawer from 'src/app/obx/pages/schedules/components/missedHitsDrawer';
 import { ACL_OBX_SITE_EXTRA_JOB_CREATE } from 'src/app/router/constant/OBXMODULE';
 import {
-  COMMON_SETTING,
   HO_SITES_DETAIL,
   OBX_SCHEDULES_CREATE_EXTRA_DUTY,
   OBX_SITES,
@@ -38,12 +37,16 @@ import history from 'src/app/router/utils/history';
 import { AddBlueIcon, AlertIcon, ForecastTrendIcon } from 'src/assets/svg';
 import { ReactComponent as RouteGroupingIcon } from 'src/assets/svg/ACLRunsheet.svg?react';
 import { ReactComponent as MHitsIcon } from 'src/assets/svg/MHitsIcon.svg?react';
-/* Staggered bars, not the building this segment used to carry — the segment is
-   "Plan" now, and a building named the rows where the label names the horizon. Drawn
-   in the same 20×20 / 1.2 stroke / round-cap style as its two neighbours, and it is
-   the lightest of the three at the 16px they render at. `CompanyGroupingIcon.svg` is
-   left in `assets/` with no importer. */
-import { ReactComponent as PlanGroupingIcon } from 'src/assets/svg/PlanGroupingIcon.svg?react';
+/* Staggered bars, not the building this segment used to carry — the segment names
+   the horizon (a rolling year), not a row, so a building glyph named the wrong half
+   of it. Drawn in the same 20×20 / 1.2 stroke / round-cap style as its two
+   neighbours, and it is the lightest of the three at the 16px they render at.
+   Renamed from `PlanGroupingIcon.svg` to track the segment's own second rename
+   (Companies → Plan → Overview) — same glyph, new identifier, so a reader does not
+   find a component called "Plan" behind a segment that no longer says it.
+   `CompanyGroupingIcon.svg` and `PlanGroupingIcon.svg` are both left in `assets/`
+   with no importer. */
+import { ReactComponent as OverviewGroupingIcon } from 'src/assets/svg/OverviewGroupingIcon.svg?react';
 import { ReactComponent as VisitGroupingIcon } from 'src/assets/svg/VisitGroupingIcon.svg?react';
 import { useApiControllers } from 'src/helper/axios';
 import { useTenantLabel } from 'src/helper/utilityHooks';
@@ -84,6 +87,7 @@ import {
   isVisitsSubject,
   MAIN_VIEW_GROUPING,
   resolveScheduleFooterVariant,
+  VISITS_BY_COMPANY_TAB_ID,
   VISITS_SCHEDULE_TAB_ID,
   withCompanyGroupingFilters,
   withRouteGroupingFilters,
@@ -118,6 +122,7 @@ import { useCanViewSummaryStats } from '../hooks/useCanViewSummaryStats';
 import { useSiteLocations } from '../hooks/useSiteLocations';
 import ShiftDetail from '../shiftDetail';
 import DedicatedSplitShift from '../shiftDetail/components/dedicatedSplitShift/index';
+import ApplySkeleton from './ApplySkeleton';
 import { buildRouteVisitCounts } from './routeVisitCount';
 import { useStyles } from './scheduleCalendar.styles';
 import ScheduleCalendarGrid from './ScheduleCalendarGrid';
@@ -577,6 +582,11 @@ const ScheduleCalendar = (props) => {
            and is still what mounts the pane, reached there from the grouping toggle's
            third segment instead. Var 1 keeps the tab and the toggle stays two-way. */
         includeCompaniesTab: !isUnifiedToggleLayout,
+        /* The other half of the same structural difference. Var 1 has no grouping
+           toggle, so the visits reading needs a tab to be reachable at all; Var 2
+           reaches it from the toggle's second segment and must not also have a tab,
+           or the same view would sit in two places one click apart. */
+        includeVisitsTab: !isUnifiedToggleLayout,
       }).filter((tab) => !(isUsersModule && tab.id === 'officer')),
     [services, getLabel, t, shiftTypes, isUsersModule, isUnifiedToggleLayout],
   );
@@ -629,8 +639,15 @@ const ScheduleCalendar = (props) => {
    */
   const visitGrouping = !canSwitchGrouping
     ? MAIN_VIEW_GROUPING.ROUTES
-    : !isUnifiedToggleLayout && visitGroupingChoice === TIMELINE_PANE_GROUPING
-      ? MAIN_VIEW_GROUPING.COMPANIES
+    : /* **Var 1 reads the grouping off the tab, not off the stored choice.** The two
+         readings are tabs there, so the tab row *is* the control — deriving it from
+         `visitGroupingChoice` as well would let a remembered choice contradict the
+         tab the planner is standing on (land on Visits, get routes). Var 2 keeps the
+         stored choice, which is what its toggle writes. */
+      !isUnifiedToggleLayout
+      ? activeTab === VISITS_BY_COMPANY_TAB_ID
+        ? MAIN_VIEW_GROUPING.COMPANIES
+        : MAIN_VIEW_GROUPING.ROUTES
       : visitGroupingChoice;
   const isCompanyGrouping = visitGrouping === MAIN_VIEW_GROUPING.COMPANIES;
   /**
@@ -1899,11 +1916,10 @@ const ScheduleCalendar = (props) => {
   /**
    * The plan, re-dealt onto three days — see `harmonizedDayStack`.
    *
-   * Both paths below run the routes through this, and they have to: the departing beat asks
-   * `planHarmonized` which cards are leaving and the landing beat asks `relocateHarmonized`
-   * where they went, and a plan that answered those two questions differently would lift one
-   * set of cards and move another. Deliberately not memoised on the routes — it is a walk
-   * over one week of visits, run twice per Apply.
+   * Both paths below run the routes through this. It used to be asked twice per Apply —
+   * once to learn which cards were leaving, once to move them — and the two answers had to
+   * agree or the sequence would lift one set of cards and land another. With the flights
+   * gone it is asked once, at the relocation, so that hazard is gone with them.
    */
   const stackRoutesForDemo = useCallback(
     (routes = []) => {
@@ -1939,21 +1955,9 @@ const ScheduleCalendar = (props) => {
     return moves;
   }, []);
 
-  /**
-   * The same question, asked one beat earlier and answered without touching anything.
-   *
-   * `relocateVisitsForRoutes` computes the moves and the relocated duties together, so this
-   * throws the duties away and keeps the map. Re-running it is a walk over the week's visits
-   * and is not worth avoiding — the alternative is a cached plan living in this component
-   * between two beats, which is a piece of state that can be stale.
-   */
-  const planHarmonized = useCallback(
-    (routes = []) => relocateVisitsForRoutes(calendarDataRef.current.allDuties, routes).moves,
-    [],
-  );
-
+  /* `onPlan` is gone with the flights — it existed so the departing beat could know which
+     cards were about to leave one beat before they left. Nothing measures cards any more. */
   const applyMotion = useApplyMotion({
-    onPlan: (routes) => planHarmonized(stackRoutesForDemo(routes)),
     onRelocate: (routes) => relocateHarmonized(stackRoutesForDemo(routes)),
   });
 
@@ -2300,21 +2304,30 @@ const ScheduleCalendar = (props) => {
      would differ only in a preposition. This one is the twelve-month cadence view,
      and the year is the thing that distinguishes it. */
   /**
-   * **"Plan"**, and the tooltip carries what one word cannot.
+   * **"Overview"**, asked for directly in place of "Plan" — and the tooltip still
+   * carries what one word cannot.
    *
-   * The segment was "Companies", which did not discriminate: the *Visits* segment
-   * beside it is already grouped by company (`MAIN_VIEW_GROUPING.COMPANIES`, tooltip
-   * "{{hits}} by company"), so the pair read as a difference of subject where there is
-   * none. What actually changes when this is pressed is the **horizon** — Routes and
-   * Visits are two readings of the week in front of you, this one leaves the week for a
-   * rolling year and swaps the grid for a table.
+   * The segment was "Companies" originally, which did not discriminate: the *Visits*
+   * segment beside it is already grouped by company (`MAIN_VIEW_GROUPING.COMPANIES`,
+   * tooltip "{{hits}} by company"), so the pair read as a difference of subject where
+   * there is none. What actually changes when this is pressed is the **horizon** —
+   * Routes and Visits are two readings of the week in front of you, this one leaves
+   * the week for a rolling year and swaps the grid for a table. "Overview" names that
+   * the same way "Plan" did; either reads fine against the reasoning above.
    *
-   * Not "Sites", which was the other candidate and is the better *subject* word now
-   * that the term is settled: it would sit about 20px from this row's own `Site` filter
-   * dropdown, one word for a control that picks a view and a control that narrows rows.
-   *
-   * The tooltip names the rows and the span, in the tenant's word for the row, because
-   * "Plan" says neither.
+   * **This segment's word, not the tab row's.** `getScheduleHeaderTabs` states its own
+   * `t('...tabs.overview')` as literal "Overview" for a *multi-service* tenant's
+   * cross-service rollup tab — a different id, a different surface, and one that can
+   * sit in the same row as `SCHEDULE_TAB_CONFIGS.companies` when Var 1
+   * (`includeCompaniesTab`) is in play, because that tab is pushed independent of
+   * `isSingleServiceTenant`. This segment cannot collide with it on screen —
+   * `canGroupMainViewByCompany` gates the whole toggle to single-service tenants,
+   * whose own `overview`-id tab is labelled with the *service* name (`resolveTerm`),
+   * never the literal word — but the companies **tab** could, so
+   * `obx.schedules.calendar.tabs.companies` is deliberately left as "Plan" rather than
+   * following this rename. The two layouts naming the surface identically was a
+   * choice, not an invariant; it is worth breaking here rather than handing a
+   * multi-service Var 1 tenant two tabs that both read "Overview".
    */
   const timelineGroupingLabel = t('obx.schedules.calendar.grouping.companyTimeline', {
     site: siteTerms(getLabel, t).singular.toLowerCase(),
@@ -2551,38 +2564,44 @@ const ScheduleCalendar = (props) => {
    * *button* and never a bare glyph — MUI hands its child a ref, and an inline SVG is
    * not a ref-forwarding component.
    */
-  const groupingSwitch = canSwitchGrouping ? (
-    <ToggleButtonGroup
-      exclusive
-      size="small"
-      value={visitGrouping}
-      className={classes.scheduleGroupingToggle}
-      onChange={(_e, next) => setGrouping(next)}
-      aria-label={t('obx.schedules.calendar.grouping.label')}
-    >
-      <Tooltip arrow placement="top" title={routesGroupingLabel}>
-        <ToggleButton
-          disableRipple
-          className={classes.scheduleGroupingToggleBtn}
-          value={MAIN_VIEW_GROUPING.ROUTES}
-          aria-label={routesGroupingLabel}
-        >
-          <RouteGroupingIcon />
-          {t('obx.schedules.calendar.grouping.routesShort')}
-        </ToggleButton>
-      </Tooltip>
-      <Tooltip arrow placement="top" title={visitsGroupingLabel}>
-        <ToggleButton
-          disableRipple
-          className={classes.scheduleGroupingToggleBtn}
-          value={MAIN_VIEW_GROUPING.COMPANIES}
-          aria-label={visitsGroupingLabel}
-        >
-          <VisitGroupingIcon />
-          {t('obx.schedules.calendar.grouping.visitsShort')}
-        </ToggleButton>
-      </Tooltip>
-      {/* **Var 2 only.** This is the segment that swaps the whole surface for the
+  /* **Var 2 only.** Asked for directly: the tabbed layout drops the toggle row
+     entirely, because under Var 1 all three of its destinations are tabs — routes on
+     the service tab, visits on their own, the company pane on Overview — and a
+     toggle duplicating the tab row is two controls for one choice that can disagree
+     with each other. */
+  const groupingSwitch =
+    canSwitchGrouping && isUnifiedToggleLayout ? (
+      <ToggleButtonGroup
+        exclusive
+        size="small"
+        value={visitGrouping}
+        className={classes.scheduleGroupingToggle}
+        onChange={(_e, next) => setGrouping(next)}
+        aria-label={t('obx.schedules.calendar.grouping.label')}
+      >
+        <Tooltip arrow placement="top" title={routesGroupingLabel}>
+          <ToggleButton
+            disableRipple
+            className={classes.scheduleGroupingToggleBtn}
+            value={MAIN_VIEW_GROUPING.ROUTES}
+            aria-label={routesGroupingLabel}
+          >
+            <RouteGroupingIcon />
+            {t('obx.schedules.calendar.grouping.routesShort')}
+          </ToggleButton>
+        </Tooltip>
+        <Tooltip arrow placement="top" title={visitsGroupingLabel}>
+          <ToggleButton
+            disableRipple
+            className={classes.scheduleGroupingToggleBtn}
+            value={MAIN_VIEW_GROUPING.COMPANIES}
+            aria-label={visitsGroupingLabel}
+          >
+            <VisitGroupingIcon />
+            {t('obx.schedules.calendar.grouping.visitsShort')}
+          </ToggleButton>
+        </Tooltip>
+        {/* **Var 2 only.** This is the segment that swaps the whole surface for the
           twelve-month pane, and it exists here only because that layout has no
           Companies tab to reach the pane by. Under Var 1 the tab is still in the row
           above, so offering the same destination twice would put the two layouts one
@@ -2590,21 +2609,21 @@ const ScheduleCalendar = (props) => {
           toolbar of its own, would leave this segment on screen nowhere to go back
           to. Last in either case: routes and visits are two readings of the week in
           front of you, this one leaves it. */}
-      {isUnifiedToggleLayout ? (
-        <Tooltip arrow placement="top" title={timelineGroupingLabel}>
-          <ToggleButton
-            disableRipple
-            className={classes.scheduleGroupingToggleBtn}
-            value={TIMELINE_PANE_GROUPING}
-            aria-label={timelineGroupingLabel}
-          >
-            <PlanGroupingIcon />
-            {t('obx.schedules.calendar.grouping.companiesShort')}
-          </ToggleButton>
-        </Tooltip>
-      ) : null}
-    </ToggleButtonGroup>
-  ) : null;
+        {isUnifiedToggleLayout ? (
+          <Tooltip arrow placement="top" title={timelineGroupingLabel}>
+            <ToggleButton
+              disableRipple
+              className={classes.scheduleGroupingToggleBtn}
+              value={TIMELINE_PANE_GROUPING}
+              aria-label={timelineGroupingLabel}
+            >
+              <OverviewGroupingIcon />
+              {t('obx.schedules.calendar.grouping.companiesShort')}
+            </ToggleButton>
+          </Tooltip>
+        ) : null}
+      </ToggleButtonGroup>
+    ) : null;
 
   /**
    * Harmonize, built here rather than inline in the page header.
@@ -2892,22 +2911,17 @@ const ScheduleCalendar = (props) => {
           {createMenu}
         </Box>
       </Box>
-      {/* The apply rules are scoped to this wrapper rather than living in
-          `@global`, so they cost nothing except while the sequence is running — and
-          so `$applySettle` resolves to a real keyframes name, which it does not
-          inside a global block. */}
-      <Box
-        /* The stage the apply sequence plays on. `ScheduleCalendarGrid` finds this node by
-           the attribute and hangs its flight layer inside it — inside, so the cards it
-           carries are still descendants of the wrapper the card CSS is scoped to, and a
-           clone does not lose half its styling on the way out. */
-        data-apply-stage="true"
-        className={
-          applyMotion.isRunning
-            ? `${classes.scheduleCalendarFull} ${classes.applyingGrid}`
-            : classes.scheduleCalendarFull
-        }
-      >
+      {/**
+       * The stage the apply sequence plays over.
+       *
+       * It used to be the stage the sequence played *on* — the grid's flight layer hung
+       * inside it and a scoped class switched three per-card animations. Both are gone;
+       * what it does now is give `ApplySkeleton` a box to be `inset: 0` against, so the
+       * skeleton covers exactly the grid and leaves the toolbar and footer alone. Those
+       * are chrome, they are not being reloaded, and hiding them would say they were.
+       */}
+      <Box data-apply-stage="true" className={classes.scheduleCalendarFull}>
+        <ApplySkeleton phase={applyMotion.phase} routeCount={applyMotion.routeCount} />
         <ScheduleErrorBoundary
           resetKey={`${activeTab}|${visitGrouping}|${queryParams.selectedView?.type}|${queryParams.selectedView?.windowStart}`}
           onRetry={refetchScheduleData}
@@ -3020,7 +3034,6 @@ const ScheduleCalendar = (props) => {
                 selectedShiftIds={selectedShiftIds}
                 onToggleShiftSelect={toggleShiftSelect}
                 harmonizePreview={harmonizePreview}
-                applyMotion={applyMotion}
                 visitGrouping={visitGrouping}
                 companyQuery={companyQuery}
                 onSelectCompany={handleSelectCompany}
@@ -3063,7 +3076,6 @@ const ScheduleCalendar = (props) => {
           <HarmonizeSplit
             open={harmonizeOpen}
             onClose={() => setHarmonizeOpen(false)}
-            settingsHref={`${COMMON_SETTING}?activeTab=harmonization`}
             onApplied={(plan) => {
               exitSelection();
 
@@ -3094,7 +3106,6 @@ const ScheduleCalendar = (props) => {
           <HarmonizeDrawer
             open={harmonizeOpen}
             onClose={() => setHarmonizeOpen(false)}
-            onOpenSettings={() => history.push(`${COMMON_SETTING}?activeTab=harmonization`)}
             /**
              * **The calendar is this flow's terminal state.**
              *

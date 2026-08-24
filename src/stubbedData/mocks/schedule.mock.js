@@ -194,6 +194,11 @@ const makeShift = (view, site, officer, base, dayOffset, windowIndex, statusInde
     officer: isUnassigned ? null : officer,
     reassignedOfficer: null,
     runsheetName: view === 'patrol' ? routeForSite(site).name : name,
+    /* The route card's badge, and the tooltip's two figures. Stamped on the card
+       rather than joined from the week's visit list, because the number has to be
+       the drawer's — `routeStopTotals` is what the drawer builds its stop list
+       from. Patrol only: a dedicated shift is not a round of stops. */
+    ...(view === 'patrol' ? routeStopTotals(routeForSite(site).id) : {}),
     isUnassigned,
   };
 };
@@ -843,27 +848,31 @@ const visitIdFor = (site, dayIndex) => 500000 + site.id * 10000 + (dayIndex + 50
 const filterCountFor = (site) => 1 + (((site.id * 7 + 3) % 8) | 0);
 
 /**
- * The sub-location within the site a visit is scoped to.
- *
- * A site is a building; a location is a named area inside it — the product's
- * own Sites > Locations feature (`sites/detail/components/locations`) is
- * where these are managed, and a checkpoint's `location.locationName` is the
- * same idea at checkpoint granularity. This is that same concept at the
- * visit's granularity: which part of the site the visit is for, the way "a
- * Walmart has a parking lot" is a location inside the Walmart site. Hashed
- * from the site id for the same reason `filterCountFor` is — one answer per
- * site, not a reshuffle on every fetch.
+ * The filters a visit is there to replace, as `{ dimension, quantity }` line
+ * items — the same "Filter Size(s)" breakdown a submitted report already
+ * prints in prose ("Filter Size: 100*100*2 * Quantity: 1"), read here as
+ * structured rows instead. One to three distinct sizes per visit, hashed from
+ * the site id for the same reason `filterCountFor` is — one answer per site,
+ * not a reshuffle on every fetch.
  */
-const SITE_LOCATION_NAMES = [
-  'Parking Lot',
-  'Main Entrance',
-  'Loading Dock',
-  'Rooftop Unit',
-  'Mechanical Room',
-  'Rear Access',
-];
-const siteLocationFor = (site = {}) =>
-  SITE_LOCATION_NAMES[(site.id * 3 + 1) % SITE_LOCATION_NAMES.length];
+const FILTER_DIMENSIONS = ['14x24x2', '20x20x1', '16x25x1', '12x24x36', '100*100*2', '24x24x2'];
+const filtersForSite = (site = {}) => {
+  const lineCount = 1 + (site.id % 3);
+  const usedIndexes = new Set();
+
+  return Array.from({ length: lineCount }, (_, i) => {
+    let dimensionIndex = (site.id * 5 + i * 7 + 3) % FILTER_DIMENSIONS.length;
+    while (usedIndexes.has(dimensionIndex)) {
+      dimensionIndex = (dimensionIndex + 1) % FILTER_DIMENSIONS.length;
+    }
+    usedIndexes.add(dimensionIndex);
+
+    return {
+      dimension: FILTER_DIMENSIONS[dimensionIndex],
+      quantity: 1 + ((site.id * (i + 2) + 3) % 5),
+    };
+  });
+};
 
 const makeVisit = ({
   site,
@@ -1379,9 +1388,81 @@ const routeById = (runsheetId) => {
   };
 };
 
+/**
+ * The stops a route carries, and what they add up to — **one source, two surfaces.**
+ *
+ * The route card and the route drawer used to derive this separately: the card
+ * counted the week's visit list per route-day (`buildRouteVisitCounts`), the drawer
+ * took the route's own sites. Those answer different questions, so a card read `0`
+ * over a drawer listing three stops. Asked for directly: the card shows exactly what
+ * the drawer shows, so both now read this.
+ *
+ * Capped at four for the reason the drawer already capped it — a demo stop list stays
+ * readable — and the cap has to live here rather than at either call site, or the
+ * count and the list it describes could disagree again by one.
+ */
+const ROUTE_STOP_CAP = 4;
+
+const routeStopSites = (runsheetId) => {
+  const route = routeById(runsheetId);
+  const sites = route?.sites?.length ? route.sites : SITES;
+  return sites.slice(0, ROUTE_STOP_CAP);
+};
+
+/**
+ * `{ totalHits, totalFilters }` for a route — the two numbers the card's badge and
+ * its tooltip print.
+ *
+ * **Filters are summed from `filtersForSite`, not `filterCountFor`.** Those are two
+ * different figures: `filterCountFor` is the site's headline filter count (what a
+ * visit card and the visit drawer's own `Filter Count` field show), while
+ * `filtersForSite` is the itemised list the drawer prints under "Filters to
+ * Replace" — one line per size, each with its own quantity — and its quantities do
+ * not add up to `filterCountFor`. The tooltip is claiming "this is what this route
+ * has to replace", so it has to be the sum a planner would reach by opening every
+ * stop and adding the lines up.
+ */
+const routeStopTotals = (runsheetId) => {
+  const sites = routeStopSites(runsheetId);
+  return {
+    totalHits: sites.length,
+    totalFilters: sites.reduce(
+      (sum, site) =>
+        sum + filtersForSite(site).reduce((lines, filter) => lines + (filter?.quantity || 0), 0),
+      0,
+    ),
+  };
+};
+
 const buildVisitRow = ({ site, base, dayOffset, windowIndex, index, isVisited }) => {
   const win = VISIT_WINDOWS[windowIndex % VISIT_WINDOWS.length];
-  const hitId = 6000 + index;
+  /**
+   * **Derived from the site, and registered** — both so that expanding a stop shows
+   * *that stop's* filters.
+   *
+   * It was `6000 + index`, which is the stop's position in the route and nothing
+   * about the stop itself. Expanding a stop fetches `/shift/patrol/hit/:hitId`
+   * (`buildVisitDetail`), which could not resolve such an id — it is outside the
+   * `visitIdFor` space and was in no registry — so it fell back to
+   * `SITES[numeric % SITES.length]` and answered with an unrelated demo site's
+   * filters. The route's tooltip totals and the stop a planner opened were then
+   * describing different buildings.
+   *
+   * `9000000 +` keeps these clear of `visitIdFor`'s `500000 + siteId * 10000` space,
+   * which reaches ~1.9M for the highest site id, so the two id spaces cannot collide.
+   */
+  const hitId = 9000000 + site.id;
+  const startsAt = isoAt(base, dayOffset, win.startHour);
+  const endsAt = isoAt(base, dayOffset, win.endHour);
+
+  visitRegistry.set(String(hitId), {
+    site,
+    assigned: true,
+    status: isVisited ? 'completed' : 'notStarted',
+    startsAt,
+    endsAt,
+    windowLabel: win.label,
+  });
 
   return {
     hitId,
@@ -1391,14 +1472,18 @@ const buildVisitRow = ({ site, base, dayOffset, windowIndex, index, isVisited })
     name: site.name,
     address: SITE_ADDRESSES[site.id],
     order: index + 1,
-    startsAt: isoAt(base, dayOffset, win.startHour),
-    endsAt: isoAt(base, dayOffset, win.endHour),
-    windowStart: isoAt(base, dayOffset, win.startHour),
-    windowEnd: isoAt(base, dayOffset, win.endHour),
+    startsAt,
+    endsAt,
+    windowStart: startsAt,
+    windowEnd: endsAt,
     /* Duration follows the one service-time model, so the drawer's "Service Time"
        and the route's estimate for the same visit are the same number. It was a
        flat 45 minutes, which agreed with nothing. */
     filterCount: filterCountFor(site),
+    /* The itemised list, carried on the row as well as answered by the per-visit
+       fetch — it is what `routeStopTotals` sums for the route card's tooltip, so
+       the stop and the total are built from one array. */
+    filters: filtersForSite(site),
     duration: serviceMinutesForFilters(filterCountFor(site)),
     visitType: 'Filter replacement',
     isVisited,
@@ -1420,16 +1505,31 @@ export const buildRunsheetShiftDetail = (runsheetId, query = {}) => {
   // Prefer the row the grid actually rendered; fall back to a deterministic
   // pick for ids this session never generated (a deep link, say).
   const known = shiftRegistry.get(String(runsheetId));
-  const route = routeById(runsheetId);
+  /**
+   * **The id this arrives with is not always a route id.**
+   *
+   * Opened from the routes grid it is a *shift* id — one day's run, minted from
+   * `shiftSeq` — and `routeById` only resolves the `700 + index` route space. It
+   * answered `null` for every such id and the stop list quietly fell back to the three
+   * legacy demo sites, which is why a card badged `4` opened a drawer listing `3`.
+   *
+   * The registry maps a shift back to its site and `routeForSite` maps that to the
+   * route, which is exactly the resolution the card's own badge already used
+   * (`makeShift`). Both sides now name the same route, so the count and the list it
+   * describes cannot disagree.
+   */
+  const routeId =
+    routeById(runsheetId)?.id ?? (known?.site ? routeForSite(known.site).id : runsheetId);
+  const route = routeById(routeId);
   const site = known?.site || route?.sites?.[0] || siteForRunsheet(runsheetId);
   const officer =
     known?.officer ?? OFFICERS[Number(String(runsheetId).replace(/\D/g, '')) % OFFICERS.length];
 
-  /* The round's own sites when the id names a route, capped at four so the drawer
-     stays readable; the three demo sites otherwise. The first stop is already
-     served either way — that is what exercises the ordered list, the
+  /* `routeStopSites` — the same list the grid's route card counts, so the badge on
+     the card and the stops in this drawer cannot disagree. The first stop is already
+     served either way, which is what exercises the ordered list, the
      visited/unvisited split and the "N of M done" roll-up. */
-  const stopSites = (route?.sites?.length ? route.sites : SITES).slice(0, 4);
+  const stopSites = routeStopSites(routeId);
 
   const hits = stopSites.map((stopSite, index) =>
     buildVisitRow({
@@ -1542,7 +1642,7 @@ export const buildVisitDetail = (hitId, query = {}) => {
     siteName: site.name,
     name: site.name,
     companyName: companyNameForSite(site),
-    location: siteLocationFor(site),
+    filters: filtersForSite(site),
     address: SITE_ADDRESSES[site.id],
     startsAt: known?.startsAt || query.startsAt || isoAt(base, 0, 9),
     endsAt: known?.endsAt || query.endsAt || isoAt(base, 0, 11),

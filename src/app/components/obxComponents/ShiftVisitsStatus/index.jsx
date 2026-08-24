@@ -134,7 +134,6 @@ const ShiftVisitsStatus = ({
   status,
   totalTours,
   isVisit = false,
-  bordered = true,
 }) => {
   const classes = useStyles();
   const { t } = useTranslation();
@@ -156,14 +155,7 @@ const ShiftVisitsStatus = ({
   };
 
   return (
-    <Box
-      className={classes.shiftVisitStatus}
-      /* `sx` wins over the makeStyles class it's paired with — see the note on
-         `RouteLink`, which nests this card inside a card of its own and needs
-         this one stripped down to a plain content block instead of doubling up
-         the border and padding. */
-      sx={bordered ? undefined : { border: 'none', padding: 0, borderRadius: 0 }}
-    >
+    <Box className={classes.shiftVisitStatus}>
       {startsAt && endsAt && (
         <Typography variant="subtitle2" className={classes.shiftVisitStatusTitle}>
           <ClockIcon className={classes.assignDrawerCalendarBodyIcon} />
@@ -197,7 +189,6 @@ ShiftVisitsStatus.propTypes = {
   status: PropTypes.string,
   completedTours: PropTypes.number,
   totalTours: PropTypes.number,
-  bordered: PropTypes.bool,
   isVisit: PropTypes.bool,
 };
 

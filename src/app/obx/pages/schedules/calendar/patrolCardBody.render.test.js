@@ -115,69 +115,36 @@ describe('the patrol card body', () => {
   });
 
   describe('the visit count', () => {
-    /* The routes reading's card as it actually renders: no vehicle, and a count of
-       the visits this run is carrying. The title arrives already resolved, the way
-       `ScheduleCalendarGrid` builds it — the noun lives there and on the card face
-       nowhere. */
-    const withCount = (visitCount, extra = {}) =>
-      renderBody({
-        showVehicle: false,
-        visitCount,
-        visitCountTitle: `${visitCount} Visits on this Route on this day`,
-        ...extra,
+    /* **It is not drawn here any more.** The badge moved to the card's top-right
+       corner, which on this card is the time line's row — rendered by
+       `CalendarCardContent`, beside the missed-hits chip that shares that corner. This
+       body's job ends at the officer and the marks, so the assertion worth keeping is
+       that it draws no count on either shape. */
+    it('is not part of the card body on any shape', () => {
+      ['visit-count', 'visit-count-value', 'visit-count-icon'].forEach((cls) => {
+        expect(
+          renderBody({ showVehicle: false }).container.querySelectorAll(`.${cls}`),
+        ).toHaveLength(0);
+        expect(
+          renderBody({ showVehicle: true }).container.querySelectorAll(`.${cls}`),
+        ).toHaveLength(0);
       });
-
-    it('is a figure and a mark, and no word', () => {
-      const { container } = withCount(4);
-
-      const count = container.querySelector('.visit-count');
-      expect(count).not.toBeNull();
-      expect(count.querySelector('.visit-count-value')).toHaveTextContent('4');
-      /* The whole legibility of a bare numeral rests on these two: the hits mark the
-         Runsheets listing already uses for this fact, and a tooltip that says the
-         noun and the scope in the tenant's own words. */
-      expect(count.querySelector('.visit-count-icon svg')).not.toBeNull();
-      expect(count).toHaveAttribute('title', '4 Visits on this Route on this day');
-      // And nothing spelling the unit out on the card face itself.
-      expect(count).toHaveTextContent('4');
-      expect(count.textContent.trim()).toBe('4');
     });
 
-    it('takes the vehicle line back, and leaves the marks where they were', () => {
-      const { container, getAllByTestId } = withCount(4);
+    it('leaves the routes reading as one row of officer and marks', () => {
+      const { container, getAllByTestId } = renderBody({ showVehicle: false });
 
-      /* Three lines under the time again — officer, then count-and-marks — which is
-         the height the card was asked to get back. The officer is no longer sharing
-         a row with the marks, and the marks are in the same wrapper, in the same
-         second position, that the vehicle line gave them. */
+      /* One row under the time line, not two: the line this shape used to spend on
+         the count is exactly what moving the badge to the corner gave back. */
       const rows = container.querySelectorAll('.row.row-new');
       expect(rows).toHaveLength(1);
       expect(rows[0].children).toHaveLength(2);
-      expect(rows[0].children[0]).toHaveClass('visit-count');
+      expect(rows[0].children[0]).toHaveTextContent('Priya Raman');
       expect(rows[0].children[1].querySelectorAll('[data-testid="status-mark"]')).toHaveLength(1);
-      expect(rows[0]).not.toHaveTextContent('Priya Raman');
-
-      // The officer keeps a line of its own, ahead of that row, with nothing on it
-      // to yield width to.
-      const officer = container.querySelector('.group');
-      expect(officer).toHaveTextContent('Priya Raman');
-      expect(officer.querySelectorAll('.visit-count')).toHaveLength(0);
       expect(getAllByTestId('status-mark')).toHaveLength(1);
-      expect(container.querySelectorAll('.split-mark')).toHaveLength(1);
     });
 
-    it('says zero for a run with nothing on it, rather than going quiet', () => {
-      const { container } = withCount(0);
-
-      /* An empty run is a fact worth reading — and a card that could show a number
-         and shows nothing is indistinguishable from one whose data has not
-         arrived. `0` is only ever printed when the window really has a visit list;
-         see `buildRouteVisitCounts`, which answers `null` when it has none. */
-      expect(container.querySelector('.visit-count-value')).toHaveTextContent('0');
-      expect(container.querySelectorAll('.row.row-new')).toHaveLength(1);
-    });
-
-    it('holds its shape for a card with no officer, no marks and no visits', () => {
+    it('keeps the unassigned officer slot a full-width click target', () => {
       const bare = {
         shiftType: 'patrol',
         name: 'Day Time Patrols',
@@ -189,40 +156,15 @@ describe('the patrol card body', () => {
       };
       const { container } = renderBody({
         showVehicle: false,
-        visitCount: 0,
-        visitCountTitle: '0 Visits on this Route on this day',
         shift: bare,
         canAssignOfficer: true,
         officerClickProps: { onClick: () => {} },
         statusIcon: null,
       });
 
-      // Still the same two rows under the time line, still in the same order — the
-      // empty officer slot draws its own glyph rather than collapsing the line.
-      expect(container.querySelectorAll('.row.row-new')).toHaveLength(1);
-      expect(container.querySelector('.visit-count-value')).toHaveTextContent('0');
-
-      /* And the unassigned slot is still the full-width click target it was: the
-         trigger is the officer group, which on this shape is a direct child of the
-         card's own column — the same place the vehicle shape puts it — so nothing
-         shares its line. */
       const trigger = container.querySelector('.group.assign-trigger');
       expect(trigger).not.toBeNull();
       expect(trigger.querySelectorAll('.officer-empty')).toHaveLength(1);
-      // Not inside a shared row: it owns its line, so its width is the card's.
-      expect(trigger.closest('.row')).toBeNull();
-    });
-
-    it('draws nothing at all where there is no count to show', () => {
-      // Every surface other than the routes reading, and that reading too whenever
-      // the window has no visit list (a failed visits fetch) — which is also when the
-      // card keeps its compressed two-line shape.
-      const noCount = renderBody({ showVehicle: false }).container;
-      expect(noCount.querySelectorAll('.visit-count')).toHaveLength(0);
-      expect(noCount.querySelector('.row.row-new')).toHaveTextContent('Priya Raman');
-      expect(
-        renderBody({ showVehicle: true }).container.querySelectorAll('.visit-count'),
-      ).toHaveLength(0);
     });
   });
 
