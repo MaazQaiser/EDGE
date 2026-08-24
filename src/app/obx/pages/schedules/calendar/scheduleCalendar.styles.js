@@ -202,6 +202,11 @@ export const useStyles = makeStyles((theme) => ({
   },
 
   scheduleCalendarFull: {
+    /* The apply status pill is absolutely positioned against this. It was missing while the
+       apply overlay was an `inset: 0` cover, which means that overlay was resolving against
+       whatever positioned ancestor it found further up the tree rather than against the stage
+       its own comment named — a plausible part of why it covered more than intended. */
+    position: 'relative',
     display: 'flex',
     flexDirection: 'column',
     overflow: 'hidden',
@@ -543,6 +548,67 @@ export const useStyles = makeStyles((theme) => ({
      wrapper, which resets its padding, so it never applied and the tick had nothing
      to sit in. Both now hang off `[data-visit-card]`. */
   '@global': {
+    /**
+     * ── Applying: the visit cards become their own skeletons ─────────────────
+     *
+     * While `useApplyMotion` is in either beat, `[data-applying="true"]` is stamped on the
+     * apply stage and every real visit card in the grid turns into a shimmering block.
+     *
+     * **This replaced an overlay** (`ApplySkeleton`, which used to cover the stage with an
+     * invented grid of bars). Covering it hid the day columns, the company column and the row
+     * headings as well as the cards, so an apply looked like the whole scheduler reloading —
+     * and the planner lost the arrangement they had been reading. Skeletonising the cards
+     * *in place* keeps the grid's structure, its scroll position and its headings, and skeletons
+     * exactly the thing that is about to change. Nothing outside a card is touched, which is
+     * why the toolbar, the tabs and the left nav simply stay live.
+     *
+     * `[data-visit-card]` is the hook the selection rules below already rely on, and it exists
+     * because makeStyles names are hashed and a global rule cannot otherwise name a card.
+     *
+     * **`visibility`, not `display`, for the contents.** The card has to keep its measured
+     * size — that is the whole point of skeletonising in place — and `display: none` on the
+     * children would collapse it to nothing. `visibility: hidden` leaves the box exactly as
+     * wide and as tall as the visit it is standing in for.
+     *
+     * The border and accent are flattened too: the duty accent is a `::before` stripe and the
+     * status wash is a background, and a grey placeholder still wearing a red status edge
+     * reads as a card with an error rather than as one being loaded.
+     */
+    '[data-applying="true"] [data-visit-card]': {
+      position: 'relative',
+      overflow: 'hidden',
+      border: '1px solid transparent !important',
+      borderRadius: 6,
+      boxShadow: 'none !important',
+      background: `linear-gradient(
+        90deg,
+        ${theme.palette.surfaceGreySubtle} 0%,
+        ${theme.palette.borderSubtle1} 50%,
+        ${theme.palette.surfaceGreySubtle} 100%
+      ) !important`,
+      backgroundSize: '220% 100% !important',
+      animation: 'applyCardShimmer 1400ms ease-in-out infinite',
+      /* Not clickable while a write is in flight. The card is standing in for a visit whose
+         identity is about to be re-read, so opening its drawer would open a stale record. */
+      pointerEvents: 'none',
+      '& *': { visibility: 'hidden' },
+      /* The accent stripe and any selection marks the card draws itself. */
+      '&::before, &::after': { display: 'none !important' },
+    },
+    '@keyframes applyCardShimmer': {
+      from: { backgroundPosition: '120% 0' },
+      to: { backgroundPosition: '-120% 0' },
+    },
+    /* The shape without the sweep. `useApplyMotion` returns before either beat under reduced
+       motion so this should never be reached, but a grid of shimmering gradients is the exact
+       thing a reader who turned motion off asked not to see. */
+    '@media (prefers-reduced-motion: reduce)': {
+      '[data-applying="true"] [data-visit-card]': {
+        animation: 'none',
+        background: `${theme.palette.surfaceGreySubtle} !important`,
+      },
+    },
+
     '[data-selectable="true"][data-selecting="true"]': {
       cursor: 'pointer',
       '& [data-visit-card]': {

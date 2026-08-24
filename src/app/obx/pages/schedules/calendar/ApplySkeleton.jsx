@@ -7,100 +7,85 @@ import { useTranslation } from 'react-i18next';
 import { APPLY_PHASE } from './useApplyMotion';
 
 /**
- * The schedule, while it is being written to the system that owns it and read back.
+ * The status of an apply in flight — **a caption, and nothing else.**
  *
- * ## Why a skeleton rather than an animation of the change
+ * ## What this used to be, and why it changed
  *
- * See `useApplyMotion` for the full argument. Briefly: applying does not rearrange this
- * week locally, it sends routes to the scheduling system and re-reads them — so the honest
- * picture is the one every other loading surface in this product shows, and the previous
- * flight choreography was dramatising a local move that does not happen.
+ * It was an opaque overlay at `inset: 0` over the whole grid stage, drawing an invented
+ * skeleton of the week: a header row of bars, then eight rows from a hand-set `ROWS`
+ * pattern, shimmering diagonally. It argued — reasonably — that a skeleton is a *shape*
+ * rather than a preview, and that deriving the bars from the incoming routes would be a
+ * second rendering of an answer nothing had accepted yet.
  *
- * ## It covers the grid rather than replacing it
+ * The problem was not the invention, it was the **coverage**. Hiding the grid hid the day
+ * columns, the company column and every row heading along with the cards, so applying looked
+ * like the whole scheduler was being replaced. It also meant the planner lost their place:
+ * the thing they were looking at vanished and a different-shaped grey grid stood in for it.
  *
- * An overlay, absolutely positioned over the stage the grid already sits in. Two reasons.
- * The grid keeps its scroll position and its own state — swapping the tree out and back
- * would reset both, and the planner would return to the top of a list they had scrolled.
- * And the relocation happens underneath at the turn between the beats: it has to be able to
- * re-render without being seen, which needs it mounted and covered rather than unmounted.
+ * Removed on instruction. The skeleton now happens **on the real visit cards** — see the
+ * `[data-applying]` rules in `scheduleCalendar.styles.js`. The grid keeps its structure, its
+ * scroll position and its headings; only the cards go grey and shimmer, and the relocation
+ * still happens underneath at the turn between the beats, where it cannot be seen.
  *
- * ## The bars do not correspond to anything
+ * ## Why the caption survived the cut
  *
- * A skeleton is a *shape*, not a preview. These are a fixed, hand-set pattern — see
- * `ROWS` — chosen to look like a week of work rather than computed from the plan. Deriving
- * them from the incoming routes would be a second rendering of the answer, in grey, which
- * is both more code and a claim the skeleton has no business making: at the saving beat
- * nothing has been accepted yet.
+ * It is the one thing the cards cannot say. A grid of shimmering placeholders means *waiting*;
+ * it does not name what is being waited for, and "3 routes are being written to the
+ * scheduling system" is the sentence that makes a two-and-a-half second pause legible rather
+ * than suspicious. So it stays — as a pill, pinned low and centred over the stage, out of the
+ * grid's own header and inert to the pointer.
  *
- * They are deliberately *not* random either. A pattern reshuffling every render flickers,
- * and one reshuffling per mount makes two applies of the same plan look like two different
- * schedules.
+ * It is deliberately *not* pinned to the top: that is where the grid's own day headings are,
+ * and those are exactly what this change exists to keep visible.
  */
-
-/**
- * The pattern, as columns each row fills.
- *
- * Seven columns, the week. Uneven on purpose: a skeleton where every row is full reads as a
- * loading bar rather than as a schedule, and the real grid is mostly gaps. Weekends light
- * once across the whole set for the same reason.
- */
-const ROWS = [[0, 3, 5], [0, 5], [4, 6], [0, 2], [1, 4], [4], [3, 4, 6], [1, 6]];
-
-const DAYS = 7;
-
 const useStyles = makeStyles((theme) => ({
   /**
-   * Over the stage, not over the page.
+   * A pill over the stage, not a cover for it.
    *
-   * `inset: 0` against `[data-apply-stage]`, which is the box the grid is already inside —
-   * so the skeleton covers exactly the grid and leaves the page's own toolbar, tabs and
-   * footer alone. Those are chrome; they are not being reloaded and hiding them would say
-   * they were.
+   * `pointer-events: none` because it reports rather than blocks. Blocking is not this
+   * component's job any more either — `[data-applying]` disables the cards themselves, which
+   * is the honest scope: the toolbar and the tabs stay live, because nothing about them is
+   * being reloaded.
    */
   root: {
     position: 'absolute',
-    inset: 0,
-    zIndex: 5,
-    display: 'flex',
-    flexDirection: 'column',
-    /* Opaque. A translucent scrim would leave the old arrangement legible underneath, and
-       the old arrangement is about to stop being true. */
-    background: theme.palette.surfaceWhite,
-    /* Nothing behind it is clickable while a write is in flight. */
-    pointerEvents: 'all',
-    animation: '$fadeIn 160ms ease both',
-  },
-  '@keyframes fadeIn': {
-    from: { opacity: 0 },
-    to: { opacity: 1 },
-  },
-
-  /* ── The caption ──────────────────────────────────────────────────────────
-     A row rather than a centred dialog. This is a status, not a decision: it needs no
-     acknowledgement and offers no choice, and a modal card in the middle of the screen
-     would ask to be dismissed. It sits at the top, where the grid's own header is, so
-     the eye finds it without hunting. */
-  status: {
-    flex: '0 0 auto',
+    bottom: 24,
+    left: '50%',
+    transform: 'translateX(-50%)',
+    zIndex: 6,
     display: 'flex',
     alignItems: 'center',
     gap: 10,
-    padding: '14px 20px',
-    borderBottom: `1px solid ${theme.palette.borderSubtle1}`,
+    maxWidth: 'calc(100% - 48px)',
+    padding: '10px 16px',
+    borderRadius: 999,
+    background: theme.palette.surfaceWhite,
+    border: `1px solid ${theme.palette.borderSubtle1}`,
+    boxShadow: '0 6px 20px rgba(16, 24, 40, 0.12)',
+    pointerEvents: 'none',
+    animation: '$riseIn 200ms ease both',
   },
+  '@keyframes riseIn': {
+    from: { opacity: 0, transform: 'translateX(-50%) translateY(6px)' },
+    to: { opacity: 1, transform: 'translateX(-50%) translateY(0)' },
+  },
+
   statusText: {
     '&.MuiTypography-root': {
       ...theme.typography.subtitle2,
       color: theme.palette.textPrimary,
+      whiteSpace: 'nowrap',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
     },
   },
 
   /**
    * The spinner, as a ring rather than a shimmer.
    *
-   * The bars below already shimmer, and two different idling motions in one view read as
-   * two different things happening. A rotating arc is the house sign for *a request is in
-   * flight*, which is exactly and only what this beat is.
+   * The cards shimmer, and two different idling motions saying the same thing read as two
+   * things happening. A rotating arc is the house sign for *a request is in flight*, which is
+   * exactly and only what this beat is.
    */
   spinner: {
     width: 16,
@@ -115,77 +100,10 @@ const useStyles = makeStyles((theme) => ({
     to: { transform: 'rotate(360deg)' },
   },
 
-  /* ── The grid of bars ─────────────────────────────────────────────────── */
-  grid: {
-    flex: '1 1 auto',
-    minHeight: 0,
-    overflow: 'hidden',
-    padding: '0 20px 20px',
-  },
-  headRow: {
-    display: 'grid',
-    gridTemplateColumns: `160px repeat(${DAYS}, 1fr)`,
-    gap: 12,
-    padding: '14px 0',
-    borderBottom: `1px solid ${theme.palette.borderSubtle1}`,
-  },
-  row: {
-    display: 'grid',
-    gridTemplateColumns: `160px repeat(${DAYS}, 1fr)`,
-    gap: 12,
-    padding: '12px 0',
-    borderBottom: `1px solid ${theme.palette.borderSubtle1}`,
-  },
-
-  /**
-   * One bar.
-   *
-   * The shimmer is a gradient sweeping `background-position`, not an opacity pulse: a pulse
-   * makes the whole set breathe in unison, which reads as one object flashing rather than
-   * as many placeholders waiting. Each bar carries its own delay (set inline) so the sweep
-   * crosses the grid.
-   */
-  bar: {
-    height: 10,
-    borderRadius: 5,
-    background: `linear-gradient(
-      90deg,
-      ${theme.palette.surfaceGreySubtle} 0%,
-      ${theme.palette.borderSubtle1} 50%,
-      ${theme.palette.surfaceGreySubtle} 100%
-    )`,
-    backgroundSize: '220% 100%',
-    animation: '$shimmer 1400ms ease-in-out infinite',
-  },
-  /* A card-shaped block, for the cells that stand in for visits. */
-  card: {
-    height: 38,
-    borderRadius: 6,
-  },
-  headBar: {
-    height: 8,
-    width: '60%',
-  },
-  labelBar: {
-    height: 10,
-    width: '78%',
-    alignSelf: 'center',
-  },
-  '@keyframes shimmer': {
-    from: { backgroundPosition: '120% 0' },
-    to: { backgroundPosition: '-120% 0' },
-  },
-
-  /**
-   * Reduced motion: the shape without the sweep.
-   *
-   * `useApplyMotion` returns before either beat for these readers, so this overlay is never
-   * mounted for them at all. Kept as the belt to that braces — if a future change mounts it
-   * unconditionally, it should still not be a grid of forty animating gradients.
-   */
+  /* `useApplyMotion` returns before either beat under reduced motion, so this is never
+     mounted for those readers. Kept as the belt to that braces. */
   '@media (prefers-reduced-motion: reduce)': {
     root: { animation: 'none' },
-    bar: { animation: 'none', background: theme.palette.surfaceGreySubtle },
     spinner: { animation: 'none' },
   },
 }));
@@ -199,49 +117,10 @@ const ApplySkeleton = ({ phase, routeCount }) => {
 
   return (
     <Box className={classes.root} role="status" aria-live="polite">
-      <Box className={classes.status}>
-        <Box className={classes.spinner} aria-hidden="true" />
-        <Typography className={classes.statusText}>
-          {phase === APPLY_PHASE.SAVING ? tt('saving', { count: routeCount }) : tt('loading')}
-        </Typography>
-      </Box>
-
-      <Box className={classes.grid} aria-hidden="true">
-        <Box className={classes.headRow}>
-          <Box />
-          {Array.from({ length: DAYS }, (unused, day) => (
-            <Box
-              // eslint-disable-next-line react/no-array-index-key
-              key={day}
-              className={`${classes.bar} ${classes.headBar}`}
-              style={{ animationDelay: `${day * 60}ms` }}
-            />
-          ))}
-        </Box>
-
-        {ROWS.map((filled, row) => (
-          // eslint-disable-next-line react/no-array-index-key
-          <Box className={classes.row} key={row}>
-            <Box
-              className={`${classes.bar} ${classes.labelBar}`}
-              style={{ animationDelay: `${row * 70}ms` }}
-            />
-            {Array.from({ length: DAYS }, (unused, day) => (
-              // eslint-disable-next-line react/no-array-index-key
-              <Box key={day}>
-                {filled.includes(day) ? (
-                  <Box
-                    className={`${classes.bar} ${classes.card}`}
-                    /* Delayed by column *and* row, so the sweep travels diagonally across
-                       the week rather than lighting each row as a unit. */
-                    style={{ animationDelay: `${day * 60 + row * 70}ms` }}
-                  />
-                ) : null}
-              </Box>
-            ))}
-          </Box>
-        ))}
-      </Box>
+      <Box className={classes.spinner} aria-hidden="true" />
+      <Typography className={classes.statusText}>
+        {phase === APPLY_PHASE.SAVING ? tt('saving', { count: routeCount }) : tt('loading')}
+      </Typography>
     </Box>
   );
 };

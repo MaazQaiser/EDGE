@@ -2920,7 +2920,15 @@ const ScheduleCalendar = (props) => {
        * skeleton covers exactly the grid and leaves the toolbar and footer alone. Those
        * are chrome, they are not being reloaded, and hiding them would say they were.
        */}
-      <Box data-apply-stage="true" className={classes.scheduleCalendarFull}>
+      <Box
+        data-apply-stage="true"
+        /* The hook the card-skeleton rules hang off — see `[data-applying]` in
+           `scheduleCalendar.styles.js`. Stamped here rather than on the grid because the
+           stage is also what positions the status pill, and one attribute driving both keeps
+           them from ever disagreeing about whether an apply is running. */
+        data-applying={applyMotion.isRunning ? 'true' : undefined}
+        className={classes.scheduleCalendarFull}
+      >
         <ApplySkeleton phase={applyMotion.phase} routeCount={applyMotion.routeCount} />
         <ScheduleErrorBoundary
           resetKey={`${activeTab}|${visitGrouping}|${queryParams.selectedView?.type}|${queryParams.selectedView?.windowStart}`}
