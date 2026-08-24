@@ -50,6 +50,19 @@ const MINS_PER_MILE = 2.2;
 
 export const travelMins = (a, b) => Math.round(Math.hypot(a.x - b.x, a.y - b.y) * MINS_PER_MILE);
 
+/**
+ * Straight-line miles between two points on the fixture's grid.
+ *
+ * The same measurement `travelMins` is built from, before it is converted — so a leg's
+ * miles and its minutes can never disagree about how far apart two sites are. **Not
+ * rounded here**: the row that prints it decides how much precision to claim, and rounding
+ * twice is how a route's legs stop summing to its own total.
+ *
+ * Notional miles on a flat grid, and every surface that quotes one says so (Q25). Nothing
+ * here is a road network.
+ */
+export const travelMiles = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+
 /** `YYYY-MM-DD` sorts lexically, so the window test needs no date library. */
 const withinWindow = (date, visit) => date >= visit.needByFrom && date <= visit.needByTo;
 
@@ -60,12 +73,41 @@ const withinWindow = (date, visit) => date >= visit.needByFrom && date <= visit.
  * the day must be worked (H3), its single zone must be the site's (H4), and the date
  * must fall inside the need-by window (H7). Capacity is *not* consulted — see the
  * header; a legal day stays legal however full it is.
+ *
+ * **A `custom` day skips the zone test and keeps the window one**, matching `priceMove`
+ * exactly — see its own note for why a hand-made route is allowed any zone but no
+ * relaxation of a customer's need-by window. The two had to agree: this function is what
+ * decides whether a **pin** sticks (below), so a day `priceMove` accepted a drop onto but
+ * this rejected would take the visit and then silently hand it back to the engine on the
+ * next render. That was a real bug, and it looked like the drop landing on the wrong day.
+ *
+ * This is *not* the list the engine assigns from — see `autoDaysFor`.
  */
 export const legalDaysFor = (visit, site, days) =>
   days
-    .filter((d) => d.worked && d.zoneId && d.zoneId === site.zoneId && withinWindow(d.date, visit))
+    .filter(
+      (d) =>
+        d.worked &&
+        withinWindow(d.date, visit) &&
+        (d.custom ? true : Boolean(d.zoneId) && d.zoneId === site.zoneId),
+    )
     .map((d) => d.date)
     .sort();
+
+/**
+ * The days the **engine** may choose from — every legal day that is not a manual route.
+ *
+ * A route a planner created by hand exists to be filled by hand: it is an empty page they
+ * drag work onto, and an optimizer that helpfully pre-loaded it would take that away the
+ * moment it appeared. So the split is: `legalDaysFor` answers *may this visit be here*
+ * (drops, pins, the tray's own legal-day counts) and this answers *may the engine put it
+ * here on its own*. `addRoute` gives a custom route no zone at all, which means this
+ * filter is belt to that braces rather than the only thing standing between the two.
+ */
+const autoDaysFor = (legalDays, days) => {
+  const custom = new Set(days.filter((d) => d.custom).map((d) => d.date));
+  return legalDays.filter((date) => !custom.has(date));
+};
 
 /**
  * Why this visit has nowhere to go — the distinction the tray's copy is built on.
@@ -129,8 +171,13 @@ const assign = (candidates, days) => {
       a.visit.id.localeCompare(b.visit.id),
   );
 
-  order.forEach(({ visit, legalDays }) => {
-    const best = [...legalDays].sort(
+  order.forEach(({ visit, autoDays }) => {
+    /* Pin-only: every legal day this visit has is a manual route, which the engine does
+       not place onto (see `autoDaysFor`). `planRange`'s pin pass is what gives it a day;
+       leaving it out of `placements` here is what lets that pass be the only author. */
+    if (!autoDays.length) return;
+
+    const best = [...autoDays].sort(
       (x, y) =>
         slackCost(x, visit) - slackCost(y, visit) ||
         loadMins[x] - loadMins[y] ||
@@ -229,6 +276,9 @@ const withElapsed = (orderedStops) => {
 
   const stops = orderedStops.map((stop, index) => {
     const travelFromPrev = travelMins(prev, stop.site);
+    /* Carried on the stop beside its minutes because the row prints one or the other and
+       both come from the same measurement — see `travelMiles`. */
+    const milesFromPrev = travelMiles(prev, stop.site);
     const arriveMins = cursor + travelFromPrev;
     const onSiteMins = onSiteMinsFor(stop.visit.filterCount);
     const departMins = arriveMins + onSiteMins;
@@ -236,12 +286,77 @@ const withElapsed = (orderedStops) => {
     cursor = departMins;
     prev = stop.site;
 
-    return { ...stop, index: index + 1, travelFromPrev, arriveMins, onSiteMins, departMins };
+    return {
+      ...stop,
+      index: index + 1,
+      travelFromPrev,
+      milesFromPrev,
+      arriveMins,
+      onSiteMins,
+      departMins,
+    };
   });
 
   const returnMins = travelMins(prev, BASE);
   return { stops, returnMins, durationMins: cursor + returnMins };
 };
+
+/**
+ * One worked day plus the visits assigned to it, as a finished runsheet.
+ *
+ * Extracted from `planRange` because **three callers now build a day**: the plan itself,
+ * `priceMove` quoting what a move would cost, and `overspill.js` re-solving a day after
+ * lifting a stop off it. Each of the three has to produce a day the other two would
+ * recognise — same sequence, same elapsed chain, same overrun arithmetic — and three
+ * copies of that is three places for `travelMins` to stop summing to `durationMins`.
+ *
+ * Sequencing lives here rather than in the caller, which is what makes it safe to hand
+ * this a *set* of visits and get back a day: removing a stop changes the tour, so a caller
+ * that dropped a visit and kept the old order would report a duration the route does not
+ * have.
+ */
+export const buildRunsheet = (day, dayVisits) => {
+  const { stops, returnMins, durationMins } = withElapsed(sequence(dayVisits));
+  const travelTotal = stops.reduce((sum, s) => sum + s.travelFromPrev, 0) + returnMins;
+
+  return {
+    date: day.date,
+    zoneId: day.zoneId,
+    shiftMins: day.shiftMins,
+    stops,
+    returnMins,
+    durationMins,
+    travelMins: travelTotal,
+    onSiteMins: durationMins - travelTotal,
+    filterCount: stops.reduce((sum, s) => sum + s.visit.filterCount, 0),
+    overrunMins: Math.max(0, durationMins - day.shiftMins),
+  };
+};
+
+/**
+ * The run's figures, from its days and what they hold.
+ *
+ * Exported for the same reason `buildRunsheet` is: `overspill.js` moves stops out of days
+ * and has to restate every one of these, and a second copy of the arithmetic is how a
+ * headline ends up disagreeing with the cards under it.
+ *
+ * **§14.4 — the headline is hours, not visits.** "13 of 15 placed" treats an 8-filter data
+ * centre and a 1-filter library as the same event, when the cost model says one is 170
+ * minutes and the other 30. Both numbers are computed; the flow leads with
+ * `placedMins / availableMins` and keeps the count as the secondary figure, which is the
+ * cheap fix §14.4 asks for and also makes the under-filled day (E4) legible in the same
+ * unit as everything else.
+ */
+export const totalsFor = ({ runsheets, days, unplaced, visitCount }) => ({
+  placedMins: runsheets.reduce((sum, r) => sum + r.durationMins, 0),
+  availableMins: days.reduce((sum, d) => sum + (d.worked ? d.shiftMins : 0), 0),
+  unplacedMins: unplaced.reduce((sum, u) => sum + onSiteMinsFor(u.visit.filterCount), 0),
+  placedCount: runsheets.reduce((sum, r) => sum + r.stops.length, 0),
+  visitCount,
+  travelMins: runsheets.reduce((sum, r) => sum + r.travelMins, 0),
+  overrunDays: runsheets.filter((r) => r.overrunMins > 0).length,
+  spareMins: runsheets.reduce((sum, r) => sum + Math.max(0, r.shiftMins - r.durationMins), 0),
+});
 
 /**
  * Plan the range.
@@ -271,11 +386,28 @@ export const planRange = ({ days, visits, setAside = [], pinned = {} }) => {
     }
 
     const legalDays = site ? legalDaysFor(visit, site, days) : [];
-    if (!legalDays.length) {
-      unplaced.push({ visit, site, reason: rejectionFor(visit, site, days), legalDays: [] });
+    const autoDays = autoDaysFor(legalDays, days);
+    const pin = pinned[visit.id];
+
+    /**
+     * **Placeable means: the engine can place it, or a pin already has.**
+     *
+     * `autoDays.length` alone was the test, and it is wrong once manual routes exist. A
+     * West visit whose only legal day is a hand-made route has no auto day — so it would
+     * have been reported unplaced while *also* being pinned to that route, and the pin pass
+     * below would then place it. Reported missing and drawn on a runsheet at the same time.
+     *
+     * Checking the pin here is what keeps the two lists disjoint: pinned onto a legal day
+     * makes it a candidate, and everything else with nowhere to go is genuinely unplaced.
+     */
+    if (!autoDays.length && !(pin && legalDays.includes(pin))) {
+      /* `legalDays` rather than `[]`: a visit the engine cannot place but a *planner* could
+         — its only legal day being a manual route — is exactly the row the tray should be
+         able to say "there is somewhere for this" about. */
+      unplaced.push({ visit, site, reason: rejectionFor(visit, site, days), legalDays });
       return;
     }
-    candidates.push({ visit, site, legalDays });
+    candidates.push({ visit, site, legalDays, autoDays });
   });
 
   /**
@@ -297,54 +429,25 @@ export const planRange = ({ days, visits, setAside = [], pinned = {} }) => {
 
   const runsheets = days
     .filter((d) => d.worked)
-    .map((day) => {
-      const dayVisits = candidates
-        .filter((c) => placements[c.visit.id] === day.date)
-        .map((c) => c.visit);
-
-      const { stops, returnMins, durationMins } = withElapsed(sequence(dayVisits));
-      const travelTotal = stops.reduce((sum, s) => sum + s.travelFromPrev, 0) + returnMins;
-
-      return {
-        date: day.date,
-        zoneId: day.zoneId,
-        shiftMins: day.shiftMins,
-        stops,
-        returnMins,
-        durationMins,
-        travelMins: travelTotal,
-        onSiteMins: durationMins - travelTotal,
-        filterCount: stops.reduce((sum, s) => sum + s.visit.filterCount, 0),
-        overrunMins: Math.max(0, durationMins - day.shiftMins),
-      };
-    });
-
-  /**
-   * §14.4 — the headline is **hours**, not visits.
-   *
-   * "13 of 15 placed" treats an 8-filter data centre and a 1-filter library as the
-   * same event, when the cost model says one is 170 minutes and the other 30. Both
-   * numbers are computed; the flow leads with `placedMins / availableMins` and keeps
-   * the count as the secondary figure, which is the cheap fix §14.4 asks for and also
-   * makes the under-filled day (E4) legible in the same unit as everything else.
-   */
-  const placedMins = runsheets.reduce((sum, r) => sum + r.durationMins, 0);
-  const availableMins = days.reduce((sum, d) => sum + (d.worked ? d.shiftMins : 0), 0);
-  const unplacedMins = unplaced.reduce((sum, u) => sum + onSiteMinsFor(u.visit.filterCount), 0);
+    .map((day) =>
+      buildRunsheet(
+        day,
+        candidates.filter((c) => placements[c.visit.id] === day.date).map((c) => c.visit),
+      ),
+    );
 
   return {
     runsheets,
+    /**
+     * **Empty here, always.** The engine's job ends at "everything legal is placed", and
+     * `overspill.js` is what decides which of those placements the day actually has hours
+     * for. Declared rather than omitted so a consumer reading `plan.spilled` off a raw
+     * `planRange` result gets a list to iterate rather than `undefined` — the two plans
+     * are the same shape, and only one of them has done the fitting.
+     */
+    spilled: [],
     unplaced,
-    totals: {
-      placedMins,
-      availableMins,
-      unplacedMins,
-      placedCount: runsheets.reduce((sum, r) => sum + r.stops.length, 0),
-      visitCount: visits.length,
-      travelMins: runsheets.reduce((sum, r) => sum + r.travelMins, 0),
-      overrunDays: runsheets.filter((r) => r.overrunMins > 0).length,
-      spareMins: runsheets.reduce((sum, r) => sum + Math.max(0, r.shiftMins - r.durationMins), 0),
-    },
+    totals: totalsFor({ runsheets, days, unplaced, visitCount: visits.length }),
   };
 };
 
@@ -365,34 +468,61 @@ export const planRange = ({ days, visits, setAside = [], pinned = {} }) => {
 export const priceMove = ({ plan, days, visitId, targetDate }) => {
   const day = days.find((d) => d.date === targetDate);
   const stop = plan.runsheets.flatMap((r) => r.stops).find((s) => s.visit.id === visitId);
+  /**
+   * **Three places a visit can be, and a move starts from any of them.**
+   *
+   * A stop on a day, a card in the overspill tray, or a card in the not-placed tray. The
+   * spill list is the one added last and it is the one the drawer's commonest drag comes
+   * from: work the day had no hours for, being put back by hand.
+   */
+  const spilled = (plan.spilled || []).find((u) => u.visit.id === visitId);
   const parked = plan.unplaced.find((u) => u.visit.id === visitId);
-  const visit = stop?.visit || parked?.visit;
-  const site = stop?.site || parked?.site;
+  const visit = stop?.visit || spilled?.visit || parked?.visit;
+  const site = stop?.site || spilled?.site || parked?.site;
 
   if (!visit || !site || !day?.worked) return { legal: false, reason: 'notWorked' };
 
   const windowAllows = withinWindow(targetDate, visit);
-  const zoneAllows = day.zoneId === site.zoneId;
+  /**
+   * **A hand-made route takes any zone; every other day takes one (D15).**
+   *
+   * `day.custom` is set only by `addRoute`, for a route a planner created inside this run
+   * — and such a route carries no zone at all (`zoneId: null`), which is what keeps the
+   * *engine* from ever placing work on it: `legalDaysFor` needs a zone match, so `assign`
+   * cannot reach it and the route arrives empty by construction.
+   *
+   * That leaves the drop path, here, as the one way work gets onto it — and a manual route
+   * that refused every drag for "wrong zone" would be the "control that is rendered and
+   * then refuses" this feature's own stop list argues against. So the zone check is
+   * skipped for it and **the window check below is not**: one-zone-per-day is Config A's
+   * discipline for automatic planning and a planner may overrule it, but a need-by window
+   * is a promise to a customer (H7) and nothing in this drawer gets to break it.
+   */
+  const zoneAllows = Boolean(day.custom) || day.zoneId === site.zoneId;
 
   if (!zoneAllows) return { legal: false, reason: 'wrongZone', windowAllows, zoneAllows };
   if (!windowAllows) return { legal: false, reason: 'outsideWindow', windowAllows, zoneAllows };
 
+  /**
+   * The day this visit is being taken *off*, if it is on one.
+   *
+   * **A spilled visit has no source**, and that is what makes its commonest drop legal:
+   * it came off this very day for want of hours, so dropping it back on the same date is
+   * the whole gesture rather than a no-op. Only a visit that is currently a placed stop
+   * can be `alreadyHere`.
+   */
   const source = plan.runsheets.find((r) => r.stops.some((s) => s.visit.id === visitId));
   if (source?.date === targetDate) return { legal: false, reason: 'alreadyHere' };
 
-  /* Replan both days with the visit moved. Cheaper than it looks — `sequence` is
-     2-opt over at most a handful of stops — and it is the only way the quoted figure
-     and the figure after the drop are guaranteed to be the same number. */
-  const rebuild = (date, visits) => {
-    const d = days.find((x) => x.date === date);
-    const { stops, returnMins, durationMins } = withElapsed(sequence(visits));
-    const travel = stops.reduce((sum, s) => sum + s.travelFromPrev, 0) + returnMins;
-    return {
-      durationMins,
-      travelMins: travel,
-      overrunMins: Math.max(0, durationMins - d.shiftMins),
-    };
-  };
+  /* Replan both days with the visit moved, through the same builder the plan itself uses.
+     Cheaper than it looks — `sequence` is 2-opt over at most a handful of stops — and it
+     is the only way the quoted figure and the figure after the drop are guaranteed to be
+     the same number. */
+  const rebuild = (date, visits) =>
+    buildRunsheet(
+      days.find((x) => x.date === date),
+      visits,
+    );
 
   const targetSheet = plan.runsheets.find((r) => r.date === targetDate);
   const targetAfter = rebuild(targetDate, [...targetSheet.stops.map((s) => s.visit), visit]);

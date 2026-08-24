@@ -8,13 +8,17 @@ import { COMPANIES_VIEW } from './companiesViewRange';
 import SchedulesCompanies from './index';
 
 /**
- * The year matrix — **one reading now**, the packed one.
+ * The year matrix — **two readings, opening on the packed one.**
  *
- * It used to be drawn both ways and this file drove the pair with the toolbar's
- * density button. That button is gone and the density is pinned to collapsed (see
- * `collapsed` in `./index`), so the tests that clicked it have gone with it and
- * `offers no way to expand the axis` stands in their place: the removal is the thing
- * that can regress now, and it regresses by a control reappearing.
+ * The density button was retired for a stretch and this file pinned the removal;
+ * it is back, so the pair is driven from here again. What the tests hold now is the
+ * asymmetry: collapsed is where the pane *opens* (`DEFAULT_MATRIX_DENSITY`) and
+ * expanded is a press away, which is the arrangement that keeps the button from
+ * reading as an undo of the packed default.
+ *
+ * Storage is cleared between cases. `readMatrixDensity` runs at mount and the click
+ * below persists, so without it the expand test would decide what the two after it
+ * open on — through jsdom's `localStorage`, which survives an unmount.
  *
  * The invariant still worth a test is the **cell count**: the `colgroup` commits to
  * two frozen columns plus one strip, and a body row that disagrees does not throw —
@@ -22,11 +26,11 @@ import SchedulesCompanies from './index';
  * is a failure that only shows up to a human looking at the right part of a wide
  * table. Counting `<td>`s costs nothing.
  *
- * The toolbar is stubbed to its `viewSwitch` slot. It is the one thing in this view
- * that reaches for the dropdown, date-picker and search components, none of which
- * this test is about. The `filterAction` slot is still rendered by the stub even
- * though this view no longer fills it — that is what lets the density assertion
- * below mean something rather than passing because the slot is not drawn at all.
+ * The toolbar is stubbed to its `viewSwitch` and `filterAction` slots. It is the one
+ * thing in this view that reaches for the dropdown, date-picker and search
+ * components, none of which this test is about — but the density button arrives
+ * through `filterAction`, so the stub has to draw that slot for the assertions below
+ * to be about the button rather than about the stub.
  *
  * Structure, not copy: `i18next` is uninitialised in tests, so `useTranslation`
  * returns the key. The card's own text is asserted literally, because the format is
@@ -139,6 +143,8 @@ const draw = (props = {}) =>
 const rowFor = (site) => screen.getByText(site.name).closest('tr');
 
 describe('the year matrix', () => {
+  beforeEach(() => window.localStorage.clear());
+
   it('opens packed: no month headings, and the strip named instead', () => {
     draw();
 
@@ -148,18 +154,31 @@ describe('the year matrix', () => {
   });
 
   /**
-   * The removal, pinned.
-   *
-   * Neither label, in either direction — the button was labelled with the *action*,
-   * so "Expand" is what a collapsed-by-default view would have shown and "Collapse"
-   * is what the expanded one did. Asserting both is what makes this fail if the
-   * control comes back in either state.
+   * The button is labelled with the **action**, not the state, so its label is also
+   * the assertion that the view is in the other one: "Expand" showing means the axis
+   * is folded. Both labels are checked in both cases for that reason — a control
+   * stuck on one word passes a one-sided test.
    */
-  it('offers no way to expand the axis', () => {
+  it('offers the axis back, labelled with what the press does', () => {
     draw();
 
-    expect(screen.queryByText(`${KEY}.density.expand`)).not.toBeInTheDocument();
+    expect(screen.getByText(`${KEY}.density.expand`)).toBeInTheDocument();
     expect(screen.queryByText(`${KEY}.density.collapse`)).not.toBeInTheDocument();
+  });
+
+  it('draws the month headings once expanded, and offers the fold back', () => {
+    draw();
+
+    fireEvent.click(screen.getByText(`${KEY}.density.expand`));
+
+    expect(screen.getByText('Aug 2026')).toBeInTheDocument();
+    expect(screen.getByText('Oct 2026')).toBeInTheDocument();
+    expect(screen.getByText(`${KEY}.density.collapse`)).toBeInTheDocument();
+
+    /* The `colgroup` commits to two frozen columns plus one per month, and a body row
+       that disagrees slides every border out of line rather than throwing. Cold Store
+       Annex carries the spanned company cell; the serviced row does not. */
+    expect(rowFor(SERVICED).querySelectorAll('td')).toHaveLength(1 + MONTHS.length);
   });
 
   it('gives every row the two frozen columns and one strip', () => {

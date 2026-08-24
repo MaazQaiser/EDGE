@@ -66,17 +66,25 @@ module.exports = {
   overrides: [
     {
       /**
-       * The harmonize workspace, with `no-undef` on.
+       * The harmonize surfaces, with `no-undef` on.
        *
        * This is the most-edited region of the app and the one whose components are large enough
        * that a deleted helper can leave a live call site behind — which is exactly what
        * happened, and what `no-undef` catches for free now that `env` is declared. Clean at the
        * time of writing, so it is a ratchet rather than a backlog.
        *
+       * **All three shells, not just the workspace.** The glob was
+       * `components/harmonize/**` alone, which is one of three sibling directories, and the
+       * gap cost a blank screen: `harmonizeSplit/index.jsx` grew a reference to a bare
+       * `range` that the component never destructured off its hook. `vite build` passed it
+       * (an undeclared identifier is legal JavaScript until it runs) and so did eslint, and
+       * it threw `ReferenceError: range is not defined` on first render — the precise failure
+       * mode this override exists for, in the directory next door to the one it covered.
+       *
        * Scoped rather than global for the reason given at the top of this file: repo-wide it
        * finds ~20 references in eight files that want looking at individually.
        */
-      files: ['src/app/obx/pages/schedules/components/harmonize/**/*.{js,jsx}'],
+      files: ['src/app/obx/pages/schedules/components/harmonize*/**/*.{js,jsx}'],
       rules: { 'no-undef': 'error' },
     },
   ],

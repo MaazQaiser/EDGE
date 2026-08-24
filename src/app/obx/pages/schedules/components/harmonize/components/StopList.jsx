@@ -107,8 +107,12 @@ const AnchorRow = ({ classes, name, meta = [], duration, lineColor, maskId, flus
          of mark rather than a different-coloured one — and the map beside this list has
          always drawn its origin as a pin. Unnumbered because a digit here is a claim about
          sequence: the numbers in this list are what a planner cross-references against the
-         map's own pins, and the map numbers stops, starting at 1. */
-      <StopPinIcon tone={STOP_TONES.idle} className={classes.stopMarker} maskId={maskId} />
+         map's own pins, and the map numbers stops, starting at 1.
+
+         `blank`: this is base, not a stop with no ordinal — the circle a numberless *stop*
+         pin now falls back to elsewhere is a fact about a visit with nothing assigned to it,
+         and an anchor was never asking that question. */
+      <StopPinIcon blank tone={STOP_TONES.idle} className={classes.stopMarker} maskId={maskId} />
     }
     title={
       <Box className={classNames(classes.stopTitleRow, classes.stopAnchorTitle)}>

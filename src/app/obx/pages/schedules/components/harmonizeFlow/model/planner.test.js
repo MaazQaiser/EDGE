@@ -252,3 +252,82 @@ describe('determinism — a proposal nobody can review twice is not a proposal',
     expect(JSON.stringify(plan())).toBe(JSON.stringify(plan()));
   });
 });
+
+/**
+ * A route the planner added by hand (`useHarmonizeFlow`'s `addRoute`): a worked day with
+ * **no zone** and `custom: true`, standing in for a date Config A does not work.
+ *
+ * The whole contract is a split — the engine must never place onto it, and a planner must
+ * be able to put anything on it whose window reaches the date. Both halves are load-bearing
+ * and each one has been broken once: filling it automatically defeats the feature, and
+ * refusing pins onto it made a drop land silently on the engine's day instead.
+ */
+describe('a manual route', () => {
+  const CUSTOM_DATE = '2026-08-15';
+  const withCustom = DEFAULT_RUN_DAYS.map((d) =>
+    d.date === CUSTOM_DATE ? { ...d, worked: true, shiftMins: 480, zoneId: null, custom: true } : d,
+  );
+
+  it('arrives empty — the engine places nothing on it', () => {
+    const p = planRange({ days: withCustom, visits: VISITS });
+    expect(sheet(p, CUSTOM_DATE).stops).toHaveLength(0);
+  });
+
+  it('leaves every other day exactly as it was', () => {
+    const before = plan();
+    const after = planRange({ days: withCustom, visits: VISITS });
+    ['2026-08-17', '2026-08-18', '2026-08-19'].forEach((date) => {
+      expect(sheet(after, date).stops.map((s) => s.visit.id)).toEqual(
+        sheet(before, date).stops.map((s) => s.visit.id),
+      );
+    });
+  });
+
+  it('accepts a drop from any zone, so long as the window reaches it', () => {
+    const p = planRange({ days: withCustom, visits: VISITS });
+    /* v4 (Kelvin Court, North) — its window is 14–20 Aug, so Sat 15 is inside it. */
+    expect(
+      priceMove({ plan: p, days: withCustom, visitId: 'v4', targetDate: CUSTOM_DATE }),
+    ).toMatchObject({ legal: true });
+  });
+
+  it('still refuses a visit whose need-by window does not reach it (H7)', () => {
+    const p = planRange({ days: withCustom, visits: VISITS });
+    /* v15 (Sable Ridge) cannot be needed before 16 Aug, whatever zone the route takes. */
+    expect(
+      priceMove({ plan: p, days: withCustom, visitId: 'v15', targetDate: CUSTOM_DATE }),
+    ).toMatchObject({ legal: false, reason: 'outsideWindow' });
+  });
+
+  it('honours a pin onto it — the bug that made a drop land on the wrong day', () => {
+    const p = planRange({ days: withCustom, visits: VISITS, pinned: { v4: CUSTOM_DATE } });
+    expect(sheet(p, CUSTOM_DATE).stops.map((s) => s.visit.id)).toEqual(['v4']);
+    expect(sheet(p, '2026-08-17').stops.some((s) => s.visit.id === 'v4')).toBe(false);
+  });
+
+  it('never reports a pinned visit as unplaced as well as placed', () => {
+    /* v14 is Zone West — unworked, so a manual route is its only legal day anywhere. */
+    const p = planRange({ days: withCustom, visits: VISITS, pinned: { v14: CUSTOM_DATE } });
+    expect(sheet(p, CUSTOM_DATE).stops.map((s) => s.visit.id)).toEqual(['v14']);
+    expect(p.unplaced.some((u) => u.visit.id === 'v14')).toBe(false);
+  });
+
+  it('keeps an unpinned West visit unplaced, but records the route as a legal day for it', () => {
+    const p = planRange({ days: withCustom, visits: VISITS });
+    const stranded = p.unplaced.find((u) => u.visit.id === 'v14');
+    expect(stranded).toBeDefined();
+    expect(stranded.legalDays).toContain(CUSTOM_DATE);
+  });
+
+  it('is not a legal day for the engine, even via legalDaysFor', () => {
+    const site = SITES.find((s) => s.id === 'kelvin');
+    const visit = VISITS.find((v) => v.id === 'v4');
+    /* Legal for a drop/pin... */
+    expect(legalDaysFor(visit, site, withCustom)).toContain(CUSTOM_DATE);
+    /* ...but the plan above proves the engine still did not use it. */
+    expect(
+      planRange({ days: withCustom, visits: VISITS }).runsheets.find((r) => r.date === CUSTOM_DATE)
+        .stops,
+    ).toHaveLength(0);
+  });
+});

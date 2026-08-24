@@ -70,6 +70,21 @@ const filtersBySite = VISITS.reduce((total, visit) => {
 }, {});
 
 /**
+ * Visits per site, counted rather than assumed to be one.
+ *
+ * It happens to be exactly one for all fifteen in today's book, which is precisely why it
+ * is counted: hard-coding `1` would read correct until the first site with a monthly *and*
+ * a quarterly contract turned up, and then every total on the panel would be wrong by a
+ * number nobody could see.
+ */
+const visitsBySite = VISITS.reduce((total, visit) => {
+  const id = visit.siteId;
+  if (!id) return total;
+  total[id] = (total[id] || 0) + 1;
+  return total;
+}, {});
+
+/**
  * The site book: the fixture's own records, plus coordinates and a filter total.
  *
  * `zoneId` is carried through as the fixture's *default* assignment. It is not the
@@ -83,6 +98,7 @@ export const ZONE_SITES = SITES.map((site) => ({
   company: site.company,
   defaultZoneId: site.zoneId || null,
   filters: filtersBySite[site.id] || 0,
+  visits: visitsBySite[site.id] || 0,
   ...gridToLatLng(site),
 }));
 

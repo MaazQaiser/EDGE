@@ -474,6 +474,23 @@ export const mapFooterStatsToScheduleStatsFooter = (
     };
   }
 
+  /* The same duty ids the overview branch below reads, without its `coverage` and
+     `metrics`. Split out rather than sharing that branch, because what makes this
+     variant short is precisely that it returns no `metrics` — the footer decides its
+     own height from the payload (`hasKpiMetrics`), so handing it an array of empty
+     metric pairs would light the tall layout over a response that has no KPI block. */
+  if (variant === SCHEDULE_STATS_FOOTER_VARIANTS.OFFICER) {
+    return {
+      dutyStats: [
+        { id: 'dedicated', value: value(legend.dedicated) },
+        { id: 'patrol', value: value(legend.patrol) },
+        { id: 'extra', value: value(legend.extraJob ?? legend.extra) },
+        { id: 'dispatch', value: value(legend.dispatch) },
+      ],
+      statusStats,
+    };
+  }
+
   if (variant === SCHEDULE_STATS_FOOTER_VARIANTS.DEDICATED) {
     return {
       dutyStats: [

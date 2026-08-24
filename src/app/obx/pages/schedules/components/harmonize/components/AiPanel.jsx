@@ -113,8 +113,13 @@ const ExcludedRow = ({ visit, classes, tt, open, onToggle, showTrack }) => {
              visits are in no sequence — a numeral here would invite the planner to look for
              stop 1 on the map. `maskId` is prefixed for this surface because three cards and
              this panel render pins together and a repeated id resolves to whichever mask the
-             document defined last. */
+             document defined last.
+
+             `blank`, so this stays the plain outline it always was: the fallback dot a
+             numberless pin now draws elsewhere is a newer surface's own decision, and this
+             panel's own pin is not the place for it to arrive uninvited. */
           <StopPinIcon
+            blank
             tone={STOP_TONES.excluded}
             className={classes.stopMarker}
             maskId={`excludedPinRim-${key}`}

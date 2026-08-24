@@ -25,17 +25,32 @@ export const MATRIX_DENSITY = {
 };
 
 /**
- * **Expanded leads.** The month axis is the thing this view has that no other
- * surface in the app does, and a planner arriving on it should see what it is
- * before being offered the compression of it.
+ * **Collapsed leads.** This reversed once: the axis used to lead, on the argument
+ * that the thing this view has that no other surface does should be seen before the
+ * compression of it is offered. Then the packed reading was asked for as *the* view
+ * and the control was retired to pin it there.
+ *
+ * The control is back — the axis is worth a press again — but the landing is not.
+ * Restoring the old default would have handed every planner twelve columns on open
+ * and made "give me the button back" read as "undo the last change", which is not
+ * what was asked. So the view opens where it opens today and the button is what
+ * moves it.
  *
  * A stored value that no longer parses lands here too, so a stale key opens on the
  * intended default rather than on whatever string happened to be in storage.
  */
-export const DEFAULT_MATRIX_DENSITY = MATRIX_DENSITY.EXPANDED;
+export const DEFAULT_MATRIX_DENSITY = MATRIX_DENSITY.COLLAPSED;
 
-/** Where the choice is remembered between sessions. */
-export const MATRIX_DENSITY_STORAGE_KEY = 'schedules.companies.yearDensity';
+/**
+ * Where the choice is remembered between sessions.
+ *
+ * **Bumped with the default above.** Anyone who used this pane before the axis was
+ * retired has `expanded` sitting under the old key, and honouring it would open
+ * their pane on the reading the product moved away from — a stored preference from
+ * a period when the default meant the opposite thing is not a preference. Same move
+ * `config/schedulerLayout.js` made when Var 2 became the kept layout.
+ */
+export const MATRIX_DENSITY_STORAGE_KEY = 'schedules.companies.yearDensity.v2';
 
 /**
  * Read/write pair modelled on `config/visitViewVariant.js` and on
@@ -46,8 +61,8 @@ export const MATRIX_DENSITY_STORAGE_KEY = 'schedules.companies.yearDensity';
  * toolbar toggle is not worth failing a render over.
  *
  * Persisted rather than held in component state alone because the pane is remounted
- * on every scheduler tab round-trip: without this, a planner who collapsed the
- * matrix and glanced at the week grid would come back to twelve columns again.
+ * on every scheduler tab round-trip: without this, a planner who expanded the matrix
+ * and glanced at the week grid would come back to packed rows again.
  */
 export const readMatrixDensity = () => {
   try {

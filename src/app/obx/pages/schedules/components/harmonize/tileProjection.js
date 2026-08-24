@@ -156,3 +156,93 @@ export const pointInRing = (point, ring = []) => {
 
   return inside;
 };
+
+/**
+ * Thin a freehand trail down to the points that carry its shape.
+ *
+ * Ramer–Douglas–Peucker: keep the two ends, find the point furthest from the line between
+ * them, and if it is further than `tolerance` keep it and recurse into both halves. What
+ * survives is the corners; what goes is the hand-tremor between them.
+ *
+ * Needed because a dragged lasso arrives as one point per pointer event — four or five
+ * hundred for a shape drawn across a panel — and the stored rule allows sixty. Naive
+ * decimation (keep every tenth) would hit that budget too, and would spend it evenly:
+ * corners and straight runs get the same number of points, so the corners round off. This
+ * spends the budget where the shape actually turns.
+ *
+ * Operates on screen `{x, y}`, not coordinates, because the tolerance a planner cares about
+ * is "how far from where I dragged" and that is a pixel distance at the zoom they drew at.
+ */
+export const simplifyPath = (points, tolerance = 2.5) => {
+  if (points.length < 3) return points.slice();
+
+  const sqTolerance = tolerance * tolerance;
+
+  /** Squared distance from `p` to the segment `a`–`b`. */
+  const sqSegmentDistance = (p, a, b) => {
+    let x = a.x;
+    let y = a.y;
+    let dx = b.x - x;
+    let dy = b.y - y;
+
+    if (dx !== 0 || dy !== 0) {
+      const t = ((p.x - x) * dx + (p.y - y) * dy) / (dx * dx + dy * dy);
+      if (t > 1) {
+        x = b.x;
+        y = b.y;
+      } else if (t > 0) {
+        x += dx * t;
+        y += dy * t;
+      }
+    }
+
+    dx = p.x - x;
+    dy = p.y - y;
+    return dx * dx + dy * dy;
+  };
+
+  const keep = new Array(points.length).fill(false);
+  keep[0] = true;
+  keep[points.length - 1] = true;
+
+  const stack = [[0, points.length - 1]];
+  while (stack.length) {
+    const [first, last] = stack.pop();
+    let furthest = -1;
+    let maxSq = sqTolerance;
+
+    for (let i = first + 1; i < last; i += 1) {
+      const sq = sqSegmentDistance(points[i], points[first], points[last]);
+      if (sq > maxSq) {
+        maxSq = sq;
+        furthest = i;
+      }
+    }
+
+    if (furthest !== -1) {
+      keep[furthest] = true;
+      stack.push([first, furthest], [furthest, last]);
+    }
+  }
+
+  return points.filter((_point, index) => keep[index]);
+};
+
+/**
+ * Simplify until the ring fits a budget, then hard-cap.
+ *
+ * Doubling the tolerance each pass converges in a handful of rounds for any real trail. The
+ * final slice is a backstop for the pathological case — a trail that is all corner — so the
+ * function cannot return more than it promised whatever it is handed.
+ */
+export const simplifyToBudget = (points, maxPoints, startTolerance = 2.5) => {
+  let tolerance = startTolerance;
+  let result = simplifyPath(points, tolerance);
+
+  while (result.length > maxPoints && tolerance < 4096) {
+    tolerance *= 2;
+    result = simplifyPath(points, tolerance);
+  }
+
+  return result.slice(0, maxPoints);
+};

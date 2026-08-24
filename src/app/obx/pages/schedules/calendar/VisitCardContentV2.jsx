@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { useStyles } from 'src/app/components/common/calendar/calendar.styles';
 import { formatShiftScheduleTimeRange } from 'src/app/obx/pages/schedules/helper';
 import { ReactComponent as RunsheetIcon } from 'src/assets/svg/runsheetHit.svg';
+import { ReactComponent as SiteHitIcon } from 'src/assets/svg/siteHit.svg';
 
 /**
  * Same helper the legacy card wraps its status mark in, copied rather than
@@ -75,12 +76,14 @@ StatusTooltip.propTypes = {
  * `reassignedName` the tour used — the route below it stays muted, which puts the
  * card's hierarchy in the type rather than only in the order.
  *
- * No icon leads it. The two glyphs this card's lower lines use, `assignHit` and
- * `runsheetHit`, are a matched 14px pair of circular badges; `src/assets/svg/` has
- * nothing for a site but map pins (`SiteIcon`, `SitePin`, `PinDropIcon`), which are
- * 18-20px drop-pin shapes with baked-in fills that would read as a smudge at the
- * 10px `reassignedOfficerFlex` squeezes line icons to, and as a *location* marker
- * rather than a site. A misleading glyph costs more than an unindented line.
+ * **The site line now leads with a glyph too** — `siteHit.svg`, drawn to join
+ * `assignHit`/`runsheetHit` as a third 14px circular badge rather than reaching for
+ * one of the existing pins. `SiteIcon`/`SitePin`/`PinDropIcon` were the ones ruled
+ * out originally: 18-20px drop-pin shapes with baked-in fills that read as a smudge
+ * at the 10px `reassignedOfficerFlex` squeezes line icons to, and as a *location*
+ * marker rather than a site. `siteHit` is a stroked building silhouette at the same
+ * economy as the route glyph beside it — two rectangles, a baseline, two window
+ * ticks — so it survives the same squeeze the objection was about.
  *
  * `overTime` is kept from the reference because it is drawn for every duty type
  * there, hits included — it is a warning, not a hit-branch detail.
@@ -152,13 +155,18 @@ const VisitCardContentV2 = memo(({ shift, statusIcon, statusValue, is24Hours }) 
         {eventTime}
       </Typography>
 
-      <Typography
-        className={classes.eventSiteNameColor}
-        variant="subtitle4"
-        title={resolvedSiteName}
-      >
-        {resolvedSiteName}
-      </Typography>
+      <Box className={classes.reassignedFooterFlex}>
+        <Box className={classes.reassignedOfficerFlex}>
+          <SiteHitIcon />
+        </Box>
+        <Typography
+          className={classes.eventSiteNameColor}
+          variant="subtitle4"
+          title={resolvedSiteName}
+        >
+          {resolvedSiteName}
+        </Typography>
+      </Box>
 
       <Box className={`${classes.reassignedFooter} ${classes.newReassignedFooter}`}>
         <Box className={classes.reassignedFooterFlex}>

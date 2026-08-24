@@ -22,6 +22,7 @@ import { siteStatusEnum } from 'src/app/homeOffice/pages/franchise/utils/enums';
 import HarmonizeWorkspace from 'src/app/obx/pages/schedules/components/harmonize';
 import HarmonizeDrawer from 'src/app/obx/pages/schedules/components/harmonizeFlow';
 import { zoneName } from 'src/app/obx/pages/schedules/components/harmonizeFlow/model/fixtures';
+import HarmonizeSplit from 'src/app/obx/pages/schedules/components/harmonizeSplit';
 import MissedHitsDrawer from 'src/app/obx/pages/schedules/components/missedHitsDrawer';
 import { ACL_OBX_SITE_EXTRA_JOB_CREATE } from 'src/app/router/constant/OBXMODULE';
 import {
@@ -36,6 +37,7 @@ import {
 import history from 'src/app/router/utils/history';
 import { AddBlueIcon, AlertIcon, ForecastTrendIcon } from 'src/assets/svg';
 import { ReactComponent as RouteGroupingIcon } from 'src/assets/svg/ACLRunsheet.svg?react';
+import { ReactComponent as MHitsIcon } from 'src/assets/svg/MHitsIcon.svg?react';
 /* Staggered bars, not the building this segment used to carry — the segment is
    "Plan" now, and a building named the rows where the label names the horizon. Drawn
    in the same 20×20 / 1.2 stroke / round-cap style as its two neighbours, and it is
@@ -96,10 +98,12 @@ import {
   isShiftScheduleFullyCancelled,
 } from '../helper';
 import { relocateVisitsForRoutes } from '../helper/applyHarmonizedRoutes';
+import { collapseRoutesToStackDays } from '../helper/harmonizedDayStack';
 import {
   buildOfficerFromAssignResult,
   updateCalendarShiftOfficerById,
 } from '../helper/patchShiftOfficerAssignment';
+import { scatterVisitsForDemo } from '../helper/scatterVisitsForDemo';
 import {
   buildOverviewFooterStats,
   dropCancelledEvents,
@@ -436,14 +440,14 @@ const ScheduleCalendar = (props) => {
    * `MissedHitsDrawer`, so the whole path below it — this count, its fetch, the
    * drawer's mount, `refreshMissedHitsCount` — is live code with no entry point.
    *
-   * Left standing rather than deleted because reassigning a missed visit is a real
-   * flow with a working drawer, and the decision that was actually made here was
-   * about *this row's* composition, not about retiring that flow. Whoever gives it
-   * a new entry point (a Missed filter, a row action, its own surface) needs this
-   * count and this fetch intact. Delete the whole path deliberately, or wire a
-   * trigger to it — do not leave it half-removed.
+   * **Read again, from the person tab.** That note stood while nothing rendered this
+   * count; `missedVisitsAction` below is the trigger it asked for. The composition
+   * decision it records is unchanged and still holds on the surface it was made
+   * about — the main service tab carries the unrouted-demand pill and does not get a
+   * second red one beside it. The person tab has no unrouted-demand pill (a visit
+   * there is already on somebody's row), so there is one red count in that row, and
+   * a missed visit with an owner and a history is exactly what it should be.
    */
-  // eslint-disable-next-line no-unused-vars
   const [missedHitsCount, setMissedHitsCount] = useState(null);
   const [missedHitDrawerData, setMissedHitDrawerData] = useState(null);
 
@@ -501,6 +505,20 @@ const ScheduleCalendar = (props) => {
   const siteLocationsFetchGenerationRef = useRef(0);
   const filterLocationsFetchGenerationRef = useRef(0);
   const overviewKpiStatsRef = useRef({ windowStart: null, windowEnd: null, data: null });
+
+  /**
+   * One scatter per visit to this screen — see `scatterVisitsForDemo`.
+   *
+   * A ref, not state: nothing renders from it, and it must survive every refetch this
+   * component makes so the grid does not reshuffle under a planner who moved the status
+   * filter mid-demo. It is re-rolled by the only thing that re-runs this line, which is a
+   * fresh mount — arriving at the scheduler, which is exactly the moment the walkthrough
+   * starts over.
+   */
+  const demoScatterSeedRef = useRef(`${Date.now()}-${Math.random()}`);
+
+  /** Set the first time a plan is applied — see `relocateHarmonized`. */
+  const demoScatterSuspendedRef = useRef(false);
 
   const _franchiseIdWithRoleAndSource = getFranchiseIdWithRoleAndSource();
 
@@ -1710,13 +1728,33 @@ const ScheduleCalendar = (props) => {
        */
       const keepCancelled = isCancelledStatusFilter(shiftStatus);
 
+      /**
+       * **The walkthrough's mess, put back.**
+       *
+       * Applied here, at the one point every branch converges on, and to *both* collections
+       * rather than to the grid's alone: on the routes reading these are two different
+       * fetches, and a visit the grid drew on Thursday while the optimizer planned it on
+       * Monday would make the plan and the cards it moves disagree. They cannot drift —
+       * `scatterVisitsForDemo` keys the day off the visit's own id, so the same visit lands
+       * on the same day in whichever list it turns up in. See that module for the scope of
+       * this, which is narrow: nothing is written and nothing is invented.
+       */
+      const scatter = (list) =>
+        demoScatterSuspendedRef.current
+          ? list
+          : scatterVisitsForDemo(list, {
+              seed: demoScatterSeedRef.current,
+              from: query.windowStart,
+              to: query.windowEnd,
+            });
+
       setListDuties(dropCancelledGroups(listShifts, keepCancelled));
       setDayViewDuties(dropCancelledGroups(dayViewShifts, keepCancelled));
       setWeekViewLocations(weekViewLocations);
-      setAllDuties(dropCancelledEvents(shifts, keepCancelled));
+      setAllDuties(scatter(dropCancelledEvents(shifts, keepCancelled)));
       /* Harmonize plans real work. A called-off visit is not work, and it has no
          business consuming a man-day in a proposed route. */
-      setVisitsForHarmonize(dropCancelledEvents(harmonizeVisits, keepCancelled));
+      setVisitsForHarmonize(scatter(dropCancelledEvents(harmonizeVisits, keepCancelled)));
       setScheduleLoading(false);
     } catch (error) {
       if (!isStaleFetch()) {
@@ -1858,16 +1896,66 @@ const ScheduleCalendar = (props) => {
    * `allDuties`, so the callback is stable and the motion hook is not re-created on
    * every fetch — the same reason the officer-assign handler above does it.
    */
+  /**
+   * The plan, re-dealt onto three days — see `harmonizedDayStack`.
+   *
+   * Both paths below run the routes through this, and they have to: the departing beat asks
+   * `planHarmonized` which cards are leaving and the landing beat asks `relocateHarmonized`
+   * where they went, and a plan that answered those two questions differently would lift one
+   * set of cards and move another. Deliberately not memoised on the routes — it is a walk
+   * over one week of visits, run twice per Apply.
+   */
+  const stackRoutesForDemo = useCallback(
+    (routes = []) => {
+      /* The window on screen, with the pane's own week behind it — the company surfaces skip
+         the grid fetch, so `selectedView` is empty there and `currentGridWeekWindow` is the
+         week their visits came from. Same pair of sources `harmonizableVisits` reads. */
+      const view = queryParams.selectedView || {};
+      const fallback = currentGridWeekWindow();
+
+      return collapseRoutesToStackDays(routes, {
+        from: view.windowStart || fallback.windowStart,
+        to: view.windowEnd || fallback.windowEnd,
+        visits: calendarDataRef.current.allDuties,
+        routeTerm: getLabel('terms', 'runsheet', t),
+      });
+    },
+    [queryParams.selectedView, getLabel, t],
+  );
+
   const relocateHarmonized = useCallback((routes = []) => {
     const { duties, moves } = relocateVisitsForRoutes(calendarDataRef.current.allDuties, routes);
     if (!moves.size) return moves;
+
+    /* **The walkthrough's scatter stops here.** It exists to give Harmonize a mess to fix,
+       and the moment the plan lands the mess is the thing that was fixed — a refetch that
+       re-scattered the same visits would undo the payoff on screen, in front of whoever was
+       being shown it. Suspended for the rest of this visit to the screen; arriving again
+       re-rolls the seed and the walkthrough starts over. */
+    demoScatterSuspendedRef.current = true;
 
     calendarDataRef.current = { ...calendarDataRef.current, allDuties: duties };
     setAllDuties(duties);
     return moves;
   }, []);
 
-  const applyMotion = useApplyMotion({ onRelocate: relocateHarmonized });
+  /**
+   * The same question, asked one beat earlier and answered without touching anything.
+   *
+   * `relocateVisitsForRoutes` computes the moves and the relocated duties together, so this
+   * throws the duties away and keeps the map. Re-running it is a walk over the week's visits
+   * and is not worth avoiding — the alternative is a cached plan living in this component
+   * between two beats, which is a piece of state that can be stale.
+   */
+  const planHarmonized = useCallback(
+    (routes = []) => relocateVisitsForRoutes(calendarDataRef.current.allDuties, routes).moves,
+    [],
+  );
+
+  const applyMotion = useApplyMotion({
+    onPlan: (routes) => planHarmonized(stackRoutesForDemo(routes)),
+    onRelocate: (routes) => relocateHarmonized(stackRoutesForDemo(routes)),
+  });
 
   const getMissedHitsCountFunc = async ({ start, end }) => {
     try {
@@ -2553,6 +2641,41 @@ const ScheduleCalendar = (props) => {
    * the tooltip, and the only thing lost is the settle animation on a grid that is
    * not mounted.
    */
+  /**
+   * **Missed visits, on the person tab.**
+   *
+   * Every piece of this already existed and had no entry point — the count, its fetch
+   * (`refreshMissedHitsCount`), the pink `missedHitsButton` treatment, `MHitsIcon`,
+   * and `MissedHitsDrawer` still mounted at the bottom of this file. See the note on
+   * `missedHitsCount` for why the trigger went and why this is the surface that gets
+   * it back rather than a general restoration.
+   *
+   * Threaded into the grid's `toolbarRightContent`, which lands it between the date
+   * navigator and the view toggle — where the reference puts it. Built here rather
+   * than in the grid because the drawer it opens is this component's state.
+   *
+   * The window is `selectedView`'s, the same range the count was fetched for, so the
+   * drawer can never list a period the number did not count.
+   */
+  const missedVisitsAction =
+    tabConfig.id === 'officer' && !isEmbeddedScheduleView && Boolean(missedHitsCount) ? (
+      <RenderIfHasPermission name={ACL_OBX_SCHEDULES_UPDATE}>
+        <Button
+          variant="destructiveSecondary"
+          className={classes.scheduleMissedVisitsButton}
+          endIcon={<MHitsIcon />}
+          onClick={() =>
+            setMissedHitDrawerData({
+              startsAt: queryParams.selectedView.windowStart,
+              endsAt: queryParams.selectedView.windowEnd,
+            })
+          }
+        >
+          {missedHitsCount} {t('obx.runsheet.missedHits', { hits: getLabel('terms', 'hits', t) })}
+        </Button>
+      </RenderIfHasPermission>
+    ) : null;
+
   const harmonizeAction =
     offersHarmonize && (!isDayView || rendersOwnPane) ? (
       /* One action, and it is the optimizer's.
@@ -2774,6 +2897,11 @@ const ScheduleCalendar = (props) => {
           so `$applySettle` resolves to a real keyframes name, which it does not
           inside a global block. */}
       <Box
+        /* The stage the apply sequence plays on. `ScheduleCalendarGrid` finds this node by
+           the attribute and hangs its flight layer inside it — inside, so the cards it
+           carries are still descendants of the wrapper the card CSS is scoped to, and a
+           clone does not lose half its styling on the way out. */
+        data-apply-stage="true"
         className={
           applyMotion.isRunning
             ? `${classes.scheduleCalendarFull} ${classes.applyingGrid}`
@@ -2853,7 +2981,18 @@ const ScheduleCalendar = (props) => {
              */
             <CalendarToolbarArrangementContext.Provider
               value={
-                isUnifiedToggleLayout
+                /* **Toggles-first only where there are toggles to lead with.**
+                 *
+                 * The arrangement was asked for against Var 2's toolbar, whose leading
+                 * slot carries a three-segment grouping switch — with the date ahead of
+                 * the toggles that row read as two view clusters split by a date. Keyed
+                 * on the layout alone, it also applied to Var 2 tabs that have *no*
+                 * grouping switch, where it moved the date behind the toggles for no
+                 * reason and against the reference. The person tab is that case.
+                 *
+                 * `groupingSwitch` is the same value the leading slot receives, so the
+                 * ordering and the thing it is ordering around cannot disagree. */
+                isUnifiedToggleLayout && groupingSwitch
                   ? CALENDAR_TOOLBAR_ARRANGEMENT.TOGGLES_FIRST
                   : CALENDAR_TOOLBAR_ARRANGEMENT.DATE_FIRST
               }
@@ -2871,6 +3010,7 @@ const ScheduleCalendar = (props) => {
                 loading={loading}
                 toolbarLeadingContent={groupingSwitch}
                 toolbarLeftContent={scheduleFilters}
+                toolbarRightContent={missedVisitsAction}
                 showListSwitch={false}
                 activeScheduleTab={isEmbeddedScheduleView ? EMBEDDED_SCHEDULE_TAB_ID : activeTab}
                 overviewSections={overviewSections}
@@ -2891,7 +3031,7 @@ const ScheduleCalendar = (props) => {
         </ScheduleErrorBoundary>
 
         {/**
-         * Two shells, one trigger — see `config/harmonizeShell`.
+         * Three shells, one trigger — see `config/harmonizeShell`.
          *
          * The drawer is not a reskin of the workspace: it implements a different
          * domain model (a range of worked days, one zone each, no radius, no
@@ -2900,13 +3040,56 @@ const ScheduleCalendar = (props) => {
          * than a `variant` prop — there is nothing for the two to hold in common
          * beyond the fact that a button opened them.
          *
-         * `weekVisits` is deliberately not threaded into the drawer. It runs on its
-         * own fixture while the endpoints in HARMONIZE-CONTEXT §5 are unbuilt; feeding
-         * it this page's visits would produce a proposal with no zones, no need-by
-         * windows and no filter counts, which is a worse demonstration than an honest
-         * one over data shaped like the payload it is waiting for.
+         * **Split is the drawer's model in a different shell**, so it takes the same
+         * props the drawer does and produces the same `plan` — which is why the two
+         * hand this page identical `onApplied` work. It is written out twice rather
+         * than hoisted into a shared handler: these are comparison shells, both due
+         * for deletion, and a helper they shared would be one more thing to unpick
+         * when two of the three go.
+         *
+         * **A switch, not a chain of ternaries.** This was `=== DRAWER ? … : Workspace`,
+         * which silently rendered the Workspace for any value that was not exactly
+         * `'drawer'` — so a third shell would have been added to the config, appeared in
+         * the switch, and opened the wrong surface with nothing to say why.
+         *
+         * `weekVisits` is deliberately not threaded into either new shell. They run on
+         * their own fixture while the endpoints in HARMONIZE-CONTEXT §5 are unbuilt;
+         * feeding them this page's visits would produce a proposal with no zones, no
+         * need-by windows and no filter counts, which is a worse demonstration than an
+         * honest one over data shaped like the payload it is waiting for.
          */}
-        {props.harmonizeShell === HARMONIZE_SHELL.DRAWER ? (
+        {props.harmonizeShell === HARMONIZE_SHELL.SPLIT ? (
+          <HarmonizeSplit
+            open={harmonizeOpen}
+            onClose={() => setHarmonizeOpen(false)}
+            settingsHref={`${COMMON_SETTING}?activeTab=harmonization`}
+            onApplied={(plan) => {
+              exitSelection();
+
+              const key = (name) =>
+                String(name || '')
+                  .trim()
+                  .toLowerCase();
+              const byName = new Map(
+                (harmonizableVisits || [])
+                  .map((visit) => [key(visit.site || visit.siteName), visit.id])
+                  .filter(([name]) => name),
+              );
+
+              applyMotion.start(
+                (plan?.runsheets || [])
+                  .map((sheet) => ({
+                    dayKey: sheet.date,
+                    name: `${getLabel('terms', 'runsheet', t)} · ${zoneName(sheet.zoneId)}`,
+                    visitIds: sheet.stops
+                      .map((stop) => byName.get(key(stop.site?.name)))
+                      .filter((id) => id != null),
+                  }))
+                  .filter((route) => route.visitIds.length),
+              );
+            }}
+          />
+        ) : props.harmonizeShell === HARMONIZE_SHELL.DRAWER ? (
           <HarmonizeDrawer
             open={harmonizeOpen}
             onClose={() => setHarmonizeOpen(false)}

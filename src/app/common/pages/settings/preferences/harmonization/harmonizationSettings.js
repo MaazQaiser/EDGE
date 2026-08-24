@@ -379,6 +379,19 @@ const sanitiseZoneShape = (raw) => {
 
     return {
       kind: ZONE_SHAPE.RADIUS,
+      /**
+       * **A radius is centred on a site, not on an arbitrary point.**
+       *
+       * `siteId` is the answer; `anchor` is that site's coordinates, denormalised so the
+       * shape can still be drawn if the site book is unavailable — the same reasoning that
+       * stores an officer's name beside their id. A dropped pin with no address was the
+       * earlier model and it produced zones described as "12 mi around a dropped pin",
+       * which is not something a planner can check.
+       *
+       * The id is optional rather than required so a rule saved under the old model keeps
+       * its circle instead of losing the zone.
+       */
+      siteId: typeof raw.siteId === 'string' && raw.siteId.trim() ? raw.siteId.trim() : null,
       anchor: anchorPoint,
       /* The same clamp the rule-level radius uses, so a zone cannot reach further than
          the setting elsewhere on this screen allows. One range, stated once. */

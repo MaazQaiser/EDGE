@@ -9,9 +9,7 @@ import {
 } from 'src/utils/constants/schedules';
 
 import Calendar from './calendar';
-import HarmonizeShellSwitch from './calendar/HarmonizeShellSwitch';
-import SchedulerLayoutSwitch from './calendar/SchedulerLayoutSwitch';
-import VisitVariantSwitch from './calendar/VisitVariantSwitch';
+import ReviewOptionsMenu from './calendar/ReviewOptionsMenu';
 import ScheduleIndicators from './components/scheduleIndicators';
 import ScheduleStatsFooter, {
   SCHEDULE_STATS_FOOTER_VARIANTS,
@@ -291,16 +289,60 @@ export default function Schedules({ selectedSite, officerId, className }) {
     writeHarmonizeShell(next);
   };
 
+  /**
+   * One entry point for the review menu, dispatching to the three writers above.
+   *
+   * The menu asks all three questions, so it needs one `onChange` rather than three props;
+   * the *answers* still go to their own module's writer, because each owns its own storage
+   * key and its own validation. A `switch` rather than a lookup table so a group added to
+   * `OPTION_GROUPS` without a handler here fails loudly in review instead of silently
+   * dropping the click.
+   */
+  const handleReviewOptionChange = (group, next) => {
+    switch (group) {
+      case 'harmonizeShell':
+        handleHarmonizeShellChange(next);
+        break;
+      case 'visitCard':
+        handleVisitCardVariantChange(next);
+        break;
+      case 'schedulerLayout':
+        handleSchedulerLayoutChange(next);
+        break;
+      default:
+        break;
+    }
+  };
+
   const showsVisitCardV2 = isVisitsSubject && visitCardVariant === VISIT_VIEW_VARIANT.V2;
-  /* Shown only over a grid of visit cards. Not on the embedded site/user schedules
-     (those draw the legacy card, so the choice would change nothing) and not on a tab
-     that renders its own pane, whose content this switch does not reach. */
+  /**
+   * Which of the menu's three questions cannot be asked here.
+   *
+   * **The two flags now hide a group rather than a pill**, which is the only thing the
+   * consolidation changed about their meaning: they still retire independently, they just
+   * subtract a section from one control instead of removing one of three.
+   *
+   * `visitCard` is dropped unless the grid is actually drawing visit cards — not on the
+   * embedded site/user schedules, which draw the legacy card and so would not change, and
+   * not on a tab rendering its own pane, whose content the choice does not reach.
+   * `schedulerLayout` is **never** conditioned on the surface, unlike the card: it decides
+   * whether the Companies *tab* exists at all, so a control that disappeared on the
+   * surfaces it governs would be unreachable from half of what it changes — including, on
+   * Var 1, the Companies tab itself.
+   */
   const showsVisitVariantSwitch = isVisitsSubject && !isEmbeddedSchedule && !tabRendersOwnPane;
-  /* Whether the floating shell is drawn at all. Each pill answers for itself inside it,
-     so this only has to be true when at least one of them will be — an empty shell is
-     still a bordered, shadowed pill floating over the grid. Embedded site and user
-     schedules are excluded wholesale: these are reviewer controls for the scheduler
-     page, and neither variant they choose between exists on an embedded grid. */
+  const hiddenReviewGroups = [
+    !SHOW_HARMONIZE_SHELL_SWITCH && 'harmonizeShell',
+    (!SHOW_VARIATION_SWITCHES || !showsVisitVariantSwitch) && 'visitCard',
+    !SHOW_VARIATION_SWITCHES && 'schedulerLayout',
+  ].filter(Boolean);
+
+  /* Whether the floating shell is drawn at all. The menu answers for itself once it is
+     mounted — it returns null with every group hidden — but the shell around it is a
+     bordered, shadowed pill, so it still has to know not to draw an empty one. Embedded
+     site and user schedules are excluded wholesale: these are reviewer controls for the
+     scheduler page, and none of the variants they choose between exists on an embedded
+     grid. */
   const showsAnyReviewSwitch =
     !isEmbeddedSchedule && (SHOW_HARMONIZE_SHELL_SWITCH || SHOW_VARIATION_SWITCHES);
 
@@ -397,21 +439,15 @@ export default function Schedules({ selectedSite, officerId, className }) {
           className={classes.visitVariantFloating}
           style={{ bottom: `calc(${footerLayout.paddingBottom} + 16px)` }}
         >
-          {SHOW_HARMONIZE_SHELL_SWITCH ? (
-            <HarmonizeShellSwitch value={harmonizeShell} onChange={handleHarmonizeShellChange} />
-          ) : null}
-          {SHOW_VARIATION_SWITCHES && showsVisitVariantSwitch ? (
-            <VisitVariantSwitch value={visitCardVariant} onChange={handleVisitCardVariantChange} />
-          ) : null}
-          {/* Unconditional under its flag, unlike the card switch beside it. The card
-              variant only means something over a grid of visit cards, so it comes and
-              goes with one; the layout variation decides whether the Companies *tab*
-              exists at all, and a control that vanished on the surfaces it governs
-              would be unreachable from half of what it changes — including, on Var 1,
-              the Companies tab itself. */}
-          {SHOW_VARIATION_SWITCHES ? (
-            <SchedulerLayoutSwitch value={schedulerLayout} onChange={handleSchedulerLayoutChange} />
-          ) : null}
+          <ReviewOptionsMenu
+            values={{
+              harmonizeShell,
+              visitCard: visitCardVariant,
+              schedulerLayout,
+            }}
+            onChange={handleReviewOptionChange}
+            hiddenGroups={hiddenReviewGroups}
+          />
         </Box>
       ) : null}
       {showLegendFooter ? (

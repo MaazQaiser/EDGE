@@ -44,7 +44,8 @@ const ExitPanel = ({
   accepted,
   raisedFrom,
   tippingStop,
-  tippingLegalDays,
+  tippingLegalDays = [],
+  tippingWasForced = false,
   drag,
   dragQuote,
   dragVisit,
@@ -53,6 +54,7 @@ const ExitPanel = ({
   onRaise,
   onRestoreHours,
   onSetAside,
+  onReturnToTray,
   onCancelDrag,
   onConfirmDrag,
   onStartMove,
@@ -227,19 +229,53 @@ const ExitPanel = ({
           shift: formatCompact(sheet.shiftMins),
         })}
       </Typography>
+      {/**
+       * **Two different sentences, because there are now two different causes.**
+       *
+       * The day used to be able to arrive over its shift on its own — the engine placed
+       * everything legal and reported the overrun. It cannot any more: `splitOverspill`
+       * fits every day to its hours before ③ draws it, so an overrun exists only where the
+       * planner put work back that the fitter had lifted off. That has an author and a
+       * name, and saying so is the difference between *the plan overran* and *you asked
+       * for this, here is what it costs.*
+       *
+       * The generic sentence is kept for the case that survives: a day whose *own*
+       * arithmetic cannot fit even one stop, where nothing was forced and the shift is
+       * simply too short for the work its zone demands.
+       */}
       {tippingStop ? (
         <Typography className={classes.decisionBody}>
-          {tt('overrunBody', { site: tippingStop.site.name, index: tippingStop.index })}
+          {tippingWasForced
+            ? tt('overrunForcedBody', { site: tippingStop.site.name })
+            : tt('overrunBody', { site: tippingStop.site.name, index: tippingStop.index })}
         </Typography>
       ) : null}
 
       <Box className={classes.decisionActions}>
+        {/* `Raise to 6h` stays primary, and forced work is the reason it deserves to be:
+            the planner has just said this work belongs on this day, so the exit that makes
+            that legitimate is the one they want — not the one that undoes what they did.
+            The next whole hour, because Config A is written in whole hours and rounding up
+            guarantees the offered value clears the overrun where an exact fit would only
+            do so until the sequence changed. */}
         {primary(tt('raiseTo', { hours: formatCompact(raiseTo) }), () =>
           onRaise(sheet.date, raiseTo),
         )}
         {text(tt('accept'), () => onAccept(sheet.date))}
         {text(tt('moveDay'), () => tippingStop && onStartMove(tippingStop.visit.id), !canMove)}
-        {text(tt('setAside'), () => tippingStop && onSetAside(tippingStop.visit.id), !tippingStop)}
+        {/* **`Set aside` and `Back to the tray` are the same slot and not the same act.**
+            Setting a visit aside says *this is not served this week*; sending forced work
+            back to the tray says *not on this day* and leaves it exactly where the fitter
+            had it — still legal, still waiting for hours. Offering the destructive verb for
+            a reversible action the planner performed thirty seconds ago would be the wrong
+            one to reach for. */}
+        {tippingWasForced
+          ? text(tt('backToTray'), () => tippingStop && onReturnToTray(tippingStop.visit.id))
+          : text(
+              tt('setAside'),
+              () => tippingStop && onSetAside(tippingStop.visit.id),
+              !tippingStop,
+            )}
         {/* With the control it explains, not in its own row at the bottom. */}
         {!canMove && tippingStop ? (
           <Typography className={classes.actionReason}>
@@ -258,6 +294,8 @@ ExitPanel.propTypes = {
   raisedFrom: PropTypes.object.isRequired,
   tippingStop: PropTypes.object,
   tippingLegalDays: PropTypes.array,
+  /** Whether the tipping stop is there because the planner put it back — see `overspill.js`. */
+  tippingWasForced: PropTypes.bool,
   drag: PropTypes.object,
   dragQuote: PropTypes.object,
   dragVisit: PropTypes.object,
@@ -266,11 +304,10 @@ ExitPanel.propTypes = {
   onRaise: PropTypes.func.isRequired,
   onRestoreHours: PropTypes.func.isRequired,
   onSetAside: PropTypes.func.isRequired,
+  onReturnToTray: PropTypes.func.isRequired,
   onCancelDrag: PropTypes.func.isRequired,
   onConfirmDrag: PropTypes.func.isRequired,
   onStartMove: PropTypes.func.isRequired,
 };
-
-ExitPanel.defaultProps = { tippingLegalDays: [] };
 
 export default ExitPanel;

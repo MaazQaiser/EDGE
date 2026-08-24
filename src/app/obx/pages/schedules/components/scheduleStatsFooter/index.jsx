@@ -20,6 +20,21 @@ export const SCHEDULE_STATS_FOOTER_VARIANTS = {
   PATROL: 'patrol',
   VISITS: 'visits',
   /**
+   * The **person** tab's footer: the duty mix and the shift statuses, short.
+   *
+   * Neither neighbour fits. `OVERVIEW` names the duty buckets correctly but its
+   * mapper returns a `metrics` array unconditionally, so it lights the tall footer
+   * and prints a 0% coverage ring over a payload with no KPI block. `PATROL` is short
+   * but spells its extra bucket `{{extra}} {{runsheet}}` — "Extra Route" — because on
+   * the patrol tab an extra *runsheet* is what is being distinguished from a regular
+   * one, and on a row that is a person that distinction is not being drawn.
+   *
+   * So this is `OVERVIEW`'s vocabulary at `PATROL`'s height. It keeps `statusStats`,
+   * the shift list, including **Split** — a fact about one person's day, which is
+   * exactly the surface whose rows are people.
+   */
+  OFFICER: 'officer',
+  /**
    * **No page footer at all** — not "unknown", which is what `null` means here.
    *
    * The page resolves the calendar's reported variant with `??`, so `null` says
@@ -231,6 +246,12 @@ const getFooterPresentation = (t, getLabel, services = {}, shiftTypes = {}) => {
     },
     [SCHEDULE_STATS_FOOTER_VARIANTS.OVERVIEW]: {
       metrics: overviewMetrics,
+      dutyStats: overviewDutyStats,
+      statusStats,
+    },
+    /* Overview's duty row and status row, and deliberately **no `metrics`** — that
+       omission is the whole difference, and it is what keeps the footer short. */
+    [SCHEDULE_STATS_FOOTER_VARIANTS.OFFICER]: {
       dutyStats: overviewDutyStats,
       statusStats,
     },

@@ -35,11 +35,96 @@
  * neither, and the unplaced tray, the ⑤ "stays unplanned" row and ⑥'s unplanned
  * panel would all be drawn against an empty state that never occurs.
  */
+/**
+ * **The boundaries a planner lassoed**, in grid coordinates — the same `{ x, y }` notional
+ * miles the sites are placed on.
+ *
+ * ## These are control points, not the shape
+ *
+ * Seven or eight vertices per zone is the *intent*; what gets drawn is `handDrawnRing` in
+ * `zoneGeography.js`, resampling and wobbling them into forty-odd points. That is not
+ * decoration. A zone here is made by dragging a lasso across a map, and a freehand drag
+ * does not produce clean straight runs between eight corners — it produces a slightly
+ * shaky closed curve that overshoots on the fast parts. A tidy octagon reads as something
+ * the *system* generated, which is a lie about where these came from and about how much
+ * precision to credit them with.
+ *
+ * ## They overlap, and that is the honest part
+ *
+ * The territories deliberately run into each other by a few miles across the empty middle
+ * of the book. Nobody lassoing four regions in a row keeps them perfectly abutting, and
+ * the model does not ask them to: membership lives on the **site** (`zoneId`), so a shape
+ * is the tool that produced the assignments and not the definition of the zone. As
+ * `harmonizationSettings.js` puts it, two overlapping shapes just mean whichever was drawn
+ * last won the site.
+ *
+ * **No site sits in the contested ground**, and `zoneGeography.test.js` pins that. The
+ * overlaps are in the gaps between the four clusters — which is exactly where a real hand
+ * gets sloppy, because there is nothing there to be careful about.
+ *
+ * ## This does not reach Settings
+ *
+ * `defaultZones()` in `harmonizationSettings.js` picks `id` and `name` off these records
+ * and writes `shape: null` itself, on the stated argument that an undrawn zone should say
+ * so. That argument is about the zone *editor*, where the shape is the thing being
+ * authored; it does not bind a map that has to render four territories today. A boundary
+ * actually drawn in Settings still wins — see `zoneGeography.js`.
+ */
 export const ZONES = [
-  { id: 'north', name: 'North' },
-  { id: 'east', name: 'East' },
-  { id: 'south', name: 'South' },
-  { id: 'west', name: 'West' },
+  {
+    id: 'north',
+    name: 'North',
+    shape: [
+      { x: -13.0, y: 3.0 },
+      { x: -8.5, y: 18.0 },
+      { x: -1.5, y: 27.0 },
+      { x: 7.5, y: 24.5 },
+      { x: 11.0, y: 13.5 },
+      { x: 8.0, y: 1.5 },
+      { x: -2.0, y: -2.5 },
+      { x: -9.0, y: -1.0 },
+    ],
+  },
+  {
+    id: 'east',
+    name: 'East',
+    shape: [
+      { x: 5.5, y: 1.0 },
+      { x: 8.0, y: 9.0 },
+      { x: 15.0, y: 12.0 },
+      { x: 23.5, y: 7.0 },
+      { x: 25.0, y: -4.0 },
+      { x: 18.5, y: -9.5 },
+      { x: 9.5, y: -7.0 },
+    ],
+  },
+  {
+    id: 'south',
+    name: 'South',
+    shape: [
+      { x: -12.0, y: -9.0 },
+      { x: -7.0, y: -2.5 },
+      { x: 2.0, y: -1.0 },
+      { x: 10.5, y: -5.0 },
+      { x: 13.5, y: -14.0 },
+      { x: 9.0, y: -22.0 },
+      { x: 0.5, y: -26.5 },
+      { x: -8.0, y: -22.5 },
+    ],
+  },
+  {
+    id: 'west',
+    name: 'West',
+    shape: [
+      { x: -7.5, y: 4.0 },
+      { x: -11.0, y: 10.0 },
+      { x: -19.0, y: 9.5 },
+      { x: -25.5, y: 2.0 },
+      { x: -24.0, y: -8.0 },
+      { x: -16.0, y: -12.0 },
+      { x: -9.0, y: -6.0 },
+    ],
+  },
 ];
 
 export const zoneName = (zoneId) => ZONES.find((z) => z.id === zoneId)?.name || '—';
@@ -49,8 +134,14 @@ export const zoneName = (zoneId) => ZONES.find((z) => z.id === zoneId)?.name || 
  *
  * One base for the whole franchise rather than one per day. Config A has no per-day
  * base field and inventing one here would be the fixture making a product decision.
+ *
+ * **Named as a place, not as a role.** It read `Base`, and both ends of every runsheet
+ * printed that word — which is the *category* of the stop rather than the stop, and left
+ * a planner reading a route whose first and last rows named nowhere. A depot address is
+ * what a driver would actually be told, and the same string is used at both ends because
+ * it is genuinely the same location (D9): the van returns to where it started.
  */
-export const BASE = { id: 'base', name: 'Base', x: 0, y: 0 };
+export const BASE = { id: 'base', name: '2210 W Cypress St', x: 0, y: 0 };
 
 /**
  * The sites, placed so that each zone is a genuine cluster with one awkward member.
@@ -346,6 +437,35 @@ export const VISITS = [
     needByTo: '2026-08-22',
   },
 ];
+
+/**
+ * The installers a route can be assigned to — **and the one place D14 is now bent.**
+ *
+ * D14 says this model is installer-blind, and the *engine* still is: nothing in
+ * `planner.js` or `overspill.js` reads this list, no capacity is derived from it, and a
+ * route's sequence and hours are identical whoever is on it. What changed is the
+ * proposal's own output — a runsheet used to be created unassigned and a planner went
+ * looking for the assignment screen afterwards, which the footer note (now removed) spent
+ * a sentence explaining. Naming someone on the card is strictly a *label on the runsheet
+ * this run will create*, so the constraint that mattered — the optimizer does not know or
+ * care who works — is untouched.
+ *
+ * Same six people, same faces, as the schedule grid's own mock (`schedule.mock.js`), so a
+ * demo that assigns Mike Ross here and then looks at the grid behind the drawer sees the
+ * same person rather than a second cast. Copied rather than imported for the reason every
+ * other fixture in this folder is: `schedule.mock.js` does not export them, and this
+ * feature's whole model is a local book §5 will replace wholesale.
+ */
+export const INSTALLERS = [
+  { id: 'i11', name: 'Mike Ross', imageUrl: 'https://i.pravatar.cc/80?img=12' },
+  { id: 'i12', name: 'Sarah Connor', imageUrl: 'https://i.pravatar.cc/80?img=5' },
+  { id: 'i13', name: 'David Nguyen', imageUrl: 'https://i.pravatar.cc/80?img=15' },
+  { id: 'i14', name: 'Priya Shah', imageUrl: 'https://i.pravatar.cc/80?img=32' },
+  { id: 'i15', name: 'James Okoro', imageUrl: 'https://i.pravatar.cc/80?img=8' },
+  { id: 'i16', name: 'Elena Ruiz', imageUrl: 'https://i.pravatar.cc/80?img=45' },
+];
+
+export const installerById = (id) => INSTALLERS.find((i) => i.id === id);
 
 /**
  * Config B as the drawer opens it — seeded from Config A, writes back to nothing (D6).

@@ -13,10 +13,19 @@
  *   (`components/harmonizeFlow/`): a range of worked days, one zone each, no radius,
  *   no installers, over a schedule grid that stays readable.
  *
- * **They are not two drawings of one feature.** The shells differ, and so do the
+ *   **Split** — full screen in two columns (`components/harmonizeSplit/`): the
+ *   drawer's flow down the left, a map of every zone down the right.
+ *
+ * **They are not three drawings of one feature.** The shells differ, and so do the
  * domain models underneath them — zone versus radius, a range of days versus one day,
  * installer-blind versus crewed. That is why this is worth comparing rather than
- * simply skinning, and it is also why neither can be expressed as a prop on the other.
+ * simply skinning, and it is also why none can be expressed as a prop on another.
+ *
+ * **Split is the drawer's model, not a third one.** It mounts `useHarmonizeFlow` and
+ * the drawer's own ②/③ components unchanged, so what it varies is the *shell* and one
+ * added component — the map. That makes the Drawer↔Split comparison a clean question
+ * about whether seeing the geography is worth half the screen, uncontaminated by a
+ * change of engine. Workspace↔either remains the question about the model.
  *
  * Expect this module to be deleted once the choice is made; nothing else should grow a
  * dependency on it.
@@ -24,6 +33,7 @@
 export const HARMONIZE_SHELL = {
   WORKSPACE: 'workspace',
   DRAWER: 'drawer',
+  SPLIT: 'split',
 };
 
 /**
@@ -31,18 +41,25 @@ export const HARMONIZE_SHELL = {
  *
  * `VisitVariantSwitch` argues for V1/V2 when a control names two *drawings of the same
  * card* and the conversation about them already uses those words. This is the case
- * `CompaniesViewSwitch` made the opposite call for: the two options are structurally
- * different surfaces, and "Workspace" and "Drawer" tell a reviewer which is which
- * before they have opened either. The tooltips carry the rest.
+ * `CompaniesViewSwitch` made the opposite call for: the options are structurally
+ * different surfaces, and "Workspace", "Drawer" and "Split" tell a reviewer which is
+ * which before they have opened any of them. The tooltips carry the rest.
+ *
+ * **"Split" names the geometry, like the two beside it, rather than the map.** "Zones"
+ * and "Map" were the alternatives and both name the *contents*, which reads as a
+ * different kind of answer from its neighbours — and "Map" is wrong twice over, since
+ * the Workspace has one too. What is actually new here is that the screen is cut in two.
  */
 export const HARMONIZE_SHELL_LABELS = {
   [HARMONIZE_SHELL.WORKSPACE]: 'Workspace',
   [HARMONIZE_SHELL.DRAWER]: 'Drawer',
+  [HARMONIZE_SHELL.SPLIT]: 'Split',
 };
 
 export const HARMONIZE_SHELL_HINTS = {
   [HARMONIZE_SHELL.WORKSPACE]: 'Shipped: full-screen, one route day, radius from the start point',
   [HARMONIZE_SHELL.DRAWER]: 'New: 470px drawer, a range of worked days, one zone each',
+  [HARMONIZE_SHELL.SPLIT]: "New: two columns — the drawer's flow beside a map of every zone",
 };
 
 /**

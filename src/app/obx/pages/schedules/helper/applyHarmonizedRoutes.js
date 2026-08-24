@@ -15,6 +15,12 @@ import dayjs from 'dayjs';
  * of visit to day comes from the drawer's payload rather than being re-derived
  * here — the drawer is the only thing that knows which route absorbed which visit.
  *
+ * **For the walkthrough, the plan reaching this function has already been re-dealt onto
+ * three days** — see `harmonizedDayStack`, which the page runs the routes through on their
+ * way here. That is a demo override sitting *above* this module rather than a change to it:
+ * this one still honours whatever days it is handed, which is what lets the override be
+ * deleted in one line when the real endpoints land.
+ *
  * **Time of day is preserved, the date is not.** A visit at 09:30 on Monday moved
  * to Thursday becomes 09:30 on Thursday, and its duration is carried across
  * verbatim. The optimizer *does* compute arrival times, but they belong to a route
@@ -61,6 +67,27 @@ const reDate = (value, target) => {
     .toISOString();
 };
 
+/**
+ * One visit, same clock time, a different day.
+ *
+ * Re-dating by `.set()` on year/month/date rather than by adding a day difference, so a move
+ * across a DST boundary does not slide the visit by an hour.
+ *
+ * **All four fields**, because the grid and the payload read different ones and a card that
+ * moved in one and not the other is a card that has not moved. That was the first version's
+ * whole bug (see `reDate`), which is also why this is exported rather than re-implemented by
+ * the second thing that needs it: `scatterVisitsForDemo` moves visits for the walkthrough and
+ * has to move them exactly as an apply does, or the two would disagree about what "moved"
+ * means on the same grid.
+ */
+export const reDateShift = (shift, target) => {
+  const next = { ...shift };
+  ['start', 'startsAt', 'end', 'endsAt'].forEach((field) => {
+    if (next[field]) next[field] = reDate(next[field], target);
+  });
+  return next;
+};
+
 export const relocateVisitsForRoutes = (duties, routes = []) => {
   if (!Array.isArray(duties) || !duties.length) return { duties, moves: new Map() };
 
@@ -91,16 +118,7 @@ export const relocateVisitsForRoutes = (duties, routes = []) => {
     const target = dayjs(move.dayKey);
     if (!target.isValid()) return shift;
 
-    /* Same clock time on the new date. Re-dating by `.set()` on year/month/date
-       rather than by adding a day difference, so a move across a DST boundary does
-       not slide the visit by an hour.
-
-       All four fields, because the grid and the payload read different ones and a
-       card that moved in one and not the other is a card that has not moved. */
-    const next = { ...shift };
-    ['start', 'startsAt', 'end', 'endsAt'].forEach((field) => {
-      if (next[field]) next[field] = reDate(next[field], target);
-    });
+    const next = reDateShift(shift, target);
 
     /* The card names the route it now belongs to. Without this the visit changes
        day and still reads as whatever it was on before, which is the sort of

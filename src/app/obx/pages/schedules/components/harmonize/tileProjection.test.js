@@ -5,6 +5,8 @@ import {
   MIN_ZOOM,
   pointInRing,
   project,
+  simplifyPath,
+  simplifyToBudget,
   tilesFor,
   unproject,
 } from './tileProjection';
@@ -204,5 +206,89 @@ describe('pointInRing', () => {
   it('answers false for a point that is not a point', () => {
     expect(pointInRing({ lat: 'north', lng: 5 }, square)).toBe(false);
     expect(pointInRing(null, square)).toBe(false);
+  });
+});
+
+describe('simplifyPath', () => {
+  it('drops points that sit on a straight line', () => {
+    const line = [
+      { x: 0, y: 0 },
+      { x: 10, y: 0 },
+      { x: 20, y: 0 },
+      { x: 30, y: 0 },
+    ];
+
+    expect(simplifyPath(line, 1)).toEqual([
+      { x: 0, y: 0 },
+      { x: 30, y: 0 },
+    ]);
+  });
+
+  it('keeps a corner', () => {
+    const corner = [
+      { x: 0, y: 0 },
+      { x: 10, y: 0 },
+      { x: 20, y: 0 },
+      { x: 20, y: 20 },
+    ];
+    const out = simplifyPath(corner, 1);
+
+    expect(out).toContainEqual({ x: 20, y: 0 });
+    expect(out.length).toBe(3);
+  });
+
+  it('always keeps both ends', () => {
+    const wiggle = Array.from({ length: 40 }, (_, i) => ({ x: i, y: i % 2 }));
+    const out = simplifyPath(wiggle, 10);
+
+    expect(out[0]).toEqual(wiggle[0]);
+    expect(out[out.length - 1]).toEqual(wiggle[wiggle.length - 1]);
+  });
+
+  it('smooths tremor at a loose tolerance but not a tight one', () => {
+    const tremor = Array.from({ length: 60 }, (_, i) => ({ x: i * 4, y: i % 2 === 0 ? 0 : 1.5 }));
+
+    expect(simplifyPath(tremor, 0.2).length).toBeGreaterThan(simplifyPath(tremor, 6).length);
+  });
+
+  it('passes short paths through untouched', () => {
+    const pair = [
+      { x: 0, y: 0 },
+      { x: 5, y: 5 },
+    ];
+
+    expect(simplifyPath(pair, 1)).toEqual(pair);
+    expect(simplifyPath([], 1)).toEqual([]);
+  });
+});
+
+describe('simplifyToBudget', () => {
+  it('brings a long freehand trail inside the budget', () => {
+    /* A circle sampled 500 times, which is roughly what a dragged lasso produces. */
+    const trail = Array.from({ length: 500 }, (_, i) => {
+      const angle = (i / 500) * Math.PI * 2;
+      return { x: 200 + Math.cos(angle) * 150, y: 200 + Math.sin(angle) * 150 };
+    });
+    const out = simplifyToBudget(trail, 60);
+
+    expect(out.length).toBeLessThanOrEqual(60);
+    /* Still recognisably the ring, not three points. */
+    expect(out.length).toBeGreaterThan(8);
+  });
+
+  it('never exceeds the budget even for a path that is all corner', () => {
+    const zigzag = Array.from({ length: 400 }, (_, i) => ({ x: i * 20, y: i % 2 === 0 ? 0 : 400 }));
+
+    expect(simplifyToBudget(zigzag, 60).length).toBeLessThanOrEqual(60);
+  });
+
+  it('leaves a path already inside the budget alone', () => {
+    const triangle = [
+      { x: 0, y: 0 },
+      { x: 100, y: 0 },
+      { x: 50, y: 80 },
+    ];
+
+    expect(simplifyToBudget(triangle, 60)).toEqual(triangle);
   });
 });

@@ -507,14 +507,13 @@ export const SCHEDULE_TAB_CONFIGS = {
      * with `applyFooterStats` left at its default, so the numbers are this tab's, not
      * a neighbour's.
      *
-     * **One label reads differently from the reference**: the patrol presentation
-     * spells the extra bucket `${extra} ${runsheet}` — "Extra Route" on Filter Go —
-     * because on the patrol tab an extra *runsheet* is the thing being distinguished
-     * from a regular one. On a row that is a person, that distinction is not being
-     * drawn and the plain "Extra" of the reference is the better word. Left alone
-     * because `patrolDutyStats` is shared with the tab it was written for.
+     * It was `PATROL` for one edit, which was the closest short variant to hand and
+     * spelled the extra bucket "Extra Route" — `patrolDutyStats` distinguishes an
+     * extra *runsheet* from a regular one, which is a distinction a row that is a
+     * person does not draw. `OFFICER` exists so the word can be plain "Extra" without
+     * changing the tab that rule was written for.
      */
-    footerVariant: SCHEDULE_STATS_FOOTER_VARIANTS.PATROL,
+    footerVariant: SCHEDULE_STATS_FOOTER_VARIANTS.OFFICER,
     resourceAreaHeaderKey: RESOURCE_AREA_HEADER_KEYS.OFFICERS,
     isOverviewTab: false,
     filters: {

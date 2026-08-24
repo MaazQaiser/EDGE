@@ -38,31 +38,25 @@ export const RadiusIcon = () => (
   </svg>
 );
 
-/** No shape yet — a zone somebody assigned site by site, which is a legal way to have one. */
-export const NoShapeIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-    <circle
-      cx="7"
-      cy="7"
-      r="5.3"
+/** The disclosure chevron, rotated by CSS when the list is open. */
+export const ChevronIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+    <path
+      d="M4 6.5 8 10.5l4-4"
       stroke="currentColor"
-      strokeWidth="1.2"
-      strokeDasharray="1.6 2"
-      opacity="0.7"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
     />
   </svg>
 );
 
-/**
- * The warning mark on the coverage panel.
- *
- * A stroked triangle rather than a filled one: the band it sits in is already
- * `surfaceWarningSubtle`, and a solid amber glyph on amber ground is a shape you cannot
- * read. The stroke is dark enough to clear 3:1 against that ground on its own.
- */
-export const AlertIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-    <path d="M8 2.3 14.5 13.3H1.5Z" stroke="#7A5200" strokeWidth="1.3" strokeLinejoin="round" />
-    <path d="M8 6.5v3.1M8 11.2v.7" stroke="#7A5200" strokeWidth="1.4" strokeLinecap="round" />
-  </svg>
-);
+/* `NoShapeIcon` and `AlertIcon` lived here.
+
+   `NoShapeIcon` was the dotted ring on a zone with no shape; the whole glyph column came out
+   of the zone row, so all three marks lost that call site and only the two the solution
+   switch draws survive.
+
+   `AlertIcon` was the coverage panel's warning triangle, in an amber tone and a red one. The
+   panel is gone from Installation Days — the empty controls mark themselves now — and it was
+   this file's only caller, so `prop-types` came off the imports with it. */

@@ -17,6 +17,22 @@ const ROW_HEIGHT = 60;
 const CONTROL_HEIGHT = 44;
 
 /**
+ * The two preference rows are taller than a table row, and deliberately so.
+ *
+ * `ROW_HEIGHT` is a table's rhythm: seven weekday rows and four zone rows are a list, and
+ * a list wants to be scanned down, which means tight. The first group is not a list. It is
+ * two settings — one address, one window — with no header above them and nothing repeating,
+ * so the 8px of air `ROW_HEIGHT` leaves around a 44px control read as two fields crammed
+ * under the page title rather than as the screen's opening statement.
+ *
+ * 76 gives them 16px above and below. The tables keep 60: matching them was tried and the
+ * whole screen went loose, because the same figure that opens a two-row group is slack
+ * repeated eleven times. They are separated by a 56px section gap and a heading, so nothing
+ * reads down from one to the other and the two heights never meet.
+ */
+const PREF_ROW_HEIGHT = 76;
+
+/**
  * The columns, named once because two stacked tables have to agree on them.
  *
  * They used to be written out per rule — `180px 80px 220px` on the weekday rows,
@@ -67,16 +83,16 @@ const ROW_INSET = 24;
 /**
  * The short number fields — radius, need-by, harmonization window — are one size.
  *
- * 96 survived the `±` moving inside the need-by field and the `days` moving inside the
- * window field, which was the thing most likely to force a change: measured, the widest
- * case is three typed digits (`digitsOnly` allows no more) beside a 14px unit inside a
- * 96px shell, and it does not clip. Growing one of them was the alternative and it costs
- * more than it buys — four fields in one column that start at the same x and end at four
- * different ones read as four unrelated controls.
+ * 96 survived the `±` moving inside the need-by field and then the `±` leaving again with
+ * the combobox it was an adornment on: measured, the widest case is three typed digits
+ * (`digitsOnly` allows no more) inside a 96px shell, and it does not clip. Growing one of
+ * them was the alternative and it costs more than it buys — fields in one column that start
+ * at the same x and end at different ones read as unrelated controls.
  *
  * `FIELD_INSET` is the horizontal padding every field on the screen already had from the
- * theme (`10px 14px`). It is named here only because the need-by field has to restate it,
- * for the reason written on `needByField`.
+ * theme (`10px 14px`). It is named here because the two `Select`s have to restate it: their
+ * inset comes from an emotion `styleOverrides` rule injected after this file's JSS, so a
+ * plain declaration loses whatever its specificity and the value has to be forced.
  */
 const FIELD_WIDTH = 96;
 const FIELD_INSET = 14;
@@ -110,6 +126,16 @@ const FIELD_INSET = 14;
  * the point — waiting until it collapses means shipping the unreadable interval in between.
  */
 const STACK_BREAKPOINT = 1000;
+
+/**
+ * The zone panel's width, and the amount the screen moves over to make room for it.
+ *
+ * Wide enough for a 400px map to still be a map, narrow enough that the list it was opened
+ * from stays legible beside it — which is the reason this is a push panel and not an
+ * overlay. At 620 the content column keeps its label and control columns down to a 1280px
+ * viewport and only starts scrolling its tables below that.
+ */
+const PANEL_WIDTH = 620;
 
 /**
  * How far a focused control has to clear the bottom of the scrollport.
@@ -166,7 +192,8 @@ const stackedRow = {
  * So the table is a table. `On` is 56 because it holds a 36px hit area and nothing else.
  * `Officers` takes the slack as `1fr`, because the number of avatars is the one thing here
  * that varies with the data. `Max Shift Hours` is 200: the 96px field, its `hrs`, and the
- * `1–16 hrs` note beside the heading all fit, measured.
+ * range note that used to sit beside the heading all fit, measured. (That note has since
+ * been removed from the column — see the `Max Shift Hours` heading in `index.jsx`.)
  *
  * It **never stacks**, for the same reason as before: there is no prose in any of these cells
  * to lose, and stacking seven rows into two lines each turns a compact table into a screenful.
@@ -188,8 +215,8 @@ const stackedRow = {
  * than the 56 it started at. Measured, 56 left 46px between the checkbox and the day it belongs
  * to — track slack plus the gap — which is the exact distance this layout is trying to remove.
  * `Day` at 132, which holds `Wednesday` at 14px with room. `Max Shift Hours` at 210, sized to its
- * *heading* rather than its field: the label, its tooltip button and the `1–16 hrs` note together
- * are wider than the 96px input beneath them.
+ * *heading* rather than its field: the label, its tooltip button and the range note it carried at
+ * the time together are wider than the 96px input beneath them.
  */
 /**
  * **One template for the whole screen, and the day table finally uses it.**
@@ -273,9 +300,54 @@ const TABLE_WIDTH = COLUMN_LABEL + COLUMN_MIDDLE + COLUMN_CONTROL + COLUMN_GAP *
  */
 const DAY_TABLE_MIN_WIDTH = COLUMN_LABEL + 132 + COLUMN_CONTROL + COLUMN_GAP * 2 + ROW_INSET * 2;
 
+/**
+ * A stepper button, at whichever size the control beside it is.
+ *
+ * Two callers at two sizes — the zone panel's reach field is 36, the need-by field is 44 —
+ * and they were about to be two copies of the same nine declarations. A square button whose
+ * only variable is its edge is exactly the thing to write once: the pair drifting apart is
+ * how one of them ends up with a different border or a different disabled colour than the
+ * field it is attached to.
+ */
+const stepButton = (theme, size) => ({
+  minWidth: `${size}px`,
+  width: `${size}px`,
+  height: `${size}px`,
+  padding: 0,
+  borderRadius: '8px',
+  border: `1px solid ${theme.palette.borderStrong1}`,
+  backgroundColor: theme.palette.surfaceWhite,
+  color: theme.palette.textSecondary1,
+  fontSize: '16px',
+  lineHeight: 1,
+  '&:hover': { backgroundColor: theme.palette.surfaceGreySubtle },
+  /**
+   * Spent, at the bound the button cannot cross.
+   *
+   * **The border greys with the glyph**, not just the glyph. A dead button that keeps a
+   * `borderStrong1` edge and loses only its symbol reads as a button whose label failed to
+   * render. Both ends of the pair going quiet is what says "this is as far as the value
+   * goes" — which is the whole reason the `3–14` footnote could be dropped from the row.
+   *
+   * A note for the next person measuring this: `getComputedStyle` in a Claude Code browser
+   * pane reported the *enabled* colour on the disabled button while its own inline
+   * `style` attribute plainly said otherwise, so the value it returns for these buttons
+   * cannot be trusted. This rule was confirmed by looking at a screenshot at the minimum,
+   * which is the check to repeat rather than another probe.
+   */
+  '&.Mui-disabled': {
+    color: theme.palette.textDisabled,
+    borderColor: theme.palette.borderSubtle2,
+  },
+});
+
 export const useStyles = makeStyles((theme) => ({
   wrapper: {
     display: 'flex',
+    /* Paired with `wrapperShifted`. `margin-right` is what moves the column: `marginLeft`
+       stays `auto`, so it re-centres in whatever space is left rather than being dragged
+       off the left edge. */
+    transition: 'margin-right 240ms cubic-bezier(0.4, 0, 0.2, 1)',
     flexDirection: 'column',
     flex: '1',
     width: '100%',
@@ -310,6 +382,26 @@ export const useStyles = makeStyles((theme) => ({
        enough to make this a scroll container, and that alone defeats the sticky
        footer below: the footer would pin to the bottom of a box that never scrolls,
        which is precisely where it already sat. */
+  },
+
+  /**
+   * The screen, with the zone panel open.
+   *
+   * A push rather than an overlay, and that is the point: a zone is defined *against* the
+   * zones that already exist, so covering the list with a scrim hides the only context the
+   * new one has. The content moves over and stays readable.
+   *
+   * `!important` on the margin because `wrapper` sets the `margin` **shorthand** (`0 auto`),
+   * and a shorthand beats a longhand at equal specificity whichever order they are injected
+   * in — the same collision that made the shift silently do nothing the first time.
+   */
+  wrapperShifted: {
+    marginRight: `${PANEL_WIDTH}px !important`,
+    [`@media (max-width: ${PANEL_WIDTH + 560}px)`]: {
+      /* Below this the remaining column is too narrow to be worth keeping, so the panel
+         takes the screen rather than squeezing the content to a sliver. */
+      marginRight: '0 !important',
+    },
   },
 
   /* No rule under the intro, and none under either section heading — see the note above
@@ -399,7 +491,10 @@ export const useStyles = makeStyles((theme) => ({
    * closes the group the way the day table's column header closes its own.
    */
   sectionFirst: {
-    paddingTop: '24px',
+    /* 32, up from 24. The rows below grew their own air (see `PREF_ROW_HEIGHT`) and at 24
+       the title sat closer to the first field than the field sat to the second one, which
+       reads as the title belonging to that one row rather than to the group. */
+    paddingTop: '32px',
     '& > *:first-child': {
       borderTop: `1px solid ${theme.palette.borderSubtle1}`,
     },
@@ -442,7 +537,7 @@ export const useStyles = makeStyles((theme) => ({
   },
 
   /**
-   * `mi`, `days`, and the `±` in front of the need-by field.
+   * `mi`, `days`, and `hrs` — the words that annotate a number.
    *
    * This rule went missing with the weekday table it used to sit beside, and the failure
    * was silent in the worst way: `classes.unit` became `undefined`, the class attribute
@@ -609,7 +704,7 @@ export const useStyles = makeStyles((theme) => ({
     /* A floor, not a fixed height. Releasing it when the row stacks is handled inside
        `stackedRow`, deliberately not with a second `[STACK_QUERY]` key here — see the note
        on `STACK_QUERY` for what happened the first time it was written in two places. */
-    minHeight: `${ROW_HEIGHT}px`,
+    minHeight: `${PREF_ROW_HEIGHT}px`,
     borderBottom: `1px solid ${theme.palette.borderSubtle1}`,
   },
 
@@ -672,6 +767,120 @@ export const useStyles = makeStyles((theme) => ({
     },
   },
 
+  /**
+   * The need-by cell: **`3 ──●────── 14   ±7 days`.**
+   *
+   * A track, its two bounds, and the value beside it. Third design for this row; the argument
+   * is written out at the call site in `index.jsx`, and the short version is that the setting
+   * is a *tolerance*, so the control should be a quantity you position rather than a number
+   * you count.
+   *
+   * One line, inside `CONTROL_HEIGHT`, which is what keeps the row at `PREF_ROW_HEIGHT` and
+   * the two top rows the same height. MUI's `valueLabelDisplay` was the other way to put the
+   * number at the thumb and it wants ~20px above the rail, which this row has not got; the
+   * value sits after the track instead, where it also holds still while the thumb moves.
+   */
+  needByCell: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    height: `${CONTROL_HEIGHT}px`,
+  },
+
+  /**
+   * The bounds, at the ends of the track.
+   *
+   * `rangeText`'s grey, and here it finally has an honest job. As a `3–14` footnote beside a
+   * field it was a limit stated in prose, in the palest type on the screen, describing a rule
+   * the control did not enforce until you hit it. Labelling the two ends of the scale it is a
+   * bound *of* is what a scale label is for.
+   */
+  needByBound: {
+    '&.MuiTypography-root': {
+      color: theme.palette.textPlaceholder,
+      whiteSpace: 'nowrap',
+      /* Both ends reserve the wider label's width, so the track's ends do not shift between
+         a one- and a two-digit bound. */
+      minWidth: '15px',
+      textAlign: 'center',
+    },
+  },
+
+  /**
+   * The track, on the app's own slider spec.
+   *
+   * Taken from `runSheets/assignHits`, which is where this app already styles `MuiSlider`:
+   * 5px rail in `surfaceGreySubtle`, brand fill, a 16px white thumb with a 2px brand border.
+   * Restated rather than imported, because that sheet belongs to a page and not to a control
+   * — but the numbers are theirs, so the two read as one product.
+   *
+   * `padding: 0`, unlike theirs, and that is the one real deviation: MUI pads a slider 13px
+   * vertically for touch, which inside a 44px flex row puts the rail off centre. The 16px
+   * thumb's own `::after` is what carries the 24px pointer target, so the target survives the
+   * padding coming off.
+   */
+  needBySlider: {
+    '&.MuiSlider-root': {
+      flex: 1,
+      /* Enough track for twelve steps to read as a scale. The cell is 352 wide and the bounds
+         and the value take ~110 of it. */
+      minWidth: '120px',
+      height: '5px',
+      padding: 0,
+      /**
+       * **8px each side, and it is a collision fix rather than spacing.**
+       *
+       * A slider thumb is centred on its own value, so at the minimum half of it — 8 of its
+       * 16px — hangs off the left end of the rail. Measured at `3`: the thumb spanned x
+       * 489–505 and the `3` label 485–492, so the glyph sat on top of the number labelling
+       * the end it had reached. The cell's 10px `gap` cannot fix this, because the gap is
+       * between the *rail* and the label and the thumb is outside the rail.
+       */
+      marginLeft: '8px',
+      marginRight: '8px',
+      color: theme.palette.surfaceBrand,
+      borderRadius: '4px',
+    },
+    '& .MuiSlider-rail': {
+      opacity: 1,
+      backgroundColor: theme.palette.surfaceGreySubtle,
+    },
+    '& .MuiSlider-thumb': {
+      width: '16px',
+      height: '16px',
+      backgroundColor: theme.palette.surfaceWhite,
+      border: `2px solid ${theme.palette.borderBrand}`,
+      '&:hover, &.Mui-focusVisible': {
+        boxShadow: `0px 0px 0px 6px ${theme.palette.surfaceBrandSubtle}`,
+      },
+      '&.Mui-active': {
+        boxShadow: `0px 0px 0px 8px ${theme.palette.surfaceBrandSubtle}`,
+      },
+    },
+  },
+
+  /**
+   * The live value, after the track.
+   *
+   * **The `±` is back, and this time it is carrying something.** Inside the old field it was a
+   * glyph floating in front of a digit: the row read `± 3` while the value you could select,
+   * copy or hear announced was `3`. Beside a scale whose ends are plainly 3 and 14, `±7 days`
+   * is the one reading that cannot be confused with the numbers either side of it — seven
+   * *either way*, not seven out of fourteen.
+   *
+   * `subtitle2` weight, so it is the heaviest thing in the cell. It is the value; the track is
+   * only how you set it.
+   */
+  needByValue: {
+    '&.MuiTypography-root': {
+      color: theme.palette.textSecondary1,
+      whiteSpace: 'nowrap',
+      /* Reserves the two-digit width, so the track does not shorten as the value grows. */
+      minWidth: '58px',
+      textAlign: 'right',
+    },
+  },
+
   /* One cell shape for every row whose control is a short number followed by its unit
      and its range: the radius, the need-by window and the custom window. It was three
      copies of this rule under three names, which is how the three drifted apart. */
@@ -727,7 +936,7 @@ export const useStyles = makeStyles((theme) => ({
      * planner can interpret. The whole value is on the input's `title` and printed in full
      * in the map dialog.
      *
-     * No specificity fight to win here, unlike `needByField`: the theme's `MuiTextField`
+     * No specificity fight to win here, unlike the two `Select`s: the theme's `MuiTextField`
      * override says a great deal about `.MuiInputBase-input` but nothing about
      * `text-overflow`, so there is no competing declaration for emotion's later injection
      * to beat. Confirmed with `getComputedStyle` rather than assumed.
@@ -739,9 +948,9 @@ export const useStyles = makeStyles((theme) => ({
     /* 6px, not the theme's 14. The buttons are 28px each and the field is the one control
        on the screen already short of room; recovering 8px of address text costs nothing,
        because a button's own padding is what keeps it off the border rather than the
-       field's inset. `!important` for the reason written on `needByField`: this padding
-       comes from an emotion `styleOverrides` rule injected after this file's JSS, so a
-       plain declaration here loses whatever its specificity. */
+       field's inset. `!important` because this padding comes from an emotion
+       `styleOverrides` rule injected after this file's JSS, so a plain declaration here
+       loses whatever its specificity. */
     '& .MuiInputBase-root': {
       paddingRight: '6px !important',
     },
@@ -887,58 +1096,31 @@ export const useStyles = makeStyles((theme) => ({
     },
   },
 
-  /**
-   * A unit that lives *inside* its field: the `±` in front of the need-by value, and the
-   * `days` after the window value.
-   *
-   * Same 14px and same `textSecondary2` as the `unit` labels that still sit outside a
-   * field, so the screen has one grey for units wherever they happen to be drawn. Against
-   * white that measures 6.76:1, and against the value it annotates — `textPrimary`, which
-   * is what the theme paints `.MuiInputBase-input` — it is plainly the lighter of the two,
-   * which is the whole job: `± 3` has to read as a modified 3, not as a two-part value.
-   *
-   * `disableTypography` on the adornment is what lets this rule set the size and colour
-   * directly. Wrapped in MUI's own `Typography`, the adornment inherits `body1` at 16px
-   * and the theme's `.MuiInputBase-input` colour rule sits at a specificity this file
-   * cannot reach from outside the input.
-   *
-   * The margins are 6 rather than MUI's 8: a sign or a unit belongs to the number it
-   * touches, and 8px of air was enough to make `±` read as a separate label that happened
-   * to be inside the box.
-   */
-  fieldUnit: {
-    '&.MuiInputAdornment-root': {
-      fontSize: '14px',
-      lineHeight: '20px',
-      color: theme.palette.textSecondary2,
-    },
-    '&.MuiInputAdornment-positionStart': { marginRight: '6px' },
-    '&.MuiInputAdornment-positionEnd': { marginLeft: '6px' },
-  },
+  /* `fieldUnit` lived here: the 14px grey for a unit drawn *inside* a field — the `±` in front
+     of the need-by value and the `days` after the harmonization window's. Both fields are gone
+     (the window from the screen, the `±` with the combobox the stepper replaced), so nothing on
+     this screen puts a word inside an input any more. `unit` is the rule for the ones that sit
+     beside a field. */
 
   /**
-   * The need-by combobox: a text field the planner can type into, with the five legal
-   * values behind a chevron.
+   * The need-by field, and it is **44 tall while the seven shift fields stay 36.**
    *
-   * **The padding needs `!important`, and the rule it replaces never once applied.**
+   * `numberField` is the 36px rule, shared by the shift column and the zone panel's reach —
+   * both of which sit in a tight repeating row where 36 is right. This one sits *directly
+   * under the address field*, in the same column of the same two-row group, and 36 against
+   * that field's 44 was the one height mismatch on the screen the eye actually reads: two
+   * adjacent controls, same x, two different sizes. `CONTROL_HEIGHT`'s own note says every
+   * control on the screen is 44 and `numberField` has quietly contradicted it since the
+   * shift column arrived; this is the half of that where it shows.
    *
-   * This used to read `padding: 0 30px 0 12px`, on the theory that MUI's own
-   * `padding-right: 39px` was losing to the theme's blanket `10px 14px`. Measured, the
-   * opposite was true and neither of those was in force: the field was running on MUI's
-   * `9px 39px 9px 9px` the whole time, because Autocomplete writes its inset at
-   * `.css-….MuiAutocomplete-inputRoot.MuiOutlinedInput-root` — three classes to this
-   * rule's two, and emotion is injected after this file's JSS, so a tie would have lost
-   * anyway. The screen looked right, which is exactly why it went unnoticed.
+   * Otherwise `numberField`: 96 wide with `minWidth` restated, because the theme's blanket
+   * `MuiTextField` override sets `minWidth: 220` on every `.MuiInputBase-root` and a narrow
+   * field silently renders 220 and overflows the two buttons beside it. The brand focus ring
+   * has to beat the theme's own outline rule, so it keeps its `!important`.
    *
-   * So the numbers are restated as what they have to be, and forced. 39 on the right is
-   * MUI's own reservation for the chevron and is kept unchanged; 14 on the left is the
-   * inset every other field on this screen has, and it is what the `±` sits against, so
-   * the sign starts on the same x as the radius field's first digit one section up.
-   *
-   * The digit is left-aligned, unlike the radius field, which is right-aligned so the
-   * number sits against the `mi` that follows it. Here the `±` is inside the field
-   * immediately to the digit's left; right-aligning would push the number away from the
-   * sign it belongs to and into the chevron.
+   * The `±` start adornment and MUI's 39px chevron reservation are both gone with the
+   * Autocomplete — the field is a plain `TextField` between two buttons now, so it takes the
+   * theme's own inset like every other field here.
    */
   needByField: {
     width: `${FIELD_WIDTH}px`,
@@ -946,42 +1128,14 @@ export const useStyles = makeStyles((theme) => ({
       minWidth: `${FIELD_WIDTH}px`,
       height: `${CONTROL_HEIGHT}px`,
       maxHeight: `${CONTROL_HEIGHT}px`,
-      padding: `0 39px 0 ${FIELD_INSET}px !important`,
-    },
-    '& .MuiAutocomplete-endAdornment': {
-      right: '6px',
-    },
-    '& .MuiAutocomplete-popupIndicator': {
-      padding: '2px',
-      color: theme.palette.textSecondary2,
-    },
-  },
-
-  /* The five values, in a list the width of the field they drop from. Five one-character
-     options do not need MUI's 16px option rows or its 48px minimum height, and at that
-     size the list would be twice as tall as the row it hangs over. */
-  needByMenu: {
-    '&.MuiAutocomplete-paper': {
-      marginTop: '4px',
       borderRadius: '8px',
-      border: `1px solid ${theme.palette.borderSubtle1}`,
-      backgroundColor: theme.palette.surfaceWhite,
     },
-    '& .MuiAutocomplete-option': {
-      minHeight: 'auto',
-      padding: '6px 12px',
-      fontSize: '14px',
-      color: theme.palette.textSecondary1,
-      /* Was `textBrand` on `surfaceBrandSubtle`, which measures **2.87:1** — the tenant's
-         green on its own pale green is not a text pair. The tint stays, because it is what
-         says "this is the current value"; the label goes to the body colour over it, the
-         same correction the day chips and the window shortcuts already carry. */
-      '&[aria-selected="true"]': {
-        backgroundColor: `${theme.palette.surfaceBrandSubtle} !important`,
-        color: `${theme.palette.textSecondary1} !important`,
-        fontWeight: 500,
-      },
+    '& .MuiInputBase-root.Mui-focused .MuiOutlinedInput-notchedOutline': {
+      borderColor: `${theme.palette.borderBrand} !important`,
     },
+    /* Left, so the digit starts where the column starts and sits against the `days` that
+       follows the `+` button. */
+    '& input': { textAlign: 'left' },
   },
 
   /* Sticky, because Save's top edge lands at y=914 in a 900px viewport. It is
@@ -1149,148 +1303,308 @@ export const useStyles = makeStyles((theme) => ({
      it only has to answer "did my edit register?". Amber or an icon here would
      promise a problem that does not exist. */
   /**
-   * A zone row and its heading, on the same shared row as everything else.
+   * **Zones are horizontal cards now, not table rows.**
    *
-   * Aliases of the day table's rules rather than copies: a zone row and a weekday row are
-   * the same three columns doing the same job, and naming them separately is what keeps
-   * the JSX readable without letting the two drift apart. Neither stacks — see
-   * `gridRowFixed`.
+   * A deliberate break with the rest of the screen, so the reason has to be good enough to
+   * carry it: **a zone is a thing, and the other two groups are lists of settings.** The
+   * weekday table is seven rows of the same shape answering one question per column, which is
+   * what a table is for. A zone is an *object* a planner made — it has a name they chose, an
+   * area they drew, a count that followed from it, and two things they can do to it. Rows
+   * forced that into three columns and a shared grid, which meant the widest cell (a boundary
+   * description) set the column for the narrowest (a two-word name), and the actions sat out
+   * at a column edge 300px from the zone they act on.
+   *
+   * What the card buys, concretely: the name and its meta line are a **block** rather than two
+   * cells, so they stay together and the meta can be as long as it needs; the actions sit at
+   * the card's own right edge, which travels with the card; and there is no header row, since
+   * a card names itself.
+   *
+   * What it costs, stated because the sheet argues the opposite elsewhere: the zones section
+   * no longer shares `FORM_COLUMNS` with the day table, so nothing lines up between the two
+   * groups. That alignment was worth having between two *tables*. This is not one.
    */
-  zoneHeader: {
-    ...gridRowFixed,
-    minWidth: `${DAY_TABLE_MIN_WIDTH}px`,
-    padding: `10px ${ROW_INSET}px`,
-    minHeight: 0,
-    borderBottom: `1px solid ${theme.palette.borderSubtle1}`,
-  },
-
-  zoneRow: {
-    ...gridRowFixed,
-    minWidth: `${DAY_TABLE_MIN_WIDTH}px`,
+  zoneCards: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '10px',
     padding: `0 ${ROW_INSET}px`,
-    minHeight: `${ROW_HEIGHT}px`,
-    borderBottom: `1px solid ${theme.palette.borderSubtle1}`,
   },
 
-  zoneTable: {
-    [STACK_QUERY]: {
-      overflowX: 'auto',
-      paddingBottom: '2px',
+  /**
+   * The card. **Bordered, not filled** — the page surface is white, and greying a card to
+   * separate it from a white page makes the content look disabled rather than grouped.
+   *
+   * **Compact: 52px, down from 72.** The first pass stacked the name over its meta line, which
+   * needed two text lines plus 14px of padding either side and made four zones 288px of screen
+   * to say four names. With the meta beside the name the card holds one line, so its height is
+   * a line of text plus air — and the whole list is legible without scrolling, which is what a
+   * list of four things should be.
+   *
+   * `minHeight` rather than `height`, so a wrapped meta on a narrow panel grows the card
+   * instead of overflowing it; it is what keeps a drawn and an undrawn zone the same size at
+   * any normal width, so the stack does not ripple as boundaries get added.
+   *
+   * The right pad is 8 against the left's 14: the actions are borderless now, so their own
+   * padding is what holds them off the card edge, and repeating 14 there would push them a
+   * visible 6px further in than the text is.
+   */
+  zoneCard: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: '12px',
+    minHeight: '52px',
+    padding: '6px 8px 6px 14px',
+    border: `1px solid ${theme.palette.borderSubtle1}`,
+    borderRadius: '10px',
+    backgroundColor: theme.palette.surfaceWhite,
+    /* The whole card is the hover target for its own actions, so the border answering the
+       pointer is what says "this card, not the one above it". No shadow: nothing here is
+       lifting off the page, and four shadowed cards on a settings screen read as a dashboard. */
+    transition: 'border-color 140ms ease',
+    '&:hover': { borderColor: theme.palette.borderSubtle2 },
+  },
+
+  /**
+   * **Name and meta on one line**, which is what makes the card horizontal rather than a
+   * two-line block that happens to be wide.
+   *
+   * `baseline`, not `center`: the two are different sizes — 14px name, 12px meta — and centring
+   * them leaves the smaller text floating half a pixel high against the larger. Sitting them on
+   * one baseline is what makes the pair read as a single line of text.
+   *
+   * **No separator glyph between them.** A `·` was the obvious thing and it competes with the
+   * `·` the meta already uses to join its own three facts, so the card would have had two
+   * levels of the same mark. The weight and colour step — `subtitle2`/`textSecondary1` against
+   * `body3`/`textPlaceholder` — already says which is the name, and the 10px gap is the join.
+   */
+  zoneCardText: {
+    display: 'flex',
+    alignItems: 'baseline',
+    gap: '10px',
+    minWidth: 0,
+  },
+
+  /* Tight, because the buttons have no borders to space apart any more — 8px between two
+     bordered boxes reads as two controls, 8px between two bare glyphs reads as a gap. */
+  zoneCardActions: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '2px',
+    flexShrink: 0,
+  },
+
+  /**
+   * The two actions, as **bare glyphs on an `IconButton`** — no box around them.
+   *
+   * They were `variant="secondaryGrey"` `Button`s, which drew a bordered 36px square each. Two
+   * boxes on every card meant eight outlined controls down a list of four zones, and an
+   * outline is a promise that something inside is enterable; these are single-press actions on
+   * the card they sit in. Taking the container off leaves the glyph, which is the whole
+   * message, and lets the card breathe at 52px.
+   *
+   * `IconButton` rather than a `Button` stripped of its border: it is the app's own control for
+   * this (23 call sites), it is round, and it already carries the hit area — 18px of glyph in
+   * 6px of pad is a 30px target, and MUI's ripple and focus behaviour come with it. The shape
+   * of the rule follows `releaseInfo/roadmap`'s own edit button: small pad, sized glyph,
+   * hover handled here rather than left to MUI's default.
+   *
+   * **The hover ground is what replaces the border.** With no box at rest, a bare glyph gives
+   * no feedback that it is a control until it moves; a grey disc on hover and on focus is the
+   * cheapest honest affordance, and it appears exactly when the pointer or the keyboard
+   * arrives.
+   *
+   * **Both glyphs are recoloured to `currentColor`.** `edit-icon.svg` ships a `#6A6A70` stroke
+   * and `trash-2.svg` a `#E43F32` one, at 16 and 20 respectively, so left alone the pair would
+   * arrive as one grey and one red icon of different sizes. Forcing both to the button's own
+   * colour and size is what makes them a pair rather than two borrowed assets.
+   */
+  zoneIconButton: {
+    '&.MuiIconButton-root': {
+      padding: '6px',
+      color: theme.palette.textSecondary2,
+      '& svg': { width: '18px', height: '18px', display: 'block' },
+      '& svg path': { stroke: 'currentColor' },
+      '&:hover': { backgroundColor: theme.palette.surfaceGreySubtle },
+      '&.Mui-focusVisible': {
+        backgroundColor: theme.palette.surfaceGreySubtle,
+        outline: `2px solid ${theme.palette.borderBrand}`,
+        outlineOffset: '-2px',
+      },
     },
   },
 
-  zoneRowActions: {
+  /**
+   * Remove, which is the same glyph until you are about to press it.
+   *
+   * **Not red at rest.** Four cards would put four red marks down a settings page, which makes
+   * destruction the loudest thing on a screen whose subject is coverage — and the app's own
+   * trash glyph ships red precisely because it is usually used inside a confirmation, not in a
+   * list. It turns red on hover and on focus, so the warning arrives exactly when the pointer
+   * or the keyboard is on it and not before. That matters more without a border: the colour
+   * change is now the only thing marking which of the two is destructive.
+   */
+  zoneIconButtonDanger: {
+    '&.MuiIconButton-root:hover, &.MuiIconButton-root.Mui-focusVisible': {
+      color: theme.palette.textAlert,
+      backgroundColor: theme.palette.surfaceAlertSubtle,
+    },
+  },
+
+  /* `zoneDays`, `zonePill` and `zonePillIdle` lived here: the weekday chips and the amber
+     "Not used" marker in the Zones table's day column. The column is gone — which days use a
+     zone is set in Installation Days and could not be changed from that table, so it was
+     read-only information in the one place a planner could do nothing with it. The rules went
+     with it rather than staying as classes nothing applies. */
+
+  /* ---------------------------------------- Zones: one solution at a time */
+
+  /**
+   * The section heading and the solution switch, on one line.
+   *
+   * Drawing a boundary and measuring a distance are two different answers to "which sites",
+   * so the section shows one at a time rather than mixing both in a list and describing
+   * both in one paragraph. The switch is what picks; the description under it changes with
+   * it, because a sentence that covers both says nothing precise about either.
+   */
+  zoneSectionHead: {
     display: 'flex',
-    gap: '4px',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: '24px',
+    padding: `0 ${ROW_INSET}px 16px`,
+    flexWrap: 'wrap',
+  },
+
+  zoneSectionHeadText: {
+    display: 'flex',
+    flexDirection: 'column',
+    minWidth: 0,
+  },
+
+  solutionSwitch: {
+    display: 'flex',
+    gap: '2px',
+    padding: '3px',
+    borderRadius: '10px',
+    border: `1px solid ${theme.palette.borderSubtle2}`,
+    backgroundColor: theme.palette.surfaceGreySubtle,
     flexShrink: 0,
+  },
+
+  solutionOption: {
+    '&.MuiButtonBase-root': {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '6px',
+      minHeight: '32px',
+      padding: '0 12px',
+      borderRadius: '7px',
+      border: 0,
+      backgroundColor: 'transparent',
+      color: theme.palette.textSecondary2,
+      fontSize: '13px',
+      fontWeight: 500,
+      lineHeight: '18px',
+      whiteSpace: 'nowrap',
+      '& svg': { width: '14px', height: '14px', display: 'block', flexShrink: 0 },
+      '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.7)' },
+    },
+  },
+
+  solutionOptionOn: {
+    '&.MuiButtonBase-root': {
+      backgroundColor: theme.palette.surfaceWhite,
+      color: theme.palette.textPrimary,
+      boxShadow: '0 1px 2px rgba(16, 24, 40, 0.08)',
+    },
+  },
+
+  /* `zoneUndefined` lived here: the grey "Not defined yet" that stood in the Covers cell
+     when a zone had no shape. Removed on request — the cell reports what a zone covers, and
+     a zone with no shape still covers whatever sites point at it, so the counts on the line
+     below were the answer all along. */
+
+  /**
+   * Adding a zone without opening the map.
+   *
+   * A zone is a name plus, eventually, a shape — and the name is the part the day table
+   * needs. So a planner can create one here, in the list, and define it later; sending them
+   * to a full-screen map to type six characters was making the cheap half of the job as
+   * expensive as the other one.
+   */
+  /* The add-a-zone row, shaped as a card so it lands in the same stack as the zones it is
+     adding to — a dashed edge because it is not a zone yet, and no fill: the grey ground it
+     used to carry was there to separate it from the table rows above, and there are none. */
+  zoneInlineRow: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    /* Taller than a zone card, because it holds a 40px field rather than a line of text — and
+       matching the card's 52 would have left the field 6px of air in a 52px box. It is a
+       different kind of row and does not have to pretend otherwise; it is also only ever on
+       screen one at a time, so nothing reads down a column of them. */
+    minHeight: '60px',
+    padding: '8px 8px 8px 14px',
+    border: `1px dashed ${theme.palette.borderSubtle2}`,
+    borderRadius: '12px',
+    backgroundColor: theme.palette.surfaceWhite,
+  },
+
+  zoneInlineField: {
+    width: '320px',
+    maxWidth: '100%',
+    '& .MuiInputBase-root': {
+      height: '40px',
+      maxHeight: '40px',
+      borderRadius: '8px',
+      backgroundColor: theme.palette.surfaceWhite,
+    },
+  },
+
+  zoneInlineActions: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    marginLeft: 'auto',
   },
 
   /* ------------------------------------------------------------------ Zones */
 
-  /**
-   * A zone row is a preference row: name in the label column, how it was defined in the
-   * middle, what uses it in the control column. Deliberately not a card. The screen's
-   * vocabulary for "a list of things with columns" is a hairline-divided row and the
-   * weekday table directly below is the same shape — bordering these would make one
-   * section look like a different screen.
-   */
-  zoneName: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    minWidth: 0,
-  },
+  /* `zoneName`, `zoneDefinition` and `zoneUse` lived here — the three grid cells of a zone
+     table row. The card has two blocks instead (`zoneCardText`, `zoneCardActions`), because
+     the name and what it covers are one statement about the zone and were only separated by
+     a column boundary. `zoneNameText` and `zoneCovers` survive: the type is unchanged. */
 
-  /**
-   * The shape's own glyph: a polygon for a drawn boundary, a dashed ring for a radius.
-   *
-   * It is not decoration. "How was this zone defined" is the one thing a planner cannot
-   * infer from the name, and it decides which editor opens — so it earns 14px at the head
-   * of the row rather than being spelled out a second time in the middle column.
-   */
-  zoneGlyph: {
-    display: 'flex',
-    flexShrink: 0,
-    color: theme.palette.textSecondary2,
-    '& svg': { width: '14px', height: '14px', display: 'block' },
-  },
+  /* `zoneGlyph` lived here: a 14px polygon / dashed ring / dotted ring at the head of the
+     row, saying how the zone was defined. Removed on request. The argument for it was that
+     "how was this made" is the one thing a name cannot carry — but the Covers cell right
+     beside it already spells the same fact out in words (`Drawn boundary · 8 points`,
+     `12 mi around Fairmont`), so the glyph was a picture of the sentence next to it, and
+     four of them down the column read as bullets on a list that is not one. */
 
+  /* `flexShrink: 0` now that the meta sits beside it: with both able to shrink, a long
+     boundary description would eat into the zone's own name, and the name is the one thing on
+     the card that cannot be inferred from anything else. The meta gives way first. */
   zoneNameText: {
     '&.MuiTypography-root': {
       color: theme.palette.textSecondary1,
+      flexShrink: 0,
       overflow: 'hidden',
       textOverflow: 'ellipsis',
       whiteSpace: 'nowrap',
     },
   },
 
-  zoneDefinition: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '2px',
-    minWidth: 0,
-  },
-
-  /**
-   * Sites *and* filters, because filters are what a zone costs a day.
-   *
-   * `10 + 20 × filters` is the cost model, so "2 sites" and "2 sites, 13 filters" are
-   * different facts and only the second one tells a planner whether a 4-hour Monday can
-   * hold the zone. Reporting the count alone is the mistake §14.4 of the context doc
-   * catches the run flow making with its own headline metric.
-   */
-  zoneCount: {
+  /* What the zone covers, beside its name rather than under it. It is the part that gives way
+     when the card runs out of room — hence the ellipsis and the `minWidth: 0`, which a flex
+     child needs before `overflow` does anything at all. */
+  zoneCovers: {
     '&.MuiTypography-root': {
       color: theme.palette.textPlaceholder,
-      whiteSpace: 'nowrap',
-    },
-  },
-
-  zoneUse: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: '12px',
-    minWidth: 0,
-  },
-
-  zoneDays: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '6px',
-    flexWrap: 'wrap',
-    minWidth: 0,
-  },
-
-  zonePill: {
-    '&.MuiTypography-root': {
-      color: theme.palette.textSecondary2,
-      backgroundColor: theme.palette.surfaceGreySubtle,
-      border: `1px solid ${theme.palette.borderSubtle1}`,
-      borderRadius: '6px',
-      padding: '2px 8px',
-      whiteSpace: 'nowrap',
-    },
-  },
-
-  /**
-   * A zone no day covers, marked on the row rather than only in the panel above.
-   *
-   * The same fact in two places on purpose: the panel says what to do about it, and the
-   * row says which zone it was — a planner scanning four rows should not have to hold the
-   * warning's wording in their head to find the one it meant.
-   *
-   * Text stays `textPrimary` rather than going amber. Amber on `surfaceWarningSubtle` is
-   * around 2:1 and this is the one place on the screen where the colour *is* the message,
-   * so the border and the ground carry it and the words stay readable.
-   */
-  zonePillIdle: {
-    '&.MuiTypography-root': {
-      color: theme.palette.textPrimary,
-      backgroundColor: theme.palette.surfaceWarningSubtle,
-      border: `1px solid ${theme.palette.borderWarning}`,
-      borderRadius: '6px',
-      padding: '2px 8px',
+      minWidth: 0,
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
       whiteSpace: 'nowrap',
     },
   },
@@ -1327,60 +1641,16 @@ export const useStyles = makeStyles((theme) => ({
     maxWidth: '52ch',
   },
 
-  /* ---------------------------------------------------- Coverage, before the run */
-
-  /**
-   * What this configuration cannot do, said in Settings.
-   *
-   * Zone membership and each day's zone are both static, so a stranded zone is a set
-   * difference rather than a result — §14.5 of the context doc wants the run's scope step
-   * to predict instead of describe, and this is the same finding one screen earlier, where
-   * the fix actually is.
-   */
-  coverageBand: {
-    display: 'flex',
-    alignItems: 'flex-start',
-    gap: '10px',
-    padding: '12px 14px',
-    borderRadius: '8px',
-    border: `1px solid ${theme.palette.borderWarning}`,
-    backgroundColor: theme.palette.surfaceWarningSubtle,
-  },
-
-  coverageBandWrap: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '8px',
-    padding: `0 ${ROW_INSET}px 16px`,
-  },
-
-  coverageIcon: {
-    display: 'flex',
-    flexShrink: 0,
-    marginTop: '1px',
-    '& svg': { width: '16px', height: '16px', display: 'block' },
-  },
-
-  coverageText: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '2px',
-    minWidth: 0,
-  },
+  /* The coverage bands are gone from Installation Days — `coverageBand`, `coverageBandWrap`,
+     `coverageIcon`, `coverageText` and `coverageBody` with them. They were three amber panels
+     reporting, from above the table, what the table's own controls already say: a day with no
+     zone is a required select that marks itself, and a zone no day covers is legible from the
+     Zone column of seven rows. `zoneCoverage` still computes all of it — the Covers column
+     reads `byZone` — so nothing was removed from the model, only the paragraphs about it.
+     `coverageTitle` survives: the zones empty state uses it. */
 
   coverageTitle: {
     '&.MuiTypography-root': { color: theme.palette.textPrimary },
-  },
-
-  coverageBody: {
-    '&.MuiTypography-root': { color: theme.palette.textSecondary1, maxWidth: '78ch' },
-  },
-
-  coverageActions: {
-    display: 'flex',
-    gap: '8px',
-    paddingTop: '6px',
-    flexWrap: 'wrap',
   },
 
   /* --------------------------------------------------- The zone cell on a day row */
@@ -1437,23 +1707,55 @@ export const useStyles = makeStyles((theme) => ({
   /**
    * A worked day with no zone yet.
    *
-   * A placeholder rather than a disabled control or an error: the day is legal like this,
-   * it simply cannot receive work, and the coverage panel is where that gets said. Making
-   * it an error would turn switching a day on into a two-step commit.
+   * A placeholder rather than a disabled control: the day is legal like this, it simply
+   * cannot receive work. Refusing to store the day until it had a zone would turn switching a
+   * day on into a two-step commit. What it *is* is an unfilled required field, so it carries
+   * `fieldRequired` and a `Required` note — which is where the coverage band above the table
+   * used to say the same thing from a distance.
    */
+  /* The heading and its required mark share a baseline. */
+  columnLabelRequired: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '2px',
+  },
+
+  /* The select and the note under it. The cell keeps the row's height either way, so a day
+     gaining a zone does not shift the six rows beneath it. */
+  zoneCell: {
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    gap: '4px',
+    width: '100%',
+    minHeight: `${CONTROL_HEIGHT}px`,
+  },
+
+  /**
+   * A mandatory field on a worked day, left empty — the zone select and the shift field
+   * both, which is why this is no longer named for the select.
+   *
+   * The app's error tokens rather than an amber advisory, and the distinction is real: amber
+   * was "this configuration has a gap you should know about", red is "this field is not
+   * filled in". Both cases here are the second one — there is a specific empty control, and
+   * it is right there in the row. It is also the whole of what is left of the coverage panel
+   * that used to say the same thing from above the table.
+   */
+  fieldRequired: {
+    '& .MuiOutlinedInput-notchedOutline': {
+      borderColor: `${theme.palette.borderAlert} !important`,
+    },
+  },
+
+  zoneRequiredNote: {
+    '&.MuiTypography-root': {
+      color: theme.palette.textAlert,
+      fontWeight: 500,
+    },
+  },
+
   zoneSelectEmpty: {
     '& .MuiSelect-select': { color: theme.palette.textPlaceholder },
-  },
-
-  zoneOptionGlyph: {
-    display: 'flex',
-    flexShrink: 0,
-    color: theme.palette.textSecondary2,
-    '& svg': { width: '14px', height: '14px', display: 'block' },
-  },
-
-  zoneOptionMeta: {
-    '&.MuiTypography-root': { color: theme.palette.textPlaceholder, marginLeft: 'auto' },
   },
 
   /* ------------------------------------------------- The zone editor's map */
@@ -1468,15 +1770,39 @@ export const useStyles = makeStyles((theme) => ({
    */
   zoneMapRoot: {
     position: 'relative',
-    /* 400 rather than 440: the dialog also has to hold the mode switch, a name field and a
-       two-column readout, and at 440 the actions row fell below the fold on a 900px screen
-       — which put Save somewhere a planner had to scroll to find. */
-    height: '400px',
+    /**
+     * **The map takes whatever height the panel has spare, and never gives up its last 320px.**
+     *
+     * `flex: 1` rather than the fixed 400px this used to be. The panel is pinned top to
+     * bottom of the viewport, so a fixed height made the drawer's largest single element the
+     * empty part of it: on a 1200px-tall screen the boundary experience has 853px of room
+     * below its label, so 453px of that was white space between the map and the footer.
+     * Growing means 853px of map there and 769px in the radius experience, the difference
+     * being the centre field and the reach row it carries above the map.
+     *
+     * `minHeight` is the floor that the old `flexShrink: 0` was really defending, and the
+     * reason it cannot simply be dropped now that the map grows: a flex item shrinks below
+     * its own size by default, so the moment the content above got taller the 400px surface
+     * was quietly squashed to 234. That is bad on its own and worse downstream — `fitView`
+     * picks a zoom from the height it is handed, so a shorter map silently zoomed out until a
+     * forty-mile territory was rendered across half of Florida.
+     *
+     * So on a short panel the body scrolls rather than the map giving way, which is the same
+     * judgement as before at a lower number: 320 rather than 400, because 400 was chosen when
+     * this was a fixed height in a dialog and a floor only has to be the point below which
+     * the fit stops being readable. Measured at 1280x700 — boundary keeps 353px and nothing
+     * scrolls; radius sits on the floor and the body scrolls 51px, which puts the last 27px
+     * of the map and part of the switcher under the fold. That scroll has to be started off
+     * the map: a wheel over the surface zooms, because `ZoneMap` takes the gesture.
+     */
+    flex: 1,
+    minHeight: '320px',
     borderRadius: '8px',
     overflow: 'hidden',
     border: `1px solid ${theme.palette.borderSubtle1}`,
     backgroundColor: theme.palette.surfaceGreySubtle,
-    cursor: 'crosshair',
+    /* The cursor is set per interaction by the component — a drag that draws and a click
+       that picks are not the same invitation. */
     touchAction: 'none',
     userSelect: 'none',
   },
@@ -1529,10 +1855,12 @@ export const useStyles = makeStyles((theme) => ({
   },
 
   /** Attribution is a condition of using the tiles, so it is not optional chrome. */
+  /* Bottom-*left* now: the switcher took the right corner, and attribution that a control
+     sits on top of is attribution nobody can read. */
   zoneMapAttribution: {
     '&.MuiTypography-root': {
       position: 'absolute',
-      right: '8px',
+      left: '8px',
       bottom: '6px',
       padding: '2px 6px',
       borderRadius: '4px',
@@ -1543,11 +1871,53 @@ export const useStyles = makeStyles((theme) => ({
     },
   },
 
+  /**
+   * The active zone's name, on the map.
+   *
+   * Not decoration and not a duplicate of the panel title: the locked zones each carry
+   * their own grey label, so without this the one shape a planner can actually edit is the
+   * only unnamed thing on screen. The brand dot is the tie — it is the same colour as the
+   * one dashed shape that answers a click.
+   */
+  zoneMapBadge: {
+    position: 'absolute',
+    left: '12px',
+    top: '12px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+    padding: '5px 10px',
+    borderRadius: '6px',
+    border: `1px solid ${theme.palette.borderSubtle1}`,
+    backgroundColor: 'rgba(255, 255, 255, 0.94)',
+    boxShadow: '0 1px 2px rgba(16, 24, 40, 0.06)',
+    maxWidth: 'calc(100% - 88px)',
+  },
+
+  zoneMapBadgeDot: {
+    width: '8px',
+    height: '8px',
+    borderRadius: '50%',
+    flexShrink: 0,
+    backgroundColor: theme.palette.surfaceBrand,
+  },
+
+  zoneMapBadgeText: {
+    '&.MuiTypography-root': {
+      color: theme.palette.textPrimary,
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
+    },
+  },
+
+  /* Top edge, beside the badge: the bottom of the map now carries the switcher and the
+     attribution, and a third floating thing down there is a cluttered corner. */
   zoneMapHint: {
     '&.MuiTypography-root': {
       position: 'absolute',
       left: '12px',
-      bottom: '10px',
+      top: '48px',
       padding: '4px 8px',
       borderRadius: '6px',
       border: `1px solid ${theme.palette.borderSubtle1}`,
@@ -1556,84 +1926,462 @@ export const useStyles = makeStyles((theme) => ({
     },
   },
 
-  /* ------------------------------------------------ The zone editor's dialog */
+  /* ------------------------------------------------- The zone editor's panel */
 
-  zoneDialogContent: {
-    '&.MuiDialogContent-root': {
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '12px',
-      padding: `12px ${ROW_INSET}px 0`,
-      overflow: 'visible',
+  /**
+   * A flat panel on the same screen, not a drawer over it.
+   *
+   * `SideDrawer` was the first attempt and it was a modal: a scrim, a floating paper, and
+   * the zone list — the only context a new zone has — hidden behind it. This is fixed to the
+   * right edge, full height, with a hairline instead of a shadow, and the screen moves over
+   * (`wrapperShifted`). Nothing is dimmed, because nothing here is meant to stop being
+   * usable.
+   *
+   * `zIndex` sits above the app chrome but below MUI's own modals (1300), so a confirm
+   * dialog opened from inside the panel still lands on top of it.
+   */
+  panelSurface: {
+    position: 'fixed',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    width: `${PANEL_WIDTH}px`,
+    maxWidth: '100vw',
+    zIndex: 1200,
+    display: 'flex',
+    flexDirection: 'column',
+    backgroundColor: theme.palette.surfaceWhite,
+    borderLeft: `1px solid ${theme.palette.borderSubtle1}`,
+    transform: 'translateX(0)',
+    transition: 'transform 240ms cubic-bezier(0.4, 0, 0.2, 1)',
+  },
+
+  panelSurfaceClosed: {
+    transform: `translateX(${PANEL_WIDTH}px)`,
+    /* Off-screen *and* out of the tab order, so a closed panel cannot be reached by
+       keyboard — a transform alone leaves every control in it focusable. */
+    visibility: 'hidden',
+  },
+
+  /* Just the heading and its close button. `zonePanelHeader` lived here with a bottom
+     border and a subtitle; both went — see the note in `ZoneEditorPanel`. */
+  zonePanelHeading: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: '12px',
+  },
+
+  zonePanelTitle: {
+    '&.MuiTypography-root': {
+      fontWeight: 600,
+      color: theme.palette.textPrimary,
     },
+  },
+
+  zonePanelClose: {
+    '&.MuiIconButton-root': {
+      marginRight: '-8px',
+      color: theme.palette.textSecondary2,
+      '&:hover': { backgroundColor: theme.palette.surfaceGreySubtle },
+    },
+  },
+
+  zonePanelBody: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '16px',
+    /* The heading lives in here now, so the body owns the top padding the header used to. */
+    padding: '20px 24px 24px',
+    overflow: 'auto',
+  },
+
+  zonePanelFooter: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: '12px',
+    padding: '16px 24px',
+    borderTop: `1px solid ${theme.palette.borderSubtle1}`,
+    backgroundColor: theme.palette.surfaceWhite,
+  },
+
+  zonePanelFooterActions: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    marginLeft: 'auto',
   },
 
   /**
-   * Boundary or radius, as a segmented control rather than two separate dialogs.
+   * **The switcher, and why it is a switcher rather than a mode flag.**
    *
-   * They are two ways of answering one question, and a planner who drew a boundary and
-   * then wants to try a distance instead should not have to cancel, find a different
-   * button and start again — switching method keeps the zone and the name.
+   * Drawing a boundary and setting a distance are two different answers to "which sites",
+   * not two settings on one control: one is a shape you author, the other is a point plus a
+   * number. So the two sides of this render **different interfaces** — different inputs,
+   * different guidance, different map affordances — and this only chooses between them.
+   *
+   * A segmented control rather than tabs: tabs imply two views of one thing, and these are
+   * two ways of making one thing. Full width so it reads as the panel's top-level choice
+   * rather than a control belonging to whatever sits under it.
    */
-  zoneModeGroup: {
-    display: 'inline-flex',
-    padding: '2px',
+  /**
+   * The switcher, floating at the map's bottom-right.
+   *
+   * It moved out of the panel header because of what it actually does: it changes how you
+   * *interact with the map*, so it belongs on the map, near the hand. In the header it read
+   * as a form field — a property of the zone — which it is not; the zone does not care how
+   * its sites were chosen.
+   *
+   * Bottom-right rather than top, so it never sits over the active-zone badge or the zoom
+   * controls, and so it is furthest from the part of a boundary a right-handed drag tends to
+   * finish on.
+   */
+  mapSwitcher: {
+    position: 'absolute',
+    right: '12px',
+    bottom: '12px',
+    display: 'flex',
     gap: '2px',
-    borderRadius: '8px',
+    padding: '3px',
+    borderRadius: '10px',
     border: `1px solid ${theme.palette.borderSubtle2}`,
-    backgroundColor: theme.palette.surfaceGreySubtle,
+    backgroundColor: 'rgba(255, 255, 255, 0.96)',
+    boxShadow: '0 2px 8px rgba(16, 24, 40, 0.12)',
   },
 
-  zoneModeButton: {
-    '&.MuiButton-root': {
-      height: '32px',
-      padding: '0 12px',
-      borderRadius: '6px',
+  mapSwitcherOption: {
+    '&.MuiButtonBase-root': {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '6px',
+      minHeight: '32px',
+      padding: '0 10px',
+      borderRadius: '7px',
       border: 0,
       backgroundColor: 'transparent',
       color: theme.palette.textSecondary2,
-      fontSize: '14px',
+      fontSize: '13px',
       fontWeight: 500,
-      lineHeight: '20px',
-      gap: '6px',
-      '&:hover': { backgroundColor: theme.palette.surfaceWhite },
-      '& svg': { width: '14px', height: '14px', display: 'block' },
+      lineHeight: '18px',
+      whiteSpace: 'nowrap',
+      '& svg': { width: '14px', height: '14px', display: 'block', flexShrink: 0 },
+      '&:hover': { backgroundColor: theme.palette.surfaceGreySubtle },
     },
   },
 
-  zoneModeButtonOn: {
-    '&.MuiButton-root': {
-      backgroundColor: theme.palette.surfaceWhite,
+  mapSwitcherOptionOn: {
+    '&.MuiButtonBase-root': {
+      backgroundColor: theme.palette.surfaceBrandSubtle,
       color: theme.palette.textPrimary,
-      boxShadow: '0 1px 2px rgba(16, 24, 40, 0.08)',
     },
   },
 
-  zoneEditorTools: {
-    display: 'flex',
-    alignItems: 'flex-end',
-    justifyContent: 'space-between',
-    gap: '24px',
-    flexWrap: 'wrap',
-  },
+  /* ------------------------- What the shape caught, under the name that owns it */
 
-  zoneEditorField: {
+  /**
+   * **Not a card any more, and no longer above the name field.**
+   *
+   * It sat between a bordered field and a bordered map: three outlined blocks stacked on a
+   * white surface, the least important of them framed exactly as strongly as the other two.
+   * A border around one line of text is the definition of chrome doing nothing, so the box
+   * is gone — the field and the map are the only framed things in the panel now, which is
+   * the right count. Measured, the block went from 50px to 28px collapsed, and the 22px
+   * goes to the map.
+   *
+   * The alternative was keeping the box and lightening it — a `surfaceGreySubtle` fill with
+   * no border. Rejected: the page surface here is white, a grey panel inside it reads as a
+   * disabled region, and it would still be a block competing with the map for the eye.
+   */
+  includedBar: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '6px',
+    /**
+     * **Cannot shrink, for the same reason as before the box came off.**
+     *
+     * The expanded list below is a scroll container, so there is no automatic content
+     * minimum protecting this subtree, and the map's 320px floor takes the remaining room
+     * first: on a 700px-tall panel with the radius experience mounted this was measured at
+     * 2px, a summary line sized to nothing. The body scrolls instead, which is what the
+     * fields above it already force it to do at that height.
+     */
+    flexShrink: 0,
   },
 
-  zoneEditorLabel: {
-    '&.MuiTypography-root': { color: theme.palette.textSecondary1 },
+  /**
+   * The glance: a quiet key, the count in bold, the load in grey, then the disclosure.
+   *
+   * `alignSelf: flex-start` rather than a full-width row. With the card gone there is no
+   * right edge for a chevron to sit against, so the chevron follows the text it opens and
+   * the hover surface is the width of the sentence instead of the width of the panel. The
+   * target is still about 200×28px — the full-width rule existed to beat aiming at a 16px
+   * chevron, and that is beaten here by two orders of magnitude of area.
+   */
+  includedSummary: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    alignSelf: 'flex-start',
+    maxWidth: '100%',
+    minHeight: '28px',
+    /* Pulled back by its own inset, so the hover surface has breathing room without
+       "Included" losing its alignment with the name field's left edge above. */
+    margin: '0 -8px',
+    padding: '0 8px',
+    borderRadius: '6px',
+    border: 0,
+    background: 'none',
+    textAlign: 'left',
+    font: 'inherit',
+    color: 'inherit',
   },
 
-  zoneNameField: {
-    width: `${COLUMN_CONTROL}px`,
+  includedSummaryLive: {
+    cursor: 'pointer',
+    '&:hover': { backgroundColor: theme.palette.surfaceGreySubtle },
+    '&:focus-visible': {
+      outline: `2px solid ${theme.palette.textPrimary}`,
+      outlineOffset: '-2px',
+    },
+  },
+
+  includedLabel: {
+    '&.MuiTypography-root': { color: theme.palette.textSecondary3 },
+  },
+
+  /* The one thing worth reading at a glance, so it is the only bold thing in the block.
+     Tabular figures because a planner redraws and compares — proportional digits make the
+     number jump sideways between two drags that caught 8 and 11 sites. */
+  includedCount: {
+    '&.MuiTypography-root': {
+      color: theme.palette.textPrimary,
+      fontVariantNumeric: 'tabular-nums',
+    },
+  },
+
+  includedDetail: {
+    '&.MuiTypography-root': {
+      color: theme.palette.textPlaceholder,
+      fontVariantNumeric: 'tabular-nums',
+      minWidth: 0,
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
+    },
+  },
+
+  includedEmpty: {
+    '&.MuiTypography-root': { color: theme.palette.textPlaceholder },
+  },
+
+  includedChevron: {
+    display: 'flex',
+    flexShrink: 0,
+    color: theme.palette.textSecondary3,
+    transition: 'transform 160ms ease',
+  },
+
+  includedChevronOpen: {
+    transform: 'rotate(180deg)',
+  },
+
+  /**
+   * Which sites, on demand — hung off a left rule instead of boxed.
+   *
+   * The rule is the only thing tying these rows to the line that opened them now that the
+   * card is gone, and it has to be `borderSubtle2`: a 1px `borderSubtle1` hairline on white
+   * measures about 1.08:1 and is simply not visible. The row separators went for that same
+   * reason — eight invisible lines are eight rows of noise that never resolve into a table —
+   * and each row is already a two-line block, which separates them on its own.
+   *
+   * `paddingTop`, not `marginTop`: this is the child of a `Collapse`, which sizes the
+   * animation from the wrapper's `offsetHeight`, and a top margin is not in that number, so
+   * the last row would be clipped by exactly the gap.
+   */
+  includedList: {
+    paddingTop: '8px',
+    paddingLeft: '11px',
+    marginLeft: '1px',
+    borderLeft: `1px solid ${theme.palette.borderSubtle2}`,
+    /* As wide as a row needs and no wider. Measured: the longest seeded site name is 22
+       characters at 14px (~150px, and a 40-character name would be ~280px), a 12px gap, and
+       "1 visit · 12 filters" at 12px is about 110px — so 420px holds the worst case. Left to
+       span the panel's full 571px the name and its counts ended up 540px apart with nothing
+       between them, which is a lot of eye travel for a pair meant to be read as one fact. */
+    maxWidth: '420px',
+    /* Five two-line rows before it scrolls. Long enough to answer "did it catch the right
+       ones" without the list pushing the map under the footer. */
+    maxHeight: '184px',
+    overflowY: 'auto',
+  },
+
+  includedRow: {
+    display: 'flex',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+    gap: '12px',
+    padding: '4px 0',
+  },
+
+  includedRowMain: {
+    display: 'flex',
+    flexDirection: 'column',
+    minWidth: 0,
+  },
+
+  includedSiteName: {
+    '&.MuiTypography-root': {
+      color: theme.palette.textSecondary1,
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
+    },
+  },
+
+  includedCompany: {
+    '&.MuiTypography-root': { color: theme.palette.textPlaceholder },
+  },
+
+  includedRowMeta: {
+    '&.MuiTypography-root': { color: theme.palette.textPlaceholder, whiteSpace: 'nowrap' },
+  },
+
+  /* ------------------------------------------- The radius centre, and its site */
+
+  centreSelect: {
+    width: '100%',
     '& .MuiInputBase-root': {
       height: `${CONTROL_HEIGHT}px`,
       maxHeight: `${CONTROL_HEIGHT}px`,
       borderRadius: '8px',
     },
+    '& .MuiSelect-select': {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '8px',
+      fontSize: '14px',
+      lineHeight: '20px',
+      padding: `0 32px 0 ${FIELD_INSET}px !important`,
+    },
+    '& .MuiOutlinedInput-notchedOutline': { borderColor: theme.palette.borderSubtle2 },
+    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+      borderColor: theme.palette.borderBrand,
+    },
+  },
+
+  centreSelectEmpty: {
+    '& .MuiSelect-select': { color: theme.palette.textPlaceholder },
+  },
+
+  /**
+   * How far the chosen centre is from where runsheets start.
+   *
+   * Not decoration: a zone centred forty miles from the depot costs eighty miles of the
+   * day before a single filter is changed, and that is invisible on a map at this zoom.
+   * Tabular figures so the number does not jitter as the planner tries different sites.
+   */
+  centreDistance: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+  },
+
+  centreDistanceValue: {
+    '&.MuiTypography-root': {
+      color: theme.palette.textSecondary1,
+      fontVariantNumeric: 'tabular-nums',
+    },
+  },
+
+  /* -------------------------------------------------- Required, and missing */
+
+  /**
+   * A field's label, its required mark, and the tooltip that says why.
+   *
+   * `RequiredAsterik` is the app's own mark and the info button is this screen's own
+   * pattern (it labels Need by Date and Max Shift Hours already). Pairing them means the
+   * asterisk does not have to carry the explanation on its own — a red star tells a planner
+   * *that* something is required and never *what counts as* filled in, which for a shape
+   * drawn on a map is the whole question.
+   */
+  zoneFieldLabel: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+    minHeight: '20px',
+  },
+
+  zoneFieldLabelText: {
+    '&.MuiTypography-root': { color: theme.palette.textPrimary },
+  },
+
+  zoneField: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '6px',
+  },
+
+  /**
+   * The boundary experience's field, whose control happens to be the map.
+   *
+   * It exists because the map there is two levels below the scrolling body — the body's flex
+   * column, then this label-plus-control wrapper — and `flex: 1` on the map alone stops at
+   * this wrapper's own content height, which is the label plus a 320px floor. So the wrapper
+   * grows as well and hands the room on.
+   *
+   * **No `minHeight: 0` here**, deliberately: that would let the wrapper shrink under the
+   * map's floor, and since nothing clips it the map would then overhang a scroll container
+   * whose `scrollHeight` had not counted it — the bottom of the map unreachable rather than
+   * scrolled to. Leaving the automatic content-based minimum means the wrapper cannot get
+   * shorter than the floor, so the body scrolls at the point the map stops growing. The
+   * radius experience needs no equivalent: its map is a direct child of the body.
+   */
+  zoneFieldMap: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '6px',
+    flex: 1,
+  },
+
+  zoneMissingText: {
+    '&.MuiTypography-root': { color: theme.palette.textAlert },
+  },
+
+  /** The map surface, outlined red while the shape it should hold is missing. */
+  zoneMapRootInvalid: {
+    borderColor: theme.palette.borderAlert,
+  },
+
+  /* ------------------------------------------------ The zone editor's dialog */
+
+  /**
+   * The panel's primary input, spanning the panel's content column.
+   *
+   * It was `COLUMN_CONTROL` (352px) — the settings form's control width, borrowed. That
+   * width means something in the three-column rows on the page behind and nothing in a
+   * 620px panel: it left 219px of empty white to the right of the field, and it made the
+   * name read as a short-answer cell rather than the thing the whole panel is naming. The
+   * Included line, the map and the footer all span the full 571px, so the field stopping
+   * short of them was the one thing breaking the panel's right edge.
+   */
+  zoneNameField: {
+    width: '100%',
+    '& .MuiInputBase-root': {
+      height: `${CONTROL_HEIGHT}px`,
+      maxHeight: `${CONTROL_HEIGHT}px`,
+      borderRadius: '8px',
+    },
+  },
+
+  /* Centre and reach side by side: they read as one sentence — "12 miles around Packages
+     Mall" — which is exactly what the zone row will say once this is confirmed. */
+  zoneRadiusInputs: {
+    display: 'grid',
+    gridTemplateColumns: 'minmax(0, 1fr) auto',
+    gap: '16px 24px',
+    alignItems: 'start',
+    [STACK_QUERY]: { gridTemplateColumns: 'minmax(0, 1fr)' },
   },
 
   zoneRadiusRow: {
@@ -1650,107 +2398,25 @@ export const useStyles = makeStyles((theme) => ({
    * question is "does this catch Fairmont or not", and that deserves a button.
    */
   zoneStepButton: {
-    '&.MuiButton-root': {
-      minWidth: '36px',
-      width: '36px',
-      height: '36px',
-      padding: 0,
-      borderRadius: '8px',
-      border: `1px solid ${theme.palette.borderStrong1}`,
-      backgroundColor: theme.palette.surfaceWhite,
-      color: theme.palette.textSecondary1,
-      fontSize: '16px',
-      lineHeight: 1,
-      '&:hover': { backgroundColor: theme.palette.surfaceGreySubtle },
-      '&.Mui-disabled': { color: theme.palette.textDisabled },
-    },
+    '&.MuiButton-root': stepButton(theme, 36),
   },
 
-  /**
-   * Which sites this shape caught, and which one is closest to missing out.
-   *
-   * The readout is the reason either method can be trusted. A boundary or a distance is a
-   * *guess* until it says what it captured, and the nearest excluded site is the number
-   * that decides whether the guess was right — "Fairmont is 1.3 miles outside" is an
-   * argument for changing the radius, where "3 sites" is not an argument for anything.
-   */
-  zoneReadout: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
-    gap: '0 32px',
-    borderTop: `1px solid ${theme.palette.borderSubtle1}`,
-    paddingTop: '12px',
-    [STACK_QUERY]: { gridTemplateColumns: 'minmax(0, 1fr)' },
+  /* The need-by stepper's buttons, square to its 44px field. Same rule, one argument
+     different — see `stepButton`. */
+  stepButtonTall: {
+    '&.MuiButton-root': stepButton(theme, CONTROL_HEIGHT),
   },
 
-  zoneReadoutColumn: {
-    display: 'flex',
-    flexDirection: 'column',
-    minWidth: 0,
-  },
-
-  zoneReadoutHead: {
-    display: 'flex',
-    alignItems: 'baseline',
-    gap: '6px',
-    paddingBottom: '4px',
-  },
-
-  zoneReadoutHeadLabel: {
-    '&.MuiTypography-root': { color: theme.palette.textSecondary2 },
-  },
-
-  zoneReadoutCount: {
-    '&.MuiTypography-root': { color: theme.palette.textPrimary },
-  },
-
-  /** Capped and scrolling rather than growing: a shape can catch all fifteen sites. */
-  zoneReadoutList: {
-    display: 'flex',
-    flexDirection: 'column',
-    maxHeight: '148px',
-    overflowY: 'auto',
-  },
-
-  zoneReadoutRow: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: '12px',
-    padding: '6px 0',
-    borderBottom: `1px solid ${theme.palette.borderSubtle1}`,
-  },
-
-  zoneReadoutName: {
-    '&.MuiTypography-root': {
-      color: theme.palette.textSecondary1,
-      overflow: 'hidden',
-      textOverflow: 'ellipsis',
-      whiteSpace: 'nowrap',
-    },
-  },
-
-  zoneReadoutMeta: {
-    '&.MuiTypography-root': {
-      color: theme.palette.textPlaceholder,
-      whiteSpace: 'nowrap',
-    },
-  },
-
-  zoneReadoutEmpty: {
-    '&.MuiTypography-root': { color: theme.palette.textPlaceholder, padding: '6px 0' },
-  },
-
-  zoneEditorActions: {
-    '&.MuiDialogActions-root': {
-      gap: '12px',
-      padding: `20px ${ROW_INSET}px 20px`,
-    },
-  },
-
-  zoneEditorClear: {
-    marginRight: 'auto',
-  },
+  /* Removed with the pieces they styled, rather than left as classes nothing applies:
+     `zonePanel`/`zoneDialogContent`/`zoneEditor*` (the modal dialog the flat panel replaced),
+     `zoneSwitcher*`/`zoneMode*` (the in-header switcher, now floating on the map),
+     `zoneReadout*` (the two-column in/out table, now the one-line `included*` bar),
+     `zoneMissing`/`zoneMissingIcon` (the red banners — the state is inline now),
+     `zoneCount` and `coverageActions` (the old zone row and warning-band buttons),
+     `zoneCentrePinned` (a dropped pin's coordinates, gone with pin-anywhere centres),
+     `zoneOption*` (the day table's zone-select option rows, which never got built out).
+     `zoneMissingText` and `zoneMapRootInvalid` survive — the footer line and the map's own
+     red outline are what say "not finished" now. */
 
   unsavedText: {
     '&.MuiTypography-root': {

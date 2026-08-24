@@ -1,19 +1,19 @@
 import { Box, Skeleton, TableCell, TableRow, Tooltip, Typography, useTheme } from '@mui/material';
 import dayjs from 'dayjs';
 import PropTypes from 'prop-types';
-import { useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { visitCardLegend } from 'src/app/obx/pages/schedules/helper/visitCardInk';
 import { useTenantLabel } from 'src/helper/utilityHooks';
-import { calendarShiftStatusEnum } from 'src/utils/constants/schedules';
 
 import { dayjsWithStandardOffset } from '../helper';
 import { COMPANIES_COLUMNS, useStyles } from './companies.styles';
+import CompaniesCollapseButton from './CompaniesCollapseButton';
 import CompaniesFilters from './CompaniesFilters';
 import { COMPANIES_VIEW } from './companiesViewRange';
 import CompaniesViewSwitch from './CompaniesViewSwitch';
 import { narrowCompanies, visitsInDateOrder } from './companyVisitFilters';
-import { isCollapsed, MATRIX_DENSITY } from './matrixDensity';
+import { isCollapsed, readMatrixDensity, writeMatrixDensity } from './matrixDensity';
 import { siteTerms } from './siteTerm';
 import { visitCardClassFor } from './visitCardClass';
 
@@ -81,24 +81,35 @@ const SchedulesCompanies = ({
   const legend = useMemo(() => visitCardLegend(theme), [theme]);
 
   /**
-   * **Collapsed, always.** Asked for directly: the packed reading is the view, and
-   * the expand/collapse button is gone from the toolbar with it.
+   * Expanded or collapsed — owned here, not by the pane.
    *
-   * So this is a constant rather than the persisted, switchable state it was — no
-   * `useState`, no storage read, no writer, and no control. The month axis was the
-   * thing the two readings disagreed about, and the sparse case it loses to is the
-   * common one: a location serviced quarterly fills three columns in twelve and
-   * rules whitespace through the other nine (see `matrixDensity.js`, which still
-   * states the trade in full).
-   *
-   * `MATRIX_DENSITY` and both branches below stay. The expanded path is a dozen
-   * lines of `renderMonthCells` reached by one boolean, and keeping it costs a
-   * constant where deleting it costs the ability to look at the axis again — which
+   * This was pinned to a constant for a while, when the packed reading was asked
+   * for as *the* view. The note left at the time said keeping both branches cost a
+   * constant where deleting them cost the ability to look at the axis again, "which
    * is the sort of thing that gets asked for once the packed rows have been lived
-   * with. Flip this to `MATRIX_DENSITY.EXPANDED`, or restore the button, and both
-   * readings are back.
+   * with". It was, so the state and its control come back exactly as they were —
+   * the branches below never moved.
+   *
+   * What did move is the landing: `DEFAULT_MATRIX_DENSITY` is collapsed now, so the
+   * pane opens on the packed reading it opens on today and the button is what asks
+   * for the twelve columns.
+   *
+   * Owned here rather than by the pane, which owns what is true of the *tab*: the
+   * scope and the one fetch that serves it, because every view reads them. This is
+   * true of one view only — the grouped list has no month axis to drop — so lifting
+   * it would put a piece of this component's own layout in a parent that cannot use
+   * it, and hand it to the grouped list as a prop it would have to ignore.
+   *
+   * Persisted rather than held in state alone: the pane is remounted on every
+   * scheduler tab round-trip. See `matrixDensity.js`.
    */
-  const collapsed = isCollapsed(MATRIX_DENSITY.COLLAPSED);
+  const [density, setDensity] = useState(readMatrixDensity);
+  const collapsed = isCollapsed(density);
+
+  const handleDensityChange = useCallback((next) => {
+    setDensity(next);
+    writeMatrixDensity(next);
+  }, []);
 
   /**
    * **Property, not Site** — this view's own word for the physical address.
@@ -332,12 +343,12 @@ const SchedulesCompanies = ({
       view={view}
       viewSwitch={<CompaniesViewSwitch value={view} onChange={onViewChange} />}
       leadingSwitch={groupingSwitch}
-      /* No `filterAction`. It carried `CompaniesCollapseButton`, beside the filters
-         and behind their separator — the density choice is pinned to collapsed now
-         (see `collapsed` above), so there is nothing for that slot to hold and
-         `CompaniesFilters` draws neither the button nor the rule that fenced it off.
-         The slot itself stays: it is the shape any future view-local control takes,
-         and the grouped list already threads nothing into it. */
+      /* The one control that belongs to this view rather than to the tab: it changes
+         how the rows are *drawn*, where everything to its left changes which rows are
+         on screen. `CompaniesFilters` fences it off behind its own rule for that
+         reason, and draws neither when the slot is empty — which is what the grouped
+         list, having no month axis to fold, threads in. */
+      filterAction={<CompaniesCollapseButton value={density} onChange={handleDensityChange} />}
     />
   );
 

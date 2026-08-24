@@ -63,7 +63,7 @@ import { STOP_PIN_PATH } from './MapPins';
  * pin and a 16px strip pin be one component: the geometry is a `viewBox`, so the only thing
  * that changes between them is the box CSS puts it in.
  */
-export const StopPinIcon = ({ number, tone, className, maskId }) => (
+export const StopPinIcon = ({ number, tone, className, maskId, blank }) => (
   <Box
     component="svg"
     viewBox="0 0 20 20"
@@ -82,17 +82,35 @@ export const StopPinIcon = ({ number, tone, className, maskId }) => (
       strokeWidth="2"
       mask={`url(#${maskId})`}
     />
-    <text
-      x="10"
-      y="8.2"
-      textAnchor="middle"
-      dominantBaseline="central"
-      fill="#FFFFFF"
-      fontSize="9"
-      fontWeight="600"
-    >
-      {number}
-    </text>
+    {/**
+     * **A numeral, or a plain circle — never an empty teardrop.**
+     *
+     * `number` is absent for a stop that has no place in a sequence: a spilled visit, or
+     * one waiting in the not-placed tray. Leaving the `<text>` empty in that case drew the
+     * teardrop with nothing inside it, which read as a numbered pin that had lost its
+     * number rather than as a mark that was never going to carry one — the same shape
+     * asking a question it had no answer for.
+     *
+     * The dot is the map's own convention for a point with no ordinal: `StartPin`'s badge
+     * centres a small glyph the same way. A pin that cannot say *which stop this is in the
+     * sequence* says *a stop is here* instead, which is the true and complete fact about
+     * a visit that has no sequence.
+     */}
+    {number ? (
+      <text
+        x="10"
+        y="8.2"
+        textAnchor="middle"
+        dominantBaseline="central"
+        fill="#FFFFFF"
+        fontSize="9"
+        fontWeight="600"
+      >
+        {number}
+      </text>
+    ) : blank ? null : (
+      <circle cx="10" cy="8.2" r="2.75" fill="#FFFFFF" />
+    )}
   </Box>
 );
 
@@ -101,6 +119,15 @@ StopPinIcon.propTypes = {
   tone: PropTypes.object.isRequired,
   className: PropTypes.string,
   maskId: PropTypes.string.isRequired,
+  /**
+   * True for a mark that is not a visit at all — `DayPane`'s base/start and base/end
+   * anchors, which pass no `number` for a different reason than an excluded stop does
+   * (there is nothing to be a sequence position for, rather than nothing *assigned*).
+   * The circle fallback below is the fix for a *visit* with no ordinal; an anchor was
+   * never asking that question, so it opts out and stays the plain teardrop it always
+   * was.
+   */
+  blank: PropTypes.bool,
 };
 
 /**

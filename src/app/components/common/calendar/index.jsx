@@ -990,16 +990,25 @@ const CalendarHeaderToolbar = ({
             sits on. Rendered in one place or the other, never both. */}
         {toolbarLeftContent && !leadsWithToggles && dateNavigator}
         {toolbarRightContent}
-        {/* **D / W / M**, not Day / Week / Month. Three words are three of the widest
-            things in a row that now also carries a labelled grouping toggle, a date
-            range and two page actions, and the words were the most compressible of
-            them: the initials are unambiguous *because* the three are always shown
+        {/* **Initials only when the row is actually crowded.**
+            
+            `D / W / M` was introduced because three words are three of the widest
+            things in a row that *also* carries a labelled grouping toggle, a date
+            range and two page actions — the words were the most compressible of them,
+            and the initials are unambiguous because the three are always shown
             together and always in that order.
+            
+            That reasoning is about the crowded row, and it was being applied to every
+            row. A surface with nothing in the leading slot — the person tab is the one
+            that made this visible — has no grouping toggle to make room for, so it
+            pays the legibility cost of initials and buys nothing with it. The slot's
+            own emptiness is the test, so the two can never disagree about whether the
+            row is full.
 
-            Each keeps its full name in a tooltip and in `aria-label`, so nothing is
-            lost to anyone reading the control rather than glancing at it — the
-            Tooltip wraps the *button*, never a bare glyph, for the ref reason noted
-            on the grouping switch. */}
+            Either way each keeps its full name in a tooltip and in `aria-label`, so
+            nothing is lost to anyone reading the control rather than glancing at it —
+            the Tooltip wraps the *button*, never a bare glyph, for the ref reason
+            noted on the grouping switch. */}
         {calendarView !== TIME_GRID.LIST && (
           <ToggleButtonGroup
             value={calendarView}
@@ -1020,7 +1029,9 @@ const CalendarHeaderToolbar = ({
                     aria-label={fullLabel}
                     onClick={handleChangeCalenderView(view.value)}
                   >
-                    {t(`obx.schedules.calendar.view.${view.short}`)}
+                    {toolbarLeadingContent
+                      ? t(`obx.schedules.calendar.view.${view.short}`)
+                      : fullLabel}
                   </ToggleButton>
                 </Tooltip>
               );

@@ -4,7 +4,7 @@ import { ThemeProvider, useTheme } from '@mui/material/styles';
 import { ReactComponent as CancelIcon } from 'assets/svg/cancelHit.svg';
 import { ReactComponent as WarningIcon } from 'assets/svg/warningCalander.svg';
 import PropTypes from 'prop-types';
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
@@ -66,6 +66,7 @@ import { ReactComponent as AlertIcon } from 'src/assets/svg/DedicatedDuty/alertC
 import { ReactComponent as NotesIcon } from 'src/assets/svg/notesStatus.svg';
 import { ReactComponent as AccessTimeIcon } from 'src/assets/svg/officerOrangeIcon.svg';
 import { ReactComponent as RunsheetIcon } from 'src/assets/svg/runsheetHit.svg';
+import { ReactComponent as SiteHitIcon } from 'src/assets/svg/siteHit.svg';
 import { ReactComponent as UnassignedOfficerIcon } from 'src/assets/svg/unassigned-officer.svg';
 import { ReactComponent as UnassignedIcon } from 'src/assets/svg/UnassignedIcon.svg';
 import { useTenantLabel } from 'src/helper/utilityHooks';
@@ -84,6 +85,36 @@ import {
 import { getRouteVisitCount } from './routeVisitCount';
 import { resolveScheduleWindowTerm } from './scheduleWindowTotal';
 import { APPLY_PHASE } from './useApplyMotion';
+
+/* ---------- Apply, on the grid: the four numbers the sequence is built from ----------
+   They belong together because they have to add up: `useApplyMotion` holds each beat open
+   for a fixed time, and a wave or a flight that outlasts its beat is cut off mid-motion.
+   `SETTLE_MS` covers one sweep plus `APPLY_WAVE_MS`; `LAND_MS` covers the longest stagger
+   plus `APPLY_FLIGHT_MS`. Change one here and check the pair over there. */
+
+/**
+ * How much later the rightmost card's gloss starts than the leftmost card's.
+ *
+ * The wave is the difference between *a computation crossing the grid* and *every card
+ * lighting up at once*, and it only reads as a crossing if the spread is a decent fraction
+ * of one card's own pass — 300ms against an 1800ms sweep.
+ */
+const APPLY_WAVE_MS = 300;
+
+/** One card's journey to its new day. */
+const APPLY_FLIGHT_MS = 620;
+
+/** Between one card leaving and the next in the same route, so a day fills top to bottom. */
+const APPLY_LANDING_STAGGER_MS = 50;
+
+/**
+ * How many frames the landing pass will wait for the grid to place the moved cards.
+ *
+ * Three is a handful of milliseconds and covers a timeline that sizes itself a frame or two
+ * behind React. Past that the flight is given up on and the cards rise into place instead —
+ * an animation that is late is worse than a plainer one that is on time.
+ */
+const APPLY_LANDING_ATTEMPTS = 3;
 
 const DUTY_COLOR_CLASS = {
   [SCHEDULE_DUTIES.DEDICATED]: 'dutyGreen',
@@ -943,9 +974,10 @@ const ScheduleCalendarGrid = ({
 
   /*
     Apply, watched rather than described. Two beats, driven by `useApplyMotion`:
-    every visit card settles and shimmers while the schedule is recomputed, then the
-    moved ones land on their own route's day, staggered in that route's order so a
-    column fills top to bottom.
+    every visit card settles and a gloss crosses it while the schedule is recomputed, then
+    the moved ones **fly** to their route's day — lifted out of the column they were in,
+    carried across, and set down — staggered in that route's order so a column fills top to
+    bottom.
 
     Painted onto mounted nodes for the same reason the two effects above are:
     FullCalendar caches rendered event content, so a prop threaded through
@@ -960,40 +992,359 @@ const ScheduleCalendarGrid = ({
   const applyPhase = applyMotion?.phase;
   const applyMoves = applyMotion?.moves;
 
-  useEffect(() => {
-    const nodes = document.querySelectorAll('[data-visit-id]');
+  /**
+   * The movers, photographed on the day they are leaving.
+   *
+   * Keyed by visit id: the card's rectangle at the moment it lifted off, and a **clone of the
+   * card itself**. Both are taken during the departing beat, which is the last moment the old
+   * arrangement exists — and taking the clone *then*, rather than at landing, is what makes
+   * the arrival independent of everything that happens to the real card in between. The grid
+   * may re-render it, re-key it, or throw it away; the flight is a photograph and does not
+   * care.
+   *
+   * This is the second design of this animation. The first measured and animated the real
+   * card after the move, and depended on two things that are FullCalendar's to break rather
+   * than ours to rely on: that a visit's element survives a change of day, and that nothing
+   * between the card and the grid clips. Neither held, and the beat played to an empty room.
+   */
+  const applyDeparturesRef = useRef(new Map());
+
+  /**
+   * Live flights and the state to put back when they end.
+   *
+   * `ghosts` are the copies flying, `hidden` are the real cards holding still underneath them,
+   * and both have to be undone by *something* — a finished flight, a phase reset, or an
+   * unmount mid-sequence. A card left at `opacity: 0` because its flight was interrupted is a
+   * visit that has vanished from the schedule, which is a considerably worse bug than a
+   * missing animation.
+   */
+  const applyFlightsRef = useRef({ animations: [], ghosts: [], hidden: [], layer: null });
+
+  /** A pending frame retry of the landing measurement — see `runLanding`. */
+  const applyRetryRef = useRef(null);
+
+  /** Visit ids already flown, so a re-render mid-beat cannot fly one of them twice. */
+  const applyFlownRef = useRef(new Set());
+
+  const endApplyFlights = useCallback(() => {
+    const state = applyFlightsRef.current;
+    state.animations.forEach((animation) => animation.cancel());
+    state.ghosts.forEach((ghost) => ghost.remove());
+    state.hidden.forEach((node) => node.style.removeProperty('opacity'));
+    if (state.layer) state.layer.remove();
+    applyFlightsRef.current = { animations: [], ghosts: [], hidden: [], layer: null };
+  }, []);
+
+  useEffect(() => endApplyFlights, [endApplyFlights]);
+
+  useLayoutEffect(() => {
+    const reset = (node) => {
+      delete node.dataset.applying;
+      node.style.removeProperty('animation-delay');
+      node.style.removeProperty('--apply-delay');
+    };
 
     if (!applyPhase || applyPhase === APPLY_PHASE.IDLE) {
-      nodes.forEach((node) => {
-        delete node.dataset.applying;
-        node.style.removeProperty('animation-delay');
-      });
-      return;
+      endApplyFlights();
+      applyDeparturesRef.current = new Map();
+      applyFlownRef.current = new Set();
+      document.querySelectorAll('[data-visit-id]').forEach(reset);
+      return undefined;
     }
 
-    nodes.forEach((node) => {
-      const move = applyMoves?.get(String(node.dataset.visitId));
+    if (applyPhase === APPLY_PHASE.SETTLING) {
+      const nodes = document.querySelectorAll('[data-visit-id]');
 
-      if (applyPhase === APPLY_PHASE.SETTLING) {
-        /* Every card, not just the movers. The schedule is being recomputed and
-           marking only the movers would assert the outcome before showing it. */
+      /**
+       * The span the settling wave crosses.
+       *
+       * Measured off the cards themselves rather than read from a column index: an event node
+       * carries its visit id and nothing about which day it sits in, and the readings differ
+       * between the week grid, the month grid and the embedded ones. Their left edges are the
+       * one thing all of them agree on, and the leftmost-to-rightmost span is exactly the
+       * distance the wave has to cover. Computed once for the pass — a `getBoundingClientRect`
+       * inside the write loop would be a layout read per card.
+       */
+      const lefts = new Map();
+      let minLeft = Infinity;
+      let maxLeft = -Infinity;
+
+      nodes.forEach((node) => {
+        const { left } = node.getBoundingClientRect();
+        lefts.set(node, left);
+        if (left < minLeft) minLeft = left;
+        if (left > maxLeft) maxLeft = left;
+      });
+
+      applyFlownRef.current = new Set();
+      const span = maxLeft - minLeft;
+
+      nodes.forEach((node) => {
+        /* Every card, not just the movers. The schedule is being recomputed and marking only
+           the movers would assert the outcome before showing it. */
         node.dataset.applying = 'settling';
         node.style.removeProperty('animation-delay');
+        /* Staggered by how far across the grid the card sits, so the gloss reads as one wave
+           crossing the week instead of every card lighting at once. A custom property because
+           the sweep animates on a pseudo-element — see `applyingGrid`. */
+        const offset = span > 0 ? ((lefts.get(node) ?? minLeft) - minLeft) / span : 0;
+        node.style.setProperty('--apply-delay', `${Math.round(offset * APPLY_WAVE_MS)}ms`);
+      });
+
+      return undefined;
+    }
+
+    /**
+     * Departing: the movers lift, and each one leaves a copy of itself behind.
+     *
+     * Measure and photograph first, write second — a rectangle read after a style is written
+     * forces a synchronous layout, and doing that per card in a grid of forty is the
+     * difference between an animation and a stutter.
+     */
+    if (applyPhase === APPLY_PHASE.DEPARTING) {
+      const departures = new Map();
+
+      document.querySelectorAll('[data-visit-id]').forEach((node) => {
+        const visitId = String(node.dataset.visitId);
+        const move = applyMoves?.get(visitId);
+        if (!move) return;
+        const rect = node.getBoundingClientRect();
+        if (!rect.width || !rect.height) return;
+        departures.set(visitId, { rect, node, clone: node.cloneNode(true), order: move.order });
+      });
+
+      applyDeparturesRef.current = departures;
+
+      document.querySelectorAll('[data-visit-id]').forEach((node) => {
+        const departure = departures.get(String(node.dataset.visitId));
+        if (!departure) {
+          /* Staying put. The gloss is over for it and nothing else is going to happen to it,
+             so it goes back to being an ordinary card while the movers leave. */
+          reset(node);
+          return;
+        }
+        node.style.removeProperty('--apply-delay');
+        node.dataset.applying = 'departing';
+        node.style.setProperty('animation-delay', `${Math.min(departure.order, 11) * 25}ms`);
+      });
+
+      return undefined;
+    }
+
+    /**
+     * Landing — **the copies fly, the real cards hold still.**
+     *
+     * Nothing here needs the departing card to still exist, and nothing needs the arriving
+     * card to be findable: the flight starts from a photograph taken a beat ago and ends at
+     * the arriving card if it can be measured, or at the **day column** it belongs to if it
+     * cannot. The column is addressable by date (`[data-date]`, the same handle the harmonize
+     * preview paints its target day with), so the worst case is a card that lands a few
+     * pixels off the stack rather than an animation that does not play.
+     *
+     * Everything is measured before anything is written, for the reason the departing beat
+     * gives.
+     */
+    const stage = document.querySelector('[data-apply-stage]');
+    const departures = applyDeparturesRef.current;
+
+    const runLanding = (attempt) => {
+      const arrivals = new Map();
+      document.querySelectorAll('[data-visit-id]').forEach((node) => {
+        const visitId = String(node.dataset.visitId);
+        if (applyMoves?.get(visitId))
+          arrivals.set(visitId, { node, rect: node.getBoundingClientRect() });
+      });
+
+      /**
+       * Waiting a frame for the grid to place the cards, but never more than a few.
+       *
+       * A mover that measures as having travelled nothing, from a set of cards that certainly
+       * moved, means the grid has not placed them yet rather than that they stayed put — the
+       * timeline sizes itself in its own pass and can be a frame or two behind this one. The
+       * retry is free because nothing is written until it is out of attempts, and the column
+       * fallback below means running out is not fatal.
+       */
+      const settled = [...departures.entries()].some(([visitId, departure]) => {
+        const arrival = arrivals.get(visitId);
+        return (
+          arrival &&
+          Math.hypot(
+            arrival.rect.left - departure.rect.left,
+            arrival.rect.top - departure.rect.top,
+          ) >= 3
+        );
+      });
+
+      if (!settled && departures.size && attempt < APPLY_LANDING_ATTEMPTS) {
+        applyRetryRef.current = window.requestAnimationFrame(() => {
+          applyRetryRef.current = null;
+          runLanding(attempt + 1);
+        });
         return;
       }
 
-      if (move) {
-        node.dataset.applying = 'landing';
-        node.style.setProperty('animation-delay', `${Math.min(move.order, 11) * 55}ms`);
-      } else {
-        /* Stayed where it was. It comes back out of the shimmer without a landing
-           animation, because nothing happened to it and animating it would say
-           something did. */
-        delete node.dataset.applying;
-        node.style.removeProperty('animation-delay');
+      const state = applyFlightsRef.current;
+
+      /**
+       * One layer per sequence, inside the stage.
+       *
+       * Inside, because the card's styling is scoped to the stage's own class and a copy hung
+       * off `document.body` would arrive stripped of half of it. Fixed, because the whole
+       * point is to escape the day cell and the lane that would otherwise clip a card
+       * travelling between columns — and measured after insertion rather than assumed to sit
+       * at the viewport origin, since a transformed ancestor anywhere above would quietly make
+       * it a containing block.
+       */
+      if (!state.layer && stage && departures.size) {
+        const layer = document.createElement('div');
+        layer.dataset.applyFlightLayer = 'true';
+        layer.style.cssText =
+          'position:fixed;inset:0;pointer-events:none;z-index:40;overflow:visible;';
+        stage.appendChild(layer);
+        state.layer = layer;
       }
-    });
-  }, [applyPhase, applyMoves, calendarEvents]);
+
+      const layerRect = state.layer?.getBoundingClientRect() || { left: 0, top: 0 };
+
+      departures.forEach((departure, visitId) => {
+        if (applyFlownRef.current.has(visitId)) return;
+        applyFlownRef.current.add(visitId);
+
+        const move = applyMoves?.get(visitId);
+        const arrival = arrivals.get(visitId);
+        const delay = Math.min(move?.order ?? 0, 11) * APPLY_LANDING_STAGGER_MS;
+
+        /* Where the card is going. The arriving card if the grid has drawn it, and the day
+           column plus a place in the stack if it has not — a route lands its visits in order,
+           so the nth card of a route belongs one card-height further down than the (n-1)th. */
+        let target = arrival?.rect;
+        if (!target) {
+          const column = move?.dayKey
+            ? document.querySelector(`[data-date="${move.dayKey}"]`)
+            : null;
+          const columnRect = column?.getBoundingClientRect();
+          if (columnRect) {
+            target = {
+              left: columnRect.left + 6,
+              top: departure.rect.top + (move?.order ?? 0) * (departure.rect.height + 4),
+            };
+          }
+        }
+
+        const dx = target ? target.left - departure.rect.left : 0;
+        const dy = target ? target.top - departure.rect.top : 0;
+
+        /**
+         * A card with nowhere to fly to fades up in place instead.
+         *
+         * Two ways to get here: the arriving card cannot be found *and* its day column cannot
+         * either, or the browser has no `Element.animate` (jsdom, in this file's own tests).
+         * The fade is the arrival this beat had before flights, and it is also the arrival the
+         * flight degrades to — which is the point: the departure has already happened, so a
+         * card that cannot travel still leaves one place and appears in another.
+         */
+        if (!state.layer || !target || typeof state.layer.animate !== 'function') {
+          if (arrival) {
+            arrival.node.dataset.applying = 'landing';
+            arrival.node.style.setProperty('animation-delay', `${delay}ms`);
+          }
+          return;
+        }
+
+        const ghost = departure.clone;
+        ghost.removeAttribute('data-visit-id');
+        ghost.removeAttribute('data-applying');
+        ghost.querySelectorAll('[data-visit-id], [data-applying]').forEach((child) => {
+          child.removeAttribute('data-visit-id');
+          child.removeAttribute('data-applying');
+        });
+        ghost.dataset.applyGhost = 'true';
+        ghost.style.cssText += `position:absolute;margin:0;left:${
+          departure.rect.left - layerRect.left
+        }px;top:${departure.rect.top - layerRect.top}px;width:${departure.rect.width}px;height:${
+          departure.rect.height
+        }px;`;
+        state.layer.appendChild(ghost);
+        state.ghosts.push(ghost);
+
+        /* The card is already where it is going — it just must not be seen there until its own
+           copy arrives. Inline, so a class the grid re-renders away cannot strand it. */
+        if (arrival) {
+          arrival.node.style.opacity = '0';
+          state.hidden.push(arrival.node);
+        }
+
+        /**
+         * Lift, carry, set down.
+         *
+         * The arc is the point. A card that slides flat between two columns reads as a value
+         * being corrected in a table; one that comes *up* off its day, crosses above the cards
+         * in between and settles onto the new one reads as the visit being moved — which is
+         * the claim the whole sequence is making. The first keyframe is deliberately the state
+         * the departing beat left the card in — lifted, slightly forward, half faded — so the
+         * copy takes over from the original mid-gesture rather than starting a new one.
+         */
+        const flight = ghost.animate(
+          [
+            {
+              transform: 'translate(0px, -6px) scale(1.03)',
+              opacity: 0.55,
+              filter: 'drop-shadow(0 6px 12px rgba(16, 24, 40, 0.16))',
+              offset: 0,
+            },
+            {
+              transform: `translate(${dx * 0.5}px, ${dy * 0.5 - 16}px) scale(1.05)`,
+              opacity: 1,
+              filter: 'drop-shadow(0 16px 26px rgba(16, 24, 40, 0.22))',
+              offset: 0.5,
+            },
+            {
+              transform: `translate(${dx}px, ${dy}px) scale(1)`,
+              opacity: 1,
+              filter: 'drop-shadow(0 1px 2px rgba(16, 24, 40, 0.10))',
+              offset: 1,
+            },
+          ],
+          {
+            duration: APPLY_FLIGHT_MS,
+            delay,
+            /* Out of the old day briskly, into the new one gently — the deceleration is what
+               makes the end of the flight read as landing rather than as stopping. */
+            easing: 'cubic-bezier(0.34, 0.02, 0.2, 1)',
+            fill: 'both',
+          },
+        );
+
+        flight.onfinish = () => {
+          if (arrival) arrival.node.style.removeProperty('opacity');
+          ghost.remove();
+        };
+
+        state.animations.push(flight);
+      });
+
+      /* What the sequence actually managed, for a beat that is otherwise impossible to debug
+         from the outside: it either looks right or it looks like nothing happened, and those
+         two failure modes have half a dozen causes between them. */
+      window.__applyMotion = {
+        phase: applyPhase,
+        planned: applyMoves?.size ?? 0,
+        departed: departures.size,
+        arrived: arrivals.size,
+        flying: applyFlightsRef.current.ghosts.length,
+        attempts: attempt,
+      };
+    };
+
+    runLanding(0);
+
+    return () => {
+      if (applyRetryRef.current) {
+        window.cancelAnimationFrame(applyRetryRef.current);
+        applyRetryRef.current = null;
+      }
+    };
+  }, [applyPhase, applyMoves, calendarEvents, endApplyFlights]);
 
   /*
     Today, on the month grid — which until now had no today at all, while the week
@@ -2697,6 +3048,15 @@ const VisitCardContent = memo(({ shift, is24Hours, alwaysNameSite }) => {
 
       {namesSite && resolvedSiteName ? (
         <Box className={classes.visitSiteLine}>
+          {/* The same badge V2 leads its site line with — see `siteHit.svg`'s note
+              there. `visitSiteLine` already lays its children out as a flex row with
+              a 6px gap, so the icon only needed a well to squeeze into, not a new
+              wrapper: `reassignedOfficerFlex` is that well everywhere else in this
+              file, and reusing it means any future "icon precedes an identity line"
+              addition inherits the same 10px squeeze without a new rule. */}
+          <Box className={classes.reassignedOfficerFlex}>
+            <SiteHitIcon />
+          </Box>
           <Typography
             className={classes.visitSiteName}
             variant="subtitle4"

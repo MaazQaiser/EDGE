@@ -1,14 +1,14 @@
-import { Box, Typography } from '@mui/material';
+import { Box, Tooltip, Typography } from '@mui/material';
 import classNames from 'classnames';
 import dayjs from 'dayjs';
 import PropTypes from 'prop-types';
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { TRAY } from '../useHarmonizeFlow';
+import { PlusIcon } from './Glyphs';
 
 /**
- * The days, as the application draws tabs.
+ * The days, as the application draws tabs — **only the days now.**
  *
  * ## What this replaced, and what survived the swap
  *
@@ -32,11 +32,16 @@ import { TRAY } from '../useHarmonizeFlow';
  * - **Drop target.** Unchanged. A tab still accepts a drop, still prices it before
  *   release, and still refuses with a reason — the verdict now shows as the tab's own
  *   colour plus the sentence in the decision box, which has room for it.
+ *
+ * **`Not placed` is no longer one of these tabs.** It used to sit at the end of the row,
+ * the same shape as a day and switching the same panel over to a dedicated pane. It is
+ * part of the floating issues accordion above the footer now, not a peer of a day at all
+ * — see `SpillTray`. What survives here is what the row was always for: comparing the
+ * days a planner can actually open, nothing else.
  */
 const DayTabs = ({
   classes,
   runsheets,
-  unplaced,
   openDay,
   onOpenDay,
   accepted,
@@ -44,6 +49,7 @@ const DayTabs = ({
   quotesForDrag,
   onDropOn,
   onDragOverDay,
+  onAddRoute,
 }) => {
   const { t } = useTranslation();
   const tt = (key, options) => t(`obx.runsheet.harmonizeFlow.${key}`, options);
@@ -127,6 +133,19 @@ const DayTabs = ({
             }}
           >
             {dayjs(sheet.date).format('ddd D')}
+            {/* **The stop count, as the tray tab has always carried one.**
+                The row said `Mon 17` and nothing else, so the size of a day was knowable
+                only by opening it — and the whole reason a tab row exists here is that a
+                planner compares days without clicking. `Not placed` was already drawing a
+                count in this exact pill, which made the omission read as the day tabs having
+                nothing to count rather than as a gap.
+
+                An empty day shows `0` rather than no pill. It is a real and unusual answer —
+                the zone is worked and nothing legal fits it — and a blank there would be
+                indistinguishable from a day whose count simply was not drawn. */}
+            <Typography component="span" className={classes.tabCount}>
+              {sheet.stops.length}
+            </Typography>
             {sheet.overrunMins > 0 ? (
               <Box
                 className={classNames(classes.tabDot, isAccepted && classes.tabDotSettled)}
@@ -137,26 +156,26 @@ const DayTabs = ({
         );
       })}
 
-      {/* The tray is a peer, not a footnote — it is where work goes when no day can take
-          it, and burying it under a disclosure would make the commonest failure the
-          hardest thing on the screen to find. */}
-      <Box
-        component="button"
-        type="button"
-        role="tab"
-        id={`harmonize-tab-${TRAY}`}
-        aria-controls="harmonize-panel"
-        aria-selected={openDay === TRAY}
-        className={classNames(classes.tab, openDay === TRAY && classes.tabSelected)}
-        onClick={() => onOpenDay(TRAY)}
-      >
-        {tt('notPlaced')}
-        {unplaced.length ? (
-          <Typography component="span" className={classes.tabCount}>
-            {unplaced.length}
-          </Typography>
-        ) : null}
-      </Box>
+      {/* **The ghost tab.** Deliberately not a peer of the days: no count pill, no
+          underline, no selected state, and quiet until hovered — it does not *select* a
+          panel, it makes a new one. Sitting at the end of the row is what makes it read
+          as "and one more", and it is why `addRoute` dates a new route after the run's
+          last day rather than asking: the tabs sort by date, so the route this creates
+          appears exactly where the button that created it was.
+
+          A tooltip rather than a visible label, because a label would give it the width
+          of a real tab and cost the row a day's worth of scroll on a 475px gutter. */}
+      <Tooltip arrow title={tt('addRouteHint')}>
+        <Box
+          component="button"
+          type="button"
+          className={classes.tabAdd}
+          aria-label={tt('addRoute')}
+          onClick={onAddRoute}
+        >
+          <PlusIcon size={16} />
+        </Box>
+      </Tooltip>
     </Box>
   );
 };
@@ -164,7 +183,6 @@ const DayTabs = ({
 DayTabs.propTypes = {
   classes: PropTypes.object.isRequired,
   runsheets: PropTypes.array.isRequired,
-  unplaced: PropTypes.array.isRequired,
   openDay: PropTypes.string,
   onOpenDay: PropTypes.func.isRequired,
   accepted: PropTypes.arrayOf(PropTypes.string).isRequired,
@@ -172,6 +190,7 @@ DayTabs.propTypes = {
   quotesForDrag: PropTypes.object,
   onDropOn: PropTypes.func.isRequired,
   onDragOverDay: PropTypes.func.isRequired,
+  onAddRoute: PropTypes.func.isRequired,
 };
 
 export default DayTabs;
