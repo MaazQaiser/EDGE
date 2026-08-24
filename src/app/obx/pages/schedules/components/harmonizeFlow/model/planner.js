@@ -110,6 +110,40 @@ const autoDaysFor = (legalDays, days) => {
 };
 
 /**
+ * The days a **planner** may drop onto — **every worked day, with no further test.**
+ *
+ * ## Three oracles now, and the split is the point
+ *
+ * - `legalDaysFor` — where the *engine's* rules allow a visit: worked, zone matches, inside
+ *   the need-by window. Still exactly as it was.
+ * - `autoDaysFor` — of those, the ones the engine may choose *on its own* (not manual routes).
+ * - **this** — where a *hand* may put it. Worked, and nothing else.
+ *
+ * The zone and window tests used to gate drops too, and dropping was refused with
+ * `wrongZone` / `outsideWindow`. Removed on instruction: a planner may now drop any visit
+ * on any day in the run. The engine is unchanged — it still only places work where D15's
+ * one-zone-per-day and H7's need-by window allow — so what this does is separate *what the
+ * optimizer is willing to propose* from *what a human is allowed to overrule*, which is the
+ * distinction ④ existed to offer and was only ever half-offering.
+ *
+ * **`worked` is kept, and it is not a restriction in practice.** The only drop targets on
+ * screen are the day tabs, and a tab exists only for a worked day or a manual route — so
+ * this rejects nothing a planner can actually aim at. It stays as the guard that stops a
+ * stale pin resurrecting a day that has since been switched off, which would otherwise
+ * build a runsheet for a day with no shift to measure it against.
+ *
+ * **This must agree with `priceMove` exactly.** It is the oracle the *pin* is tested
+ * against, so a day `priceMove` accepts but this rejects takes the drop and then silently
+ * hands the visit back to the engine on the next render — a real bug once, and it looked
+ * like the drop landing on the wrong day.
+ */
+export const droppableDatesFor = (days) =>
+  days
+    .filter((d) => d.worked)
+    .map((d) => d.date)
+    .sort();
+
+/**
  * Why this visit has nowhere to go — the distinction the tray's copy is built on.
  *
  * Data faults are tested first and separately from scheduling ones. A site with no
@@ -374,6 +408,9 @@ export const totalsFor = ({ runsheets, days, unplaced, visitCount }) => ({
  */
 export const planRange = ({ days, visits, setAside = [], pinned = {} }) => {
   const asideSet = new Set(setAside);
+  /* Where a hand may have put something — see `droppableDatesFor`. Built once here because
+     both the placeable test and the pin pass below have to ask the same question. */
+  const droppable = new Set(droppableDatesFor(days));
   const candidates = [];
   const unplaced = [];
 
@@ -400,7 +437,7 @@ export const planRange = ({ days, visits, setAside = [], pinned = {} }) => {
      * Checking the pin here is what keeps the two lists disjoint: pinned onto a legal day
      * makes it a candidate, and everything else with nowhere to go is genuinely unplaced.
      */
-    if (!autoDays.length && !(pin && legalDays.includes(pin))) {
+    if (!autoDays.length && !(pin && droppable.has(pin))) {
       /* `legalDays` rather than `[]`: a visit the engine cannot place but a *planner* could
          — its only legal day being a manual route — is exactly the row the tray should be
          able to say "there is somewhere for this" about. */
@@ -422,9 +459,14 @@ export const planRange = ({ days, visits, setAside = [], pinned = {} }) => {
    * of stranding the visit on a day it may not legally occupy (H4/H7 outrank a pin).
    */
   const placements = assign(candidates, days);
-  candidates.forEach(({ visit, legalDays }) => {
+  candidates.forEach(({ visit }) => {
     const pin = pinned[visit.id];
-    if (pin && legalDays.includes(pin)) placements[visit.id] = pin;
+    /* **Tested against the droppable set, not `legalDays`.** A pin is a planner's decision
+       and it now outranks the zone and the window, which is the whole of the "drop anywhere"
+       change — `priceMove` accepted the drop, so this has to honour it or the visit bounces
+       back to the engine's choice on the next render. `worked` is still checked (via
+       `droppable`) so a pin cannot survive its day being switched off. */
+    if (pin && droppable.has(pin)) placements[visit.id] = pin;
   });
 
   const runsheets = days
@@ -482,26 +524,24 @@ export const priceMove = ({ plan, days, visitId, targetDate }) => {
 
   if (!visit || !site || !day?.worked) return { legal: false, reason: 'notWorked' };
 
-  const windowAllows = withinWindow(targetDate, visit);
   /**
-   * **A hand-made route takes any zone; every other day takes one (D15).**
+   * **Neither the zone nor the window refuses a drop any more.**
    *
-   * `day.custom` is set only by `addRoute`, for a route a planner created inside this run
-   * — and such a route carries no zone at all (`zoneId: null`), which is what keeps the
-   * *engine* from ever placing work on it: `legalDaysFor` needs a zone match, so `assign`
-   * cannot reach it and the route arrives empty by construction.
+   * Both used to, and the refusals were `wrongZone` and `outsideWindow`. With one zone per
+   * day and each zone worked once, the arithmetic of that was brutal: *no* cross-day move
+   * was ever legal on the canonical week — every drag came back "wrong zone" — so ④ was a
+   * gesture the feature advertised and then declined. Removed on instruction: a planner may
+   * drop any visit on any day.
    *
-   * That leaves the drop path, here, as the one way work gets onto it — and a manual route
-   * that refused every drag for "wrong zone" would be the "control that is rendered and
-   * then refuses" this feature's own stop list argues against. So the zone check is
-   * skipped for it and **the window check below is not**: one-zone-per-day is Config A's
-   * discipline for automatic planning and a planner may overrule it, but a need-by window
-   * is a promise to a customer (H7) and nothing in this drawer gets to break it.
+   * The two facts are still **computed and still returned**, because they are the difference
+   * between a move that is merely unusual and one that breaks a promise to a customer. H7's
+   * need-by window in particular is no longer *enforced* here, and `windowAllows: false` is
+   * now the only trace of that — anything wanting to warn about it reads this flag. The
+   * engine has not been relaxed: `legalDaysFor` still applies both, so nothing gets placed
+   * outside a window unless a human put it there deliberately.
    */
+  const windowAllows = withinWindow(targetDate, visit);
   const zoneAllows = Boolean(day.custom) || day.zoneId === site.zoneId;
-
-  if (!zoneAllows) return { legal: false, reason: 'wrongZone', windowAllows, zoneAllows };
-  if (!windowAllows) return { legal: false, reason: 'outsideWindow', windowAllows, zoneAllows };
 
   /**
    * The day this visit is being taken *off*, if it is on one.

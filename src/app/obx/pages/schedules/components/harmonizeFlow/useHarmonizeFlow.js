@@ -80,14 +80,12 @@ export const FLOW_STATE = {
  * for all of them.**
  *
  * It was a flat 620ms regardless of what the line said, and that is a reading-speed bug a
- * fixed duration always has: *"Checking every day against its shift"* (6 words) and
- * *"Reading 15 visits and their need-by windows"* (7 words, plus two numbers a reader
- * actually stops on) cannot take the same 620ms to read and both be comfortable — one
- * line was idling, the next was being pulled away mid-read.
+ * fixed duration always has: two lines of different lengths cannot take the same 620ms to
+ * read and both be comfortable — one line idles, the next is pulled away mid-read.
  *
  * `holdMsForLine` prices each line by its own word count instead: a base for the "swap and
  * orient" cost every line pays, plus a per-word reading allowance, clamped so a one-word
- * line cannot flash by in under half a second and a long one cannot stall the sequence.
+ * line cannot flash by and a long one cannot stall the sequence.
  * Deliberately not derived from the plan's own execution: `planRange` computes in well
  * under a millisecond, so there is nothing to narrate, and instrumenting a pure function
  * with timing hooks to serve a loading screen would be the wrong trade. The lines are
@@ -96,11 +94,28 @@ export const FLOW_STATE = {
  *
  * The shimmer sweep is driven from the same figure this returns, so a line's sweep and its
  * hold can never fall out of step with each other.
+ *
+ * ## Retimed twice, and the second time went back up (Abdullah's direction)
+ *
+ * The original nine lines ran **~7.7 seconds** and were called too long. Cutting to four
+ * short lines *and* dropping the constants took it to **~2.3s**, and that was called **too
+ * fast** — "I wasn't able to see what was happening and what was what". Both notes are
+ * right, and together they say the problem was never the total: it was **nine things to
+ * read**. Three lines at a readable pace is a shorter *and* calmer wait than nine at a
+ * rushed one.
+ *
+ * So the line count stayed cut (three, see `revealLines`) and the pace came back up. The
+ * set now runs **~3.3s**, about 1.1s a line.
+ *
+ * `MIN_HOLD_MS` is the number that actually sets the pace, and deliberately so: the copy is
+ * terse by design (`Calculating routes` is two words), so every line prices below the floor
+ * and lands on it. Tune the *floor* to change the feel; `BASE`/`PER_WORD` only matter if
+ * someone writes a long line again, and the clamp is what stops them making it drag.
  */
-const BASE_HOLD_MS = 380;
-const PER_WORD_MS = 70;
-const MIN_HOLD_MS = 480;
-const MAX_HOLD_MS = 1000;
+const BASE_HOLD_MS = 600;
+const PER_WORD_MS = 100;
+const MIN_HOLD_MS = 1100;
+const MAX_HOLD_MS = 1600;
 
 export const holdMsForLine = (line = '') => {
   const words = line.trim().split(/\s+/).filter(Boolean).length;
@@ -116,12 +131,9 @@ export const useHarmonizeFlow = ({ open, onApplied }) => {
     (key, options) => t(`obx.runsheet.harmonizeFlow.line.${key}`, options),
     [t],
   );
-  /* "1 visits" is the bug this exists to prevent — the countable nouns live in one place
-     and every sentence composes them. */
-  const tCount = useCallback(
-    (noun, count) => t(`obx.runsheet.harmonizeFlow.count.${noun}`, { count }),
-    [t],
-  );
+  /* The `count.*` composer that used to live here is gone with the long reveal — the three
+     lines ② speaks now carry no numbers at all. The `count.*` keys themselves stay: the
+     panes, the tray and the tabs all still compose from them. */
 
   const [state, setState] = useState(FLOW_STATE.SCOPE);
   const [days, setDays] = useState(DEFAULT_RUN_DAYS);
@@ -178,14 +190,53 @@ export const useHarmonizeFlow = ({ open, onApplied }) => {
   const [installers, setInstallers] = useState({});
 
   /**
+   * Visit ids the planner has **taken out of scope** in ①, before the run.
+   *
+   * ## Why this is not `setAside`
+   *
+   * `setAside` (X4) also removes a visit from the routes, and the two must not be
+   * conflated. A set-aside visit stays *in scope and unplaced with a reason* — that is the
+   * whole point of it, and `planRange` takes it as its own argument precisely so the tray
+   * can say "you set this aside" and offer to put it back. An excluded visit is a
+   * different statement: **it is not part of this run at all.** So it is filtered out of
+   * the `visits` array before the engine ever sees it, which is what keeps it out of the
+   * tray, out of the unplaced count and out of `15 of 15 visits`. A planner who excludes
+   * five visits should see a run about ten, not a run about fifteen with five complaints.
+   *
+   * ## Why it survives a range change
+   *
+   * `setRangeDates` clears pins, set-asides, forced days and route names, on the rule that
+   * "a different range is a different question". This does not go with them, and the
+   * distinction is that every one of those names a **date** — carrying them forward would
+   * apply last week's hand edits to a week that never saw those days. An exclusion names a
+   * **visit**, and the visit pool is the same either way, so a planner who deselected a
+   * site and then nudged the range by a day would have their selection silently undone for
+   * no reason they could see. It clears on close with everything else.
+   */
+  const [excluded, setExcluded] = useState([]);
+
+  /**
+   * The visit pool this run is actually about.
+   *
+   * Everything downstream reads this rather than `VISITS` — the engine, ①'s forecast and
+   * ②'s narration — so there is exactly one answer to "which visits are in scope" and no
+   * way for the stat row to disagree with the routes underneath it.
+   */
+  const scopeVisits = useMemo(() => {
+    if (!excluded.length) return VISITS;
+    const out = new Set(excluded);
+    return VISITS.filter((v) => !out.has(v.id));
+  }, [excluded]);
+
+  /**
    * The engine's answer: everything legal, placed, with each day's overrun reported.
    *
    * Kept separate from `plan` below because the two say different true things. This one is
    * *what is legal this week* — the D3/S0 contract, where capacity never refuses a visit.
    */
   const rawPlan = useMemo(
-    () => planRange({ days, visits: VISITS, setAside, pinned }),
-    [days, setAside, pinned],
+    () => planRange({ days, visits: scopeVisits, setAside, pinned }),
+    [days, scopeVisits, setAside, pinned],
   );
 
   /**
@@ -216,7 +267,7 @@ export const useHarmonizeFlow = ({ open, onApplied }) => {
    * refuses — the exact failure the prediction exists to prevent.
    */
   const forecast = useMemo(() => {
-    const dry = planRange({ days, visits: VISITS });
+    const dry = planRange({ days, visits: scopeVisits });
     /**
      * The same fitting ③ will do, run here so ① can name the day that runs short.
      *
@@ -234,9 +285,15 @@ export const useHarmonizeFlow = ({ open, onApplied }) => {
       unplacedMins: dry.unplaced.reduce((sum, u) => sum + onSiteMinsFor(u.visit.filterCount), 0),
       unplacedZones: [...new Set(dry.unplaced.map((u) => u.site?.zoneId).filter(Boolean))],
       zonesWorked,
-      workMins: VISITS.reduce((sum, v) => sum + onSiteMinsFor(v.filterCount), 0),
-      filterCount: VISITS.reduce((sum, v) => sum + v.filterCount, 0),
-      visitCount: VISITS.length,
+      /* The three figures ① leads with, all off `scopeVisits` — so deselecting a visit
+         takes its filters and its minutes out of the summary in the same gesture. A stat
+         row still counting fifteen while the list below it shows ten ticked would be the
+         summary contradicting the thing it summarises. */
+      workMins: scopeVisits.reduce((sum, v) => sum + onSiteMinsFor(v.filterCount), 0),
+      filterCount: scopeVisits.reduce((sum, v) => sum + v.filterCount, 0),
+      visitCount: scopeVisits.length,
+      /** The denominator for `10 of 15 selected` — the pool, not the selection. */
+      poolCount: VISITS.length,
       /** The denominator `Est. work` never had — the hours the range actually offers. */
       availableMins: dry.totals.availableMins,
       /**
@@ -251,56 +308,88 @@ export const useHarmonizeFlow = ({ open, onApplied }) => {
       spillMins: fitted.totals.spilledMins,
       spillDates: [...new Set(fitted.spilled.map((u) => u.date))],
     };
-  }, [days, workedDays]);
+  }, [days, workedDays, scopeVisits]);
 
   /**
    * The narration lines ② speaks, in the order `planRange` actually does the work.
    *
-   * Written from the finished plan, so every one of them is *true about this run* rather
-   * than a generic script: the zone line names the zones, the sequencing line names the
-   * days, and the last line names what could not be placed. When the endpoints in §5
-   * land, the lines do not change — only what drives their timing does.
+   * ## Four lines, in plain verbs — and why the previous nine went
+   *
+   * This used to be a nine-line script that named its own workings: it counted the visits
+   * and their need-by windows, named the zone count, announced the legality pass, then
+   * emitted **one line per worked day** (`Sequencing Mon 17 — 3 stops`), then checked the
+   * shifts, then reported spill and unplaced as two separate sentences. Every line was true
+   * and the whole thing ran about **7.7 seconds** in the canonical week, with the per-day
+   * lines making it *longer the more the engine had to do* — the runs a planner is least
+   * patient with were the slowest to get out of the way.
+   *
+   * On Abdullah's direction it is now four steps that name the *logic* rather than the
+   * implementation, in the words the work would be described in out loud:
+   *
+   *   Calculating visits → Grouping sites by zone → Creating routes → Checking shift hours
+   *
+   * Two things that changed shape rather than simply being deleted:
+   *
+   * - **The per-day sequencing lines collapse into one `Creating routes`.** That is where
+   *   most of the seven seconds lived, and it is also the line that scaled with the run.
+   *   `plan.runsheets` no longer drives the *length* of the reveal, which is why a
+   *   fortnight now narrates in the same time as a week.
+   * - **Spill and unplaced merge into one `Flagging N visits that do not fit`.** They are
+   *   genuinely different failures (no hours versus no legal day) and the *tray* still
+   *   separates them under its two intros. But as narration they were two sentences making
+   *   one point, and the reason this line has to exist at all is only so the tray does not
+   *   arrive in ③ unannounced. One line discharges that.
+   *
+   * **The numbers came out of the copy on purpose.** `Reading 15 visits and their need-by
+   * windows` reads as a system reporting its inputs; `Calculating visits` reads as a step.
+   * The counts are all on screen in ① a moment earlier and in ③ a moment later, so the
+   * reveal was the one place they were not load-bearing. The single exception is the
+   * issues line, where the count *is* the news.
+   *
+   * ## This list is also the Reasoning trail
+   *
+   * `ReasoningTrail` in ③ renders exactly this array as its numbered disclosure, so
+   * shortening the reveal shortens the trail to the same four steps. That is a real loss of
+   * detail — the trail used to name each day and each zone — accepted as the cost of the
+   * ask. Everything it used to say that a planner can act on is stated with a remedy
+   * attached in the tray, which is the only place it was ever actionable.
    */
-  const revealLines = useMemo(() => {
-    const zones = [...new Set(workedDays.map((d) => d.zoneId).filter(Boolean))];
-    const lines = [
-      tLine('readVisits', { visits: tCount('visit', VISITS.length) }),
-      tLine('matchZones', { zones: tCount('zone', zones.length) }),
-      tLine('findLegalDays'),
-      ...plan.runsheets.map((r) =>
-        tLine('sequencing', {
-          day: dayjs(r.date).format('ddd D'),
-          stops: tCount('stop', r.stops.length),
-        }),
-      ),
-      tLine('checkShifts'),
-    ];
-    /* The fitting step, named — it is the one thing ② does that ③ then leads with, and a
-       reveal that never mentioned it would make the tray arrive unannounced.
-
-       **`count` is passed as well as the phrase**, and both of these needed it: the phrase
-       is already pluralised ("1 visit"), but the *verb* after it is not, so a single spilled
-       visit read "1 visit **have** a day but no hours on it". i18next needs the number
-       itself to pick the form; handing it only the finished noun phrase leaves the rest of
-       the sentence stuck in the plural. */
-    if (plan.spilled.length) {
-      lines.push(
-        tLine('foundSpill', {
-          count: plan.spilled.length,
-          visits: tCount('visit', plan.spilled.length),
-        }),
-      );
-    }
-    if (plan.unplaced.length) {
-      lines.push(
-        tLine('foundUnplaced', {
-          count: plan.unplaced.length,
-          visits: tCount('visit', plan.unplaced.length),
-        }),
-      );
-    }
-    return lines;
-  }, [plan, workedDays, tLine, tCount]);
+  /**
+   * The three lines ② speaks.
+   *
+   * ## Three, fixed, and none of them derived from the plan
+   *
+   * This started as nine lines written *from the finished plan* — the zone line named the
+   * zones, one line per worked day named that day and its stop count, and the last two
+   * named what had spilled and what could not be placed. Accurate, and three separate
+   * problems: it ran ~7.7s, it got **longer the more work the engine did**, and at nine
+   * items nobody read any of them. Cut to four, then to **three** on Abdullah's direction
+   * ("keep them to a minimum", "keep them easy"), in the words the job would be described
+   * in out loud:
+   *
+   *   Calculating visits → Calculating routes → Creating the best route
+   *
+   * **No plan dependency at all now**, which is the structural win hiding in a copy change:
+   * the reveal is the same three lines and the same ~3.3s for a three-day week or a
+   * four-week range. `plan` is no longer in this memo, so a drag in ④ cannot rebuild the
+   * narration either.
+   *
+   * ## What that gave up
+   *
+   * The old set ended on `Flagging N visits that do not fit`, and its job was to stop the
+   * issues tray arriving in ③ unannounced. **That warning is gone**, accepted on
+   * instruction. The tray still announces itself — it is a titled bar carrying the count,
+   * sitting above the footer — so the cost is that a planner meets the number a beat later
+   * than they used to, not that they never meet it.
+   *
+   * `ReasoningTrail` renders this array, so ③'s trail is these same three steps. It is no
+   * longer rendered in the drawer at all (the head disclosure was removed on instruction);
+   * `harmonizeSplit` still shows it at the foot of its own column.
+   */
+  const revealLines = useMemo(
+    () => [tLine('calcVisits'), tLine('calcRoutes'), tLine('bestRoute')],
+    [tLine],
+  );
 
   /* ── ② the wait ─────────────────────────────────────────────────────────────
      One line at a time, then ③. `setTimeout` rather than `setInterval`, because each
@@ -363,10 +452,40 @@ export const useHarmonizeFlow = ({ open, onApplied }) => {
       setForced([]);
       setRouteNames({});
       setInstallers({});
+      setExcluded([]);
       setOpenDay(null);
       setDrag(null);
     }
   }, [open]);
+
+  /* ── ① scope selection ───────────────────────────────────────────────────────
+     Three actions over one array. `toggleVisit` is the only one that has to think:
+     the array holds the *excluded* ids, so ticking a box removes from it and clearing
+     a box adds to it — the inverse of what the control looks like it is doing. It is
+     stored that way round because the default is "everything is in", and an empty
+     array saying "nothing excluded" needs no seeding from the fixture and cannot drift
+     out of date if the pool ever changes. */
+  const toggleVisit = useCallback((visitId) => {
+    setExcluded((prev) =>
+      prev.includes(visitId) ? prev.filter((id) => id !== visitId) : [...prev, visitId],
+    );
+  }, []);
+
+  /**
+   * **Kept, though ① no longer calls either of them.**
+   *
+   * The bulk-select control has been removed from the panel three times over (see
+   * `VisitScopeList`) and the last removal left these two with no caller. They stay because
+   * they are the *hook's* API rather than that control's implementation — one line each,
+   * already tested by the exclusion behaviour around them, and the note in `VisitScopeList`
+   * says a master checkbox is what comes back if fifteen clicks proves too many. Deleting
+   * them buys nothing and makes that reversal a bigger change than it should be.
+   */
+  const selectAllVisits = useCallback(() => setExcluded([]), []);
+
+  /* Every id in the pool, not `VISITS.map` at call time inside a component — the pool is
+     the module's own constant, so this cannot go stale against what `scopeVisits` filters. */
+  const deselectAllVisits = useCallback(() => setExcluded(VISITS.map((v) => v.id)), []);
 
   /**
    * Set the range, and rebuild the worked days inside it.
@@ -620,11 +739,18 @@ export const useHarmonizeFlow = ({ open, onApplied }) => {
    * A visit dropped out of the tray also stops being set aside, which is the only way
    * X4 is reversible by dragging rather than only by the panel's own "Put it back".
    */
-  const commitDrag = useCallback(
-    (targetDate) => {
-      const visitId = drag?.visitId;
-      setDrag(null);
-      if (!visitId) return;
+  /**
+   * Move a visit to a day **without a drag in flight** — the move menu's path.
+   *
+   * `commitDrag` below is now a thin wrapper over this: it reads the visit id off `drag`,
+   * clears it, and delegates. Extracted because `StopMoveMenu` picks a day from a list and
+   * never arms a drag, so it had no `drag.visitId` for `commitDrag` to find — and the fix
+   * must not be a second copy of the pin/force/open sequence, which is exactly the kind of
+   * duplication that lets one path force and the other not.
+   */
+  const moveVisitTo = useCallback(
+    (visitId, targetDate) => {
+      if (!visitId || !targetDate) return;
       const verdict = priceMove({ plan, days, visitId, targetDate });
       if (!verdict.legal) return;
       setSetAside((prev) => prev.filter((v) => v !== visitId));
@@ -644,7 +770,24 @@ export const useHarmonizeFlow = ({ open, onApplied }) => {
       setForced((prev) => (prev.includes(visitId) ? prev : [...prev, visitId]));
       setOpenDay(targetDate);
     },
-    [drag, plan, days],
+    [plan, days],
+  );
+
+  const commitDrag = useCallback(
+    (targetDate) => {
+      const visitId = drag?.visitId;
+      /* Cleared first and unconditionally: a drop that turns out to be refused still ends
+         the drag, or the row stays picked up with nothing holding it. */
+      setDrag(null);
+      moveVisitTo(visitId, targetDate);
+    },
+    [drag, moveVisitTo],
+  );
+
+  /** The move menu's per-day quote — the same `priceMove` the drag prices with. */
+  const quoteMove = useCallback(
+    (visitId, targetDate) => priceMove({ plan, days, visitId, targetDate }),
+    [plan, days],
   );
 
   /**
@@ -719,6 +862,8 @@ export const useHarmonizeFlow = ({ open, onApplied }) => {
     forced,
     routeNames,
     installers,
+    excluded,
+    scopeVisits,
     drag,
     setDrag,
     dragQuote,
@@ -735,9 +880,14 @@ export const useHarmonizeFlow = ({ open, onApplied }) => {
       setAsideVisit,
       restoreVisit,
       commitDrag,
+      moveVisitTo,
+      quoteMove,
       returnToTray,
       setRouteName,
       setInstaller,
+      toggleVisit,
+      selectAllVisits,
+      deselectAllVisits,
       run: () => setState(FLOW_STATE.COMPUTING),
       cancel: () => setState(FLOW_STATE.SCOPE),
       setRangeDates,

@@ -20,13 +20,12 @@
  * them showed would be wrong in the same direction, which reads as a broken optimizer
  * rather than a bad default. One anchor, one geography, one file that decides it.
  *
- * ## The boundaries prefer the planner's own
+ * ## A zone is a radius
  *
- * A zone's shape can come from two places. If somebody has drawn one in Settings, the
- * saved rule carries it in latitude and longitude and it wins outright — that is the whole
- * reason the editor exists. Failing that, the fixture's seeded boundary is projected the
- * same way the sites are. A planner who draws North in Settings and reopens Harmonize sees
- * the North they drew.
+ * **Not a boundary.** Every zone on this map is a distance around a point, and the lassoed
+ * outline this module used to draw is gone — see the note above `circleRing`. A radius set
+ * in Settings wins outright; a boundary saved there is read as the circle that encloses it;
+ * failing both, the circle is derived from the sites that belong to the zone.
  */
 
 import {
@@ -183,165 +182,147 @@ export const ringCentroid = (ring = []) => {
 };
 
 /**
- * A saved radius shape, read out as a ring.
+ * ── Zones are circles ──────────────────────────────────────────────────────────────
+ *
+ * **The radius solution, not the boundary one.** A zone on this map is a distance around a
+ * point, and that is now the *only* thing it can be. The lassoed polygon this module used
+ * to draw — 18 wobbled vertices resampled off the fixture's control points, with three
+ * harmonics of seeded noise to make it look hand-drawn — is gone, along with the whole
+ * argument for it. It was a good drawing of the wrong model.
+ *
+ * Two consequences worth stating rather than discovering:
+ *
+ * - **A boundary saved in Settings is read as its enclosing circle**, not as the shape
+ *   somebody drew. That is a real loss of fidelity and it is deliberate: a surface that
+ *   drew one zone as a traced outline and its neighbour as a circle would be showing two
+ *   different definitions of the word *zone* on the same screen. Settings still offers both
+ *   methods; this map states the radius reading of whichever it finds.
+ * - **`ZONES[].shape` in the fixture is no longer read.** Its control points only ever
+ *   existed to be lassoed. The circle comes from the zone's **sites** instead, which is the
+ *   more honest source anyway — membership lives on the site (`zoneId`), so the sites *are*
+ *   the zone, and a circle derived from them cannot leave one of its own sites outside it.
+ */
+
+/**
+ * A circle, read out as a closed ring.
  *
  * The map draws one kind of thing — a closed path — so a circle is turned into a polygon
- * here rather than the renderer growing a second shape branch. 48 segments is smooth at
- * every zoom the map offers; the longitude term widens by the cosine of the latitude, the
- * same flat-earth assumption the projection this file imports already makes.
+ * here rather than the renderer growing a second shape branch. That also keeps every
+ * downstream consumer untouched: `ringCentroid`, the view fit, and the map's own
+ * ray-casting hit test all take a list of points and none of them needs to learn what a
+ * radius is.
+ *
+ * **96 segments, up from 48.** A polygon standing in for a circle has to survive the
+ * closest zoom the map offers, and at 48 a twenty-mile ring shows visible flats on its
+ * shoulders — which reads as a *shape* again, which is the one thing this change exists to
+ * stop. 96 is 3.75° per segment: indistinguishable from round at `MAX_ZOOM`, and still a
+ * trivial path.
+ *
+ * The longitude term widens by the cosine of the latitude, the same flat-earth assumption
+ * the projection this file imports already makes.
  */
-const RADIUS_RING_SEGMENTS = 48;
+const RADIUS_RING_SEGMENTS = 96;
 const MILES_PER_DEGREE_LAT = 69.0;
 
-const radiusToRing = (shape) => {
-  const { anchor, radiusMiles } = shape;
+const circleRing = (centre, radiusMiles) => {
   const miles = Number(radiusMiles);
-  if (!anchor || !Number.isFinite(miles) || miles <= 0) return null;
+  if (!centre || !Number.isFinite(miles) || miles <= 0) return null;
 
-  const perDegreeLng = MILES_PER_DEGREE_LAT * Math.cos((anchor.lat * Math.PI) / 180);
+  const perDegreeLng = MILES_PER_DEGREE_LAT * Math.cos((centre.lat * Math.PI) / 180);
 
   return Array.from({ length: RADIUS_RING_SEGMENTS }, (_unused, index) => {
     const angle = (index / RADIUS_RING_SEGMENTS) * 2 * Math.PI;
     return {
-      lat: anchor.lat + (miles * Math.sin(angle)) / MILES_PER_DEGREE_LAT,
-      lng: anchor.lng + (miles * Math.cos(angle)) / perDegreeLng,
+      lat: centre.lat + (miles * Math.sin(angle)) / MILES_PER_DEGREE_LAT,
+      lng: centre.lng + (miles * Math.cos(angle)) / perDegreeLng,
     };
   });
 };
 
-/* ── Making a polygon look lassoed ──────────────────────────────────────────────────
-   The fixture stores seven or eight control points per zone, and a regular octagon says
-   "generated". What a planner actually produced was a lasso — so what this section adds is
-   *irregularity*, not curvature: more corners than the control shape has, at uneven
-   intervals, none of them square. It also sets the right expectation about precision, which
-   is the quieter reason it earns its keep — a boundary you can see was drawn by hand is one
-   nobody will read to the nearest street. */
-
-/** A stable pseudo-random in [0, 1) from a string. The same trick `demoVisits` uses. */
-const hashUnit = (value) => {
-  let hash = 0;
-  for (const character of String(value)) hash = (hash * 31 + character.charCodeAt(0)) | 0;
-  return (Math.abs(hash) % 10000) / 10000;
+/** Miles between two points on the flat-earth reading this module already uses. */
+const milesBetween = (a, b) => {
+  const dLat = (a.lat - b.lat) * MILES_PER_DEGREE_LAT;
+  const dLng =
+    (a.lng - b.lng) * MILES_PER_DEGREE_LAT * Math.cos((((a.lat + b.lat) / 2) * Math.PI) / 180);
+  return Math.hypot(dLat, dLng);
 };
 
 /**
- * How far the hand strays from the line it meant to draw, in notional miles.
+ * How much air a derived circle leaves outside its furthest site.
  *
- * A little under a mile at a forty-mile view — visible as unsteadiness, nowhere near
- * enough to move a site across a boundary. The test suite is what actually holds that
- * second claim: every site has at least 1.6 miles of margin to the nearest foreign edge.
+ * A circle drawn exactly through the outermost site puts that pin *on* the boundary, which
+ * looks like a rounding error rather than a territory — and a zone is the ground a van
+ * covers, not the convex hull of the addresses currently on the books. A mile and a half at
+ * a forty-mile view is enough to read as containment without swallowing the neighbour.
  */
-const WOBBLE_MILES = 0.7;
+const RADIUS_PADDING_MILES = 1.5;
 
 /**
- * Vertices in the finished ring. Well under `ZONE_POINTS_MAX`, so a shape like this could be
- * saved from the editor.
+ * The smallest radius a derived circle is allowed to have.
  *
- * **18, down from 44, and the drop is the point.** At 44 the vertices are close enough
- * together that the outline reads as a curve whatever you do to it. At 18 each edge is long
- * enough to be seen as a straight segment and each vertex as a corner — which is what a
- * lasso or polygon tool actually produces.
+ * Two sites four hundred yards apart are a real answer from a real deployment, and the
+ * circle around them would be a dot. A zone that cannot be seen cannot be clicked, and this
+ * map's whole selection model is clicking a zone.
  */
-const RING_POINTS = 18;
+const RADIUS_MIN_DERIVED_MILES = 3;
 
 /**
- * A periodic wobble — three harmonics with hashed phases.
+ * A zone's circle, derived from the sites that belong to it.
  *
- * **Periodic is the requirement, not a nicety.** The offset is applied around a closed
- * ring, so whatever it returns at `t = 0` it must return again at `t = 1` or the shape
- * ends with a step where the start and the end fail to meet — a visible notch, always in
- * the same place, which is the one artefact that would read as a rendering fault rather
- * than as a human hand. Integer harmonics of a full turn are periodic by construction.
+ * The centre is the **mean of the sites**, not the middle of their bounding box: the box's
+ * centre is decided entirely by the two extremes and ignores where the work actually is, so
+ * a zone with a tight cluster and one outlier would be centred half way out to the outlier.
+ * The mean is pulled by the cluster, which is where the van spends its day.
  *
- * Three of them because one is a wave and two is a pattern; the third is what stops the
- * eye finding the rhythm. Amplitudes fall off so the low frequency carries the drift and
- * the high ones only roughen it.
+ * The radius is then whatever reaches the furthest site, plus air. Derived per zone rather
+ * than shared, because the fixture's zones are genuinely different sizes and one radius for
+ * all of them would be this module inventing a fact.
  */
-const wobbleFor = (seed) => {
-  const phaseA = hashUnit(`${seed}-a`) * Math.PI * 2;
-  const phaseB = hashUnit(`${seed}-b`) * Math.PI * 2;
-  const phaseC = hashUnit(`${seed}-c`) * Math.PI * 2;
+export const deriveZoneCircle = (zoneId) => {
+  const points = SITE_POINTS.filter((site) => site.zoneId === zoneId);
+  if (!points.length) return null;
 
-  return (t) =>
-    0.55 * Math.sin(2 * Math.PI * 3 * t + phaseA) +
-    0.3 * Math.sin(2 * Math.PI * 7 * t + phaseB) +
-    0.15 * Math.sin(2 * Math.PI * 13 * t + phaseC);
+  const centre = {
+    lat: points.reduce((total, point) => total + point.lat, 0) / points.length,
+    lng: points.reduce((total, point) => total + point.lng, 0) / points.length,
+  };
+  const reach = points.reduce((most, point) => Math.max(most, milesBetween(centre, point)), 0);
+
+  return {
+    centre,
+    radiusMiles: Math.max(reach + RADIUS_PADDING_MILES, RADIUS_MIN_DERIVED_MILES),
+  };
 };
 
-/** Where a fraction `t` of the way round the polygon's perimeter lands. */
-const alongPerimeter = (points, t) => {
-  const lengths = points.map((point, index) => {
-    const next = points[(index + 1) % points.length];
-    return Math.hypot(next.x - point.x, next.y - point.y);
-  });
-  const total = lengths.reduce((sum, length) => sum + length, 0);
-  let travelled = t * total;
+/**
+ * A shape saved in Settings, read as a circle.
+ *
+ * A saved **radius** is already one, and is taken at its word. A saved **boundary** is
+ * reduced to the circle that encloses it — centred on the outline's own area centroid, so
+ * the reading is anchored to the shape's middle rather than to a vertex, and wide enough to
+ * contain every point the planner drew. No padding is added here: unlike the derived case
+ * there is nothing to be generous about, the planner has already said where the edge is.
+ */
+const savedShapeCircle = (shape) => {
+  if (!shape) return null;
 
-  for (let i = 0; i < points.length; i += 1) {
-    if (travelled <= lengths[i] || i === points.length - 1) {
-      const fraction = lengths[i] ? travelled / lengths[i] : 0;
-      const a = points[i];
-      const b = points[(i + 1) % points.length];
-      return { x: a.x + (b.x - a.x) * fraction, y: a.y + (b.y - a.y) * fraction };
-    }
-    travelled -= lengths[i];
+  if (shape.kind === ZONE_SHAPE.RADIUS) {
+    const miles = Number(shape.radiusMiles);
+    if (!shape.anchor || !Number.isFinite(miles) || miles <= 0) return null;
+    return { centre: shape.anchor, radiusMiles: miles };
   }
-  return points[0];
-};
 
-/**
- * Control points in, a lassoed outline out. Grid miles both ends.
- *
- * Resample the control polygon's perimeter evenly, then push each sample in or out along its
- * own radius from the middle. The result is an irregular polygon of `RING_POINTS` **sharp**
- * vertices that follows the control shape's envelope.
- *
- * ## The smoothing pass is gone, and that reverses this function's own argument
- *
- * It used to finish with a three-tap average over each vertex's neighbours, and the docstring
- * argued for it at length: without it the per-sample offsets are independent and the outline
- * reads as a jagged star, which is a shape no pointer has ever traced. That reasoning was
- * sound *at 44 samples*, where the wobble's spatial frequency is high enough to look like
- * noise rather than intent.
- *
- * It is reversed on instruction — *"the zones will have sharp corners, since it will be drawn
- * using the lasso tool"* — and the way to honour that without reintroducing the jagged star is
- * to change the sample count rather than to keep smoothing a dense ring. At 18 vertices the
- * wobble lands as a handful of visible corners on long straight edges: angular, deliberate,
- * and much closer to what a lasso leaves behind than a traced curve was. The wobble amplitude
- * came down with it (0.85 → 0.7 mi) because a corner exaggerates an offset that a smoothed
- * curve used to absorb.
- *
- * **The periodic wobble still matters, for its original reason.** The offset is applied around
- * a closed ring, so it has to return the same value at `t = 1` as at `t = 0` or the shape ends
- * with a step where the start and end fail to meet — and with no smoothing left to soften it,
- * that seam would now be a genuine notch rather than a rounded kink.
- *
- * Deterministic from the zone id, so the same zone is the same shape on every render, in every
- * session, and in the tests. A boundary that reshuffled itself when the map redrew would be
- * worse than an octagon.
- */
-export const handDrawnRing = (controlPoints, seed) => {
-  if (!controlPoints || controlPoints.length < 3) return [];
+  if (shape.kind === ZONE_SHAPE.BOUNDARY) {
+    const points = Array.isArray(shape.points) ? shape.points : [];
+    if (points.length < 3) return null;
+    const centre = ringCentroid(points);
+    if (!centre) return null;
+    const reach = points.reduce((most, point) => Math.max(most, milesBetween(centre, point)), 0);
+    if (!(reach > 0)) return null;
+    return { centre, radiusMiles: reach };
+  }
 
-  const middle = controlPoints.reduce(
-    (total, point) => ({
-      x: total.x + point.x / controlPoints.length,
-      y: total.y + point.y / controlPoints.length,
-    }),
-    { x: 0, y: 0 },
-  );
-  const noise = wobbleFor(seed);
-
-  return Array.from({ length: RING_POINTS }, (_unused, index) => {
-    const t = index / RING_POINTS;
-    const base = alongPerimeter(controlPoints, t);
-    const dx = base.x - middle.x;
-    const dy = base.y - middle.y;
-    const reach = Math.hypot(dx, dy) || 1;
-    const push = noise(t) * WOBBLE_MILES;
-    return { x: base.x + (dx / reach) * push, y: base.y + (dy / reach) * push };
-  });
+  return null;
 };
 
 /**
@@ -382,41 +363,43 @@ export const announcedDates = ({ revealLines = [], step = 0, runsheets = [], for
     .map((sheet) => sheet.date);
 
 /**
- * Every zone, with a ring to draw and a colour to draw it in.
+ * Every zone, with a circle to draw and a colour to draw it in.
  *
  * `settings` is passed rather than read here so the caller decides when the rule is
- * re-read — a component that read storage on every render would re-derive four rings a
+ * re-read — a component that read storage on every render would re-derive four circles a
  * frame while somebody drags the map. Defaults to the live rule for the convenience of
  * tests and one-off callers.
  *
- * `drawn` says which of the two sources answered. It is not decoration: a boundary the
- * planner drew is a statement about their territory and the seeded one is this fixture's
- * guess at it, and the map is entitled to say which it is showing.
+ * Each zone comes back with **both readings of its geometry**: `centre` and `radiusMiles`,
+ * which is what it now *is*, and `ring`, which is that circle flattened to a path so the
+ * renderer and the hit test do not have to change. The ring is derived from the pair, never
+ * the other way round.
+ *
+ * `drawn` says which of the two sources answered — a radius the planner set in Settings, or
+ * this module's own reading of where their sites are. It is not decoration: one is a
+ * statement about their territory and the other is an inference from the work in it, and the
+ * map is entitled to say which it is showing.
  */
 export const zoneRings = (settings = readHarmonizationSettings()) => {
   const saved = Array.isArray(settings?.zones) ? settings.zones : [];
 
   return ZONES.map((zone) => {
     const savedShape = saved.find((entry) => entry.id === zone.id)?.shape || null;
-
-    let ring = null;
-    if (savedShape?.kind === ZONE_SHAPE.BOUNDARY) ring = savedShape.points;
-    else if (savedShape?.kind === ZONE_SHAPE.RADIUS) ring = radiusToRing(savedShape);
-
-    const drawn = Boolean(ring);
-    /* The seeded fallback goes through the lasso pass first — see `handDrawnRing`. A
-       boundary somebody actually drew in Settings does not: it already *is* the shape
-       their hand made, and roughening it further would be this module editing a planner's
-       own work. */
-    if (!drawn) ring = handDrawnRing(zone.shape, zone.id).map(gridToLatLng);
+    const fromSettings = savedShapeCircle(savedShape);
+    const circle = fromSettings || deriveZoneCircle(zone.id);
+    const ring = circle ? circleRing(circle.centre, circle.radiusMiles) : null;
 
     return {
       id: zone.id,
       name: zone.name,
       color: zoneColor(zone.id),
-      ring,
-      drawn,
-      centroid: ringCentroid(ring),
+      centre: circle?.centre || null,
+      radiusMiles: circle?.radiusMiles || null,
+      ring: ring || [],
+      drawn: Boolean(fromSettings),
+      /* The circle's own centre, not a computed centroid — they agree to within floating
+         point, and the centre is the one that is true by construction. */
+      centroid: circle?.centre || null,
     };
   });
 };

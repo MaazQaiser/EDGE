@@ -47,7 +47,6 @@ const ExitPanel = ({
   tippingLegalDays = [],
   tippingWasForced = false,
   drag,
-  dragQuote,
   dragVisit,
   onAccept,
   onUnaccept,
@@ -55,8 +54,6 @@ const ExitPanel = ({
   onRestoreHours,
   onSetAside,
   onReturnToTray,
-  onCancelDrag,
-  onConfirmDrag,
   onStartMove,
 }) => {
   const { t } = useTranslation();
@@ -79,79 +76,36 @@ const ExitPanel = ({
     </Box>
   );
 
-  /* ── ④ — a move is in flight, so the box is the move preview ─────────────────
-     It outranks the overrun: while the planner is holding a stop, their question is
-     "what does this cost", not "what shall I do about Monday". */
-  if (drag?.visitId && dragVisit) {
-    const target = drag.overDate;
-
-    if (!target) {
-      return (
-        <Box className={classNames(classes.decision, classes.decisionNeutral)}>
-          <Typography className={classes.decisionTitle}>
-            {tt('movePrompt', { site: dragVisit.site?.name })}
-          </Typography>
-          <Typography className={classes.decisionBody}>{tt('moveDayHint')}</Typography>
-          <Box className={classes.decisionActions}>{text(tt('cancelMove'), onCancelDrag)}</Box>
-        </Box>
-      );
-    }
-
-    if (!dragQuote?.legal) {
-      return (
-        <Box className={classNames(classes.decision, classes.decisionRefused)}>
-          <Typography className={classes.decisionTitle}>
-            {tt('moveRefusedTitle', { day: dayjs(target).format('ddd D') })}
-          </Typography>
-          {/* Both halves of the rule, because naming only the failing one leaves the
-              planner wondering whether the other would have failed too. */}
-          <Typography className={classes.decisionBody}>
-            {tt(`moveRefused.${dragQuote?.reason || 'notWorked'}`, {
-              day: dayjs(target).format('ddd D'),
-              siteZone: zoneName(dragVisit.site?.zoneId),
-            })}
-          </Typography>
-          <Box className={classes.decisionActions}>{text(tt('cancelMove'), onCancelDrag)}</Box>
-        </Box>
-      );
-    }
-
-    const sourceAfter = dragQuote.source?.after;
-    const sourceDelta = sourceAfter
-      ? capacityDelta(sourceAfter.durationMins, dragQuote.source.before.shiftMins)
-      : null;
-
-    return (
-      <Box className={classNames(classes.decision, classes.decisionNeutral)}>
-        <Typography className={classes.decisionTitle}>
-          {tt('moveTitle', { site: dragVisit.site?.name, day: dayjs(target).format('ddd D') })}
-        </Typography>
-        {/* The price, in the one place on screen with room to state it in full — this is
-            why the tabs no longer try to carry it. */}
-        <Typography className={classes.dropHint}>
-          {tt('quoteHere', { delta: formatCompact(Math.abs(dragQuote.target.deltaMins)) })}
-        </Typography>
-        <Typography className={classes.decisionBody}>
-          {tt('moveBody', {
-            source: dayjs(dragQuote.source?.date).format('ddd'),
-            sourceAfter: formatCompact(sourceAfter?.durationMins || 0),
-            sourceWord: tt(sourceDelta?.direction || 'spare', {
-              amount: formatCompact(sourceDelta?.magnitude || 0),
-            }),
-            target: dayjs(target).format('ddd'),
-            targetAfter: formatCompact(dragQuote.target.after.durationMins),
-          })}
-        </Typography>
-        <Typography className={classes.decisionNote}>{tt('manualIsFinal')}</Typography>
-        <Box className={classes.decisionActions}>
-          {primary(tt('dropOn', { day: dayjs(target).format('ddd D') }), () =>
-            onConfirmDrag(target),
-          )}
-          {text(tt('cancelMove'), onCancelDrag)}
-        </Box>
-      </Box>
-    );
-  }
+  /**
+   * ── ④ — **nothing is shown while a move is in flight.**
+   *
+   * This block used to be the move preview, and it was three panels: *Moving Kelvin Court*
+   * with a hint while no day was hovered, a refusal naming which rule failed, and — over a
+   * legal target — the full quote (`+1h 30m here`, what both days become, a note that manual
+   * edits are final) with `Drop on Tue 18` and `Cancel` buttons.
+   *
+   * **Removed on instruction: "when dragging a visit in the day, do not show the message."**
+   * Two things make that safe rather than merely obedient:
+   *
+   * - **`DayTabs` already carries the verdict.** Each tab paints `tabDropLegal` or
+   *   `tabDropRefused` for the visit in flight and handles the drop itself, so the target is
+   *   marked where the pointer is going rather than in a panel at the bottom of the drawer.
+   * - **The refusal panel had almost nothing left to say.** Dropping is unrestricted now
+   *   (see `droppableDatesFor`), so `wrongZone` and `outsideWindow` cannot come back — the
+   *   panel's most informative branch was already unreachable.
+   *
+   * What genuinely went with it is the **priced quote before the drop** — §13.7's "the cost
+   * of a move is visible before it is made". That cost is not gone from the product: the
+   * move menu (`StopMoveMenu`) prints the same `priceMove` figure per day, in amber when the
+   * day would end over. So the number moved from *after you pick up* to *before you pick*,
+   * which is arguably the better moment; but on the **drag** path specifically it is now
+   * absent, and the day going amber after the fact is the only feedback. That is the trade,
+   * recorded here rather than discovered later.
+   *
+   * The screen-reader announcement in `index.jsx` is deliberately kept — it is not a visible
+   * message, and it is the only thing making the drag usable without sight.
+   */
+  if (drag?.visitId && dragVisit) return null;
 
   if (!sheet) return null;
 
@@ -297,7 +251,6 @@ ExitPanel.propTypes = {
   /** Whether the tipping stop is there because the planner put it back — see `overspill.js`. */
   tippingWasForced: PropTypes.bool,
   drag: PropTypes.object,
-  dragQuote: PropTypes.object,
   dragVisit: PropTypes.object,
   onAccept: PropTypes.func.isRequired,
   onUnaccept: PropTypes.func.isRequired,
@@ -305,8 +258,6 @@ ExitPanel.propTypes = {
   onRestoreHours: PropTypes.func.isRequired,
   onSetAside: PropTypes.func.isRequired,
   onReturnToTray: PropTypes.func.isRequired,
-  onCancelDrag: PropTypes.func.isRequired,
-  onConfirmDrag: PropTypes.func.isRequired,
   onStartMove: PropTypes.func.isRequired,
 };
 

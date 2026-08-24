@@ -1,16 +1,25 @@
 /**
- * The seeded boundaries have to be *checkable*, or they are decoration.
+ * The circles have to be *checkable*, or they are decoration.
  *
- * A hand-authored polygon around a cluster of hand-placed sites is exactly the kind of
- * thing that looks right in a diff and is wrong on screen — one vertex a mile short and a
- * site sits outside the zone that works it, which on this map reads as a bug in the
- * planner rather than a typo in a fixture. So the containment is asserted rather than
- * eyeballed: every site is inside its own zone and inside no other.
+ * A zone is a radius around a point (`zoneRings`), and where that point and that radius come
+ * from is arithmetic over hand-placed fixture sites — exactly the kind of thing that looks
+ * right in a diff and is wrong on screen. One site half a mile outside the circle that claims
+ * it, and the map reads as a bug in the planner rather than as a fixture a nudge short. So
+ * containment is asserted rather than eyeballed: every site is inside its own circle and
+ * inside no other.
  *
- * That second half is the one worth having. Four convex-ish territories drawn freehand
- * around a 42-mile box overlap easily at the corners, and an overlap is invisible until
- * the day somebody moves a site into the seam. `zoneOfSite` cannot report it — membership
- * lives on the site, so the model has no way to notice that two shapes both cover it.
+ * That second half is the one worth having. `zoneOfSite` cannot report a site caught by two
+ * territories — membership lives on the site, so the model has no way to notice — and it is
+ * invisible until the day somebody has to explain why a move was refused for being in the
+ * wrong zone.
+ *
+ * **What this suite used to be about.** Every assertion here was previously about a *lassoed
+ * polygon*: that the ring had more corners than the fixture's control shape, that most
+ * vertices turned a real angle rather than easing round, that the seeded wobble closed without
+ * a seam, and that the territories genuinely overlapped because a hand-drawn boundary is not
+ * precise. None of those questions exist any more — the shape is a circle, it has no control
+ * points, no wobble and no seam — so they are gone rather than adapted. The two that survive
+ * in spirit are containment and the cap on how many translucent fills may stack.
  */
 
 import dayjs from 'dayjs';
@@ -19,6 +28,7 @@ import { SITES, ZONES } from 'src/app/obx/pages/schedules/components/harmonizeFl
 
 import {
   announcedDates,
+  deriveZoneCircle,
   ringCentroid,
   SITE_POINTS,
   ZONE_COLORS,
@@ -26,84 +36,48 @@ import {
   zoneRings,
 } from './zoneGeography';
 
-/* The rule as it ships: four zones, none of them drawn. Passing it explicitly rather than
+/* The rule as it ships: four zones, none of them set. Passing it explicitly rather than
    letting the default read `localStorage` keeps the suite from depending on whatever a
    previous test — or a developer's own browser profile — happened to leave behind. */
 const UNDRAWN = { zones: ZONES.map((zone) => ({ id: zone.id, name: zone.name, shape: null })) };
 
+/** The flat-earth miles this module measures in, so a test can check a radius. */
+const MILES_PER_DEGREE_LAT = 69.0;
+const milesBetween = (a, b) => {
+  const dLat = (a.lat - b.lat) * MILES_PER_DEGREE_LAT;
+  const dLng =
+    (a.lng - b.lng) * MILES_PER_DEGREE_LAT * Math.cos((((a.lat + b.lat) / 2) * Math.PI) / 180);
+  return Math.hypot(dLat, dLng);
+};
+
 describe('zoneGeography', () => {
-  describe('seeded boundaries', () => {
-    it('gives every zone a ring with at least three points', () => {
+  describe('derived circles', () => {
+    it('gives every zone a centre, a radius and a ring to draw it with', () => {
       zoneRings(UNDRAWN).forEach((zone) => {
-        expect(zone.ring.length).toBeGreaterThanOrEqual(3);
         expect(zone.drawn).toBe(false);
+        expect(Number.isFinite(zone.centre.lat)).toBe(true);
+        expect(Number.isFinite(zone.centre.lng)).toBe(true);
+        expect(zone.radiusMiles).toBeGreaterThan(0);
+        expect(zone.ring.length).toBe(96);
       });
     });
 
-    it('adds corners to the fixture shape without becoming a curve', () => {
-      /* The fixture holds seven or eight control points per zone; what reaches the map is
-         resampled and wobbled. Two bounds, and they pull in opposite directions on purpose.
-
-         **The lower bound** catches the lasso pass being bypassed — equal to the control
-         count means the zones are plain octagons again.
-
-         **The upper bound is the new one.** This assertion used to demand `> control * 4`,
-         from when the ring was 44 points and smoothed into a curve. Sharp corners were asked
-         for, so the ring is 18 and unsmoothed, and a *dense* ring is now the failure rather
-         than the goal: past roughly 24 vertices the edges get too short to read as straight
-         and the outline goes back to looking traced. */
+    it('is actually round, not a polygon that happens to be closed', () => {
+      /* The renderer draws a `<polygon>`, so the only thing making it a circle is that every
+         vertex is the same distance from the centre. Half a percent of tolerance covers the
+         cosine term's own approximation and nothing else — a ring built from the wrong centre,
+         or scaled on one axis, misses this by whole miles. */
       zoneRings(UNDRAWN).forEach((zone) => {
-        const control = ZONES.find((entry) => entry.id === zone.id).shape.length;
-        expect(zone.ring.length).toBeGreaterThan(control);
-        expect(zone.ring.length).toBeLessThanOrEqual(24);
-      });
-    });
-
-    it('turns a real corner at most vertices, rather than easing round them', () => {
-      /* What "sharp" actually means, asserted rather than assumed. At each vertex, measure
-         the turn between the incoming and outgoing edge; a smoothed ring turns a degree or
-         two at a time, a lassoed polygon turns visibly. Requiring most vertices — not all —
-         because a wobble that happens to push two neighbours the same way legitimately
-         leaves one nearly straight, and pinning every vertex would make this test fail on a
-         change to the noise phases that nothing else objects to. */
-      zoneRings(UNDRAWN).forEach((zone) => {
-        const ring = zone.ring;
-        const turns = ring.map((point, index) => {
-          const before = ring[(index - 1 + ring.length) % ring.length];
-          const after = ring[(index + 1) % ring.length];
-          const inbound = Math.atan2(point.lat - before.lat, point.lng - before.lng);
-          const outbound = Math.atan2(after.lat - point.lat, after.lng - point.lng);
-          let turn = Math.abs(outbound - inbound);
-          if (turn > Math.PI) turn = 2 * Math.PI - turn;
-          return (turn * 180) / Math.PI;
+        zone.ring.forEach((point) => {
+          expect(milesBetween(point, zone.centre) / zone.radiusMiles).toBeCloseTo(1, 2);
         });
-        const sharp = turns.filter((degrees) => degrees > 8).length;
-        expect(sharp).toBeGreaterThanOrEqual(Math.ceil(ring.length * 0.6));
       });
     });
 
-    it('is the same shape every time it is asked', () => {
-      /* Seeded, not random. A territory that reshuffled itself between renders would be
-         worse than a clean polygon — it would read as the map being unable to decide. */
-      const first = zoneRings(UNDRAWN).map((zone) => zone.ring);
-      const second = zoneRings(UNDRAWN).map((zone) => zone.ring);
-      expect(second).toEqual(first);
-    });
-
-    it('closes without a seam', () => {
-      /* The wobble is applied around a closed ring, so the offset at the last point has to
-         meet the offset at the first. A non-periodic noise leaves a step there — a notch
-         always in the same place, which reads as a rendering fault rather than a hand. The
-         final gap should be no larger than the ordinary spacing between samples. */
-      zoneRings(UNDRAWN).forEach((zone) => {
-        const gaps = zone.ring.map((point, index) => {
-          const next = zone.ring[(index + 1) % zone.ring.length];
-          return Math.hypot(next.lat - point.lat, next.lng - point.lng);
-        });
-        const closing = gaps[gaps.length - 1];
-        const median = [...gaps].sort((a, b) => a - b)[Math.floor(gaps.length / 2)];
-        expect(closing).toBeLessThan(median * 2.5);
-      });
+    it('is the same circle every time it is asked', () => {
+      /* Derived, not random — but worth pinning anyway: a territory that moved between
+         renders would read as the map being unable to decide. */
+      expect(zoneRings(UNDRAWN)).toEqual(zoneRings(UNDRAWN));
     });
 
     it('puts every site inside its own zone', () => {
@@ -118,17 +92,31 @@ describe('zoneGeography', () => {
       });
     });
 
+    it('leaves air outside the furthest site rather than drawing through it', () => {
+      /* A circle whose edge passes through its outermost pin looks like a rounding error, and
+         a zone is the ground a van covers rather than the convex hull of the addresses
+         currently on the books. The padding is what makes containment *look* like
+         containment, so it is asserted and not just commented. */
+      zoneRings(UNDRAWN).forEach((zone) => {
+        const reach = SITE_POINTS.filter((site) => site.zoneId === zone.id).reduce(
+          (most, site) => Math.max(most, milesBetween(zone.centre, site)),
+          0,
+        );
+        expect(zone.radiusMiles).toBeGreaterThan(reach + 1);
+      });
+    });
+
     it('puts no site inside a zone it does not belong to', () => {
       /**
-       * **The shapes overlap on purpose and this still has to hold.**
+       * **The one assertion that carried straight across from the boundary suite.**
        *
-       * Membership lives on the site, so a site caught by two boundaries is not a data
-       * error — `zoneOfSite` would resolve it the same way regardless. It is a *reading*
-       * error: the map's whole claim is that you can see which territory a pin is in, and
-       * a pin in the seam makes that claim false at exactly the moment somebody is trying
-       * to work out why a move was refused for being in the wrong zone.
+       * A site caught by two territories is not a data error — `zoneOfSite` resolves it off
+       * the site either way. It is a *reading* error: the map's whole claim is that you can
+       * see which territory a pin is in, and a pin in a seam makes that claim false at
+       * exactly the moment somebody is working out why a move was refused.
        *
-       * So the overlaps are allowed to exist and are not allowed to contain anything.
+       * Circles make this easier to hold than lassoed outlines did, not harder — the derived
+       * set is currently disjoint (see the test below), so there are no seams to fall into.
        */
       const rings = zoneRings(UNDRAWN);
 
@@ -141,41 +129,23 @@ describe('zoneGeography', () => {
       });
     });
 
-    it('does overlap its neighbours, because a lasso is not precise', () => {
-      /* The inverse of the test above, and it is an assertion rather than a tolerance: if
-         the territories ever come back perfectly disjoint, somebody has tidied them into
-         the generated-looking shapes this pass deliberately replaced. Sampled on the ring
-         points themselves — a vertex of one zone falling inside another is the cheapest
-         honest evidence that the two intersect. */
-      const rings = zoneRings(UNDRAWN);
-      const overlapping = rings.filter((zone) =>
-        rings.some(
-          (other) =>
-            other.id !== zone.id && zone.ring.some((point) => pointInRing(point, other.ring)),
-        ),
-      );
-
-      expect(overlapping.length).toBeGreaterThanOrEqual(2);
-    });
-
     it('never stacks more than two territories over the same ground', () => {
       /**
-       * **The limit on the overlap, now that overlap is the point.**
+       * **The limit on overlap, which for circles is a ceiling rather than a target.**
        *
-       * This replaces an assertion that the base sat outside every zone. That was written
-       * when the boundaries were disjoint, and it stopped being either true or interesting
-       * the moment they were drawn to run into each other — the depot is at the origin, the
-       * territories now reach the middle of the book, and a depot inside the territory it
-       * mostly serves is what a real franchise looks like. It is drawn as a ring rather
-       * than a pin, so it was never going to read as somebody's stop.
+       * The boundary suite asserted that the territories *did* overlap, because a hand-drawn
+       * lasso that came back perfectly disjoint meant somebody had tidied it into the
+       * generated-looking shape that pass existed to avoid. A circle has no such tell, and
+       * the derived set at these radii does not overlap at all — which is a better answer,
+       * not a suspicious one.
        *
-       * What does still need holding is the *visual* consequence. The fills are translucent
-       * and they compound: two at 0.18 read as about 0.33, which is a legible seam, and
-       * three read as a bruise in the middle of the map with no zone identifiably under it.
-       * Two is the most any point may carry.
+       * What still needs holding is the visual consequence, because a planner can set any
+       * radius they like in Settings. The fills are translucent and they compound: two at
+       * 0.18 read as about 0.33, a legible seam, and three read as a bruise with no zone
+       * identifiably under it. Two is the most any point may carry.
        *
-       * Sampled over every ring vertex, every site and the base — the vertices are where
-       * the shapes actually reach, so they are where a three-way pile-up would first show.
+       * Sampled over every ring vertex, every site and the base — the vertices are where the
+       * shapes actually reach, so they are where a pile-up would first show.
        */
       const rings = zoneRings(UNDRAWN);
       const samples = [
@@ -191,25 +161,36 @@ describe('zoneGeography', () => {
 
       expect(worst).toBeLessThanOrEqual(2);
     });
+
+    it('is centred on where the work is, not half way out to the outlier', () => {
+      /* The mean of the sites, not the middle of their bounding box. North is the case that
+         tells them apart: a tight trio near base plus one site well to the north, so the box
+         centre sits noticeably further out than the mean does. */
+      const north = deriveZoneCircle('north');
+      const sites = SITE_POINTS.filter((site) => site.zoneId === 'north');
+      const boxCentre = {
+        lat: (Math.min(...sites.map((s) => s.lat)) + Math.max(...sites.map((s) => s.lat))) / 2,
+        lng: (Math.min(...sites.map((s) => s.lng)) + Math.max(...sites.map((s) => s.lng))) / 2,
+      };
+
+      const meanReach = sites.reduce(
+        (most, site) => Math.max(most, milesBetween(north.centre, site)),
+        0,
+      );
+      const boxReach = sites.reduce(
+        (most, site) => Math.max(most, milesBetween(boxCentre, site)),
+        0,
+      );
+      expect(meanReach).toBeLessThanOrEqual(boxReach);
+    });
+
+    it('has nothing to derive for a zone with no sites', () => {
+      expect(deriveZoneCircle('nowhere')).toBeNull();
+    });
   });
 
   describe('the saved rule wins', () => {
-    it('prefers a boundary drawn in Settings over the seed', () => {
-      const drawnRing = [
-        { lat: 28.5, lng: -82.9 },
-        { lat: 28.6, lng: -82.8 },
-        { lat: 28.5, lng: -82.7 },
-      ];
-
-      const north = zoneRings({
-        zones: [{ id: 'north', name: 'North', shape: { kind: 'boundary', points: drawnRing } }],
-      }).find((zone) => zone.id === 'north');
-
-      expect(north.ring).toEqual(drawnRing);
-      expect(north.drawn).toBe(true);
-    });
-
-    it('reads a saved radius out as a closed ring', () => {
+    it('takes a saved radius at its word', () => {
       const east = zoneRings({
         zones: [
           {
@@ -217,7 +198,6 @@ describe('zoneGeography', () => {
             name: 'East',
             shape: {
               kind: 'radius',
-              siteId: 'langford',
               anchor: { address: 'Langford Textiles', lat: 28.13, lng: -82.18 },
               radiusMiles: 6,
             },
@@ -226,13 +206,49 @@ describe('zoneGeography', () => {
       }).find((zone) => zone.id === 'east');
 
       expect(east.drawn).toBe(true);
-      expect(east.ring.length).toBe(48);
+      expect(east.radiusMiles).toBe(6);
+      expect(east.centre).toEqual({ address: 'Langford Textiles', lat: 28.13, lng: -82.18 });
+      expect(east.ring.length).toBe(96);
       /* Six miles north of the anchor, give or take the rounding in 69 miles a degree. */
-      const north = east.ring.reduce((top, point) => (point.lat > top.lat ? point : top));
-      expect(north.lat - 28.13).toBeCloseTo(6 / 69, 3);
+      const top = east.ring.reduce((highest, point) => (point.lat > highest.lat ? point : highest));
+      expect(top.lat - 28.13).toBeCloseTo(6 / 69, 3);
     });
 
-    it('falls back to the seed for a radius with no usable anchor', () => {
+    it('reads a boundary drawn in Settings as the circle that encloses it', () => {
+      /**
+       * **A deliberate loss of fidelity, and the reason is on the module.** The planner drew
+       * an outline and this map shows a circle round it, because a surface that drew one zone
+       * traced and its neighbour as a circle would be showing two different definitions of
+       * the word *zone* at once.
+       *
+       * What has to hold is that the reading is *generous*: every point they drew is inside
+       * the circle. A circle that clipped a corner off their own boundary would be worse than
+       * either shape on its own.
+       */
+      const drawnRing = [
+        { lat: 28.5, lng: -82.9 },
+        { lat: 28.62, lng: -82.78 },
+        { lat: 28.54, lng: -82.62 },
+        { lat: 28.44, lng: -82.74 },
+      ];
+
+      const north = zoneRings({
+        zones: [{ id: 'north', name: 'North', shape: { kind: 'boundary', points: drawnRing } }],
+      }).find((zone) => zone.id === 'north');
+
+      expect(north.drawn).toBe(true);
+      expect(north.ring.length).toBe(96);
+      expect(north.centre).toEqual(ringCentroid(drawnRing));
+      /* Measured against the radius rather than with `pointInRing`, and the difference is the
+         point: the circle is defined *through* the outermost vertex, so that one vertex is
+         exactly on the arc and a strict inside-test rejects it. Every other point they drew is
+         strictly within. `<=` is the correct relation for "encloses". */
+      drawnRing.forEach((point) => {
+        expect(milesBetween(point, north.centre)).toBeLessThanOrEqual(north.radiusMiles + 1e-9);
+      });
+    });
+
+    it('falls back to the derived circle for a radius with no usable anchor', () => {
       const south = zoneRings({
         zones: [
           { id: 'south', name: 'South', shape: { kind: 'radius', anchor: null, radiusMiles: 4 } },
@@ -240,7 +256,22 @@ describe('zoneGeography', () => {
       }).find((zone) => zone.id === 'south');
 
       expect(south.drawn).toBe(false);
-      expect(south.ring.length).toBeGreaterThanOrEqual(3);
+      expect(south.radiusMiles).toBeCloseTo(deriveZoneCircle('south').radiusMiles, 6);
+    });
+
+    it('falls back for a boundary too short to enclose anything', () => {
+      const west = zoneRings({
+        zones: [
+          {
+            id: 'west',
+            name: 'West',
+            shape: { kind: 'boundary', points: [{ lat: 28.1, lng: -82.7 }] },
+          },
+        ],
+      }).find((zone) => zone.id === 'west');
+
+      expect(west.drawn).toBe(false);
+      expect(west.ring.length).toBe(96);
     });
   });
 

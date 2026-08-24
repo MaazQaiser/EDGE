@@ -1,5 +1,4 @@
-import OpenInNewOutlinedIcon from '@mui/icons-material/OpenInNewOutlined';
-import { Box, Button, Typography } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import classNames from 'classnames';
 import dayjs from 'dayjs';
 import PropTypes from 'prop-types';
@@ -38,7 +37,7 @@ const SETTLE_MS = 420;
  * to predict a run never looks like it computed anything. `prefersReducedMotion` skips it
  * outright rather than shortening it.
  */
-const ScopePanel = ({ classes, range, forecast, onRangeChange, quiet, settingsHref }) => {
+const ScopePanel = ({ classes, range, forecast, onRangeChange, quiet }) => {
   const { t } = useTranslation();
   const tt = (key, options) => t(`obx.runsheet.harmonizeSplit.${key}`, options);
 
@@ -83,19 +82,33 @@ const ScopePanel = ({ classes, range, forecast, onRangeChange, quiet, settingsHr
     return () => clearTimeout(timer.current);
   }, [range.from, range.to]);
 
-  /* Counts first, then the ratio that decides. Filters lead the pair because the cost model
-     is `10 + 20 × filters` — filters are what the hours are made of — and the work figure is
-     the plain ratio this feature quotes everywhere else. */
-  const stats = [
+  /**
+   * The forecast, as two counts and a ratio — **not as three equal figures.**
+   *
+   * They used to be a row of three identical `value over label` stacks, which spaced them
+   * evenly and so claimed they were the same kind of fact. They are not. `Visits` and
+   * `Filters` are counts of what is in scope: plain integers, complete on their own, and
+   * they belong together because filters are what the visits are *made of* — the cost model
+   * is `10 + 20 × filters`, so the second number is the first one priced.
+   *
+   * `Est. work / shift hours` was never a third statistic. It is a **comparison**, it is the
+   * only one of the three that can come out wrong, and it is the reason a planner reads this
+   * panel at all. So it gets its own line and a bar, and the four-word caption that used to
+   * explain what the slash meant is unnecessary once the bar is drawing it.
+   */
+  const counts = [
     { key: 'visits', value: String(forecast.visitCount) },
     { key: 'filters', value: String(forecast.filterCount) },
-    {
-      key: 'work',
-      value: `${formatCompact(forecast.workMins)} / ${formatCompact(forecast.availableMins)}`,
-      /* The pool exceeds the shifts before a mile is driven. Amber ink on the figure, once. */
-      warn: forecast.workMins > forecast.availableMins,
-    },
   ];
+
+  const work = formatCompact(forecast.workMins);
+  const available = formatCompact(forecast.availableMins);
+  const overCapacity = forecast.workMins > forecast.availableMins;
+  /* Clamped at 1, and the `statBarOver` colour is what carries the excess. A bar drawn past
+     its own trough is not a bar; a full amber one beside an amber figure is unambiguous. */
+  const fillRatio = forecast.availableMins
+    ? Math.min(1, forecast.workMins / forecast.availableMins)
+    : 0;
 
   /**
    * **① does not fold, and there is no control that folds it.**
@@ -139,57 +152,76 @@ const ScopePanel = ({ classes, range, forecast, onRangeChange, quiet, settingsHr
         />
       </Box>
 
-      {/* Everything quoted from Config A, in one container — see `scopeBox`. The heading
-          carries its own way out to Config A, which is where a reader looks for one, not at
-          the foot of the list it applies to. A new tab rather than a navigation: this
-          surface holds unsaved work, and following a link in place would discard a proposal
-          to go and look at a setting. */}
+      {/**
+       * Everything quoted from Config A, in one container — see `scopeBox`.
+       *
+       * **The `Scope` heading and the `Configuration` link are both gone**, on instruction,
+       * and the box is what is left. Worth recording what each one was for, because the
+       * arguments were real and were overruled rather than refuted:
+       *
+       * - The heading named the region so a reader could tell a *quoted* forecast from the
+       *   proposal below it. What replaces it is position and the container itself — this is
+       *   the only filled box in the column, it sits directly under the field that changes
+       *   it, and the figures inside it say what they are. A one-word heading over three
+       *   labelled numbers is a label for labels.
+       * - The link was the way out to Config A, deliberately a new tab because this surface
+       *   holds unsaved work. Removing it leaves no route from here to the rule these
+       *   figures come from, which is a genuine loss; the settings page is still reachable
+       *   the way every other page is.
+       */}
       <Box className={classes.scopeBox}>
-        <Box className={classes.sectionHead}>
-          <Typography component="h3" className={classes.sectionHeading}>
-            {tt('scope')}
-          </Typography>
-          <Button
-            disableRipple
-            variant="onlyText"
-            className={classes.configLink}
-            component="a"
-            href={settingsHref}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            {tt('configuration')}
-            <OpenInNewOutlinedIcon className={classes.configLinkIcon} />
-          </Button>
-        </Box>
-
-        {/* The three figures. They are the *forecast* — what a run would have to place —
-            and they stay on screen at ③ beside the top bar's outturn, deliberately: the
-            panel above them is still the control a planner reaches for when the answer is
-            wrong, and a forecast that vanished would take its own denominator with it. */}
         {settling ? (
-          <Box aria-hidden="true">
-            <Box className={classes.statRow}>
-              {stats.map((stat) => (
-                <Box className={classes.stat} key={stat.key}>
-                  <Box className={classNames(classes.skeletonBar, classes.skeletonStatValue)} />
-                  <Box className={classNames(classes.skeletonBar, classes.skeletonStatLabel)} />
-                </Box>
+          <Box className={classes.statLines} aria-hidden="true">
+            <Box className={classes.statCounts}>
+              {counts.map((count) => (
+                <Box
+                  className={classNames(classes.skeletonBar, classes.skeletonStatValue)}
+                  key={count.key}
+                />
               ))}
+            </Box>
+            <Box className={classes.statCapacity}>
+              <Box className={classNames(classes.skeletonBar, classes.skeletonStatValue)} />
+              <Box className={classNames(classes.skeletonBar, classes.skeletonStatBar)} />
             </Box>
           </Box>
         ) : (
-          <Box className={classes.statRow} role="status" aria-live="polite">
-            {stats.map((stat) => (
-              <Box className={classes.stat} key={stat.key}>
+          <Box className={classes.statLines} role="status" aria-live="polite">
+            <Box className={classes.statCounts}>
+              {counts.map((count) => (
+                <Box className={classes.statCount} key={count.key}>
+                  <Typography component="span" className={classes.statValue}>
+                    {count.value}
+                  </Typography>
+                  <Typography component="span" className={classes.statUnit}>
+                    {tt(`stat.${count.key}`)}
+                  </Typography>
+                </Box>
+              ))}
+            </Box>
+
+            <Box className={classes.statCapacity}>
+              <Box className={classes.statCapacityRow}>
                 <Typography
-                  className={classNames(classes.statValue, stat.warn && classes.statValueWarn)}
+                  component="span"
+                  className={classNames(classes.statValue, overCapacity && classes.statValueWarn)}
                 >
-                  {stat.value}
+                  {work}
                 </Typography>
-                <Typography className={classes.statLabel}>{tt(`stat.${stat.key}`)}</Typography>
+                <Typography component="span" className={classes.statUnit}>
+                  {tt('statOfShift', { available })}
+                </Typography>
               </Box>
-            ))}
+              {/* `aria-hidden`: the figure and its unit beside it already say the whole of
+                  what the bar says, and a second announcement of the same ratio is noise in
+                  a live region that has just announced it. */}
+              <Box className={classes.statBar} aria-hidden="true">
+                <Box
+                  className={classNames(classes.statBarFill, overCapacity && classes.statBarOver)}
+                  style={{ transform: `scaleX(${fillRatio})` }}
+                />
+              </Box>
+            </Box>
           </Box>
         )}
       </Box>
@@ -203,7 +235,6 @@ ScopePanel.propTypes = {
   forecast: PropTypes.object.isRequired,
   onRangeChange: PropTypes.func.isRequired,
   quiet: PropTypes.bool,
-  settingsHref: PropTypes.string.isRequired,
 };
 
 export default ScopePanel;

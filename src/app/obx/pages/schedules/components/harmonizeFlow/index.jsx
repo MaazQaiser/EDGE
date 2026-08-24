@@ -10,13 +10,12 @@ import ComputingState from './components/ComputingState';
 import DayPane from './components/DayPane';
 import DayTabs from './components/DayTabs';
 import ExitPanel from './components/ExitPanel';
-import ReasoningTrail from './components/ReasoningTrail';
 import ScopeState from './components/ScopeState';
 import SpillTray from './components/SpillTray';
 import { useStyles } from './harmonizeFlow.styles';
 import { formatCompact } from './model/durations';
-import { SITES, VISITS } from './model/fixtures';
-import { legalDaysFor } from './model/planner';
+import { VISITS } from './model/fixtures';
+import { droppableDatesFor } from './model/planner';
 import { FLOW_STATE, holdMsForLine, useHarmonizeFlow } from './useHarmonizeFlow';
 
 /**
@@ -53,7 +52,7 @@ import { FLOW_STATE, holdMsForLine, useHarmonizeFlow } from './useHarmonizeFlow'
  * there is no ⑥: Apply closes the drawer and the calendar animates the visits onto their
  * new days. See the note on `FLOW_STATE` for why the calendar is the terminal state.
  */
-const HarmonizeDrawer = ({ open, onClose, onApplied, onOpenSettings }) => {
+const HarmonizeDrawer = ({ open, onClose, onApplied }) => {
   const classes = useStyles();
   const { t } = useTranslation();
   const tt = (key, options) => t(`obx.runsheet.harmonizeFlow.${key}`, options);
@@ -83,21 +82,21 @@ const HarmonizeDrawer = ({ open, onClose, onApplied, onOpenSettings }) => {
    */
   const [spillOpen, setSpillOpen] = useState(false);
 
-  /** Shut by default, the same reasoning `spillOpen` gets — see `ReasoningTrail`. */
-  const [reasoningOpen, setReasoningOpen] = useState(false);
-
-  /* Every visit's legal days, once per render: the window strip on each stop needs it,
-     the tray needs it, and X1 needs it to know whether `Move day` can be offered. */
-  const legalDaysByVisit = useMemo(
-    () =>
-      Object.fromEntries(
-        VISITS.map((v) => [
-          v.id,
-          legalDaysFor(v, SITES.find((s) => s.id === v.siteId) || {}, days),
-        ]),
-      ),
-    [days],
-  );
+  /**
+   * Where a stop could be moved to — **one list for the whole run, not one per visit.**
+   *
+   * This was `legalDaysByVisit`: `legalDaysFor` per visit, keyed by id, because the answer
+   * genuinely differed visit to visit while a drop had to match the day's zone and the
+   * visit's need-by window. Dropping is unrestricted now (see `droppableDatesFor`), so
+   * every visit has the same answer and the map was fifteen copies of one array.
+   *
+   * X1 is the only consumer: `canMove` asks whether the tipping stop has anywhere else to
+   * go before offering `Move day`. Under the old rule that was usually *no* on the
+   * canonical week — one zone per day, each zone worked once — which is why the panel so
+   * often showed `Move day is unavailable`. It is now yes whenever the run has a second
+   * worked day.
+   */
+  const droppableDates = useMemo(() => droppableDatesFor(days), [days]);
 
   const openSheet = plan.runsheets.find((r) => r.date === openDay) || null;
 
@@ -172,7 +171,7 @@ const HarmonizeDrawer = ({ open, onClose, onApplied, onOpenSettings }) => {
           <Box className={classNames(classes.washLayer, classes.eclipse)} aria-hidden="true" />
         ) : null}
 
-        <Box className={classes.head}>
+        <Box className={classNames(classes.head, isProposal && classes.headProposal)}>
           <Box className={classes.titleRow}>
             <Typography component="h2" className={classes.title}>
               {title}
@@ -193,22 +192,26 @@ const HarmonizeDrawer = ({ open, onClose, onApplied, onOpenSettings }) => {
               says filters drive time and a visit count treats an 8-filter data centre and a
               1-filter library as the same event.
 
-              **`Configuration` is not here any more.** It rode this row for a while, on the
-              argument that an action belongs beside the sentence that explains it. It now
-              sits on ①'s own `Scope` heading, which is the top of the read-only table it
-              actually applies to — and leaving both in put the same link on screen twice,
-              forty pixels apart. */}
+              **`Configuration` is not here, and it is not on ① either any more.** It rode
+              this row for a while, then moved to ①'s `Scope` heading, and has now been
+              removed from the drawer altogether — see the note on that heading in
+              `ScopeState` for what that leaves unreachable. */}
           {subtitle ? <Typography className={classes.subtitle}>{subtitle}</Typography> : null}
 
-          {isProposal ? (
-            <ReasoningTrail
-              classes={classes}
-              lines={flow.revealLines}
-              open={reasoningOpen}
-              onToggle={() => setReasoningOpen((prev) => !prev)}
-            />
-          ) : null}
+          {/* **`ReasoningTrail` is gone from this head**, on instruction ("hide the
+              reasoning from the top").
 
+              It was a numbered disclosure between the subtitle and the day tabs, and the
+              placement was the problem rather than the content: opening it pushed the route
+              card **234px** down and clipped the stops — a rarely-opened control sitting in
+              the path between the day you just picked and the route you picked it to read.
+              `harmonizeSplit` had already moved the same shared component to a band at the
+              *foot* of its answer for exactly this reason; the drawer never got that change
+              and has now simply dropped it instead.
+
+              The component still exists and Split still renders it. If it should come back
+              here, the foot of the body — below the route, above the tray — is where Split
+              settled it after trying the two positions above the card. */}
           {isProposal ? (
             <DayTabs
               classes={classes}
@@ -226,7 +229,7 @@ const HarmonizeDrawer = ({ open, onClose, onApplied, onOpenSettings }) => {
         </Box>
 
         <Box
-          className={classes.body}
+          className={classNames(classes.body, isProposal && classes.bodyProposal)}
           {...(isProposal
             ? {
                 role: 'tabpanel',
@@ -241,14 +244,13 @@ const HarmonizeDrawer = ({ open, onClose, onApplied, onOpenSettings }) => {
               days={days}
               range={flow.range}
               forecast={flow.forecast}
-              /* `ScopeState` marks this `isRequired` and it was never passed, so ①'s
-                 `Configuration` button has been calling `undefined` — a dead control, the
-                 same shape as the `+` tab and the installer button this shell also never
-                 wired (see `harmonizeSplit`, which wires all three). Surfaced by removing
-                 the issues tray's own settings CTA, which had been the only consumer of
-                 this prop and was hiding the fact that ① had none. */
-              onOpenSettings={onOpenSettings}
               onRangeChange={actions.setRangeDates}
+              /* The pool, not `flow.scopeVisits` — the list has to draw the rows a planner
+                 has cleared as well as the ones they have kept, or clearing a box would
+                 make the row disappear and take its own undo with it. */
+              visits={VISITS}
+              excluded={flow.excluded}
+              onToggleVisit={actions.toggleVisit}
             />
           ) : null}
 
@@ -281,6 +283,12 @@ const HarmonizeDrawer = ({ open, onClose, onApplied, onOpenSettings }) => {
               onDragStart={startMove}
               onDragEnd={() => flow.setDrag(null)}
               onStartMove={startMove}
+              /* The move menu's destinations and its pricing. `workedDays` rather than
+                 `days`: only a worked day has a route to move onto, and it is the same list
+                 the tabs are built from, so the menu cannot offer a day the tabs do not. */
+              workedDays={workedDays}
+              onQuoteMove={actions.quoteMove}
+              onMoveTo={actions.moveVisitTo}
               isTipping={(stop) => stop.visit.id === tippingStop?.visit.id}
             />
           ) : null}
@@ -292,10 +300,9 @@ const HarmonizeDrawer = ({ open, onClose, onApplied, onOpenSettings }) => {
               accepted={flow.accepted}
               raisedFrom={flow.raisedFrom}
               tippingStop={tippingStop}
-              tippingLegalDays={tippingStop ? legalDaysByVisit[tippingStop.visit.id] : []}
+              tippingLegalDays={tippingStop ? droppableDates : []}
               tippingWasForced={Boolean(tippingStop && flow.forced.includes(tippingStop.visit.id))}
               drag={drag}
-              dragQuote={dragQuote}
               dragVisit={dragVisit}
               onAccept={actions.acceptOverrun}
               onUnaccept={actions.unacceptOverrun}
@@ -303,8 +310,6 @@ const HarmonizeDrawer = ({ open, onClose, onApplied, onOpenSettings }) => {
               onRestoreHours={actions.restoreHours}
               onSetAside={actions.setAsideVisit}
               onReturnToTray={actions.returnToTray}
-              onCancelDrag={() => flow.setDrag(null)}
-              onConfirmDrag={actions.commitDrag}
               onStartMove={startMove}
             />
           ) : null}
@@ -348,16 +353,21 @@ const HarmonizeDrawer = ({ open, onClose, onApplied, onOpenSettings }) => {
             now answers the first for any route it is used on; the second, D1, has no
             other home on screen and is simply not stated any more. */}
         <Box className={classNames(classes.footerBand, isComputing && classes.footerBandBare)}>
-          <Box className={classes.footer}>
+          <Box className={classNames(classes.footer, isProposal && classes.footerProposal)}>
             {state === FLOW_STATE.SCOPE ? (
               <>
                 <Button disableRipple variant="secondaryGrey" onClick={onClose}>
                   {tt('cancel')}
                 </Button>
+                {/* Two ways there is nothing to do, and both have to close this button.
+                    No worked days is a Settings problem (`noWorkedDays` says so under the
+                    table); no selected visits is one the reader just created in the list
+                    above, and `noVisitsSelected` names the fix rather than leaving a dead
+                    green button to be poked at. */}
                 <Button
                   disableRipple
                   variant="primary"
-                  disabled={!workedDays.length}
+                  disabled={!workedDays.length || !flow.scopeVisits.length}
                   onClick={actions.run}
                 >
                   {tt('harmonize')}
@@ -395,9 +405,14 @@ const HarmonizeDrawer = ({ open, onClose, onApplied, onOpenSettings }) => {
                   disabled={!plan.runsheets.length}
                   onClick={actions.apply}
                 >
-                  {tt('applyN', {
-                    runsheets: tt('count.runsheet', { count: plan.runsheets.length }),
-                  })}
+                  {/* **`routes`, not `runsheets`.** The surface title went `Proposed
+                      runsheets` → `Proposed Routes` on instruction, and this button was the
+                      other half of the same word: a screen headed Routes whose primary
+                      action applied runsheets. `runsheet` is the *model's* noun — it is
+                      still what `plan.runsheets` is called and still the right word in the
+                      grid behind — but it is not the word this drawer speaks. `harmonizeSplit`
+                      had already made the same call with its own `applyRoutes` key. */}
+                  {tt('applyRoutes', { count: plan.runsheets.length })}
                 </Button>
               </>
             ) : null}
@@ -414,7 +429,6 @@ HarmonizeDrawer.propTypes = {
   /** Handed the finished plan. The caller animates the calendar with it. */
   onApplied: PropTypes.func,
   /** Days, shift hours and zones are Config A — this is the route to where they live. */
-  onOpenSettings: PropTypes.func,
 };
 
 export default HarmonizeDrawer;

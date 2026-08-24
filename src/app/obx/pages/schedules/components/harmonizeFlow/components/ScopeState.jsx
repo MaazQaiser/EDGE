@@ -1,4 +1,4 @@
-import { Box, Button, Typography } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import classNames from 'classnames';
 import dayjs from 'dayjs';
 import PropTypes from 'prop-types';
@@ -8,8 +8,7 @@ import DateRangePicker from 'src/app/components/common/RangeDatepicker';
 import { prefersReducedMotion } from 'src/app/obx/pages/schedules/components/harmonize/routeMotion';
 
 import { formatCompact } from '../model/durations';
-import { zoneName } from '../model/fixtures';
-import { GearIcon } from './Glyphs';
+import VisitScopeList from './VisitScopeList';
 
 /** How long the skeleton holds before the real numbers reveal. */
 const SETTLE_MS = 420;
@@ -23,14 +22,26 @@ const SETTLE_MS = 420;
  * input is not what this app does anywhere, so the label follows the system and the gap
  * under the field carries the separation.
  *
- * ## Why the days and the zones are not editable here
+ * ## Config A is neither shown nor reachable from here any more
  *
- * They are **Config A** — the franchise's standing answer to which days it works and which
- * zone each one covers — and Config A is set in Settings. Asking again at the top of every
- * run made this a second place to answer the same question, and a second place for the
- * answer to be wrong. So the run *reads* them and this screen *states* them, and
- * `Configuration` — with the same gear a planner already knows from Settings — rides the
- * `Scope` heading rather than sitting under the table it applies to.
+ * The worked days, their zones and their shift hours are **Config A** — the franchise's
+ * standing answer, set in Settings. ① used to *state* them in a Day / Zone / Shift table
+ * and link to them with a `Configuration` gear on the `Scope` heading. **Both were removed
+ * on instruction.** The run still reads Config A — the `shift hours` denominator in the
+ * stat row is summed from the worked days — it simply no longer displays it, and offers no
+ * way to go and change it. See the comment on the heading for what that costs.
+ *
+ * ## The summary, then the work
+ *
+ * ① is two answers. The stat row is the **summary** — what the run adds up to. Under it,
+ * `VisitScopeList` is the **detail**: every visit in the pool, its target and its filter
+ * count, with a box the planner can clear to take it out of this run.
+ *
+ * That pairing is why the figures above are computed from the *selection* and not from the
+ * fixture (see `forecast` in `useHarmonizeFlow`). Clearing three boxes drops the visit
+ * count, the filter count and the estimated hours in the same gesture, so the summary is
+ * always a summary of the list under it. Before this, ① summarised fifteen visits it never
+ * showed, and half the panel's height was empty below the table.
  *
  * ## What this screen no longer says
  *
@@ -52,7 +63,7 @@ const SETTLE_MS = 420;
  *
  * ## Loading, on open and on every range change
  *
- * The three figures and the table are `planRange` run dry, which finishes in well under a
+ * The three figures are `planRange` run dry, which finishes in well under a
  * millisecond — so without help this panel never *looks* like it computed anything, on the
  * very screen that exists to predict a real run. A short skeleton, held for `SETTLE_MS`,
  * is the honest amount of theatre for an instant answer: long enough to read as "working
@@ -64,7 +75,16 @@ const SETTLE_MS = 420;
  * skeleton is scenery, and a reader who has turned motion off wants the numbers on the
  * first frame, not a briefer version of a wait they did not ask to see.
  */
-const ScopeState = ({ classes, days, range, forecast, onOpenSettings, onRangeChange }) => {
+const ScopeState = ({
+  classes,
+  days,
+  range,
+  forecast,
+  visits,
+  excluded,
+  onRangeChange,
+  onToggleVisit,
+}) => {
   const { t } = useTranslation();
   const tt = (key, options) => t(`obx.runsheet.harmonizeFlow.${key}`, options);
 
@@ -118,21 +138,18 @@ const ScopeState = ({ classes, days, range, forecast, onOpenSettings, onRangeCha
       </Box>
 
       <Box className={classes.section}>
-        {/* The heading carries its own action, which is where a reader looks for one — not
-            at the foot of the list it applies to. */}
+        {/* **No action on this heading any more.** `Configuration` — the gear that opened
+            Config A in Settings — was removed on instruction. Worth knowing what went with
+            it: this drawer no longer offers *any* route to the screen that decides the
+            worked days, their zones and their hours, and the tray's own `Give Zone X a
+            working day in settings` button had already been removed on the argument that
+            ①'s link was the one to keep. So a planner who reads `Zone West is not worked`
+            now has nowhere in the flow to go and fix it. Accepted on instruction; this is
+            the note to read if that turns out to matter. */}
         <Box className={classes.sectionHead}>
           <Typography component="h3" className={classes.sectionHeading}>
             {tt('scope')}
           </Typography>
-          <Button
-            disableRipple
-            variant="onlyText"
-            className={classes.sectionAction}
-            onClick={onOpenSettings}
-          >
-            <GearIcon className={classes.sectionActionIcon} />
-            {tt('configuration')}
-          </Button>
         </Box>
 
         {settling ? (
@@ -145,13 +162,6 @@ const ScopeState = ({ classes, days, range, forecast, onOpenSettings, onRangeCha
                 </Box>
               ))}
             </Box>
-            {(worked.length ? worked : [0, 1]).map((day, index) => (
-              <Box className={classes.dayRow} key={day.date || index}>
-                <Box className={classNames(classes.skeletonBar, classes.skeletonDayName)} />
-                <Box className={classNames(classes.skeletonBar, classes.skeletonDayZone)} />
-                <Box className={classNames(classes.skeletonBar, classes.skeletonDayShift)} />
-              </Box>
-            ))}
           </Box>
         ) : (
           <Box
@@ -174,40 +184,36 @@ const ScopeState = ({ classes, days, range, forecast, onOpenSettings, onRangeCha
               ))}
             </Box>
 
-            {worked.length ? (
-              <Box className={classes.dayTable} role="table">
-                <Box className={classes.dayHeadRow} role="row">
-                  <Typography className={classes.dayHeadCell} role="columnheader">
-                    {tt('colDay')}
-                  </Typography>
-                  <Typography className={classes.dayHeadCell} role="columnheader">
-                    {tt('colZone')}
-                  </Typography>
-                  <Typography className={classes.dayHeadNum} role="columnheader">
-                    {tt('colShift')}
-                  </Typography>
-                </Box>
+            {/* **The Day / Zone / Shift table is gone**, on instruction — with it the
+                skeleton rows above, `colDay`/`colZone`/`colShift`, and ①'s only statement
+                of what Config A actually says. The three figures remain, and the `work /
+                shift hours` denominator is still computed from the worked days, so the
+                *hours* the run has are still on screen even though the days that supply
+                them are not.
 
-                {worked.map((day) => (
-                  <Box className={classes.dayRow} role="row" key={day.date}>
-                    <Typography className={classes.dayName} role="cell">
-                      {dayjs(day.date).format('ddd D MMM')}
-                    </Typography>
-                    <Typography className={classes.dayZone} role="cell">
-                      {zoneName(day.zoneId)}
-                    </Typography>
-                    <Typography className={classes.dayShift} role="cell">
-                      {formatCompact(day.shiftMins)}
-                    </Typography>
-                  </Box>
-                ))}
-              </Box>
-            ) : (
+                `noWorkedDays` is kept and promoted to stand on its own. It is the one thing
+                the table said that a planner cannot get anywhere else in the drawer: with no
+                worked days there is nothing to harmonize onto and the footer's button is
+                closed, so without this line ① would be three zeros and a dead button. */}
+            {worked.length ? null : (
               <Typography className={classes.hint}>{tt('noWorkedDays')}</Typography>
             )}
           </Box>
         )}
       </Box>
+
+      {/* Held back behind the same skeleton as the figures, though nothing in it is
+          computed — it is the fixture, available on the first frame. ① reveals as one
+          panel or it reveals as two, and a real list under a skeletonised summary reads
+          as the summary having failed to load rather than as a deliberate stagger. */}
+      {settling ? null : (
+        <VisitScopeList
+          classes={classes}
+          visits={visits}
+          excluded={excluded}
+          onToggle={onToggleVisit}
+        />
+      )}
     </Box>
   );
 };
@@ -217,8 +223,11 @@ ScopeState.propTypes = {
   days: PropTypes.array.isRequired,
   range: PropTypes.object.isRequired,
   forecast: PropTypes.object.isRequired,
-  onOpenSettings: PropTypes.func.isRequired,
+  /** The whole pool. `forecast` describes the *selection* — this is what it is a subset of. */
+  visits: PropTypes.array.isRequired,
+  excluded: PropTypes.array.isRequired,
   onRangeChange: PropTypes.func.isRequired,
+  onToggleVisit: PropTypes.func.isRequired,
 };
 
 export default ScopeState;

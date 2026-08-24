@@ -29,6 +29,15 @@ const EDGE_SHADOW = 'rgba(38, 37, 39, 0.06)';
 const WARNING_INK = '#B54708';
 
 /**
+ * The amber a bar turns when the work does not fit.
+ *
+ * `harmonize.styles.js`'s own `SPILL_LINE`, copied by value for the same reason
+ * `WARNING_INK` is: the fill amber survives against a coloured trough, which is where both
+ * of these use it, and the two shells have to say *this does not fit* in one voice.
+ */
+const SPILL_LINE = '#FEDF89';
+
+/**
  * The left column's width, and why it is a clamp rather than a percentage.
  *
  * The Workspace's columns are proportional — 25/25/50 — because all three of its regions
@@ -300,33 +309,8 @@ export const useStyles = makeStyles((theme) => {
         outlineOffset: 1,
       },
     }),
-    /**
-     * The way out to Config A — the theme's own `onlyText` button, not a hand-rolled link.
-     *
-     * It was an `<a>` with its own colour and its own hover underline, which is a fourth
-     * link treatment in an app that already has one. `onlyText` is the link-button variant
-     * (`textBrand`, 14/500, no underline, `textBrandHover` on hover) and the drawer's own
-     * `sectionAction` already dresses it exactly this way; copied by value, including the
-     * negative margin that pulls the button's padding back so its label sits flush with
-     * the gutter the heading starts from.
-     *
-     * Still an anchor underneath (`component="a"`, `target="_blank"`) — this surface holds
-     * unsaved work, so following it in place would discard a proposal to look at a setting.
-     */
-    configLink: w({
-      '&.MuiButton-root': {
-        flex: '0 0 auto',
-        minWidth: 0,
-        height: 'auto',
-        padding: '2px 6px',
-        marginRight: -6,
-        display: 'flex',
-        alignItems: 'center',
-        gap: 5,
-        textDecoration: 'none',
-      },
-    }),
-    configLinkIcon: w({ fontSize: 14 }),
+    /* `configLink` and `configLinkIcon` are **gone with the `Configuration` button they
+       dressed** — removed from ① on instruction. `ScopePanel` carries the note. */
 
     /* ── The two columns ──────────────────────────────────────────────────────── */
     body: w({
@@ -441,27 +425,10 @@ export const useStyles = makeStyles((theme) => {
       borderRadius: 10,
       padding: '12px 14px 14px',
     }),
-    sectionHead: w({
-      display: 'flex',
-      alignItems: 'center',
-      gap: 8,
-      marginBottom: 10,
-      /* The heading takes the room, so the two actions after it sit together on the right
-         rather than being pushed apart by `space-between` the moment a second one appears. */
-      '& > h3': { marginRight: 'auto' },
-    }),
-
-    /* ── The day tabs ──────────────────────────────────────────────────────────
-       Composed *onto* `harmonizeFlow.styles.js`'s own `tab`, so everything about the
-       chrome — 14/500, the 2px selected rule, the hover, the drop verdicts — is the
-       drawer's and cannot drift.
-
-       **`splitTabDot` is gone**, and with it the only thing this shell was adding to the
-       drawer's tab: a 7px dot in the day's zone colour. Removed on instruction — see
-       `DayTabRow` for why the date/zone/map tie survives without it. `splitTab` survives
-       on its own because the 2px of left padding it adds is what keeps the first tab's
-       label off the band's edge now that no dot is standing in front of it. */
-    splitTab: w({ paddingLeft: 2 }),
+    /* `sectionHead` and `sectionHeading` are **gone**, and with them the `Scope` word and
+       the `Configuration` link that sat opposite it. Both removed on instruction; the
+       argument for each is in `ScopePanel`. The box below them keeps its own padding, so
+       nothing had to move to close the gap. */
 
     /* ── ① folded ──────────────────────────────────────────────────────────────
        **Gone.** Six rules (`foldedRow`, `foldedSpacer`, `foldedChip`, `foldedChipText`,
@@ -471,37 +438,229 @@ export const useStyles = makeStyles((theme) => {
        carries the argument, including why an *automatic* fold was reversed before the
        manual one was cut. */
 
-    sectionHeading: w({
-      ...theme.typography.h4,
-      /* `h4` is 700 — a step heavier than this heading earns beside a 14/500 text button
-         on the same row. The drawer's own `sectionHeading` makes the same adjustment for
-         the same reason; copied by value so the two cannot drift apart. */
-      fontWeight: 500,
-      color: theme.palette.textPrimary,
+    /* ── The day tabs ──────────────────────────────────────────────────────────
+       **A segmented control, not an underlined tab strip — and this is a replacement of the
+       drawer's chrome rather than a composition onto it.**
+
+       Everything came from `harmonizeFlow.styles.js` before: 14/500 in `textPlaceholder`,
+       `4px 4px 12px`, a 2px `borderBrand` rule under the selected one and a `borderSubtle1`
+       hairline under the row. The argument for taking it was that a private tab treatment
+       inside this feature would read as a different application from the schedule page behind
+       it, and `splitTab` added a grand total of 2px of left padding on top.
+
+       That treatment is what has now been replaced, on instruction — *"the tabs are not
+       clearly visible at the moment"* — and the diagnosis is right for a reason specific to
+       this shell rather than to the underline pattern. A 2px rule under a label is enough when
+       a tab strip is the loudest thing in its band. Here the row sits between a filled
+       forecast box above it and a route card with a tinted region and a gauge below it, and a
+       hairline-plus-underline is the quietest chrome on the screen at the exact moment it is
+       the control the planner is meant to press. So each day becomes a **box you can see**: a
+       bordered container at rest, a filled brand container when selected.
+
+       **The drawer keeps the underline.** These are handed to `DayTabRow` through
+       `drawerClasses`, which overrides `tab`/`tabSelected`/`tabRow` by key, so the drawer's
+       own sheet is untouched and its strip is unchanged. That is deliberate: Drawer↔Split is a
+       comparison, and this is a difference in the shell, which is what the comparison is
+       about. The two rows still share every *behaviour* — `DayTabRow` is one component — and
+       differ only in the classes it is handed.
+
+       Not composed with the drawer's rules, either. `w()` compiles each key to a doubled
+       selector of equal specificity, so a Split rule layered over a drawer rule would be
+       decided by whichever sheet the injector happened to emit first — and these two live in
+       different files. Replacing the class is the only version of this that cannot silently
+       lose. */
+    splitTabRow: w({
+      display: 'flex',
+      alignItems: 'center',
+      /* 8px, where the underlined row used 20. An underlined tab needs air around its label
+         because the label *is* the tab and nothing else bounds it; a bordered box carries its
+         own edge, so the gap only has to separate two boxes. 20px between containers reads as
+         three unrelated buttons rather than as one control with three positions. */
+      gap: 8,
+      marginTop: 16,
+      /* **No hairline under the row.** It was the underline pattern's baseline — the thing the
+         selected tab's 2px rule sat on and interrupted. With boxes there is nothing to
+         interrupt it, so it would just be a rule under some buttons, and it was one of the two
+         indistinguishable `borderSubtle1` lines 90px apart that `previewTrack` records
+         fighting with. */
+      overflowX: 'auto',
+      /* 2px of vertical room for the focus ring, which a box tab draws outside its own edge
+         where an underlined one had 12px of padding to draw inside. */
+      padding: '2px 0',
+      scrollbarWidth: 'none',
+      '&::-webkit-scrollbar': { display: 'none' },
     }),
 
-    /* ── The three figures ─────────────────────────────────────────────────────
-       Tighter than the drawer's own stat row: this column carries the same three
-       numbers plus a pill per day plus, eventually, a whole runsheet, so the figures
-       give up a type size rather than the pills giving up their second line. */
-    /* `marginBottom` is gone and `marginTop` is trimmed: the container's own padding is
-       what holds the figures off its edges now, and the old 14px bottom margin would have
-       stacked with it. */
-    statRow: w({ display: 'flex', gap: 32, marginTop: 10 }),
-    stat: w({ display: 'flex', flexDirection: 'column', gap: 1 }),
+    splitTab: w({
+      ...theme.typography.subtitle2,
+      display: 'flex',
+      alignItems: 'center',
+      gap: 7,
+      flex: '0 0 auto',
+      whiteSpace: 'nowrap',
+      cursor: 'pointer',
+      /* 8px, `scopeBox`'s radius at a smaller box. Not fully rounded: a pill reads as a filter
+         chip — something switched on and off independently — and these are mutually exclusive
+         positions of one control, which is what a slightly-rounded rectangle says. */
+      borderRadius: 8,
+      padding: '6px 12px',
+      border: `1px solid ${theme.palette.borderSubtle1}`,
+      background: theme.palette.surface,
+      color: theme.palette.textSecondary1,
+      transition: 'background 140ms ease, border-color 140ms ease, color 140ms ease',
+      /* Scoped away from the drag verdicts for the reason the drawer's own `tab` records: the
+         doubled hover selector outranks a single-class modifier, so without this, resting the
+         pointer on a refused tab repaints it as an ordinary hover. */
+      '&:hover:not($splitTabSelected):not($splitTabDropLegal):not($splitTabDropRefused)': {
+        borderColor: theme.palette.borderStrong1,
+        color: theme.palette.textPrimary,
+      },
+      '&:focus-visible': { outline: `2px solid ${theme.palette.borderBrand}`, outlineOffset: 2 },
+    }),
+
+    /**
+     * The selected day — **a filled container, and filled *subtly*.**
+     *
+     * A solid brand fill with white text was the other candidate, and it loses on this screen
+     * for a reason that has nothing to do with taste: the column footer already carries a
+     * solid green `Harmonize`, and a second solid green block 300px above it makes the row look
+     * like it holds the primary action. Subtle brand ground + brand border + brand ink is
+     * unmistakably *the selected one* and still reads as a state rather than as a button.
+     *
+     * The border is what does most of the work — a fill this pale is a hint, and the 1px edge
+     * going from `borderSubtle1` to `borderBrand` is the part that reads at a glance.
+     */
+    splitTabSelected: w({
+      background: theme.palette.surfaceBrandSubtle,
+      borderColor: theme.palette.borderBrand,
+      color: theme.palette.textBrand,
+      fontWeight: 600,
+    }),
+
+    /* The stop count, inside a box. **Plain text, not the drawer's grey pill** — a pill inside
+       a bordered container is a box in a box, and the container has already done the job the
+       pill's ground was doing. Colour inherits from the tab, so it goes brand with the
+       selected one instead of staying grey inside a brand container. */
+    splitTabCount: w({
+      ...theme.typography.subtitle3,
+      fontWeight: 600,
+      color: 'inherit',
+      opacity: 0.75,
+      fontVariantNumeric: 'tabular-nums',
+    }),
+
+    /* The `+` tab: the same box, dashed and unlabelled. Dashed because it does not *select* a
+       panel, it makes a new one — the one thing in this row that is not a position of the
+       control. Square, since there is no label to set its width. */
+    splitTabAdd: w({
+      flex: '0 0 auto',
+      display: 'grid',
+      placeItems: 'center',
+      width: 33,
+      height: 33,
+      borderRadius: 8,
+      border: `1px dashed ${theme.palette.borderStrong1}`,
+      background: 'transparent',
+      color: theme.palette.textSecondary3,
+      cursor: 'pointer',
+      transition: 'color 140ms ease, border-color 140ms ease',
+      '&:hover': { color: theme.palette.textBrand, borderColor: theme.palette.borderBrand },
+      '&:focus-visible': { outline: `2px solid ${theme.palette.borderBrand}`, outlineOffset: 2 },
+    }),
+
+    /* ── ④ drag verdicts, on a box tab ────────────────────────────────────────
+       The drawer's own verdicts are a dashed *bottom border* plus a ground, with the top two
+       corners rounded — a treatment built for a tab that has only its underside to draw on. A
+       box has all four sides, so the verdict is the whole border: dashed the full way round,
+       which reads as "a target" in a row whose resting state is a solid edge. The grounds and
+       inks are the drawer's own values, including its note that the legal verdict takes
+       `textPrimary` rather than `textBrand` because brand-on-brand-subtle is 2.87:1 on the
+       FilterGo tenant — which would have made the *legal* verdict harder to read than the
+       refusal beside it. */
+    splitTabDropLegal: w({
+      background: theme.palette.surfaceBrandSubtle,
+      borderColor: theme.palette.borderBrand,
+      borderStyle: 'dashed',
+      color: theme.palette.textPrimary,
+    }),
+    splitTabDropRefused: w({
+      background: theme.palette.surfaceAlertSubtle,
+      borderColor: theme.palette.borderAlert,
+      borderStyle: 'dashed',
+      color: theme.palette.textAlert,
+    }),
+
+    /* ── The forecast ──────────────────────────────────────────────────────────
+       **Two counts and a meter, not three equal columns — and that is the change.**
+
+       The three figures used to be a flex row of identical `value over label` stacks:
+       `15 / Visits`, `57 / Filters`, `21h 30m / 24h / Est. work / shift hours`. Even
+       spacing is a claim that three things are the same kind of thing, and these are not.
+       Two of them are **counts of work in scope** — plain integers, complete on their own.
+       The third is a **ratio against a capacity**, which is the only one of the three that
+       can be wrong, and the one the planner is actually reading the panel to find out.
+       Giving it a third of a row and a four-word caption made the question look like a
+       statistic.
+
+       So the counts pair off on one line and the ratio gets the second line to itself,
+       with the bar this feature already draws for exactly this comparison — 4px, fully
+       rounded, `#EEF5FF` trough under a `#146DFF` fill, `proposedBar`'s own values copied
+       so the forecast in ① and the outturn on a route card are one gauge at two moments.
+       The mouthful goes with it: the bar says *of what*, so the words only have to say
+       `of 24h shift`.
+
+       A hairline between the two lines was tried and dropped. Inside a `surfaceGreySubtle`
+       box a `borderSubtle1` rule is about 1.1:1 — in the markup and not on the screen —
+       and the 14px of air is doing the separating anyway. */
+    statLines: w({ display: 'flex', flexDirection: 'column', gap: 14 }),
+
+    /* The counts. `baseline`, not `center`: the figure is 20px and its unit is 14px, and
+       sitting them on a shared baseline is what makes the pair read as one phrase — `15
+       visits` — rather than as a number with a label parked beside it. */
+    statCounts: w({ display: 'flex', alignItems: 'baseline', gap: 20, flexWrap: 'wrap' }),
+    statCount: w({ display: 'flex', alignItems: 'baseline', gap: 5 }),
+
+    /* The capacity line: figure, its unit, and the bar under both. */
+    statCapacity: w({ display: 'flex', flexDirection: 'column', gap: 7 }),
+    statCapacityRow: w({ display: 'flex', alignItems: 'baseline', gap: 5 }),
+
     statValue: w({
       ...theme.typography.h3,
       color: theme.palette.textPrimary,
+      /* Tabular figures, so the width of `21h 30m` does not shuffle as the range changes
+         and the bar below it does not appear to start from a different place. */
       fontVariantNumeric: 'tabular-nums',
       lineHeight: '28px',
     }),
     /* The pool exceeds the shifts before a mile is driven. Amber ink on the figure, once
        — the same treatment and the same argument as the drawer's own. */
     statValueWarn: w({ color: WARNING_INK }),
-    /* Sentence case in `body2`, not 11px uppercase letterspaced. The uppercase micro-label
-       is a convention from somewhere else — nothing in this product wears it, and beside a
-       20px figure it read as a chart legend rather than as a caption. */
-    statLabel: w({ ...theme.typography.body2, color: theme.palette.textSecondary2 }),
+    /* The unit that finishes the phrase: `visits`, `filters`, `of 24h shift`. Sentence case
+       in `body2` — the 11px uppercase letterspaced micro-label is a convention from
+       somewhere else, nothing in this product wears it, and beside a 20px figure it read
+       as a chart legend rather than as part of the sentence. */
+    statUnit: w({ ...theme.typography.body2, color: theme.palette.textSecondary2 }),
+
+    /* `proposedBar`'s geometry and colours, copied by value. See the note above. */
+    statBar: w({
+      position: 'relative',
+      height: 4,
+      background: '#EEF5FF',
+      borderRadius: 24,
+      overflow: 'hidden',
+    }),
+    statBarFill: w({
+      position: 'absolute',
+      inset: 0,
+      background: '#146DFF',
+      borderRadius: 24,
+      transformOrigin: 'left center',
+      transition: 'transform 260ms ease',
+    }),
+    /* Over capacity: the trough fills completely and turns amber, because a bar that stops
+       at 100% while the figure above it reads `26h of 24h` is a bar contradicting its own
+       caption. Amber and not red — D3 makes the cap soft. */
+    statBarOver: w({ background: SPILL_LINE }),
 
     hint: w({ ...theme.typography.body2, color: theme.palette.textSecondary2, marginTop: 10 }),
 
@@ -515,8 +674,12 @@ export const useStyles = makeStyles((theme) => {
       '0%, 100%': { opacity: 1 },
       '50%': { opacity: 0.45 },
     },
-    skeletonStatValue: w({ width: 44, height: 20, marginBottom: 4 }),
-    skeletonStatLabel: w({ width: 34, height: 10 }),
+    /* Skeleton shapes that match the forecast's own layout rather than a generic pair of
+       bars: two count phrases on one line, then a figure and a full-width track. A skeleton
+       whose silhouette differs from what replaces it is a second layout shift 420ms after
+       the first. */
+    skeletonStatValue: w({ width: 78, height: 20 }),
+    skeletonStatBar: w({ width: '100%', height: 4, borderRadius: 24 }),
     skeletonPill: w({ width: 116, height: 44, borderRadius: 8 }),
 
     /* ── The plan region ──────────────────────────────────────────────────────── */

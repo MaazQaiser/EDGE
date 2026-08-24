@@ -174,7 +174,13 @@ describe('X3 — raising the hours is the exit that re-runs the engine (D5)', ()
 });
 
 describe('move pricing (④)', () => {
-  it('refuses a wrong-zone day and says the window was not the problem', () => {
+  /**
+   * **This used to assert the opposite**, and the reversal is deliberate: it read
+   * *"refuses a wrong-zone day and says the window was not the problem"*. Dropping is
+   * unrestricted now — see `droppableDatesFor` — so a wrong-zone day takes the visit and
+   * the two flags survive only as description.
+   */
+  it('accepts a wrong-zone day, and still reports that the zone did not match', () => {
     const p = plan();
     const verdict = priceMove({
       plan: p,
@@ -182,11 +188,25 @@ describe('move pricing (④)', () => {
       visitId: 'v1',
       targetDate: '2026-08-19',
     });
-    expect(verdict.legal).toBe(false);
-    expect(verdict.reason).toBe('wrongZone');
-    /* The distinction the refusal sentence is built on: the date was fine. */
+    expect(verdict.legal).toBe(true);
+    /* Still computed, so a caller can warn even though nothing refuses: v1 is a North
+       site and Wednesday works South, but the date is inside its window. */
     expect(verdict.windowAllows).toBe(true);
     expect(verdict.zoneAllows).toBe(false);
+    /* And it is a real quote, not a rubber stamp — the target day gets heavier. */
+    expect(verdict.target.deltaMins).toBeGreaterThan(0);
+  });
+
+  it('honours a pin onto a wrong-zone day, so the drop and the plan agree', () => {
+    /* The bug this guards: `priceMove` accepting a drop the pin pass then discards, which
+       lands the visit on the engine's own day while the tab you dropped on stays empty. */
+    const p = planRange({
+      days: DEFAULT_RUN_DAYS,
+      visits: VISITS,
+      pinned: { v1: '2026-08-19' },
+    });
+    expect(sheet(p, '2026-08-19').stops.some((s) => s.visit.id === 'v1')).toBe(true);
+    expect(sheet(p, '2026-08-17').stops.some((s) => s.visit.id === 'v1')).toBe(false);
   });
 
   /**
@@ -213,19 +233,25 @@ describe('move pricing (④)', () => {
   });
 
   /**
-   * A pin outranks the engine's preference but not the hard constraints. If the days
-   * change under a pinned visit so that its day is no longer legal, the pin is dropped
-   * rather than honoured — H4 and H7 are not negotiable and a stranded stop in the
-   * wrong zone is a worse outcome than a move quietly undone.
+   * **Narrowed, not deleted.** This used to assert that a pin was dropped when its day's
+   * *zone* changed under it, on the rule that H4/H7 outrank a pin. A planner may now
+   * overrule the zone deliberately, so a zone change no longer invalidates a pin — the
+   * only thing that still does is the day ceasing to be worked, which is the one case
+   * where honouring the pin would build a runsheet for a day with no shift.
    */
-  it('drops a pin that has become illegal rather than stranding the visit', () => {
-    const days = DEFAULT_RUN_DAYS.map((d) =>
+  it('keeps a pin when the zone changes under it, and drops it when the day stops being worked', () => {
+    const rezoned = DEFAULT_RUN_DAYS.map((d) =>
       d.date === '2026-08-18' ? { ...d, zoneId: 'south' } : d,
     );
-    const p = planRange({ days, visits: VISITS, pinned: { v1: '2026-08-18' } });
-    /* v1 is a North site; Tuesday is now South, so the pin cannot stand. */
-    expect(sheet(p, '2026-08-18').stops.some((s) => s.visit.id === 'v1')).toBe(false);
-    expect(sheet(p, '2026-08-17').stops.some((s) => s.visit.id === 'v1')).toBe(true);
+    const kept = planRange({ days: rezoned, visits: VISITS, pinned: { v1: '2026-08-18' } });
+    /* v1 is a North site and Tuesday is now South — the pin stands anyway. */
+    expect(sheet(kept, '2026-08-18').stops.some((s) => s.visit.id === 'v1')).toBe(true);
+
+    const closed = DEFAULT_RUN_DAYS.map((d) =>
+      d.date === '2026-08-18' ? { ...d, worked: false } : d,
+    );
+    const dropped = planRange({ days: closed, visits: VISITS, pinned: { v1: '2026-08-18' } });
+    expect(sheet(dropped, '2026-08-17').stops.some((s) => s.visit.id === 'v1')).toBe(true);
   });
 
   it('refuses a day that is not worked at all', () => {
@@ -291,12 +317,15 @@ describe('a manual route', () => {
     ).toMatchObject({ legal: true });
   });
 
-  it('still refuses a visit whose need-by window does not reach it (H7)', () => {
+  it('now accepts a visit whose need-by window does not reach it, and flags the window', () => {
     const p = planRange({ days: withCustom, visits: VISITS });
-    /* v15 (Sable Ridge) cannot be needed before 16 Aug, whatever zone the route takes. */
+    /* v15 (Sable Ridge) cannot be needed before 16 Aug, and the route is dated the 15th.
+       The window used to be the one rule this drawer would not break; a planner may now
+       break it deliberately, so the drop is accepted and `windowAllows` is what says the
+       promise to the customer is the thing being overruled. */
     expect(
       priceMove({ plan: p, days: withCustom, visitId: 'v15', targetDate: CUSTOM_DATE }),
-    ).toMatchObject({ legal: false, reason: 'outsideWindow' });
+    ).toMatchObject({ legal: true, windowAllows: false });
   });
 
   it('honours a pin onto it — the bug that made a drop land on the wrong day', () => {

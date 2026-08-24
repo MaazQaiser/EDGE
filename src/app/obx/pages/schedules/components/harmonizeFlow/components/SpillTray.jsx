@@ -1,16 +1,13 @@
 import { Box, Collapse, Typography } from '@mui/material';
 import classNames from 'classnames';
-import dayjs from 'dayjs';
 import PropTypes from 'prop-types';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { ThinkingOrb } from 'thinking-orbs';
 
 import { StopPinIcon } from '../../harmonize/components/StopPinIcon';
 import { DragHandle, StopFigure, StopRow } from '../../harmonize/components/StopRowParts';
 import { STOP_TONES, useStyles as useRouteStyles } from '../../harmonize/harmonize.styles';
 import { formatCompact, onSiteMinsFor } from '../model/durations';
-import { zoneName } from '../model/fixtures';
 import { UNPLACED_REASON } from '../model/reasons';
 import { ChevronDown, WarningIcon } from './Glyphs';
 
@@ -75,7 +72,17 @@ const SpillTray = ({
     stopDetailLabel: classes.flowDetailLabel,
     stopPillName: classes.flowStopName,
     stopFigure: classes.flowFigure,
-    stopChevron: classes.flowChevron,
+    /**
+     * **Hidden here, unlike on a route row.**
+     *
+     * `StopFigure` draws its disclosure button unconditionally, and these rows pass no
+     * `onToggle` — there is no arithmetic behind an unplaced visit (no arrival, no
+     * departure, no leg), so the chevron was a control that could never open anything. It
+     * was previously left visible and inert on the argument that it kept this figure in the
+     * same column as the routes' figures; that is what `flowTrayFigureEnd` does now
+     * instead, without putting a dead affordance on every row of the tray.
+     */
+    stopChevron: classes.flowTrayChevronHidden,
     stopChevronIcon: classes.flowChevronIcon,
     /* Centred, not top-aligned — there is no track under this pin for a top alignment to
        be reaching toward. See `flowLoosePinColumn`. */
@@ -96,7 +103,7 @@ const SpillTray = ({
       <Box
         component="button"
         type="button"
-        className={classes.spillBar}
+        className={classNames(classes.spillBar, classes.spillBarProposal)}
         aria-expanded={open}
         aria-controls="harmonize-issues"
         onClick={onToggle}
@@ -126,17 +133,12 @@ const SpillTray = ({
       </Box>
 
       <Collapse in={open} timeout={220} unmountOnExit>
-        <Box className={classes.spillBody} id="harmonize-issues">
+        <Box
+          className={classNames(classes.spillBody, classes.spillBodyProposal)}
+          id="harmonize-issues"
+        >
           {spilled.length ? (
             <>
-              {/* **What these are, then what you can do with them** — in that order and in
-                  two short clauses. It read: *"Every one of these has a legal day — the day
-                  just ran out of hours. Drag one onto a day tab to put it back, and that day
-                  goes over its shift."* Thirty words, two of them jargon (`legal day`, `day
-                  tab`), and it spent its first clause explaining the engine's classification
-                  rather than the planner's options. */}
-              <Typography className={classes.spillIntro}>{tt('spillIntro')}</Typography>
-
               {spilled.map((item) => (
                 <Box
                   key={item.visit.id}
@@ -197,7 +199,7 @@ const SpillTray = ({
                     figure={
                       /* `stopFigureRow`: `stopValues` is a column of value rows, so an
                          unwrapped fragment stacks its children one per line. */
-                      <Box className={route.stopFigureRow}>
+                      <Box className={classNames(route.stopFigureRow, classes.flowTrayFigureEnd)}>
                         <StopFigure
                           classes={route}
                           duration={formatCompact(onSiteMinsFor(item.visit.filterCount))}
@@ -217,21 +219,6 @@ const SpillTray = ({
                         filters: tt('count.filter', { count: item.visit.filterCount }),
                       })}
                     </Typography>
-                    {/* Where it came off, and the zone it belongs to — **the two facts a
-                        planner needs to find it a new day**, which is the only decision this
-                        row supports. It used to spend the line on *why* instead ("its only
-                        legal day" / "3 legal days in its window"): true, and an argument
-                        about the engine's own reasoning rather than the thing being moved.
-                        The zone is what says which days could take it at all. */}
-                    <Box className={classes.spillOffRow}>
-                      <Box className={classes.spillOffDot} aria-hidden="true" />
-                      <Typography className={classes.spillOff}>
-                        {tt('spillOffFrom', {
-                          day: dayjs(item.date).format('ddd D'),
-                          zone: zoneName(item.site?.zoneId),
-                        })}
-                      </Typography>
-                    </Box>
                   </StopRow>
                 </Box>
               ))}
@@ -240,15 +227,6 @@ const SpillTray = ({
 
           {unplaced.length ? (
             <>
-              <Typography
-                className={classNames(
-                  classes.spillIntro,
-                  spilled.length && classes.spillIntroSecond,
-                )}
-              >
-                {tt('notPlacedIntro')}
-              </Typography>
-
               {unplaced.map((item) => {
                 const aside = item.reason === UNPLACED_REASON.SET_ASIDE;
 
@@ -322,7 +300,7 @@ const SpillTray = ({
                         </Box>
                       }
                       figure={
-                        <Box className={route.stopFigureRow}>
+                        <Box className={classNames(route.stopFigureRow, classes.flowTrayFigureEnd)}>
                           <StopFigure
                             classes={route}
                             duration={formatCompact(onSiteMinsFor(item.visit.filterCount))}
@@ -337,18 +315,6 @@ const SpillTray = ({
                           filters: tt('count.filter', { count: item.visit.filterCount }),
                         })}
                       </Typography>
-                      <Box className={classes.trayReasonRow}>
-                        {/* Paused: the orb is the drawer's mark for *the optimizer*, and
-                            this is the optimizer's own account of why the visit is here.
-                            Frozen because the working-out is over — an animated orb on a
-                            settled result would claim something is still happening. */}
-                        <Box className={classes.trayReasonOrb} aria-hidden="true">
-                          <ThinkingOrb state="breathing" size={20} paused />
-                        </Box>
-                        <Typography className={classes.trayReason}>
-                          {tt(`reason.${item.reason}`, { zone: zoneName(item.site?.zoneId) })}
-                        </Typography>
-                      </Box>
                       {/**
                        * **The `Give Zone X a working day in settings` button is gone.**
                        *

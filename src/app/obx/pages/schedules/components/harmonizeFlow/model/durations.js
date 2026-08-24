@@ -3,7 +3,7 @@
  *
  * The drawer states the same quantity three ways and each one is load-bearing:
  *
- *   **Compact** — `5h38m`. A day's duration against its shift, a leg of driving, an
+ *   **Compact** — `5h 38m`. A day's duration against its shift, a leg of driving, an
  *   overrun. These sit in the capacity strip at 62–74px a tab and in the head's stat
  *   row, where `5 hr 38 min` would wrap and `5.63h` would need decoding.
  *
@@ -13,7 +13,7 @@
  *   purpose — it is the one notation a reader will not mistake for a duration, which
  *   is exactly the distinction D16 needs them to hold.
  *
- *   **Words** — `1h38m over`, `2h30m spare`. The compact figure plus one word of
+ *   **Words** — `1h 38m over`, `2h 30m spare`. The compact figure plus one word of
  *   direction. §13.6's N4 finding: over and comfortable share a silhouette, so the
  *   bar cannot carry the warning alone and the word underneath is not decoration.
  *
@@ -38,11 +38,20 @@ export const onSiteMinsFor = (filterCount = 0) =>
   STOP_OVERHEAD_MINS + Math.max(0, filterCount) * FILTER_MINS;
 
 /**
- * `5h38m`, `38m`, `6h`.
+ * `5h 38m`, `38m`, `6h`.
  *
  * Zero renders as `0m` rather than empty, for the same reason the sibling formatter
  * spells out `0 min`: a day with no driving is an answer, and a blank where a figure
  * belongs reads as a bug.
+ *
+ * **The space between the two units was added on instruction** (`5h38m` → `5h 38m`). It is
+ * a thin space's worth of legibility on a figure this drawer prints in six places, and the
+ * density argument at the top of this file survives it — the point of *compact* was never
+ * to close that gap, it was to avoid `5 hr 38 min`, which is more than twice as wide.
+ *
+ * The single-unit forms deliberately keep no space: `6h` and `38m` are one token each and
+ * there is nothing to separate. It also means the string only ever grows when both units
+ * are present, which is the case the tabs and the tray were measured against.
  */
 export const formatCompact = (minutes = 0) => {
   const safe = Math.max(0, Math.round(minutes));
@@ -51,7 +60,7 @@ export const formatCompact = (minutes = 0) => {
 
   if (!hours) return `${mins}m`;
   if (!mins) return `${hours}h`;
-  return `${hours}h${String(mins).padStart(2, '0')}m`;
+  return `${hours}h ${String(mins).padStart(2, '0')}m`;
 };
 
 /**

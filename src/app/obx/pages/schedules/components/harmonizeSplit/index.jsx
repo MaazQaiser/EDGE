@@ -14,7 +14,10 @@ import SpillTray from 'src/app/obx/pages/schedules/components/harmonizeFlow/comp
 import { useStyles as useFlowStyles } from 'src/app/obx/pages/schedules/components/harmonizeFlow/harmonizeFlow.styles';
 import { formatCompact } from 'src/app/obx/pages/schedules/components/harmonizeFlow/model/durations';
 import { SITES, VISITS } from 'src/app/obx/pages/schedules/components/harmonizeFlow/model/fixtures';
-import { legalDaysFor } from 'src/app/obx/pages/schedules/components/harmonizeFlow/model/planner';
+import {
+  droppableDatesFor,
+  legalDaysFor,
+} from 'src/app/obx/pages/schedules/components/harmonizeFlow/model/planner';
 import {
   FLOW_STATE,
   holdMsForLine,
@@ -82,7 +85,7 @@ const OVERLAY_CLOSE_MS = 200;
 const OVERLAY_COMMIT_MS = 460;
 const HANDOVER_AT_MS = 300;
 
-const HarmonizeSplit = ({ open, onClose, onApplied, settingsHref }) => {
+const HarmonizeSplit = ({ open, onClose, onApplied }) => {
   const classes = useStyles();
   const flowClasses = useFlowStyles();
   const { t } = useTranslation();
@@ -171,8 +174,28 @@ const HarmonizeSplit = ({ open, onClose, onApplied, settingsHref }) => {
       ...flowClasses,
       spillTray: classes.flowSpillTray,
       routeBody: classNames(flowClasses.routeBody, classes.flowRouteBody),
-      /* The one rule `DayTabRow` still adds on top of the drawer's tab chrome. */
-      splitTab: classes.splitTab,
+      /**
+       * **The whole tab treatment, replaced rather than composed onto.**
+       *
+       * It used to be one key — 2px of left padding on top of the drawer's underlined strip.
+       * The row is a segmented control in this shell now (see `splitTab*` in the sheet), so
+       * every class the tabs wear is overridden here by name: the drawer's own rules are
+       * never emitted for this row, which is what stops two equal-specificity sheets from
+       * deciding the appearance by injection order.
+       *
+       * The drawer is untouched. `DayTabRow` is still one component with one set of
+       * behaviours; only the classes handed to it differ.
+       */
+      tabRow: classes.splitTabRow,
+      tab: classes.splitTab,
+      tabSelected: classes.splitTabSelected,
+      tabCount: classes.splitTabCount,
+      tabAdd: classes.splitTabAdd,
+      tabDropLegal: classes.splitTabDropLegal,
+      tabDropRefused: classes.splitTabDropRefused,
+      /* `tabRowScrollable`'s right-edge fade and `tabDot`'s amber overrun mark are the
+         drawer's own, unchanged: both are about *what the row says*, not about how a tab is
+         drawn, and a box tab has the same need for each. */
     }),
     [flowClasses, classes],
   );
@@ -246,7 +269,6 @@ const HarmonizeSplit = ({ open, onClose, onApplied, settingsHref }) => {
          so a missing key is `undefined` and an unclassed element, not an error. */
       previewIllustration: classes.previewIllustration,
       previewEmptyText: classes.previewEmptyText,
-      splitTab: classes.splitTab,
     }),
     [classes],
   );
@@ -486,8 +508,8 @@ const HarmonizeSplit = ({ open, onClose, onApplied, settingsHref }) => {
        * 120px. Grouping horizontally buys the same coherence for nothing.
        *
        * Baseline alignment rather than centre: the pair is 20px against 14px, and a shared
-       * baseline is what makes two different sizes read as one line of text. `sectionHead`
-       * next door makes the same call for the same reason.
+       * baseline is what makes two different sizes read as one line of text. The forecast's
+       * own `15 visits` pairs do the same, for the same reason.
        */}
       <Box className={classes.topBar}>
         <Box className={classes.titleGroup}>
@@ -576,7 +598,6 @@ const HarmonizeSplit = ({ open, onClose, onApplied, settingsHref }) => {
             forecast={flow.forecast}
             onRangeChange={actions.setRangeDates}
             quiet={isProposal}
-            settingsHref={settingsHref}
           />
 
           <Box
@@ -683,6 +704,13 @@ const HarmonizeSplit = ({ open, onClose, onApplied, settingsHref }) => {
                   onDragStart={startMove}
                   onDragEnd={() => flow.setDrag(null)}
                   onStartMove={startMove}
+                  /* The move menu's destinations and pricing — `DayPane` defaults these to
+                     empty, which would open a menu saying there is nowhere to go. Split
+                     mounts the drawer's ③ unchanged, so it has to pass whatever the drawer
+                     passes or the shared component degrades in only one of the two shells. */
+                  workedDays={workedDays}
+                  onQuoteMove={actions.quoteMove}
+                  onMoveTo={actions.moveVisitTo}
                   isTipping={(stop) => stop.visit.id === tippingStop?.visit.id}
                 />
               ) : null}
@@ -694,12 +722,15 @@ const HarmonizeSplit = ({ open, onClose, onApplied, settingsHref }) => {
                   accepted={flow.accepted}
                   raisedFrom={flow.raisedFrom}
                   tippingStop={tippingStop}
-                  tippingLegalDays={tippingStop ? legalDaysByVisit[tippingStop.visit.id] : []}
+                  /* The *droppable* set, not the engine's legal set — X1's `Move day` asks
+                     where a hand may put this, and dropping is unrestricted now. The
+                     `legalDaysByVisit` map above stays for `dueOnActiveDay`, which genuinely
+                     wants the engine's own choices. */
+                  tippingLegalDays={tippingStop ? droppableDatesFor(days) : []}
                   tippingWasForced={Boolean(
                     tippingStop && flow.forced.includes(tippingStop.visit.id),
                   )}
                   drag={drag}
-                  dragQuote={dragQuote}
                   dragVisit={dragVisit}
                   onAccept={actions.acceptOverrun}
                   onUnaccept={actions.unacceptOverrun}
@@ -707,8 +738,6 @@ const HarmonizeSplit = ({ open, onClose, onApplied, settingsHref }) => {
                   onRestoreHours={actions.restoreHours}
                   onSetAside={actions.setAsideVisit}
                   onReturnToTray={actions.returnToTray}
-                  onCancelDrag={() => flow.setDrag(null)}
-                  onConfirmDrag={actions.commitDrag}
                   onStartMove={startMove}
                 />
               ) : null}
@@ -862,7 +891,21 @@ const HarmonizeSplit = ({ open, onClose, onApplied, settingsHref }) => {
             zones={zones}
             runsheets={plan.runsheets}
             workedDays={workedDays}
-            openDay={openDay}
+            /**
+             * **`activeDay`, not the hook's `openDay`.**
+             *
+             * `openDay` is null until a proposal arrives, which used to be the right thing to
+             * hand a map that only emphasised a day once there was a route in it. The map
+             * emphasises the *territory* now — one circle in its own hue, the rest grey — and
+             * that emphasis has to follow the tab row, which is on screen and has a day
+             * selected from the first frame. Passing `openDay` here left the map with no open
+             * zone before the press, so `emphasisFor` fell through to its no-subject case and
+             * drew all three circles at full strength: the tabs moved and the map did not.
+             *
+             * `activeDay` is the same value the route header and the day tabs read, so all
+             * three cannot disagree.
+             */
+            openDay={activeDay}
             onOpenDay={flow.setOpenDay}
             hoveredZoneId={hoveredZoneId}
             highlightedSiteId={highlightedSiteId}
@@ -889,12 +932,6 @@ HarmonizeSplit.propTypes = {
   onClose: PropTypes.func.isRequired,
   /** Handed the finished plan. The caller animates the calendar with it. */
   onApplied: PropTypes.func,
-  /** Days, shift hours and zones are Config A — this is the route to where they live. */
-  settingsHref: PropTypes.string,
-};
-
-HarmonizeSplit.defaultProps = {
-  settingsHref: '/app/settings?activeTab=preferences',
 };
 
 export default HarmonizeSplit;

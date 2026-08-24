@@ -240,9 +240,10 @@ export const useStyles = makeStyles((theme) => ({
        * **Grid, so the three segments are equal.**
        *
        * They used to be `flex` and content-sized, which meant each segment was as wide
-       * as its own word: `Routes` and `Visits` are six characters and `Plan` is four, so
-       * the selected pill changed size as you moved along the control and the run read
-       * as three unrelated buttons rather than one switch with three positions.
+       * as its own word — `Routes`, `Visits` and the third segment's label have never
+       * been the same length (it has read `Companies`, then `Plan`, now `Overview`),
+       * so the selected pill changed size as you moved along the control and the run
+       * read as three unrelated buttons rather than one switch with three positions.
        *
        * `gridAutoColumns: 1fr` is what equalises. Flex cannot: `flex: 1` distributes the
        * *free* space, and an auto-width container has none — its intrinsic size is the
@@ -635,212 +636,14 @@ export const useStyles = makeStyles((theme) => ({
     },
   },
 
-  /* ---------- Apply, on the grid ----------
-     The drawer closes and this is where the plan arrives. Three beats, driven by
-     `useApplyMotion` and switched by one `data-applying` attribute per card.
-
-     **settling** — every visit card, not just the movers. The schedule is being
-     recomputed; marking only the movers would assert the outcome before showing it,
-     and it would send the eye hunting for which cards are about to change instead
-     of watching them change. Dimmed and desaturated with a slow pulse: still
-     legible, just not current.
-
-     **landing** — the moved cards are on their new days and rise into place, each
-     delayed by its position in its route (set inline, because twelve stagger
-     classes to express one multiplication is not a stylesheet), so a day fills top
-     to bottom rather than appearing all at once. Cards that did not move come out
-     of the pulse with no animation at all, because nothing happened to them.
-
-     **These rules are a scoped class, not `@global`,** even though the cards they
-     target are FullCalendar's and are reached by descendant selector. `$applySettle`
-     only resolves to the generated keyframes name in a normal rule — inside
-     `@global` it is passed through as a literal, and the animation silently never
-     runs. The wrapper carrying this class is `scheduleCalendarFull`, added only
-     while the sequence is running, which also means these selectors cost nothing
-     the rest of the time.
-
-     Opacity, transform and filter only. A grid full of cards animating width or
-     height is the one thing that would make this janky rather than impressive. */
-  applyingGrid: {
-    /**
-     * **A gloss travels across each card; it does not grey them out.**
-     *
-     * Two versions preceded this. The first dimmed every card and pulsed its `opacity`,
-     * which said *inactive* — the idiom a disabled control uses — where the moment wants
-     * *being worked on*. The second kept most of that dim (`opacity: 0.62`,
-     * `grayscale(0.8)`) and swept a solid brand band over it, and the dim was the thing
-     * everyone saw: a grid of grey cards with a blue bar crossing them, which reads as a
-     * screen that has gone unavailable rather than as one being worked out.
-     *
-     * So the card is left essentially as it is — a 4% opacity dip and a touch of
-     * desaturation, enough to sit half a step back and not enough to notice as a state —
-     * and **the whole effect is the highlight**: a specular white core with a faint cool
-     * halo on either flank, the shape light makes crossing glass. The flanks are what keep
-     * it visible on a near-white card, where white on white would be nothing; the white
-     * core is what keeps it from reading as another status wash on a tinted one.
-     *
-     * The core has come down twice, 0.92 → 0.80 → **0.56**, and each time for the same
-     * reason: at full strength the band takes the card's own text with it as it passes.
-     * Legible, but visibly dropping out for a third of a second per card, which is the
-     * *"can't read the grid"* complaint the grey version earned, in a prettier form. At 0.56
-     * over a 92%-wide band the brightest moment is a lift rather than a wash — the card is
-     * never not readable — and the effect survives because it is slow and wide, not because
-     * it is bright.
-     *
-     * **`--apply-delay` is set per card from its position across the grid**, so the
-     * highlights arrive as a wave that crosses the week rather than all at once. It is a
-     * custom property rather than `animation-delay` because the animation is on the
-     * pseudo-element, and custom properties inherit into it where the shorthand would land
-     * on the card instead. It is *also* why the sweep keeps running out of phase after the
-     * first cycle, which is the effect wanted.
-     */
-    '& [data-visit-id][data-applying="settling"]': {
-      opacity: 0.96,
-      filter: 'saturate(0.94)',
-      /* No `overflow: hidden`: these are FullCalendar's own event nodes and clipping them
-         risks their internal layout. The gradient's own transparent ends do the fading, and
-         `borderRadius: inherit` keeps the highlight off the corners. */
-      '&::after': {
-        content: '""',
-        position: 'absolute',
-        inset: 0,
-        borderRadius: 'inherit',
-        pointerEvents: 'none',
-        /**
-         * Eleven stops for one band, because the edges are the whole problem.
-         *
-         * At five stops the gloss had a *shape* — you could see where it began and ended,
-         * and a shape crossing a card reads as an object sliding over it. Light does not
-         * have an edge. Each shoulder is now three stops falling away at a decreasing rate,
-         * the peak is a plateau rather than a point, and the band is 92% of the card wide
-         * so its own ends are always past the corners. The result has no boundary to find:
-         * the card brightens, is bright, and dims.
-         *
-         * The two cool stops on each shoulder are what make it work on a **white** card,
-         * where a white core over white paper is nothing at all. They are the reason the
-         * gloss is a wash of light rather than a highlight — checked against a plain white
-         * card beside the tinted ones, which is the case that decides these numbers.
-         */
-        backgroundImage: `linear-gradient(102deg,
-          rgba(255, 255, 255, 0) 0%,
-          rgba(20, 109, 255, 0.03) 14%,
-          rgba(20, 109, 255, 0.075) 26%,
-          rgba(255, 255, 255, 0.20) 36%,
-          rgba(255, 255, 255, 0.44) 44%,
-          rgba(255, 255, 255, 0.56) 50%,
-          rgba(255, 255, 255, 0.44) 56%,
-          rgba(255, 255, 255, 0.20) 64%,
-          rgba(20, 109, 255, 0.075) 74%,
-          rgba(20, 109, 255, 0.03) 86%,
-          rgba(255, 255, 255, 0) 100%)`,
-        backgroundSize: '92% 100%',
-        backgroundRepeat: 'no-repeat',
-        /**
-         * 1800ms, and it crosses **once**.
-         *
-         * It ran at 1150ms on an `infinite` loop with a fast-through-the-middle curve, and
-         * all three of those made it read as sharp: a quick pass says *scanning*, the speed
-         * spike in the middle says *swipe*, and looping meant that on the wider cards the
-         * band snapped back to the left edge and set off again before the beat was over.
-         * One unhurried pass, eased in and out symmetrically, with the fill holding it off
-         * the right-hand side afterwards — the card is worked on once, not scanned
-         * repeatedly.
-         */
-        animation: '$applySweep 1800ms cubic-bezier(0.4, 0.05, 0.35, 1) both',
-        animationDelay: 'var(--apply-delay, 0ms)',
-      },
-    },
-    /**
-     * **Departing: the movers pick themselves up.**
-     *
-     * The one beat in this sequence that cannot fail, and the reason it exists. Everything
-     * about the arrival depends on finding cards *after* the grid has rearranged itself;
-     * this runs while the old week is still on screen, on the same nodes the gloss just
-     * crossed, so if a planner sees the shimmer they will see this.
-     *
-     * It is also the gesture the flight continues. Up six pixels, three percent larger, a
-     * shadow growing underneath and half the opacity gone — a card being picked up off the
-     * table. The copy that flies starts from exactly this pose, so the handover from the real
-     * card to its photograph happens mid-movement where there is nothing to notice.
-     */
-    '& [data-visit-id][data-applying="departing"]': {
-      zIndex: 5,
-      animation: '$applyDepart 280ms cubic-bezier(0.32, 0, 0.24, 1) both',
-    },
-    /**
-     * The fallback arrival: up and in, for a mover whose old position was never measured.
-     *
-     * Every card that *was* on screen when the plan applied flies from where it was — see
-     * `data-applying="flying"` below and the FLIP pass in `ScheduleCalendarGrid`. This is
-     * what is left for the ones that were not: a visit scrolled out of view, or one the
-     * relocation created rather than moved. Rising into place is the right figure for a
-     * card with no previous place; using it for a card that has one is what made the moves
-     * teleport.
-     */
-    '& [data-visit-id][data-applying="landing"]': {
-      animation: '$applyLand 420ms cubic-bezier(0.2, 0.8, 0.2, 1) both',
-    },
-    /**
-     * The clone in flight, and the layer it flies on.
-     *
-     * The motion itself is a Web Animations keyframe set built per card — the distance is
-     * only known at runtime — so all this contributes is what the flight needs to be *seen*:
-     * no transition of its own to fight the animation's timing, nothing catching the pointer
-     * on the way past, and no clipping from the layer it sits on. Everything else about how
-     * a ghost looks it inherits by being a copy of the card, inside the stage the card's own
-     * rules are scoped to.
-     */
-    '& [data-apply-flight-layer] [data-apply-ghost]': {
-      transition: 'none !important',
-      willChange: 'transform',
-      pointerEvents: 'none',
-    },
-  },
-  /* Enters off the left edge and leaves off the right. The band is 92% of the card, so both
-     ends of the travel put it fully outside — a sweep that started or stopped mid-card would
-     read as a highlight switching on rather than passing through. The travel is wider than
-     it used to be for the same reason the band is: the wider the band, the further it has to
-     go to clear the card at both ends. */
-  '@keyframes applySweep': {
-    from: { backgroundPosition: '-120% 0' },
-    to: { backgroundPosition: '220% 0' },
-  },
-  /* Off the table. Ends where the flight's first keyframe begins — see `applyDepart`'s note
-     and the ghost's opening pose; the two are one gesture split across two elements. */
-  '@keyframes applyDepart': {
-    from: {
-      opacity: 1,
-      transform: 'translateY(0) scale(1)',
-      filter: 'drop-shadow(0 1px 1px rgba(16, 24, 40, 0.08))',
-    },
-    to: {
-      opacity: 0.55,
-      transform: 'translateY(-6px) scale(1.03)',
-      filter: 'drop-shadow(0 6px 12px rgba(16, 24, 40, 0.16))',
-    },
-  },
-  /* Up and in, with a touch of scale — a card arriving on this day is a different
-     event from a card that was already here being redrawn. */
-  '@keyframes applyLand': {
-    from: { opacity: 0, transform: 'translateY(10px) scale(0.96)' },
-    to: { opacity: 1, transform: 'translateY(0) scale(1)' },
-  },
-
-  /* The relocation is the information; the pulse and the stagger are the telling of
-     it. `useApplyMotion` skips both beats for these readers and simply moves the
-     visits — this is the belt to that braces. */
-  '@media (prefers-reduced-motion: reduce)': {
-    applyingGrid: {
-      '& [data-visit-id][data-applying="settling"]': {
-        opacity: 0.85,
-        /* The sweep is the whole of the motion now, so it is the whole of what goes. */
-        '&::after': { animation: 'none', opacity: 0 },
-      },
-      '& [data-visit-id][data-applying="departing"]': { animation: 'none' },
-      '& [data-visit-id][data-applying="landing"]': { animation: 'none' },
-      /* The flight is built in JS and never starts for these readers — `useApplyMotion`
-         returns before either beat — so there is nothing here to switch off but the hint. */
-      '& [data-apply-flight-layer] [data-apply-ghost]': { willChange: 'auto' },
-    },
-  },
+  /**
+   * **The apply animation's stylesheet is gone.**
+   *
+   * `applyingGrid` scoped three per-card states — a swept gloss, a lift-off and a landing —
+   * plus a flight layer and four sets of keyframes, all switched by a `data-applying`
+   * attribute the grid wrote onto every visit card. It went with the FLIP machinery in
+   * `ScheduleCalendarGrid`: applying is a write to another system and a reload, not a local
+   * rearrangement, so what covers the grid now is `ApplySkeleton` and it brings its own
+   * rules. See `useApplyMotion` for the argument.
+   */
 }));

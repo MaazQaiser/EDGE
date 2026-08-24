@@ -2,114 +2,88 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { prefersReducedMotion } from 'src/app/obx/pages/schedules/components/harmonize/routeMotion';
 
 /**
- * The calendar taking the plan on, in two beats.
+ * Apply, as what actually happens: **a write to another system, then a reload.**
  *
- * Apply used to be instantaneous and invisible: the drawer closed, a toast said
- * how many visits went where, and the calendar underneath carried on showing the
- * old week. The one thing the feature exists to demonstrate — five scattered days
- * becoming one or two trips — was the one thing never shown.
+ * ## What this replaced, and why
  *
- *   **settling**  — a slow gloss crosses every visit card on screen, staggered by how far
- *                   across the grid it sits so the pass reads as one wave crossing the week.
- *                   *Every* card, not just the movers: at this moment the schedule is being
- *                   recomputed, and marking only the movers would be claiming to know the
- *                   outcome before showing it. It also stops the eye hunting for which cards
- *                   are about to change, which is a distraction from watching them change.
- *   **departing** — the movers, and only the movers, lift off the day they are on: up a
- *                   little, forward a little, and half out of the page. Nothing has moved in
- *                   the data yet. This beat exists because **it is the only moment the old
- *                   arrangement is still on screen and already known to be wrong**, and the
- *                   whole difficulty of the landing beat — see the grid's `runLanding` — is
- *                   that by the time the visits have moved, where they came from is gone.
- *                   Here it is still there to be measured, photographed and animated.
- *   **landing**   — the visits are on their new days, and each one arrives from where it
- *                   was: a copy of the card taken during the departure flies to the new
- *                   column and sets down, staggered in its route's own order so a day fills
- *                   top to bottom. A mover whose journey cannot be worked out fades up in
- *                   place instead, which is the arrival this beat had before flights.
+ * The previous version was a three-beat choreography on the grid itself — a gloss swept
+ * every card, then the movers lifted off their old day, then a photograph of each one flew
+ * across the week and set down in its new column. It was a FLIP animation: measure every
+ * card, clone it, position the clones in a floating layer, animate them to rectangles
+ * measured *after* React had re-rendered the week, then unpick all of it. Around three
+ * hundred lines across the hook, the grid and the stylesheet, plus a retry loop for the
+ * frames where the destination had not laid out yet.
  *
- * Then it is over and the cards are ordinary cards again. There is no third beat
- * and no success state: the calendar *is* the success state, which is the same
- * reason Apply closes the drawer instead of showing a confirmation.
+ * It was replaced on instruction with something simpler, and the simpler thing is also the
+ * more truthful one. **Routes are not moved by this application.** Applying sends them to
+ * the scheduling system that owns them and then re-reads the week back. The flight animation
+ * dramatised a local rearrangement that does not exist; a save and a reload is the event.
  *
- * **And no second beat before it either, as of the ⑤ removal.** There used to be a review
- * screen between the proposal and this, listing what would move and what would be left. It
- * restated a plan the operator had just finished reading, and it put two clicks between
- * deciding and seeing. Everything it described is what these two beats now show happening,
- * which is the argument the drawer's own note makes about why there is no ⑥ either.
+ * ## The two beats
  *
- * **Reduced motion moves the visits and skips both beats.** The relocation is the
- * information; the gloss and the flights are the telling of it.
+ *   **saving**  — the plan is going to the other system. The grid is covered by a skeleton
+ *                 of itself and the caption names what is being written and where.
+ *   **loading** — it has been accepted, and the week is being read back. Same skeleton, a
+ *                 caption that has moved on.
+ *
+ * Then the skeleton clears and the grid is the new week.
+ *
+ * ## The relocation is invisible on purpose
+ *
+ * It happens at the turn between the two beats, **under the skeleton**. That is the whole
+ * reason this can be three dozen lines where the last one was three hundred: nothing has to
+ * be measured, cloned or flown, because at the moment the arrangement changes there is
+ * nothing on screen to animate *from*. The skeleton is not decoration hiding a shortcut — a
+ * reload genuinely does not show you the old data rearranging itself.
+ *
+ * ## What is lost, and the trade
+ *
+ * The old sequence showed *five scattered days becoming one trip*, which is the thing the
+ * feature exists to do. This one does not; it shows a save. The planner has, though, just
+ * spent a minute reading that exact rearrangement in the proposal, per route and per stop —
+ * the flight was the third telling of it, and it was the one costing a retry loop.
+ *
+ * **Reduced motion writes and reloads with no skeleton at all** — the two beats are the
+ * telling, and a reader who has turned motion off wants the new week, not a shorter wait
+ * for it.
  */
 
 /**
- * How long the gloss runs before the visits move.
+ * How long the write is shown for.
  *
- * **2150ms.** It has been 620, 1100 and 1450, and every one of those was shorter than one
- * pass of the thing it was timing, so the right-hand side of the grid was cut off mid-gloss
- * and the beat read as a flicker there.
- *
- * This number is arithmetic rather than taste now: the sweep takes **1800ms** to cross a
- * card and the rightmost cards start **300ms** after the leftmost (`APPLY_WAVE_MS` in the
- * grid), so 2100 is the first value at which every card finishes. The extra 50 is a pause
- * between the last card completing and the week rearranging — without it the cards move
- * while the far side is still lighting up, and the two beats read as one confused event
- * rather than as *thinking*, then *acting*.
- *
- * And this sequence is now the *whole* of Apply. The review screen that used to stand
- * between the proposal and this moment is gone, so there is no longer a step explaining what
- * is about to happen — the grid has to be legible on its own, which means the pause has to
- * be long enough to register as a pause. Just under two seconds end to end.
+ * Long enough to read a sentence naming the system being written to, which is the one thing
+ * this beat exists to say. Shorter and it is a flash nobody can attribute a cause to; much
+ * longer and a demo is waiting on a timer for no reason, since nothing is actually in
+ * flight. When this is wired to a real endpoint, this constant goes and the phase ends when
+ * the request settles.
  */
-const SETTLE_MS = 2150;
+const SAVE_MS = 1400;
 
 /**
- * How long the landing beat holds the cards.
+ * How long the read-back is shown for.
  *
- * **1300ms.** The cards used to fade in where they had been put; they now fly from where
- * they were, and the flight has to *finish* inside this window — the phase going `IDLE`
- * cancels every flight in progress, and a cancelled flight takes its card straight to the
- * destination, which is the teleport this beat exists to remove.
- *
- * The budget, from the grid's own constants: 50ms of stagger per position capped at the
- * twelfth card (550ms), plus a 620ms flight, plus a few frames for the landing pass to find
- * the cards in their new places.
+ * Shorter than the write. Fetching is the cheaper half in reality, and by this point the
+ * planner is waiting for a result rather than reading a caption.
  */
-const LAND_MS = 1300;
-
-/**
- * How long the movers spend lifting off before the week rearranges.
- *
- * Short — this is a wind-up, not a beat in its own right, and the sequence is already
- * three-and-a-half seconds end to end. Long enough to see the cards pick themselves up and
- * to know *which* cards are about to move, which is the second thing this beat is for: it is
- * the only moment the grid says "these ones" while they are still in their old places.
- */
-const DEPART_MS = 280;
+const LOAD_MS = 1100;
 
 export const APPLY_PHASE = {
   IDLE: 'idle',
-  SETTLING: 'settling',
-  DEPARTING: 'departing',
-  LANDING: 'landing',
+  SAVING: 'saving',
+  LOADING: 'loading',
 };
 
 /**
  * @param {object} params
- * @param {Function} params.onPlan     Called at the *start*, with the applied routes. Must
- *                                     return the `moves` map **without changing anything** —
- *                                     the sequence needs to know which cards are leaving one
- *                                     beat before they leave, and asking the same question
- *                                     twice is cheaper than threading a plan through the
- *                                     page's state.
- * @param {Function} params.onRelocate Called at the turn between departing and landing with
- *                                     the applied routes. Performs the move and returns the
- *                                     `moves` map, which is what the landing stagger is keyed
- *                                     on.
+ * @param {Function} params.onRelocate Called at the turn between the two beats, with the
+ *                                     applied routes. Performs the move. Its return value
+ *                                     is no longer read — the landing stagger that needed a
+ *                                     `moves` map is gone with the flights.
  */
-export const useApplyMotion = ({ onPlan, onRelocate }) => {
+export const useApplyMotion = ({ onRelocate }) => {
   const [phase, setPhase] = useState(APPLY_PHASE.IDLE);
-  const [moves, setMoves] = useState(() => new Map());
+  /** How many routes are being written, for the caption to name. */
+  const [routeCount, setRouteCount] = useState(0);
   const timers = useRef([]);
 
   const clear = () => {
@@ -117,10 +91,8 @@ export const useApplyMotion = ({ onPlan, onRelocate }) => {
     timers.current = [];
   };
 
-  /* A calendar that unmounts mid-sequence — a tab change, a navigation — must not
-     leave timers behind that call `setState` on a gone component, and must not
-     leave `data-applying` painted on nodes that outlive it either. The attribute
-     cleanup belongs to the grid; the timers belong here. */
+  /* A calendar that unmounts mid-sequence — a tab change, a navigation — must not leave
+     timers behind that call `setState` on a component that has gone. */
   useEffect(() => clear, []);
 
   const start = useCallback(
@@ -130,53 +102,25 @@ export const useApplyMotion = ({ onPlan, onRelocate }) => {
       if (prefersReducedMotion()) {
         onRelocate?.(routes);
         setPhase(APPLY_PHASE.IDLE);
-        setMoves(new Map());
         return;
       }
 
-      /* Asked before anything moves, so the departing beat knows which cards are leaving.
-         An empty plan here is worth saying out loud rather than playing a two-second
-         sequence over a grid where nothing is going to happen: the shells that match their
-         own fixture to this page's visits by *site name* produce exactly that when a name
-         stops matching, and it is silent by design at every other layer. */
-      const planned = onPlan?.(routes);
-      const upcoming = planned instanceof Map ? planned : new Map();
-      if (!upcoming.size && process.env.NODE_ENV !== 'production') {
-        // eslint-disable-next-line no-console
-        console.warn(
-          '[harmonize] Apply produced no moves — no visit on the grid matched the plan.',
-          routes,
-        );
-      }
-
-      setPhase(APPLY_PHASE.SETTLING);
-      setMoves(upcoming);
-
-      timers.current.push(window.setTimeout(() => setPhase(APPLY_PHASE.DEPARTING), SETTLE_MS));
+      setRouteCount(routes.length);
+      setPhase(APPLY_PHASE.SAVING);
 
       timers.current.push(
         window.setTimeout(() => {
-          /* The move happens here, between the beats — late enough that the gloss was a real
-             pause rather than a decoration over an already finished change, and late enough
-             that the cards have visibly picked themselves up off the day they are leaving. */
-          const applied = onRelocate?.(routes);
-          setMoves(applied instanceof Map ? applied : upcoming);
-          setPhase(APPLY_PHASE.LANDING);
-        }, SETTLE_MS + DEPART_MS),
+          /* Under the skeleton. See the note above — this being unwatched is what lets the
+             whole flight apparatus go. */
+          onRelocate?.(routes);
+          setPhase(APPLY_PHASE.LOADING);
+        }, SAVE_MS),
       );
 
-      timers.current.push(
-        window.setTimeout(
-          () => {
-            setPhase(APPLY_PHASE.IDLE);
-            setMoves(new Map());
-          },
-          SETTLE_MS + DEPART_MS + LAND_MS,
-        ),
-      );
+      timers.current.push(window.setTimeout(() => setPhase(APPLY_PHASE.IDLE), SAVE_MS + LOAD_MS));
     },
-    [onPlan, onRelocate],
+    [onRelocate],
   );
 
-  return { phase, moves, start, isRunning: phase !== APPLY_PHASE.IDLE };
+  return { phase, routeCount, start, isRunning: phase !== APPLY_PHASE.IDLE };
 };

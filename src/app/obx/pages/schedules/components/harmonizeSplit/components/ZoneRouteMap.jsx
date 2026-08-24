@@ -34,25 +34,35 @@ import { BASE_POINT, SITE_POINTS, siteFacts, sitePointById } from '../zoneGeogra
  * a coordinate lands in the same place on all three surfaces and a planner who has learned
  * to drag one has learned all of them. That was the whole point of lifting it out.
  *
- * ## Everything at once, with one thing emphasised
+ * ## The week at once, with one day emphasised
  *
  * The drawer can only ever discuss one day, because it only has room for one. A map does
  * not have that problem, and pretending it does — drawing only the open day — would throw
- * away the one fact this shell exists to show: *the week is three zones, and here is how
- * they sit relative to each other.* So every zone is drawn and every runsheet is drawn,
- * and the open day is separated from them by weight rather than by exclusion.
+ * away the one fact this shell exists to show: *the week is three rounds, and here is how
+ * they sit relative to each other.* So every **worked** zone is drawn and every runsheet is
+ * drawn, and the open day is separated from them by weight rather than by exclusion.
  *
- * The separation is deliberately **three cues, not one**: the open zone's fill is denser,
- * its route is opaque and twice the width, and its stops are numbered where the others are
- * plain dots. Colour alone would fail the moment two zones are adjacent and a planner is
- * red-green colourblind, which is the case the palette's own validation is run against.
+ * The separation is deliberately **three cues, not one**: the open zone keeps its hue and
+ * its denser fill where the others go grey, its route is opaque and twice the width, and
+ * its stops are numbered where the others are plain dots. Colour alone would fail the moment
+ * two zones are adjacent and a planner is red-green colourblind, which is the case the
+ * palette's own validation is run against.
+ *
+ * **A zone no day in the range works is not drawn.** It used to be, dashed, and the dash is
+ * gone with it — see `emphasisFor`.
+ *
+ * ## Territories are circles
+ *
+ * A zone is a radius around a point, never a traced boundary. `zoneRings` decides where the
+ * circle is and how wide; what arrives here is that circle already flattened to a path, which
+ * is why this component still draws `<polygon>` and still hit-tests by ray casting.
  *
  * ## The map is a way to change the day
  *
  * One zone per day and one day per zone (D15), so a zone *is* a day here — which makes
- * clicking a zone the most direct way there is to say "show me Tuesday". It is the same
+ * clicking a circle the most direct way there is to say "show me Tuesday". It is the same
  * selection the tab row makes, routed through the same handler, so the two cannot disagree.
- * A zone no day works refuses the click and says why, rather than being inert.
+ * Every circle on screen has a day, so every circle takes a click.
  */
 
 /** A pan has to travel before it stops being a click. 4px is a deliberate press's wobble. */
@@ -91,16 +101,29 @@ const CARD_FLIP_ABOVE = 190;
  * anything past about 0.20 stops being a tint and starts hiding the streets that make the
  * territory legible in the first place.
  *
- * **`worked` is close to `open` on purpose.** The first draft put it at 0.07 against 0.16,
- * and before a plan exists — when *every* worked zone is in the `worked` bucket because
- * none of them is open yet — the territory was invisible: three washed shapes on a busy
- * basemap at the one moment the map has nothing to do but show the planner their ground.
- * Emphasis is for separating one thing from the rest, and where there is no "one thing"
- * there is nothing to separate, so the pre-plan state hands every worked zone the open
- * weight (see `emphasisFor`) and this constant only governs the case where a day is
- * genuinely open and the others are genuinely subordinate to it.
+ * **`muted` is now much quieter than `worked` was, and the reason is that it is grey.** The
+ * old pair sat at 0.18 against 0.10 — close together on purpose, because before a plan
+ * existed *every* worked zone was in the subordinate bucket and three washed shapes on a
+ * busy basemap were invisible at the one moment the map had nothing to do but show the
+ * planner their ground. Neither half of that argument survives: a day is always selected, so
+ * there is always exactly one zone in the `open` bucket, and a muted circle no longer has to
+ * hold a hue at low opacity — it is drawn in grey, which reads at 0.07 where a pale orange
+ * does not. The separation is doing the work the closeness used to prevent.
+ *
+ * There is no `idle` any more. A zone no day works is not drawn — see `emphasisFor`.
  */
-const ZONE_FILL = { open: 0.18, worked: 0.1, idle: 0.05 };
+const ZONE_FILL = { open: 0.18, muted: 0.07 };
+
+/**
+ * The grey a subordinate circle is drawn in.
+ *
+ * `borderStrong1`'s value, copied rather than read: this is an SVG attribute, so it cannot
+ * take a theme token, and picking the palette entry that is already this product's "present
+ * but not the subject" line keeps the map speaking the app's language. Dark enough to hold a
+ * 1.4px stroke over CARTO's yellow arterials, light enough that the open circle beside it is
+ * unambiguously the loud one.
+ */
+const MUTED_INK = '#9E9E9E';
 
 /**
  * The route weight for a day that is not the open one.
@@ -140,7 +163,7 @@ const ROUTE_WIDTH = { open: 3.5, other: 1.5 };
  * the wrong subject drawn loudest. The route carries the emphasis now (see `ROUTE_CASING`)
  * and the boundary went back to being the frame it always was.
  */
-const ZONE_STROKE = { open: 2.25, hovered: 1.75, worked: 1.4, idle: 1.4 };
+const ZONE_STROKE = { open: 2.25, hovered: 1.75, muted: 1.4 };
 
 /**
  * Ray casting, in screen pixels.
@@ -458,15 +481,32 @@ const ZoneRouteMap = ({
    * that fact only exists in a stationary frame. So the frame holds the week and the
    * emphasis moves inside it.
    */
-  const fitKey = zones.map((zone) => zone.ring.length).join('|');
+  /**
+   * **Keyed on the circles themselves, not on how many points they have.**
+   *
+   * It used to be `ring.length` joined, which was already nearly a constant and is now
+   * exactly one: every ring is `RADIUS_RING_SEGMENTS` long whatever the zone is, so a zone
+   * moving or resizing would not have changed the key at all. Centre and radius are what a
+   * circle *is*, so they are what a change to one looks like.
+   */
+  const fitKey = zones
+    .map((zone) => `${zone.centre?.lat},${zone.centre?.lng},${zone.radiusMiles}`)
+    .join('|');
   useEffect(() => {
     if (fittedRef.current || !size.width || !size.height) return;
-    const points = [...zones.flatMap((zone) => zone.ring), BASE_POINT].filter(
+    /* Fits the zones that are **drawn**, plus the base. A zone no day works is not on
+       screen, so reserving room for it would leave the week's actual ground smaller than
+       the frame it was given — the old dashed West cost about a fifth of the width. */
+    const source = drawnZones.length ? drawnZones : zones;
+    const points = [...source.flatMap((zone) => zone.ring), BASE_POINT].filter(
       (point) => Number.isFinite(Number(point?.lat)) && Number.isFinite(Number(point?.lng)),
     );
     if (!points.length) return;
     fittedRef.current = true;
     setView(fitView(points, size.width, size.height, FIT_PADDING));
+    /* `drawnZones` is deliberately absent from the deps: it depends on `openDay` through
+       `emphasisFor`, and the whole point of `fittedRef` is that this runs once. Listing it
+       would make the rule read as though a tab press could refit the map. */
   }, [fitKey, size.width, size.height, zones]);
 
   const zoomBy = useCallback(
@@ -488,29 +528,53 @@ const ZoneRouteMap = ({
     return out;
   }, [workedDays]);
 
+  /**
+   * The zone the open day works — **read off the worked days, not off the proposal.**
+   *
+   * It used to come from `runsheets`, which only exist once Harmonize has been pressed, so
+   * before the press no zone was open and every circle took the same weight. That was
+   * defensible when the tab row arrived with the proposal; it is wrong now that the tabs are
+   * on screen from the first frame. Pressing `Tue 18` has to move the emphasis on the map
+   * whether or not anything has been solved — that response *is* what ties the row to the
+   * map — and `workedDays` carries the day→zone pairing from Config A, which is the fact
+   * being asked about. One zone per day and one day per zone (D15), so the lookup is exact.
+   */
   const openZoneId = useMemo(
-    () => runsheets.find((sheet) => sheet.date === openDay)?.zoneId || null,
-    [runsheets, openDay],
+    () => workedDays.find((day) => day.date === openDay)?.zoneId || null,
+    [workedDays, openDay],
   );
 
   /**
-   * How loudly to draw one zone — and the pre-plan case is the interesting one.
+   * How loudly to draw one zone. Three answers, and only two of them are drawn.
    *
-   * With no day open, **every worked zone is the subject**. Ranking them anyway would be
-   * the map inventing a hierarchy the screen has not got: before Harmonize is pressed
-   * there is no proposal, no selected day, and no reason for Tuesday's ground to be
-   * quieter than Monday's. So they all take the open weight, and the only distinction the
-   * map draws is the true one — worked against not worked, which is the fact ① is
-   * simultaneously stating in words and the reason West is on this map at all.
+   * - `open` — the selected day's territory. The subject.
+   * - `muted` — a territory some *other* day in the range works. Present, so the week still
+   *   reads as a set of rounds sitting relative to each other, but grey and very quiet: it
+   *   is context for the one circle that is being discussed.
+   * - `hidden` — a zone **no day in this range works at all**. Not drawn. It used to be, in
+   *   a dashed outline meaning "not worked", and the dash is gone with it on instruction:
+   *   the fact is already stated in words by the issues tray, which owns that sentence, and a
+   *   fourth shape on the map competing with three that matter is a worse way to say it.
+   *
+   * **There is no pre-plan special case any more, and there does not need to be one.** The
+   * old rule handed every worked zone the open weight while `openZoneId` was null, because
+   * before the press nothing was selected and ranking them would have invented a hierarchy.
+   * A day is always selected now — the tab row defaults to the first worked one — so there is
+   * always a genuine subject to emphasise.
    */
   const emphasisFor = useCallback(
     (zoneId) => {
-      const worked = Boolean(dayOfZone[zoneId]);
-      if (!worked) return 'idle';
+      if (!dayOfZone[zoneId]) return 'hidden';
       if (!openZoneId) return 'open';
-      return zoneId === openZoneId ? 'open' : 'worked';
+      return zoneId === openZoneId ? 'open' : 'muted';
     },
     [dayOfZone, openZoneId],
+  );
+
+  /** The circles that are on screen: every zone some day in this range works. */
+  const drawnZones = useMemo(
+    () => zones.filter((zone) => zone.ring.length >= 3 && emphasisFor(zone.id) !== 'hidden'),
+    [zones, emphasisFor],
   );
 
   const looseSet = useMemo(() => new Set(looseSiteIds || []), [looseSiteIds]);
@@ -628,9 +692,7 @@ const ZoneRouteMap = ({
          territory's name under the card that covers it. */
       const zoneUnder =
         at && !nextSite
-          ? zones.find(
-              (zone) => zone.ring.length >= 3 && pointInScreenRing(at, zone.ring.map(toScreen)),
-            )
+          ? drawnZones.find((zone) => pointInScreenRing(at, zone.ring.map(toScreen)))
           : null;
       const nextZone = zoneUnder?.id || null;
       if (nextZone !== hoverZoneId) setHoverZoneId(nextZone);
@@ -713,10 +775,11 @@ const ZoneRouteMap = ({
       return;
     }
 
-    const hit = zones.find(
-      (zone) => zone.ring.length >= 3 && pointInScreenRing(at, zone.ring.map(toScreen)),
-    );
-    if (hit && dayOfZone[hit.id]) onOpenDay?.(dayOfZone[hit.id]);
+    /* Only the drawn circles are clickable, which needs no extra guard: `drawnZones` is
+       exactly the set some day works, so a hit always has a day to open. Circles overlap, so
+       `find` takes the first in paint order — the same one whose stroke is on top. */
+    const hit = drawnZones.find((zone) => pointInScreenRing(at, zone.ring.map(toScreen)));
+    if (hit) onOpenDay?.(dayOfZone[hit.id]);
   };
 
   /**
@@ -824,15 +887,21 @@ const ZoneRouteMap = ({
         preserveAspectRatio="none"
       >
         {/* ── The territories ──────────────────────────────────────────────────
-            Fills first, all of them, then every stroke — rather than fill-and-stroke
-            per zone. Where two boundaries touch, a later zone's translucent fill
-            drawn over an earlier zone's stroke turns that shared edge a different
-            colour from the rest of it, which reads as a third zone in the seam. Two
-            passes cost nothing and the edges stay their own colour. */}
-        {zones.map((zone) => {
-          if (zone.ring.length < 3) return null;
+            **One circle per zone, and only the zones this range works.** A zone is a
+            radius around a point now, not a traced boundary — see `zoneRings` — so what
+            is drawn here is a 96-gon standing in for a circle, which is why the polygon
+            element survived a change of model.
+
+            Fills first, all of them, then every stroke — rather than fill-and-stroke per
+            zone. Circles overlap by nature, far more than the old lassoed shapes did, and
+            where two edges cross a later zone's translucent fill drawn over an earlier
+            zone's stroke turns that arc a different colour from the rest of it, which
+            reads as a third territory in the seam. Two passes cost nothing and every edge
+            stays its own colour. */}
+        {drawnZones.map((zone) => {
+          const emphasis = emphasisFor(zone.id);
           /* **Not gated by the reveal, and that reverses a first pass.** Hiding the
-             territories until the narration named them made the map flicker: four shapes
+             territories until the narration named them made the map flicker: shapes
              arriving one at a time is an answer being built, and a zone is not an answer —
              it is the ground the answer will be drawn on, true before anybody pressed
              anything and unchanged by pressing it. What ② withholds is the *routes*. */
@@ -840,51 +909,42 @@ const ZoneRouteMap = ({
             <polygon
               key={`fill-${zone.id}`}
               points={ringPath(zone.ring)}
-              fill={zone.color}
-              fillOpacity={ZONE_FILL[emphasisFor(zone.id)]}
-              style={{ transition: 'fill-opacity 260ms ease' }}
+              fill={emphasis === 'open' ? zone.color : MUTED_INK}
+              fillOpacity={ZONE_FILL[emphasis]}
+              style={{ transition: 'fill-opacity 260ms ease, fill 260ms ease' }}
             />
           );
         })}
 
-        {zones.map((zone) => {
-          if (zone.ring.length < 3) return null;
+        {drawnZones.map((zone) => {
           const emphasis = emphasisFor(zone.id);
-          const worked = Boolean(dayOfZone[zone.id]);
           const hovered = zone.id === hoveredZoneId;
-          const strokeOpacity =
-            emphasis === 'open' || hovered ? 0.95 : emphasis === 'worked' ? 0.6 : 0.4;
+          /* **A muted circle is grey, not its own hue at low opacity.** Asked for directly
+             — *"the other radiuses will be very much less prominent and grayed out"* — and
+             it is also the stronger read: four washed-out hues on a raster basemap are four
+             things competing quietly, whereas grey is unmistakably *not the subject*. The
+             colour comes back on hover, because a hovered circle is one the planner is
+             asking about, and its hue is the answer to which zone it is. */
+          const muted = emphasis !== 'open' && !hovered;
 
           return (
             <polygon
               key={`stroke-${zone.id}`}
               points={ringPath(zone.ring)}
               fill="none"
-              stroke={zone.color}
-              strokeOpacity={strokeOpacity}
-              /* Keyed off `emphasis` for the base case rather than hardcoding `worked`.
-                 The ternary used to end `: ZONE_STROKE.worked`, which meant **`ZONE_STROKE.idle`
-                 was never read** — an idle zone silently took the worked weight. Harmless only
-                 because the two values happen to be equal today; the moment somebody tuned
-                 `idle` nothing would have moved and the constant would have looked broken.
-                 Precedence is unchanged: open, then hovered, then the emphasis's own weight. */
+              stroke={muted ? MUTED_INK : zone.color}
+              strokeOpacity={emphasis === 'open' || hovered ? 0.95 : 0.55}
               strokeWidth={
                 emphasis === 'open'
                   ? ZONE_STROKE.open
                   : hovered
                     ? ZONE_STROKE.hovered
-                    : ZONE_STROKE[emphasis]
+                    : ZONE_STROKE.muted
               }
-              /* Dashed says "nobody is working here this range" — the same distinction
-                 the legend makes in words, so the two halves of the relief agree. */
-              strokeDasharray={worked ? undefined : '7 5'}
-              /* **`round` was already here and is now load-bearing rather than cosmetic.** It
-                 matches the Settings editor, which draws the saved boundary as a `<polygon>`
-                 with a round join — confirmed by the session working on it — so the two
-                 surfaces agree in character. And with the ring now 18 sharp vertices carrying
-                 a wobble each, some interior angles are acute enough that the default miter
-                 would shoot a long thin dart off the corner. That was not a risk while the
-                 ring was a smoothed 44-point curve; it is one now. */
+              /* **No dash.** It used to mean "no day in this range works this zone", and
+                 those zones are not drawn at all now, so the only thing a dashed circle
+                 could say here is nothing. Removed on instruction; the fact itself is still
+                 stated in words by the issues tray, which owns that sentence. */
               strokeLinejoin="round"
               style={{ transition: 'stroke-opacity 200ms ease, stroke-width 160ms ease' }}
             />
@@ -1100,69 +1160,42 @@ const ZoneRouteMap = ({
         </g>
 
         {/* ── The names ────────────────────────────────────────────────────────
-            **The whole of the relief the palette's contrast warning obliges, now that
-            the legend is gone.** Two of the four hues sit under 3:1 against the basemap,
-            so identity may not rest on colour — and it does not, because every territory
-            is captioned on itself. Removing these is not a styling choice; it would take
-            the palette out of compliance and needs the validator re-run first.
+            The hovered territory's name, and nothing else's. `hoverZoneId` records what
+            that costs the palette's relief rule and what would discharge it.
 
-            The legend they replaced was a box in the corner repeating what a zone is
-            called, what colour it is and which day works it — three facts the map, the
-            shape itself and the day pills were each already carrying. Its one unique
-            line was *West · not worked*, which is now the second line here, on the zone
-            it is about rather than in a list two hundred pixels away.
+            The `not worked` second line that used to hang under a zone's name is **gone
+            with the zones it described** — a zone no day works is not drawn at all now, so
+            there is no shape left to caption. The fact is still stated in words, by the
+            issues tray, which owns that sentence.
 
             Painted stroke-first so the white halo sits behind the glyphs and the name
             survives crossing a road or a park. */}
-        {zones.map((zone) => {
-          if (!zone.centroid || zone.ring.length < 3) return null;
+        {drawnZones.map((zone) => {
+          if (!zone.centroid) return null;
           /* Only the hovered territory names itself now — see `hoverZoneId`, which records what
              that costs and why nothing currently discharges the palette's relief rule. */
           if (zone.id !== hoverZoneId) return null;
           const at = toScreen(zone.centroid);
           const emphasis = emphasisFor(zone.id);
-          const idle = emphasis === 'idle';
 
           return (
-            <g key={`label-${zone.id}`} style={{ pointerEvents: 'none' }}>
-              <text
-                x={at.x}
-                /* Lifted half a line when there is a caption under it, so the pair stays
-                   centred on the territory rather than hanging below its middle. */
-                y={idle ? at.y - 7 : at.y}
-                textAnchor="middle"
-                dominantBaseline="central"
-                fill={zone.color}
-                fontSize={emphasis === 'open' ? 13 : 11.5}
-                fontWeight={emphasis === 'open' ? 700 : 600}
-                stroke="#FFFFFF"
-                strokeWidth={3}
-                paintOrder="stroke"
-                letterSpacing="0.04em"
-                style={{ textTransform: 'uppercase' }}
-              >
-                {zone.name}
-              </text>
-              {idle ? (
-                <text
-                  x={at.x}
-                  y={at.y + 8}
-                  textAnchor="middle"
-                  dominantBaseline="central"
-                  /* Grey, not the zone's own colour: this is a fact about the *schedule*,
-                     not about the territory, and colouring it would make "not worked"
-                     look like another shade of West. */
-                  fill="#6A6A70"
-                  fontSize={10}
-                  fontWeight={500}
-                  stroke="#FFFFFF"
-                  strokeWidth={2.5}
-                  paintOrder="stroke"
-                >
-                  {tt('zoneNotWorked')}
-                </text>
-              ) : null}
-            </g>
+            <text
+              key={`label-${zone.id}`}
+              x={at.x}
+              y={at.y}
+              textAnchor="middle"
+              dominantBaseline="central"
+              fill={zone.color}
+              fontSize={emphasis === 'open' ? 13 : 11.5}
+              fontWeight={emphasis === 'open' ? 700 : 600}
+              stroke="#FFFFFF"
+              strokeWidth={3}
+              paintOrder="stroke"
+              letterSpacing="0.04em"
+              style={{ pointerEvents: 'none', textTransform: 'uppercase' }}
+            >
+              {zone.name}
+            </text>
           );
         })}
       </Box>

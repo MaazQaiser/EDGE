@@ -13,9 +13,13 @@ import {
   useStyles as useRouteStyles,
 } from '../../harmonize/harmonize.styles';
 import { formatCompact, formatElapsed } from '../model/durations';
+/* `zoneName` is still needed by the empty-day message, which explains *why* a day has
+   nothing on it — that is a genuine statement about the zone, unlike the chip it replaced. */
 import { BASE, zoneName } from '../model/fixtures';
-import { MoveIcon, TrashIcon } from './Glyphs';
+import { travelMiles } from '../model/planner';
+import { TrashIcon } from './Glyphs';
 import RouteAvatar from './RouteAvatar';
+import StopMoveMenu from './StopMoveMenu';
 
 /**
  * The base/start and base/end anchors' own tone — **lighter than `STOP_TONES.idle`.**
@@ -108,6 +112,9 @@ const DayPane = ({
   onDragStart,
   onDragEnd,
   onStartMove,
+  workedDays = [],
+  onQuoteMove,
+  onMoveTo,
   isTipping,
 }) => {
   const workspace = useRouteStyles();
@@ -142,6 +149,33 @@ const DayPane = ({
   const [openId, setOpenId] = useState(null);
 
   const over = sheet.overrunMins > 0;
+
+  /**
+   * **The route's reach — the caption's third figure, where the drive time used to be.**
+   *
+   * The chip beside the route's name used to print the day's zone (`North`) — D15's one hard
+   * constraint, given the standing a chip carries. That chip is gone; this figure took its
+   * place for a moment and then moved down into the caption, on instruction.
+   *
+   * There is **no radius in this model**, so it is derived rather than read: the furthest
+   * stop's straight-line distance from base, which is the smallest circle centred on base
+   * that contains the whole route. `travelMiles` is the same Euclidean measure the sequencer
+   * prices legs with, so the figure agrees with the `mi` on the rows below it — it is not a
+   * second geometry.
+   *
+   * Rounded to a whole mile: the site grid is notional (see `MINS_PER_MILE`), so a decimal
+   * would claim a survey. An empty route has no reach and prints nothing rather than `0 mi`.
+   *
+   * **What this costs:** the card no longer states which zone the day works. That was the
+   * last place D15 appeared on screen — ① dropped the Day/Zone/Shift table earlier in the
+   * same session, and the tray's `From {day} · Zone {zone}` line went with the intros. So
+   * one-zone-per-day is now a rule the engine obeys and the UI never mentions. Accepted on
+   * instruction; this is the note to read if a planner ever asks why two zones cannot share
+   * a day.
+   */
+  const reachMiles = sheet.stops.length
+    ? Math.round(Math.max(...sheet.stops.map((stop) => travelMiles(BASE, stop.site))))
+    : null;
 
   /* The workspace's own bar rule: the budget, stretched if the day runs past it, so a
      column of cards puts every bar on one axis at one length. Here there is one card at a
@@ -210,15 +244,11 @@ const DayPane = ({
             placeholder={tt('routeFor', { day: dayjs(sheet.date).format('ddd D MMM') })}
             inputProps={{ 'aria-label': tt('routeNameLabel') }}
           />
-          {/* D15's hard constraint, given the standing a chip carries and a mid-sentence
-              clause did not. */}
-          {/* A hand-made route carries no zone (see `addRoute`), so there is no zone to
-              name — and `zoneName(null)` would print a bare em dash where every other card
-              states its one hard constraint. `Any zone` says the true thing about it: the
-              engine's one-zone rule is what it opted out of. */}
-          <Typography component="span" className={classes.flowZoneChip}>
-            {sheet.zoneId ? zoneName(sheet.zoneId) : tt('anyZone')}
-          </Typography>
+          {/* **No chip here any more.** It held the zone, then the derived radius, and the
+              radius has moved down into the caption where the drive time used to be — see
+              `paneMetaCaption`. Having it in both places would state the route's one
+              geographic fact twice, forty pixels apart. `flowZoneChip` stays in the sheet:
+              `harmonizeSplit`'s `RoutePreview` still wears it. */}
 
           {/* Who is on it. On the title's own row rather than down beside the counts,
               because it belongs to the route's *identity* — the same rank as its name and
@@ -249,7 +279,21 @@ const DayPane = ({
         </Box>
 
         {/* The figure a planner compares card to card — the thing the old caption-sized
-            `3h48m / 4h` never earned the eye's first stop for. */}
+            `3h 48m / 4h` never earned the eye's first stop for.
+
+            **When the day is over, the overrun gets its own highlighted chip beside it.**
+            Dropping a visit onto a day that is already full is now a legal gesture (see
+            `droppableDatesFor`), so "this day went over, and by this much" changed from an
+            edge case into the expected outcome of the drawer's commonest action — and the
+            total turning amber said *that* it happened without ever saying *by how much*.
+            A reader had to subtract `of 4h shift` from the total in their head.
+
+            This is a partial reinstatement of the `spare`/`over` verdict removed from the
+            caption in an earlier pass. That removal was right on its own terms — the
+            verdict printed on *every* card, including comfortable ones, restating what the
+            gauge already showed. **The chip only exists when the day is over**, so it never
+            competes with the gauge for a day that is fine, and it carries the one number
+            that was genuinely absent. `spare` did not come back. */}
         <Box className={classes.flowRouteMetric}>
           <Typography
             className={classNames(
@@ -262,6 +306,11 @@ const DayPane = ({
           <Typography className={classes.flowRouteMetricOf}>
             {tt('ofShift', { shift: formatCompact(sheet.shiftMins) })}
           </Typography>
+          {over ? (
+            <Typography className={classes.flowRouteOverChip}>
+              {tt('overBy', { amount: formatCompact(sheet.overrunMins) })}
+            </Typography>
+          ) : null}
         </Box>
 
         {/* How full the day is. **The fill turns yellow, it does not overflow** — the track
@@ -275,16 +324,29 @@ const DayPane = ({
           />
         </Box>
 
-        {/* Stops, filters, drive — quiet. The spare/over verdict that used to trail this
-            line is gone; the big metric above and the gauge under it already say whether
-            the day is full. */}
+        {/* Visits, filters, reach — quiet.
+ 
+            **`drive 1h 18m` is gone and the radius has taken its slot**, on instruction. The
+            two are not the same kind of fact, and the swap is the better trade: driving time
+            is *already* inside the `3h 48m` above and inside every row's own leg figure, so
+            the caption was its third airing. The route's reach appeared nowhere else once the
+            chip came off the title row.
+
+            `visits`, not `stops` — the word the rest of the product uses. `stop` is the
+            sequencer's name for a visit that has a position in a route, and this was the only
+            place on the card that spoke it. */}
         <Box className={classes.flowRouteCaption}>
           <Typography className={classes.flowRouteCaptionText}>
-            {tt('paneMetaCaption', {
-              stops: tt('count.stop', { count: sheet.stops.length }),
-              filters: tt('count.filter', { count: sheet.filterCount }),
-              drive: formatCompact(sheet.travelMins),
-            })}
+            {reachMiles === null
+              ? tt('paneMetaCaptionNoRadius', {
+                  visits: tt('count.visit', { count: sheet.stops.length }),
+                  filters: tt('count.filter', { count: sheet.filterCount }),
+                })
+              : tt('paneMetaCaption', {
+                  visits: tt('count.visit', { count: sheet.stops.length }),
+                  filters: tt('count.filter', { count: sheet.filterCount }),
+                  radius: tt('radiusMiles', { miles: reachMiles }),
+                })}
           </Typography>
         </Box>
       </Box>
@@ -428,18 +490,15 @@ const DayPane = ({
                             Hidden until the row is hovered or the button itself is focused
                             (`data-move`, revealed by `stopHoverRow`) — twelve always-on
                             action icons down a 475px list is a toolbar, not a route. */}
-                        <Tooltip arrow title={tt('moveVisit', { site: stop.site.name })}>
-                          <Box
-                            component="button"
-                            type="button"
-                            data-move="true"
-                            className={classes.stopMoveButton}
-                            aria-label={tt('moveVisit', { site: stop.site.name })}
-                            onClick={() => onStartMove(stop.visit.id)}
-                          >
-                            <MoveIcon size={15} />
-                          </Box>
-                        </Tooltip>
+                        <StopMoveMenu
+                          classes={classes}
+                          visitId={stop.visit.id}
+                          site={stop.site.name}
+                          currentDate={sheet.date}
+                          days={workedDays}
+                          onQuote={onQuoteMove}
+                          onMove={onMoveTo}
+                        />
                       </Box>
                     }
                     figure={
@@ -507,6 +566,12 @@ DayPane.propTypes = {
   onDragStart: PropTypes.func.isRequired,
   onDragEnd: PropTypes.func.isRequired,
   onStartMove: PropTypes.func.isRequired,
+  /** The run's worked days — the move menu's destinations. */
+  workedDays: PropTypes.array,
+  /** `(visitId, date) => priceMove verdict`, for the move menu's per-day cost. */
+  onQuoteMove: PropTypes.func,
+  /** `(visitId, date) => void` — commit a move without a drag in flight. */
+  onMoveTo: PropTypes.func,
   isTipping: PropTypes.func.isRequired,
 };
 

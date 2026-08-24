@@ -27,9 +27,15 @@ import { PlusIcon } from 'src/app/obx/pages/schedules/components/harmonizeFlow/c
  * is deliberate rather than drift. Two things the drawer's `DayTabs` cannot do and should
  * not learn: it maps `runsheets`, so it cannot exist before a run; and it prints `0` for an
  * empty day, which is a true statement about a solved day and a false one about a day
- * nobody has solved. Everything visual is still the drawer's — the classes below are
- * `harmonizeFlow.styles.js`'s own tab rules, handed in — so the two rows cannot drift apart
- * in appearance, only in what they are able to say.
+ * nobody has solved.
+ *
+ * **Every class is handed in, and the two shells now hand in different ones.** This used to
+ * be `harmonizeFlow.styles.js`'s tab rules in both cases, on the argument that a shared sheet
+ * is what stops two rows drifting in appearance. Split overrides them wholesale now — its row
+ * is a segmented control of bordered boxes where the drawer's is an underlined strip — so the
+ * appearance is deliberately two answers to the same question, which is what a comparison
+ * shell is for. What cannot drift is the *behaviour*, because that is this file and there is
+ * one of it.
  *
  * **A third reason used to be the zone colour dot, and it has been removed.** Each tab
  * carried a 7px dot in its zone's hue, argued for as the tie between a date in this row and
@@ -122,7 +128,6 @@ const DayTabRow = ({
             }
             className={classNames(
               classes.tab,
-              classes.splitTab,
               selected && classes.tabSelected,
               quote?.legal && classes.tabDropLegal,
               quote && !quote.legal && classes.tabDropRefused,

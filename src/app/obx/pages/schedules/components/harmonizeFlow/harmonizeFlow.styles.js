@@ -9,6 +9,9 @@ import { makeStyles } from '@mui/styles';
  * in one voice.
  */
 const WARNING_INK = '#B54708';
+/* `WARNING_INK` at 12% — the ground under the overrun chip. Derived from the ink rather
+   than picked, so the two cannot drift; see `flowRouteOverChip`. */
+const SPILL_TINT = 'rgba(181, 71, 8, 0.12)';
 
 /** `textPrimary` at 6%. Named because it is otherwise the only literal in the sheet. */
 const EDGE_SHADOW = 'rgba(38, 37, 39, 0.06)';
@@ -45,6 +48,49 @@ export const useStyles = makeStyles((theme) => {
    */
   const w = (styles) => ({ '&&': styles });
 
+  /**
+   * The drawer's gutter — **one number for every band, and it came down from 24.**
+   *
+   * `head`, `body`, `footer`, the tab row, the issues bar and the issues body all inset
+   * their content by this, which is what makes the title, the tabs, a stop name, a tray
+   * row's name and the footer buttons share a single left edge down the whole panel. It was
+   * `24` throughout, matching the app's other drawers.
+   *
+   * Reduced to **20** on instruction: ① now holds a fifteen-row list whose rows carry their
+   * own padding and their own hairlines, and 24px of paper on top of that read as a double
+   * inset — the panel was spending 48px of a 523px drawer on air either side of a column of
+   * checkboxes.
+   *
+   * **It has to be one constant.** Several things in this sheet are calibrated *against*
+   * the gutter rather than to an absolute number — the row-hover fills reach outward by
+   * negative margin to land flush with it, and the issues bar's own left padding is what
+   * the rows below it align to. Change this and they all move together; hard-code one of
+   * them back to 24 and that one drifts. Comments elsewhere that still say "24px gutter"
+   * mean "the gutter"; this is the value.
+   */
+  const GUTTER = 20;
+
+  /**
+   * ③'s own, tighter gutter — **14, against ①'s 20.**
+   *
+   * The proposal is the one state whose content brings its own horizontal inset. A route row
+   * is `grip · pin column · name · figures`, and the grip and pin spend ~44px before the
+   * first character of a site name; the row also paints its hover fill 10px *outward* on each
+   * side (`flowStopLine`'s negative margin). So the drawer's own 20px was being added to an
+   * indent the card had already paid for, and the effect was a route card that looked inset
+   * twice while its own header sat at the true gutter.
+   *
+   * Applied to **every band in the state, not just the body** — head, footer and the issues
+   * tray take it too. That is the whole reason it is a constant and not a number typed into
+   * `body`: the title, the day tabs, a route's own header, a tray row and the footer buttons
+   * share one left edge down the panel, and moving one band without the others is what
+   * produces the stepped edge this is meant to remove.
+   *
+   * 14 rather than 12: the row fill reaches 10px past the content edge, so 12 would leave it
+   * 2px from the paper and read as a clipping bug rather than as a row.
+   */
+  const GUTTER_TIGHT = 14;
+
   /** The decision box's state edge plus its lift, so a modifier cannot drop one. */
   const edge = (colour) => `inset 3px 0 0 0 ${colour}, 0 -4px 12px ${EDGE_SHADOW}`;
 
@@ -75,7 +121,7 @@ export const useStyles = makeStyles((theme) => {
       position: 'relative',
       flex: '0 0 auto',
       minHeight: 0,
-      padding: '24px 24px 0',
+      padding: `24px ${GUTTER}px 0`,
     }),
     titleRow: w({
       display: 'flex',
@@ -363,7 +409,7 @@ export const useStyles = makeStyles((theme) => {
       flex: '1 1 auto',
       minHeight: 0,
       overflowY: 'auto',
-      padding: '20px 24px 24px',
+      padding: `20px ${GUTTER}px 24px`,
       /**
        * **The scrollbar is taken out of layout, so a row's fill never depends on it.**
        *
@@ -430,12 +476,16 @@ export const useStyles = makeStyles((theme) => {
      * all times, so revealing it cannot shift the site name beside it, and it stays
      * reachable by keyboard (its own `:focus-visible` is the second half of the reveal).
      */
+    /* 22 → 26, with an 18px glyph inside it (was 15). Reported as "too small": at 15px in a
+       22px box it was the smallest interactive thing in the drawer and well under the 24px
+       minimum a pointer target wants, on a control that only appears on hover — so it had to
+       be found *and* hit inside a row that reveals it. */
     stopMoveButton: w({
       flex: '0 0 auto',
       display: 'grid',
       placeItems: 'center',
-      width: 22,
-      height: 22,
+      width: 26,
+      height: 26,
       padding: 0,
       border: 'none',
       borderRadius: 4,
@@ -447,6 +497,34 @@ export const useStyles = makeStyles((theme) => {
       '&:hover': { background: theme.palette.surfaceWhite, color: theme.palette.textBrand },
       '&:focus-visible': { outline: `2px solid ${theme.palette.borderBrand}`, outlineOffset: 1 },
     }),
+    /* ── The move menu ────────────────────────────────────────────────────────
+       `StopMoveMenu`'s rows: the day on the left, what the move would cost that day on the
+       right. A grid rather than `space-between` so the costs line up down the column — they
+       are the thing being compared, and a ragged right edge makes three of them read as
+       three unrelated facts. */
+    moveMenuRow: w({
+      display: 'grid',
+      gridTemplateColumns: 'minmax(0, 1fr) auto',
+      alignItems: 'baseline',
+      gap: 16,
+      minWidth: 190,
+    }),
+    moveMenuDay: w({ ...theme.typography.subtitle2, color: theme.palette.textPrimary }),
+    moveMenuCost: w({
+      ...theme.typography.body2,
+      color: theme.palette.textSecondary2,
+      fontVariantNumeric: 'tabular-nums',
+    }),
+    /* Amber where the day would end up past its shift. This is the warning the unrestricted
+       drop rules removed from the refusal path, put back where the choice is made — the
+       planner is told before, not only shown after. */
+    moveMenuCostOver: w({
+      ...theme.typography.body2,
+      color: WARNING_INK,
+      fontVariantNumeric: 'tabular-nums',
+    }),
+    moveMenuEmpty: w({ ...theme.typography.body2, color: theme.palette.textSecondary2 }),
+
     stopDragging: w({ opacity: 0.4 }),
     /* The stop the shift expires during. An edge, not a wash — filled, it merged with
        the amber panel below and the two read as one block. */
@@ -465,32 +543,6 @@ export const useStyles = makeStyles((theme) => {
       color: theme.palette.textSecondary2,
       textAlign: 'center',
       padding: '18px 8px 22px',
-    }),
-    /**
-     * The reason, with the orb beside it — **this sentence is the optimizer talking.**
-     *
-     * Every other line on a tray row is a fact about the visit (its site, its company, its
-     * filters, its hours). This one is the engine's own account of why it could not place
-     * it, which is the same voice ② narrated in and the reasoning trail replays. The orb is
-     * `ThinkingOrb` held `paused` — the mark the drawer already uses for "the optimizer",
-     * frozen, because nothing is being worked out any more.
-     */
-    trayReasonRow: w({
-      display: 'flex',
-      alignItems: 'flex-start',
-      gap: 7,
-      marginTop: 6,
-    }),
-    /* A fixed box for the canvas so a row's text cannot reflow around it as it settles. */
-    trayReasonOrb: w({
-      flex: '0 0 auto',
-      width: 20,
-      height: 20,
-      marginTop: -1,
-    }),
-    trayReason: w({
-      ...theme.typography.subtitle3,
-      color: theme.palette.textSecondary2,
     }),
     /**
      * What is left of the remedy line.
@@ -794,6 +846,129 @@ export const useStyles = makeStyles((theme) => {
       textAlign: 'right',
     }),
 
+    /* ── ①'s visit list ───────────────────────────────────────────────────────
+       Fifteen rows a planner can clear one at a time — see `VisitScopeList`. The rows
+       borrow `dayRow`'s hairline-and-hover treatment deliberately: they sit twenty pixels
+       under that table in the same column, and two list idioms stacked in one panel reads
+       as two panels. What differs is the grid, because these rows carry a control. */
+
+    /* `10 of 15 selected` — the one figure in ① that is about the *pool* rather than the
+       run, which is why it is not in the stat row above. Those three figures all describe
+       what the run will do; this one describes what the reader has done to it. It rides the
+       heading row now, opposite `Visits`, in the slot the two bulk buttons used to occupy —
+       `flex: 0 0 auto` so a long count cannot squeeze the heading. */
+    visitsSelected: w({
+      ...theme.typography.body2,
+      color: theme.palette.textSecondary2,
+      fontVariantNumeric: 'tabular-nums',
+      flex: '0 0 auto',
+    }),
+
+    /* **A note worth keeping from the version this replaces.** The old header was its own
+       grid row, and it first shipped with its class missing entirely — which in `makeStyles`
+       fails *silently*: `classes.visitHeadRow` was `undefined`, the Box got no grid, and
+       `Filters` rendered as a plain block hard against the left gutter. This sheet has form
+       on it; three referenced-but-never-written classes were found the same way in ①'s day
+       table. Grep the class name before diagnosing a layout bug here. */
+    /**
+     * The Visits heading row, wearing the list's own rule.
+     *
+     * `sectionHead` supplies the layout — `space-between` on a shared baseline — and this
+     * adds the two things a table header needs that a section heading does not: air under
+     * the label pair, and the hairline that starts the list. 10px of padding rather than 6:
+     * the heading is 24px tall against the label's 18, so the rule needs to clear the
+     * *heading's* descenders, not the label's.
+     *
+     * The label itself is right-aligned by the flex row, so `visitHeadNum` no longer needs
+     * `text-align` — kept anyway, because it costs nothing and the class is what a reader
+     * will check when the column stops lining up.
+     */
+    visitsHead: w({
+      paddingBottom: 10,
+      borderBottom: `1px solid ${theme.palette.borderSubtle1}`,
+    }),
+    visitHeadNum: w({
+      ...theme.typography.subtitle3,
+      color: theme.palette.textSecondary3,
+      textAlign: 'right',
+      flex: '0 0 auto',
+    }),
+
+    /* No top border: `visitsHead` draws the rule now, and two hairlines a few pixels apart
+       read as a mistake rather than as a table. 4px of air under the rule so the first row's
+       checkbox is not touching it. */
+    visitList: w({ paddingTop: 4 }),
+
+    /**
+     * `[box] name / meta … filters`.
+     *
+     * `28px` for the control column rather than the checkbox's own 38px hit box: `size:
+     * small` draws a 20px glyph in a 30px button, and the button's padding is pulled back
+     * on `visitCheckbox` so the glyph lines up with the `Day` column's text edge above it
+     * instead of sitting 9px inside it. The hit area is preserved by the negative margin,
+     * not by the column width — a 38px column would indent every row's text to clear
+     * padding that is mostly transparent.
+     *
+     * `align-items: center`, unlike `dayRow`'s `baseline`: a row here is two stacked lines
+     * against a control that has no baseline, and baseline-aligning a checkbox to the
+     * first of two lines hangs it off the top of the row.
+     */
+    visitRow: w({
+      display: 'grid',
+      gridTemplateColumns: '28px minmax(0, 1fr) auto',
+      gap: 10,
+      alignItems: 'center',
+      padding: '7px 0',
+      borderBottom: `1px solid ${theme.palette.borderSubtle1}`,
+      '&:last-child': { borderBottom: 'none' },
+      transition: 'background 120ms ease, opacity 120ms ease',
+      '&:hover': { background: theme.palette.surfaceGreySubtle },
+      /* Dimmed, not struck through and not moved. A cleared row is still a visit — it is
+         just not in this run — and both of the louder treatments say "deleted". 0.5 is
+         enough to read as out at a glance while leaving the name legible, because the
+         reader's next act is often to put one back and they have to find it first. */
+      '&[data-excluded]': { opacity: 0.5 },
+    }),
+
+    /* The box itself. Padding pulled back to 4px so the glyph aligns with the text column
+       above it; the negative margin gives the missing hit area back rather than taking it
+       out of the row's height. */
+    visitCheckbox: w({
+      '&.MuiCheckbox-root': {
+        padding: 4,
+        margin: -4,
+        alignSelf: 'center',
+      },
+    }),
+
+    visitText: w({ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 1 }),
+
+    /* `subtitle1`, matching `dayName` in the table above — the target is the row's subject
+       in both lists, and the two columns are read as one. */
+    visitName: w({
+      ...theme.typography.subtitle1,
+      color: theme.palette.textPrimary,
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
+    }),
+    visitMeta: w({
+      ...theme.typography.body2,
+      color: theme.palette.textSecondary2,
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
+    }),
+    /* Tabular figures, because this column is scanned down rather than read — the filter
+       count is what the estimate is made of. */
+    visitFilters: w({
+      ...theme.typography.body2,
+      color: theme.palette.textSecondary1,
+      fontVariantNumeric: 'tabular-nums',
+      textAlign: 'right',
+      whiteSpace: 'nowrap',
+    }),
+
     /* ── ①'s loading skeleton ─────────────────────────────────────────────────
        `planRange` finishes in under a millisecond, so without this the panel that exists
        to *predict* a run never looks like it computed anything. Held for `SETTLE_MS` on
@@ -1034,37 +1209,36 @@ export const useStyles = makeStyles((theme) => {
     }),
 
     /**
-     * The orb, **untinted**.
+     * The mascot's box — **was `orbTint`, at 64px, for `thinking-orbs`.**
      *
-     * The workspace lays a brand-coloured `mix-blend-mode: lighten` square over it,
-     * because the package paints greyscale and takes no colour prop. That trick composites
-     * against whatever is behind the orb, and behind it here is a gradient — so the result
-     * ranged from correct to a flat green block depending on where the eclipse's white
-     * core happened to fall that frame. A tint that changes with its own backdrop is not a
-     * tint, and this stage already carries the brand in the aurora around it.
+     * ② plays the tenant's own boot animation now rather than the generative orb (see
+     * `ComputingState`), so the two things this class used to be about are gone with it:
+     * there is no greyscale canvas to tint, and no shared tuned size to match. What
+     * survives is the *positioning* contract, which the halo below still depends on —
+     * a relative, explicitly sized parent that opens its own stacking context so
+     * `mascotHalo`'s negative z-index stays scoped here instead of falling back to the
+     * wash layers behind the whole drawer.
      *
-     * Left as a positioned box so the canvas has a sized parent to fill.
+     * 128 rather than the orb's 64: the orb was an abstract mark and this is a
+     * character, which needs the room. Kept in sync with `MASCOT_SIZE` in
+     * `ComputingState` — the Lottie sizes itself inline, and this box has to match or
+     * the halo is centred on the wrong rectangle.
      */
-    /* Blended rather than filtered: the package paints greyscale and takes no colour
-       prop. 64 is one of its two tuned sizes — separate designs, not a scale factor.
-       `zIndex: 0` opens its own stacking context so `orbHalo`'s negative z-index stays
-       scoped to this box instead of falling all the way back to the wash layers. */
-    orbTint: w({ position: 'relative', width: 64, height: 64, zIndex: 0 }),
+    mascotStage: w({ position: 'relative', width: 128, height: 128, zIndex: 0 }),
     /**
-     * The orb's own ground — **referenced above, and, until now, never built.**
+     * The mascot's own ground.
      *
-     * The eclipse stopped aiming at the orb (see above) once the wash moved to `shell`,
-     * because a percentage tuned for the body's centre drifts the moment the head or
-     * footer changes height. This is the other half of that fix: a white ground sized
-     * and centred against the orb itself, so it cannot drift from it — the eclipse only
-     * has to hold the *middle of the paper* back now, not track the orb's exact position.
+     * The eclipse stopped aiming at the centre of the animation once the wash moved to
+     * `shell`, because a percentage tuned for the body's centre drifts the moment the head
+     * or footer changes height. This is the other half of that fix: a white ground sized
+     * and centred against the animation itself, so it cannot drift from it — the eclipse
+     * only has to hold the *middle of the paper* back now, not track an exact position.
      *
-     * `inset: -20` gives the canvas's 64px box a margin of clean ground on every side
-     * before the gradient fades, and `zIndex: -1` (against `orbTint`'s own stacking
-     * context) keeps it behind the canvas without reaching past `orbTint` to affect
-     * anything else in the stage.
+     * `inset: -20` gives the box a margin of clean ground on every side before the gradient
+     * fades, and `zIndex: -1` (against `mascotStage`'s own stacking context) keeps it behind
+     * the animation without reaching past it to affect anything else in the stage.
      */
-    orbHalo: w({
+    mascotHalo: w({
       position: 'absolute',
       inset: -20,
       zIndex: -1,
@@ -1425,6 +1599,35 @@ export const useStyles = makeStyles((theme) => {
     /* Amber on the figure itself the moment the day runs past its shift — the workspace's
        own `proposedTimeOver` rule, restated for this size. */
     flowRouteMetricOver: w({ color: WARNING_INK }),
+    /**
+     * `+1h 30m` — **the overrun, highlighted, and only drawn when there is one.**
+     *
+     * A filled chip rather than amber text on the paper, because it sits on a row that
+     * already has two amber-capable things on it (the total, and the gauge four pixels
+     * below) and a third bare amber string would read as part of the same sentence. The
+     * ground is what makes it a separate fact: *this much was added on top of the shift.*
+     *
+     * `SPILL_TINT` is `WARNING_INK` at 12% rather than a new token — the same ink the text
+     * uses, so the chip cannot drift from the figure beside it, and light enough that
+     * `WARNING_INK` on it clears 4.5:1. It is deliberately **not** the gauge's own
+     * `#FEDF89`: that yellow is calibrated to be legible as a 4px bar against the region's
+     * green wash, and it is far too pale to carry 12px text.
+     *
+     * `alignSelf: center` because the row is `align-items: baseline` for the figure and its
+     * `of 4h shift` — a chip with a background baseline-aligned to a 20px numeral hangs its
+     * ground below the text's descenders.
+     */
+    flowRouteOverChip: w({
+      ...theme.typography.subtitle3,
+      alignSelf: 'center',
+      color: WARNING_INK,
+      background: SPILL_TINT,
+      borderRadius: 4,
+      padding: '2px 6px',
+      marginLeft: 2,
+      fontVariantNumeric: 'tabular-nums',
+      whiteSpace: 'nowrap',
+    }),
     /* Stops, filters, drive — quiet. The spare/over verdict that used to sit at the end of
        this line is gone: the big metric above it and the gauge under it already say
        whether the day is full, so the caption's own job is just the three counts. */
@@ -1549,6 +1752,24 @@ export const useStyles = makeStyles((theme) => {
       '&:focus-visible': { outline: `2px solid ${theme.palette.borderBrand}`, outlineOffset: 2 },
     }),
     flowChevronIcon: w({ width: 13, height: 13, flexShrink: 0, display: 'block' }),
+
+    /**
+     * The tray's chevron: **not drawn at all.**
+     *
+     * `StopFigure` renders its disclosure button unconditionally, and the issues tray passes
+     * no `onToggle` — an unplaced visit has no arithmetic to open. So every row of the tray
+     * carried a chevron that looked like a control and was not one. `display: none` on the
+     * button rather than a `null` figure, because the alternative is a prop on the shared
+     * `StopFigure` and this is the only caller that wants it gone.
+     *
+     * The figure loses the chevron's width when it goes, so `flowTrayFigureEnd` gives the
+     * duration the same trailing inset the chevron used to occupy — which is what keeps a
+     * tray row's hours in the column a route row's hours sit in.
+     */
+    flowTrayChevronHidden: w({ display: 'none' }),
+    /* The 13px glyph plus its 8px padding less the -8px margin — the space the hidden
+       chevron used to hold, given back to the figure so the two lists' right edges agree. */
+    flowTrayFigureEnd: w({ paddingRight: 13 }),
 
     /**
      * ③'s entrance — **the route rises in, one row after another.**
@@ -1687,7 +1908,7 @@ export const useStyles = makeStyles((theme) => {
       display: 'flex',
       alignItems: 'center',
       gap: 10,
-      padding: '12px 24px',
+      padding: `12px ${GUTTER}px`,
       border: 'none',
       background: 'transparent',
       textAlign: 'left',
@@ -1762,7 +1983,7 @@ export const useStyles = makeStyles((theme) => {
       maxHeight: '32vh',
       overflowY: 'auto',
       overflowX: 'hidden',
-      padding: '0 24px 16px',
+      padding: `0 ${GUTTER}px 16px`,
       scrollbarWidth: 'none',
       '&::-webkit-scrollbar': { display: 'none' },
     }),
@@ -1774,24 +1995,13 @@ export const useStyles = makeStyles((theme) => {
      * fault the day table's headers had against its own labels: the intro is context for
      * what follows, not a peer of it, and it should look like context.
      */
-    /* Left-padded to the bar's own **title**, not its icon — `24px` (the bar's padding)
-       `+ 16px` (the warning triangle) `+ 10px` (the bar's gap) = `50px`, so the sentence
-       explaining the accordion starts under the words it explains rather than under the
-       decorative mark beside them. */
-    spillIntro: w({
-      ...theme.typography.subtitle3,
-      color: theme.palette.textSecondary3,
-      paddingBottom: 8,
-      paddingLeft: 26,
-    }),
-    /* The not-placed group's own intro, when the spilled group is on screen above it —
-       a hairline and a little air, so the second remedy reads as its own paragraph
-       rather than a continuation of the first. */
-    spillIntroSecond: w({
-      marginTop: 4,
-      paddingTop: 12,
-      borderTop: `1px solid ${theme.palette.borderSubtle1}`,
-    }),
+    /* **The two intro paragraphs are gone**, on instruction — `spillIntro`,
+       `spillIntroSecond` and their locale keys with them. They explained the two groups
+       ("No day had room for these…" / "Each of these has no legal day…"). With both removed
+       the groups no longer announce themselves, and since the reason line and the
+       `From {day} · Zone {zone}` line went at the same time, a spilled row and a stranded
+       row are now visually identical — the tray is one flat list of names, companies,
+       filter counts and hours. The distinction survives only in the pin's tone. */
 
     /**
      * One spilled visit — **a row, not a card.**
@@ -1905,35 +2115,6 @@ export const useStyles = makeStyles((theme) => {
       justifyContent: 'center',
       gap: 8,
     }),
-    /* The day it came off. Amber ink, because *why this is here* is the row's one piece of
-       genuinely exceptional information — everything above it is the same as any stop. */
-    /**
-     * The reason this visit is here — the one amber fact on an otherwise plain row, and
-     * now its own line rather than trailing straight off the company/filters caption.
-     */
-    spillOffRow: w({
-      display: 'flex',
-      alignItems: 'center',
-      gap: 6,
-      marginTop: 2,
-    }),
-    /* The same amber dot `dayDot`/`tabDot` use for the same idea — one sign, meaning
-       "this needs a decision", learned once. */
-    spillOffDot: w({
-      flex: '0 0 auto',
-      width: 5,
-      height: 5,
-      borderRadius: '50%',
-      background: theme.palette.surfaceWarningStrong,
-    }),
-    spillOff: w({
-      fontFamily: 'Inter',
-      fontSize: 12,
-      fontWeight: 500,
-      lineHeight: '16px',
-      color: WARNING_INK,
-    }),
-
     /**
      * The bottom band: the buttons — **one bordered box**, though there used to be a
      * note above them too (`footerNote`, removed on instruction — see `HarmonizeDrawer`).
@@ -1976,7 +2157,7 @@ export const useStyles = makeStyles((theme) => {
     /* The button row. The border and the ground belong to `footerBand` above. */
     footer: w({
       position: 'relative',
-      padding: '16px 24px',
+      padding: `16px ${GUTTER}px`,
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'flex-end',
@@ -2003,5 +2184,23 @@ export const useStyles = makeStyles((theme) => {
       whiteSpace: 'nowrap',
       border: 0,
     }),
+    /* ── ③'s tighter bands — **defined last, deliberately** ───────────────────
+       One modifier per band, each swapping the horizontal gutter for `GUTTER_TIGHT`. Applied
+       together by `isProposal` in `index.jsx`; see `GUTTER_TIGHT` for why they move as a set.
+       Vertical padding is untouched — this is about the left and right edge.
+
+       **These live at the foot of the sheet because position is what makes them win.**
+       `w()` gives every class the same `&&` specificity, so a tie is broken by order in the
+       generated stylesheet. Defined up beside `titleRow` — which is where they were first
+       written — `bodyProposal` came *before* `body`, `footerProposal` before `footer` and
+       `spillBarProposal` before `spillBar`, so the base class won every time and only `head`
+       (declared earlier still) actually narrowed. Measured: head 14px, body/footer/bar all
+       stuck at 20px. Anything overriding a base class in this sheet has to be declared after
+       it, and the end of the object is the only place that is true for all of them. */
+    headProposal: w({ paddingLeft: GUTTER_TIGHT, paddingRight: GUTTER_TIGHT }),
+    bodyProposal: w({ paddingLeft: GUTTER_TIGHT, paddingRight: GUTTER_TIGHT }),
+    footerProposal: w({ paddingLeft: GUTTER_TIGHT, paddingRight: GUTTER_TIGHT }),
+    spillBarProposal: w({ paddingLeft: GUTTER_TIGHT, paddingRight: GUTTER_TIGHT }),
+    spillBodyProposal: w({ paddingLeft: GUTTER_TIGHT, paddingRight: GUTTER_TIGHT }),
   };
 });
