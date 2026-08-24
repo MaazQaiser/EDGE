@@ -30,6 +30,7 @@ const ZoneLassoExperience = ({
   activeZoneId,
   invalid,
   switcher,
+  fitToken,
   onShapeDrawn,
   onClear,
 }) => {
@@ -80,6 +81,7 @@ const ZoneLassoExperience = ({
         interaction="draw"
         hint={tt(drawn ? 'zoneHintRedraw' : 'zoneHintDraw')}
         switcher={switcher}
+        fitToken={fitToken}
         onShapeDrawn={onShapeDrawn}
       />
     </Box>
@@ -97,6 +99,7 @@ ZoneLassoExperience.propTypes = {
   activeZoneId: PropTypes.string,
   invalid: PropTypes.bool,
   switcher: PropTypes.node,
+  fitToken: PropTypes.any,
   onShapeDrawn: PropTypes.func.isRequired,
   onClear: PropTypes.func.isRequired,
 };

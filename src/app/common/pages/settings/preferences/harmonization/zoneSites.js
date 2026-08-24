@@ -85,6 +85,34 @@ const visitsBySite = VISITS.reduce((total, visit) => {
 }, {});
 
 /**
+ * A zip code per site, for the zip-code zone method.
+ *
+ * The fixture's own records carry no postal address, only the notional grid this module
+ * already projects into coordinates — so these are assigned here, clustered by the same
+ * zone the grid already groups them into, rather than derived from `x`/`y`. Kelvin Court
+ * keeps North's prefix despite being the outlier: it is a real if awkward member of that
+ * zone, and giving it a different prefix would make it choosable by boundary or radius but
+ * not by the zip codes that are supposed to describe the same territory.
+ */
+const ZIP_BY_SITE = {
+  fenchurch: '33701',
+  verity: '33702',
+  marchmont: '33703',
+  kelvin: '33704',
+  harborview: '33711',
+  langford: '33712',
+  fairmont: '33713',
+  ashgrove: '33714',
+  southgate: '33721',
+  pemberton: '33722',
+  rosslyn: '33723',
+  whitmore: '33724',
+  calder: '33725',
+  brookfield: '33731',
+  sableridge: '33732',
+};
+
+/**
  * The site book: the fixture's own records, plus coordinates and a filter total.
  *
  * `zoneId` is carried through as the fixture's *default* assignment. It is not the
@@ -99,6 +127,7 @@ export const ZONE_SITES = SITES.map((site) => ({
   defaultZoneId: site.zoneId || null,
   filters: filtersBySite[site.id] || 0,
   visits: visitsBySite[site.id] || 0,
+  zip: ZIP_BY_SITE[site.id] || null,
   ...gridToLatLng(site),
 }));
 

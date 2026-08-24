@@ -1,32 +1,40 @@
-import { Box, Button, MenuItem, Select, TextField, Typography } from '@mui/material';
+import { Box, Button, TextField, Typography } from '@mui/material';
 import PropTypes from 'prop-types';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+/* The same keyless geocoding field the Start & End Location row uses. Reached across from
+   the workspace for the reason recorded at that import: the alternative is a second address
+   typeahead that drifts from this one. */
+import AddressSearchField from 'src/app/obx/pages/schedules/components/harmonize/components/AddressSearchField';
 
 import { useStyles } from './harmonization.styles';
 import { clampRadiusMiles, RADIUS_MAX_MILES, RADIUS_MIN_MILES } from './harmonizationSettings';
 import ZoneMap from './ZoneMap';
 
 /**
- * Setting a zone as a distance around one of the sites.
+ * Setting a zone as a distance around a point the planner drops on the map.
  *
  * The other experience behind the switcher, and genuinely different rather than the lasso
  * with its controls swapped. Two decisions shape it:
  *
- * **The centre is a site, not a point.** A radius zone is "ten miles around Kelvin Court
- * Offices" — a sentence a planner can check. Letting them drop a pin anywhere produced
- * "12 mi around a dropped pin", which is a zone nobody can verify and which no downstream
- * screen can name. So the centre is chosen from the book, either in the dropdown or by
- * clicking a pin on the map, and the two are the same act.
+ * **The centre is a dropped pin, not a site — a reversal.** It used to be chosen from the
+ * site book, in a dropdown or by clicking a pin, on the argument that "ten miles around
+ * Kelvin Court Offices" is a sentence a planner can check while "12 mi around a dropped pin"
+ * is not. Reversed at the user's direction, and the reason it loses is that a territory's
+ * centre is usually *not* a site: it is a depot, a junction, the middle of a city. Snapping
+ * to the nearest site meant the shape a planner wanted was one the control refused to make.
+ * The dropdown is gone with it — there is nothing to pick from a list any more, and the map
+ * is now the only input, which is the same shape the lasso experience already has.
  *
  * **The distance from where runsheets start is shown, because the map hides it.** A zone
  * centred forty miles from the depot spends eighty miles of the day before a filter is
- * changed, and at a metro-wide zoom that is invisible.
+ * changed, and at a metro-wide zoom that is invisible. It survives the change to a pin
+ * unaltered — it was never a fact about the *site*, only about the point.
  */
 
 const ZoneRadiusExperience = ({
   sites,
-  centreSite,
+  anchor,
   radiusMiles,
   distanceFromBase,
   capturedIds,
@@ -37,7 +45,9 @@ const ZoneRadiusExperience = ({
   activeZoneId,
   invalid,
   switcher,
-  onSelectSite,
+  fitToken,
+  onDropPin,
+  onClearPin,
   onRadiusChange,
   onRadiusBlur,
   onStep,
@@ -52,7 +62,7 @@ const ZoneRadiusExperience = ({
     });
 
   const radiusNumber = Number(radiusMiles);
-  const hasCentre = Boolean(centreSite);
+  const hasCentre = Boolean(anchor);
   const hasRadius = hasCentre && Number.isFinite(radiusNumber) && radiusNumber > 0;
   /* Named once each: the button needs the answer for `disabled` and again for the spent
      styling that travels inline beside it. */
@@ -61,6 +71,23 @@ const ZoneRadiusExperience = ({
 
   return (
     <>
+      {/**
+       * **Two ways into the same point: search for it, or click the map.**
+       *
+       * The centre was briefly a readout with no control at all — the map was the only input
+       * — which is right about where a pin gets *placed* and wrong about how a planner finds
+       * the place to put it. A territory is usually described by an address before it is
+       * described by a position on a tile, and panning a metro-scale map to a street you
+       * could have typed is the slow way round.
+       *
+       * So this is the same `AddressSearchField` the Start & End Location row uses: keyless
+       * Photon geocoding over the same OpenStreetMap data the tiles come from, so a searched
+       * address lands where the map draws it. Selecting a result drops the pin; clicking the
+       * map still moves it, and the field re-seeds from whatever the pin currently is.
+       *
+       * `key` on the resolved address for the reason the settings row already records — the
+       * field is uncontrolled, so writing a value has to remount it for the box to show it.
+       */}
       <Box className={classes.zoneRadiusInputs}>
         <Box className={classes.zoneField}>
           <Box className={classes.zoneFieldLabel}>
@@ -68,33 +95,27 @@ const ZoneRadiusExperience = ({
               {tt('zoneCentreLabel')}
             </Typography>
           </Box>
-          <Select
-            value={centreSite?.id || ''}
-            onChange={(event) =>
-              onSelectSite(sites.find((site) => site.id === event.target.value) || null)
-            }
-            displayEmpty
-            className={`${classes.centreSelect} ${hasCentre ? '' : classes.centreSelectEmpty}`}
-            inputProps={{ 'aria-label': tt('zoneCentreLabel') }}
-            renderValue={(value) =>
-              value
-                ? sites.find((site) => site.id === value)?.name || value
-                : tt('zoneCentrePlaceholder')
-            }
-          >
-            {sites.map((site) => (
-              <MenuItem key={site.id} value={site.id}>
-                {site.name}
-              </MenuItem>
-            ))}
-          </Select>
-
-          {/* The consequence of the choice, not a restatement of it. */}
-          {hasCentre && distanceFromBase !== null ? (
-            <Box className={classes.centreDistance}>
-              <Typography variant="body3" className={classes.centreDistanceValue}>
-                {tt('zoneCentreDistance', { miles: distanceFromBase.toFixed(1) })}
+          <AddressSearchField
+            key={anchor?.address || (hasCentre ? `${anchor.lat},${anchor.lng}` : 'empty')}
+            id="zone-centre"
+            placeholder={tt('zoneCentrePlaceholder')}
+            defaultValue={anchor?.address || ''}
+            onSelect={(location) => onDropPin(location)}
+            showValueTitle
+          />
+          {hasCentre ? (
+            <Box className={classes.centrePlaced}>
+              <Typography variant="body2" className={classes.centrePlacedText}>
+                {distanceFromBase !== null
+                  ? tt('zoneCentreDistance', { miles: distanceFromBase.toFixed(1) })
+                  : tt('zoneCentreDropped')}
               </Typography>
+              {/* Clearing is the only verb a placed pin needs — moving it is another click on
+                  the map or another search, the same way redrawing a boundary replaces it
+                  rather than editing it. Matches `zoneClear` in the lasso experience. */}
+              <Button variant="tertiaryGrey" onClick={onClearPin}>
+                {tt('zoneClear')}
+              </Button>
             </Box>
           ) : (
             <Typography variant="body3" className={classes.rangeText}>
@@ -155,21 +176,22 @@ const ZoneRadiusExperience = ({
         capturedIds={capturedIds}
         labelIds={labelIds}
         basePoint={basePoint}
-        anchor={centreSite}
+        anchor={anchor}
         radiusMiles={hasRadius ? clampRadiusMiles(radiusNumber) : null}
         otherZones={otherZones}
-  /* The id travels beside the name because the map colours a zone by **id**, not by what it
-     is called — see `zonePalette`. Forwarded explicitly rather than by spreading `shared`:
-     these two components destructure a fixed prop list, which is what silently swallowed
-     `activeZoneId` the first time it was added at the panel and made a *renamed* zone fall to
-     the palette's grey fallback while the zone itself was unchanged. */
+        /* The id travels beside the name because the map colours a zone by **id**, not by what
+           it is called — see `zonePalette`. Forwarded explicitly rather than by spreading
+           `shared`: these components destructure a fixed prop list, which is what silently
+           swallowed `activeZoneId` the first time it was added at the panel and made a
+           *renamed* zone fall to the palette's grey fallback while the zone was unchanged. */
         activeZoneName={activeZoneName}
         activeZoneId={activeZoneId}
         invalid={invalid}
         interaction="select"
         hint={tt(hasCentre ? 'zoneHintCentreSet' : 'zoneHintCentre')}
         switcher={switcher}
-        onSelectSite={onSelectSite}
+        fitToken={fitToken}
+        onDropPin={onDropPin}
         onRadiusDragged={hasCentre ? onRadiusDragged : undefined}
       />
     </>
@@ -178,7 +200,7 @@ const ZoneRadiusExperience = ({
 
 ZoneRadiusExperience.propTypes = {
   sites: PropTypes.array.isRequired,
-  centreSite: PropTypes.object,
+  anchor: PropTypes.object,
   radiusMiles: PropTypes.string.isRequired,
   distanceFromBase: PropTypes.number,
   capturedIds: PropTypes.object,
@@ -189,7 +211,9 @@ ZoneRadiusExperience.propTypes = {
   activeZoneId: PropTypes.string,
   invalid: PropTypes.bool,
   switcher: PropTypes.node,
-  onSelectSite: PropTypes.func.isRequired,
+  fitToken: PropTypes.any,
+  onDropPin: PropTypes.func.isRequired,
+  onClearPin: PropTypes.func.isRequired,
   onRadiusChange: PropTypes.func.isRequired,
   onRadiusBlur: PropTypes.func.isRequired,
   onStep: PropTypes.func.isRequired,

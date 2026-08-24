@@ -193,13 +193,20 @@ const ZoneMap = ({
   /**
    * `draw`   — drag to lasso an area (the boundary experience)
    * `select` — click a site to centre on it, drag the ring's edge to resize (radius)
+   * `view`   — no shape to author here (zip codes); panning and zoom still work
    */
   interaction = 'select',
-  /* The boundary/radius switcher, floating bottom-right. Passed in rather than built here
+  /* The zone-method switcher, floating bottom-right. Passed in rather than built here
      because the map does not own which experience is mounted — it only lends the corner. */
   switcher = null,
+  /* Lets a caller that owns the map's box raise its height — the day-radius dialog does,
+     because a dialog has no spare flex the way the editor panel has. */
+  className = '',
+  /* Changes when the map is showing a *different* thing — a different zone, a different
+     day's circle. Refits the view; a pan inside one open survives. */
+  fitToken = null,
   onShapeDrawn,
-  onSelectSite,
+  onDropPin,
   onRadiusDragged,
 }) => {
   const classes = useStyles();
@@ -232,14 +239,27 @@ const ZoneMap = ({
   }, []);
 
   /**
-   * Fit once, to the sites, and then leave the view alone.
+   * Fit when the thing being edited changes, and then leave the view alone.
    *
-   * Deliberately **not** refitting when the shape changes. The shape is what the planner
-   * is editing, and a map that re-centred on every dropped point would move the ground
-   * out from under the next click. The sites are the fixed thing here, so they are what
-   * the opening view is chosen for.
+   * Still **not** refitting as the shape is drawn — a map that re-centred on every dropped
+   * point would move the ground out from under the next click. But "fit once, ever" was too
+   * few: this map does not unmount between zones (the editor panel is hidden, not removed),
+   * so `fittedRef` stayed true for the life of the screen. Open North, pan across the metro,
+   * close, open East — East's boundary was wherever the last pan left it, usually off screen,
+   * which read as the zone having no shape at all.
+   *
+   * `fitToken` is the caller's answer to "is this a different thing now": the editor panel
+   * changes it per zone-open, so each open refits and every pan inside that open survives.
+   *
+   * **The active shape joins the fit**, which is the other half of the same bug. Fitting to
+   * the site book alone put a boundary drawn outside the cluster off screen on the *first*
+   * open too, with no pan needed to get there.
    */
   const fitKey = sites.map((site) => `${site.lat},${site.lng}`).join('|');
+  useEffect(() => {
+    fittedRef.current = false;
+  }, [fitToken]);
+
   useEffect(() => {
     if (fittedRef.current) return;
     if (!size.width || !size.height) return;
@@ -249,14 +269,22 @@ const ZoneMap = ({
     const otherPoints = otherZones.flatMap((zone) =>
       zone.kind === 'boundary' ? zone.points : zone.anchor ? [zone.anchor] : [],
     );
-    const fitPoints = [...sites, ...otherPoints, ...(basePoint ? [basePoint] : [])].filter(
-      (point) => Number.isFinite(Number(point?.lat)) && Number.isFinite(Number(point?.lng)),
-    );
+    const fitPoints = [
+      ...sites,
+      ...otherPoints,
+      ...points,
+      ...(anchor ? [anchor] : []),
+      ...(basePoint ? [basePoint] : []),
+    ].filter((point) => Number.isFinite(Number(point?.lat)) && Number.isFinite(Number(point?.lng)));
     if (!fitPoints.length) return;
 
     fittedRef.current = true;
     setView(fitView(fitPoints, size.width, size.height, FIT_PADDING));
-  }, [fitKey, size.width, size.height, basePoint, otherZones]);
+    /* `points`/`anchor` are read but deliberately absent from the deps: they are the shape
+       being edited, and listing them would refit on every drag — the exact behaviour the note
+       above refuses. `fitToken` is what says "a different shape is on screen now". */
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fitKey, size.width, size.height, basePoint, otherZones, fitToken]);
 
   const zoomBy = useCallback(
     (delta) =>
@@ -407,7 +435,7 @@ const ZoneMap = ({
     return (
       <Box
         ref={containerRef}
-        className={`${classes.zoneMapRoot} ${invalid ? classes.zoneMapRootInvalid : ''}`}
+        className={`${classes.zoneMapRoot} ${invalid ? classes.zoneMapRootInvalid : ''} ${className}`}
       />
     );
   }
@@ -423,31 +451,21 @@ const ZoneMap = ({
   };
 
   /**
-   * A click selects a **site** to centre on — not an arbitrary point.
+   * A click drops the centre wherever it lands — a reversal of the rule that used to be here.
    *
-   * A radius zone is "ten miles around Kelvin Court Offices", so the centre has to be a
-   * place that exists in the book. Picking bare coordinates produced zones described as
-   * "12 mi around a dropped pin", which is a sentence a planner cannot verify. Nearest pin
-   * within a grab radius rather than an exact hit, because a 12px dot is a small target.
+   * The centre was previously snapped to the **nearest site within 22px**, on the argument
+   * that "12 mi around a dropped pin" is a zone nobody can verify. Reversed at the user's
+   * direction: a territory's natural centre is often not a site at all, and snapping meant a
+   * planner could not place one where they meant to. Bare coordinates, so a click anywhere is
+   * an answer — and the drag guard still stands, because a pan ends in a `click` on the
+   * element it started on and would otherwise move the pin every time the map moved.
    */
   const handleClick = (event) => {
-    if (interaction !== 'select' || !onSelectSite) return;
+    if (interaction !== 'select' || !onDropPin) return;
     if (movedRef.current || ringDragRef.current || isChrome(event)) return;
 
     const at = localPoint(event);
-    let closest = null;
-    let closestDistance = Infinity;
-
-    sites.forEach((site) => {
-      const screen = toScreen(site);
-      const distance = Math.hypot(screen.x - at.x, screen.y - at.y);
-      if (distance < closestDistance) {
-        closestDistance = distance;
-        closest = site;
-      }
-    });
-
-    if (closest && closestDistance <= 22) onSelectSite(closest);
+    onDropPin(unproject(originX + at.x, originY + at.y, zoom));
   };
 
   const tiles = tilesFor({
@@ -485,18 +503,23 @@ const ZoneMap = ({
   return (
     <Box
       ref={containerRef}
-      className={`${classes.zoneMapRoot} ${invalid ? classes.zoneMapRootInvalid : ''}`}
+      className={`${classes.zoneMapRoot} ${invalid ? classes.zoneMapRootInvalid : ''} ${className}`}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={endDrag}
       onPointerCancel={endDrag}
       onClick={handleClick}
-      /* Crosshair where a drag encloses something, pointer where a click picks something.
-         `sx` rather than the shared class so the two interactions can differ without the
-         class having to know which one is mounted. */
+      /* Crosshair where a drag encloses something, pointer where a click picks something,
+         and the platform default where neither is on offer (`view`) — there is nothing
+         here to draw or select, only pan and zoom. `sx` rather than the shared class so
+         the interactions can differ without the class having to know which one is mounted. */
       sx={{
-        cursor: interaction === 'draw' ? 'crosshair' : 'pointer',
-        '&:active': { cursor: interaction === 'draw' ? 'crosshair' : 'pointer' },
+        cursor:
+          interaction === 'draw' ? 'crosshair' : interaction === 'select' ? 'pointer' : 'default',
+        '&:active': {
+          cursor:
+            interaction === 'draw' ? 'crosshair' : interaction === 'select' ? 'pointer' : 'default',
+        },
       }}
       onWheel={(event) => {
         event.preventDefault();
@@ -775,9 +798,30 @@ const ZoneMap = ({
           </g>
         ) : null}
 
+        {/**
+         * The centre, drawn as a **pin** rather than another dot.
+         *
+         * It used to be a filled circle, which was honest while the centre had to *be* a site
+         * — it sat exactly on one, so reading as a site was correct. A dropped pin is a
+         * different kind of thing: it is the planner's own mark on the map, usually nowhere
+         * near a site, and a third circle among fifteen site dots gives no clue which of them
+         * is the centre. A teardrop with a tip at the coordinate says "placed here" and cannot
+         * be mistaken for the book.
+         *
+         * Drawn tip-down from the anchor point, so the pin's *point* is the actual centre and
+         * the body sits above it — which is what makes the circle it draws look centred rather
+         * than hanging off the marker.
+         */}
         {anchor ? (
           <g transform={`translate(${toScreen(anchor).x} ${toScreen(anchor).y})`}>
-            <circle r={7} fill={activeHue} stroke="#ffffff" strokeWidth={3} />
+            <path
+              d="M0 0 L-6.5 -11 A 7.5 7.5 0 1 1 6.5 -11 Z"
+              fill={activeHue}
+              stroke="#ffffff"
+              strokeWidth={2}
+              strokeLinejoin="round"
+            />
+            <circle cy={-14} r={2.75} fill="#ffffff" />
           </g>
         ) : null}
 
@@ -917,10 +961,12 @@ ZoneMap.propTypes = {
   activeZoneId: PropTypes.string,
   invalid: PropTypes.bool,
   hint: PropTypes.string,
-  interaction: PropTypes.oneOf(['draw', 'select']),
+  interaction: PropTypes.oneOf(['draw', 'select', 'view']),
   switcher: PropTypes.node,
+  className: PropTypes.string,
+  fitToken: PropTypes.any,
   onShapeDrawn: PropTypes.func,
-  onSelectSite: PropTypes.func,
+  onDropPin: PropTypes.func,
   onRadiusDragged: PropTypes.func,
 };
 

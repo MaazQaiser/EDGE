@@ -51,6 +51,19 @@ export const ChevronIcon = () => (
   </svg>
 );
 
+/** The selected-row tick in `ZoneMethodMenu`, inline for the same reason `ChevronIcon` is. */
+export const CheckIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+    <path
+      d="M11.8 3.9 5.7 10 2.2 6.5"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
 /* `NoShapeIcon` and `AlertIcon` lived here.
 
    `NoShapeIcon` was the dotted ring on a zone with no shape; the whole glyph column came out

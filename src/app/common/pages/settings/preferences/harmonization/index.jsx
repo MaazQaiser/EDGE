@@ -59,6 +59,7 @@ import { toaster } from 'src/utils/toast';
 
 import { useStyles } from './harmonization.styles';
 import {
+  boundaryAreaSqFt,
   clampNeedBy,
   clampShiftHours,
   clearDraft,
@@ -73,10 +74,24 @@ import {
   ZONE_SHAPE,
   zoneCoverage,
 } from './harmonizationSettings';
+import DayRadiusDialog from './DayRadiusDialog';
 import LocationPickerDialog from './LocationPickerDialog';
 import ZoneEditorPanel from './ZoneEditorPanel';
-import { BoundaryIcon, RadiusIcon } from './ZoneGlyphs';
-import { siteById, ZONE_SITES } from './zoneSites';
+import ZoneMethodMenu from './ZoneMethodMenu';
+import { ZONE_SITES } from './zoneSites';
+
+/**
+ * A boundary's area, compacted — `2.4M sqft` rather than `2,438,911 sqft`.
+ *
+ * The card's meta line is one sentence sharing room with a name, a site count and a filter
+ * count, so a seven-digit exact figure would be the longest fact on the shortest line for a
+ * number nobody drew precisely enough to read to the foot anyway.
+ */
+const sqFtFormatter = new Intl.NumberFormat('en-US', {
+  notation: 'compact',
+  maximumFractionDigits: 1,
+});
+const formatSqFt = (value) => sqFtFormatter.format(value);
 
 /**
  * A readable id for a new zone, derived from its name.
@@ -264,14 +279,24 @@ const Harmonization = () => {
   /* `null` is closed; `{ zoneId }` edits that zone; `{ zoneId: null }` creates one. */
   const [zoneEditor, setZoneEditor] = useState(null);
 
+  /* True once Save has been pressed on a rule with a gap in it. Nothing on the screen marks
+     itself missing before that — see `handleSave`. */
+  const [saveAttempted, setSaveAttempted] = useState(false);
+
+  /* The weekday whose radius the map overlay is editing, or `null` when it is closed. */
+  const [radiusEditor, setRadiusEditor] = useState(null);
+
   /**
-   * Which of the two solutions the Zones section is showing.
+   * Which of the two solutions the section is showing.
    *
    * A view preference, not part of the rule — it decides what the list shows and what the
-   * add button opens, and nothing about it is worth saving. It opens on boundaries because
-   * that is the one that needs a map to understand.
+   * add button opens, and nothing about it is worth saving. **It opens on Radius**, which
+   * reverses the note that used to sit here: boundaries got the default on the grounds that
+   * they are the method a map explains, and the answer is that needing the map explained is
+   * not a reason to open there. A radius is the method most franchises reach for and the one
+   * that produces a usable zone from a click and a number.
    */
-  const [solution, setSolution] = useState(ZONE_SHAPE.BOUNDARY);
+  const [solution, setSolution] = useState(ZONE_SHAPE.RADIUS);
   const isRadiusSolution = solution === ZONE_SHAPE.RADIUS;
 
   /* `null` when not adding; a string — including `''` — while the inline row is open. */
@@ -287,6 +312,26 @@ const Harmonization = () => {
   const visibleZones = useMemo(
     () => form.zones.filter((zone) => !zone.shape || zone.shape.kind === solution),
     [form.zones, solution],
+  );
+
+  /**
+   * The gap Save refuses on: a day the crew works that nothing can legally land on.
+   *
+   * **Which field counts depends on the live solution**, because the two are different
+   * questions and only one of them is on screen. Under Boundary a day needs a zone; under
+   * Radius it needs its own circle, and the zone it may still be carrying from the other
+   * view is not something the planner can see or fix from here. Refusing to save over a
+   * field nobody is being shown would be a dead end.
+   *
+   * Derived rather than tracked, so filling the last empty day clears the mark with no
+   * second press.
+   */
+  const daysMissingZone = useMemo(
+    () =>
+      form.routeDays
+        .filter((day) => (isRadiusSolution ? !day.radius : !day.zoneId))
+        .map((day) => day.weekday),
+    [form.routeDays, isRadiusSolution],
   );
 
   /* Cleared when the form matches what is stored, not only written when it does not:
@@ -341,11 +386,18 @@ const Harmonization = () => {
         ? previous.routeDays.filter((day) => day.weekday !== weekday)
         : [
             ...previous.routeDays,
-            /* `zoneId: null` rather than guessing one. A day switched on has not been told
-               which zone it covers, and picking the first zone in the list on the planner's
-               behalf would silently commit them to a territory. The select marks itself
-               required until it has one. */
-            { weekday, shiftHours: SHIFT_HOURS_DEFAULT, officers: [], zoneId: null },
+            /* Both territory fields start empty rather than guessed. A day switched on has
+               not been told which ground it covers, and picking the first zone in the list —
+               or dropping a centre at the depot — on the planner's behalf would silently
+               commit them to a territory. Whichever field the live solution reads marks
+               itself required, but only once Save has asked for it. */
+            {
+              weekday,
+              shiftHours: SHIFT_HOURS_DEFAULT,
+              officers: [],
+              zoneId: null,
+              radius: null,
+            },
           ].sort((a, b) => a.weekday - b.weekday);
 
       return { ...previous, routeDays };
@@ -408,25 +460,14 @@ const Harmonization = () => {
      `null` case in every consumer. */
   const needByDays = clampNeedBy(form.needByDays);
 
-  /**
-   * Where the value sits in its own range, in a word.
-   *
-   * **This is the part that makes the row worth reading**, and it is the answer to the
-   * question the number alone cannot settle: 7 is not tight or loose until you know 3 and 14
-   * are the ends. The thumb's position says it visually; this says it in a word, for anyone
-   * reading the sentence rather than the track — and for a screen reader, which gets no
-   * position at all.
-   *
-   * **Thirds of the legal range, derived rather than hardcoded.** Written as `<= 5` / `<= 9`
-   * first, which was three numbers with no reason behind them that would have quietly become
-   * wrong the moment `NEED_BY_MAX` moved. It is a description of *where in the range* the
-   * value is, not a recommendation — nothing here says which one to pick.
-   */
-  const needByPosture = () => {
-    const third = (NEED_BY_MAX - NEED_BY_MIN) / 3;
-    if (needByDays <= NEED_BY_MIN + third) return tt('needByTight');
-    if (needByDays <= NEED_BY_MIN + third * 2) return tt('needByBalanced');
-    return tt('needByFlexible');
+  /* One day's own circle, written from the map overlay. `null` clears it. */
+  const changeDayRadius = (weekday, radius) => {
+    setForm((previous) => ({
+      ...previous,
+      routeDays: previous.routeDays.map((day) =>
+        day.weekday === weekday ? { ...day, radius } : day,
+      ),
+    }));
   };
 
   const changeDayZone = (weekday, zoneId) => {
@@ -516,6 +557,23 @@ const Harmonization = () => {
   };
 
   const handleSave = () => {
+    /**
+     * **Marking missing fields is what pressing Save does, not what ticking a day does.**
+     *
+     * A worked day with no zone used to go red the instant the day was switched on, which is
+     * the panel's own rejected pattern arriving one screen later: it reports a field as wrong
+     * before the planner has had a chance to fill it, so ticking Monday reads as having broken
+     * something. `ZoneEditorPanel` settled this already — "nothing is marked missing until a
+     * confirm has been attempted" — and the day table now follows the same rule.
+     *
+     * Save returns early rather than storing a rule it has just marked as incomplete. It is
+     * still a live button rather than a disabled one, for the reason the panel's Confirm
+     * gives: this press is what makes the errors appear, so a Save that never fires is a Save
+     * whose messages never arrive.
+     */
+    setSaveAttempted(true);
+    if (daysMissingZone.length) return;
+
     const { settings, persisted } = saveHarmonizationSettings(form);
 
     /* There is no endpoint behind this yet, so the write can genuinely fail — private
@@ -534,6 +592,9 @@ const Harmonization = () => {
       return;
     }
 
+    /* A saved rule has nothing outstanding, so the next empty field starts clean again
+       rather than inheriting a mark from the press that fixed the last one. */
+    setSaveAttempted(false);
     setSaved(settings);
     setForm(settings);
 
@@ -872,17 +933,19 @@ const Harmonization = () => {
          * change, not a refinement, and pretending otherwise with an estimate would be worse
          * than saying nothing.
          *
-         * **What carries the meaning, so the row is not merely a prettier number.** The
-         * description column is a live readout in three parts: the **posture** (`Balanced` —
-         * where in the range this sits, the thing the number cannot say), the **mechanic**
-         * (`up to 7 days either side`), and the **span** (`a 15-day window`) — because `2n+1`
-         * is the number a scheduler actually recognises, and it is what explains why 7 feels
-         * larger than it looks. All three derive from the one value, so there is nothing that
-         * can disagree.
+         * **The description is fixed copy now, not a live readout — a direct reversal, recorded
+         * so nobody re-derives the old rule.** It used to compose three derived parts every
+         * render: the posture (`Balanced`), the mechanic (`up to 7 days either side`) and the
+         * span (`a 15-day window`). Asked to stop: the sentence should say what the control
+         * *is* — a window around the need-by date — and leave what the current value says to
+         * the track and the number beside it, which already show it without narrating every
+         * drag back in prose.
          *
-         * Typing is gone, and that is a real loss accepted on purpose: twelve values on a track
-         * are reachable by drag and by arrow key, and the only reason free text was needed was
-         * that the range used to be invisible.
+         * **Label, description, control — the page's own three columns.** A stacked variant
+         * was built and reverted: the row briefly put the description under the label to give
+         * the track more width, which made this the one row on the screen whose label did not
+         * sit on the same line as its sentence. Consistency down the left edge is worth more
+         * than the extra rail, so it is back on `prefRow` with every other setting.
          */}
         <Box className={classes.prefRow}>
           <Box className={classes.prefLabelGroup}>
@@ -913,16 +976,14 @@ const Harmonization = () => {
             </Tooltip>
           </Box>
           <Typography variant="body2" className={classes.prefText} id={hintIds('needBy').desc}>
-            {tt('needByReadout', {
-              posture: needByPosture(),
-              days: needByDays,
-              /* The window is `2n + 1` days: n either side, plus the need-by date itself. */
-              span: needByDays * 2 + 1,
-            })}
+            {tt('needByStaticText')}
           </Typography>
           <Box className={classes.needByCell}>
+            {/* `±3`, not `3` — see `needByCell` for the audit. The bounds and the readout are
+                the same quantity, so they are written the same way; bare integers beside a
+                `±7 days` answer made the cell read as two different scales. */}
             <Typography variant="body3" className={classes.needByBound} aria-hidden="true">
-              {NEED_BY_MIN}
+              {tt('needByBoundValue', { days: NEED_BY_MIN })}
             </Typography>
             <Slider
               className={classes.needBySlider}
@@ -934,6 +995,12 @@ const Harmonization = () => {
               /* No `marks`. Twelve ticks under a 120px rail is a texture, not a scale, and the
                  two ends are already labelled — which is the only part a planner reads. */
               size="small"
+              /* The number follows the handle while it is being moved. The resting readout is
+                 up to 250px away at the minimum end, so without this the row is dragged on the
+                 left and read on the right. `auto` rather than `on`: at rest the trailing value
+                 is the answer, and two permanent copies of one number is the worse trade. */
+              valueLabelDisplay="auto"
+              valueLabelFormat={(value) => tt('needByWindowValue', { days: value })}
               slotProps={{
                 input: { id: 'harmonization-needBy' },
               }}
@@ -947,7 +1014,7 @@ const Harmonization = () => {
                 screen reader would otherwise hear "3" and "14" twice each. They are here for
                 the eye, which gets no such announcement. */}
             <Typography variant="body3" className={classes.needByBound} aria-hidden="true">
-              {NEED_BY_MAX}
+              {tt('needByBoundValue', { days: NEED_BY_MAX })}
             </Typography>
             <Typography variant="subtitle2" className={classes.needByValue} aria-hidden="true">
               {tt('needByWindowValue', { days: needByDays })}
@@ -968,23 +1035,26 @@ const Harmonization = () => {
 
       {/* ZONES ------------------------------------------------------------- */}
       {/**
-       * The zones a day can be given, **one solution at a time.**
+       * The zones a day can be given — **Boundary only.**
        *
-       * Drawing a boundary and measuring a distance from a site are two different answers to
-       * "which sites belong together", so the section shows one or the other rather than a
-       * mixed list under a paragraph that describes both. The switch picks; the description
-       * follows it.
+       * **This whole section is gone under Radius**, which is the shape of the two solutions
+       * finally diverging rather than a display tweak. A boundary is a *named, reusable*
+       * territory: several days can cover North, so North has to exist somewhere before a day
+       * can point at it, and that somewhere is this list. A radius is not reusable in the same
+       * way — each installation day now owns its own circle (`routeDays[].radius`), set in the
+       * day's own row — so under Radius there is no list left to show. Keeping an empty
+       * "Radius" heading over a card stack that could never fill would be chrome describing a
+       * model that no longer exists.
        *
-       * Zones that have not been defined yet appear under **either** solution, because they
-       * have not committed to one — a zone added inline is still a candidate for a boundary
-       * or a radius, and hiding it behind the switch would make it vanish the moment a
-       * planner flipped the toggle after creating it.
+       * Zones that have not been defined yet still appear, because they have not committed to
+       * a shape — a zone added inline is still a candidate for a boundary.
        *
        * **No day column.** Which days use a zone is set in Installation Days and cannot be
        * changed from here, so a column showing it was read-only information in the one place
        * a planner could do nothing about it — and it crowded out the thing they can act on,
        * which is whether the zone is defined at all.
        */}
+      {isRadiusSolution ? null : (
       <Box className={classes.section}>
         <Box className={classes.zoneSectionHead}>
           <Box className={classes.zoneSectionHeadText}>
@@ -992,203 +1062,206 @@ const Harmonization = () => {
               {tt('zones')}
             </Typography>
             <Typography variant="body2" className={classes.sectionText}>
-              {tt(isRadiusSolution ? 'zonesTextRadius' : 'zonesTextBoundary')}
+              {tt('zonesTextBoundary')}
             </Typography>
           </Box>
-
-          <Box className={classes.solutionSwitch} role="group" aria-label={tt('zoneSolution')}>
-            <Button
-              className={`${classes.solutionOption} ${
-                isRadiusSolution ? '' : classes.solutionOptionOn
-              }`}
-              onClick={() => setSolution(ZONE_SHAPE.BOUNDARY)}
-              aria-pressed={!isRadiusSolution}
-            >
-              <BoundaryIcon />
-              {tt('zoneMethodBoundary')}
-            </Button>
-            <Button
-              className={`${classes.solutionOption} ${
-                isRadiusSolution ? classes.solutionOptionOn : ''
-              }`}
-              onClick={() => setSolution(ZONE_SHAPE.RADIUS)}
-              aria-pressed={isRadiusSolution}
-            >
-              <RadiusIcon />
-              {tt('zoneMethodRadius')}
-            </Button>
-          </Box>
         </Box>
 
-        {visibleZones.length || inlineName !== null ? (
-          /**
-           * **A stack of horizontal cards, not a table.** The column headings went with the
-           * table: a card names itself, and `Zone` over a zone's own name was a label for a
-           * label. See `zoneCards` in the sheet for why a zone is the one thing on this screen
-           * that is an object rather than a setting, and what leaving the shared grid costs.
-           */
-          <Box className={classes.zoneCards}>
-            {visibleZones.map((zone) => {
-              const entry = coverage.byZone.find((candidate) => candidate.zone.id === zone.id);
-              const siteCount = entry?.sites.length || 0;
-              const filterCount = entry?.filters || 0;
+        {/**
+         * **The solution switch floats over the whole screen**, fixed to the bottom-right
+         * corner rather than sharing the heading row or scrolling away with the card stack —
+         * the same move the scheduler's own review menu makes over its grid.
+         */}
+        <>
+          {visibleZones.length || inlineName !== null ? (
+            /**
+             * **A stack of horizontal cards, not a table.** The column headings went with the
+             * table: a card names itself, and `Zone` over a zone's own name was a label for a
+             * label. See `zoneCards` in the sheet for why a zone is the one thing on this screen
+             * that is an object rather than a setting, and what leaving the shared grid costs.
+             */
+            <Box className={classes.zoneCards}>
+              {visibleZones.map((zone) => {
+                const entry = coverage.byZone.find((candidate) => candidate.zone.id === zone.id);
+                const siteCount = entry?.sites.length || 0;
+                const filterCount = entry?.filters || 0;
 
-              const shapeKind = zone.shape?.kind || null;
-              /* A radius names the site it is centred on. The live book wins over the
-                 denormalised `anchor.address` so a renamed site reads correctly. */
-              const centreName =
-                (zone.shape?.siteId ? siteById(zone.shape.siteId)?.name : null) ||
-                zone.shape?.anchor?.address ||
-                null;
-              const definition =
-                shapeKind === ZONE_SHAPE.RADIUS
-                  ? centreName
-                    ? tt('zoneDefRadius', { miles: zone.shape.radiusMiles, place: centreName })
-                    : tt('zoneDefRadiusUnnamed', { miles: zone.shape.radiusMiles })
-                  : shapeKind === ZONE_SHAPE.BOUNDARY
-                    ? tt('zoneDefBoundary', { points: zone.shape.points.length })
-                    : null;
+                const shapeKind = zone.shape?.kind || null;
+                /**
+                 * One fact per method, and the fact that method actually decides.
+                 *
+                 * Not "who it's centred on" or "how many points were clicked" — those describe
+                 * *how the shape was drawn*, which is the editor's business, not what a
+                 * planner scanning this list needs. The card answers "how much ground does
+                 * this cover", and each method has exactly one honest way to say that: a
+                 * reach, or an area.
+                 */
+                const definition =
+                  shapeKind === ZONE_SHAPE.RADIUS
+                    ? tt('zoneDefRadius', { miles: zone.shape.radiusMiles })
+                    : shapeKind === ZONE_SHAPE.BOUNDARY
+                      ? tt('zoneDefBoundary', {
+                          area: formatSqFt(boundaryAreaSqFt(zone.shape.points)),
+                        })
+                      : null;
 
-              /* `zoneSitesFilters`, the key the table cell already used — the card needed the
+                /* `zoneSitesFilters`, the key the table cell already used — the card needed the
                  same `{{sites}} · {{filters}}` string and briefly got a second one under its
                  own name, which is two keys to keep in step for one sentence. */
-              const counts = tt('zoneSitesFilters', {
-                sites: sitesLabel(siteCount),
-                filters: filtersLabel(filterCount),
-              });
+                const counts = tt('zoneSitesFilters', {
+                  sites: sitesLabel(siteCount),
+                  filters: filtersLabel(filterCount),
+                });
 
-              return (
-                <Box key={zone.id} className={classes.zoneCard}>
-                  {/**
-                   * **The name and what it covers are one block, on one meta line.**
-                   *
-                   * They were two grid cells with the area stacked over the counts, which is
-                   * the shape a column forces: the cell was narrow, so the answer wrapped. In
-                   * a card the meta line has the whole width of the card minus two buttons, so
-                   * `Drawn boundary · 8 points · 4 sites · 10 filters` reads as one sentence
-                   * about coverage rather than two facts in a stack.
-                   *
-                   * A zone with no shape starts at the counts and says nothing about an area
-                   * it has not got — the same reason "Not defined yet" came out. Membership is
-                   * a field on the site, so an undrawn zone still covers whatever points at
-                   * it, and the counts are true either way.
-                   */}
-                  <Box className={classes.zoneCardText}>
-                    <Typography variant="subtitle2" className={classes.zoneNameText}>
-                      {zone.name}
-                    </Typography>
-                    <Typography variant="body3" className={classes.zoneCovers}>
-                      {definition ? `${definition} · ${counts}` : counts}
-                    </Typography>
+                return (
+                  <Box key={zone.id} className={classes.zoneCard}>
+                    {/**
+                     * **The name and what it covers are one block, on one meta line.**
+                     *
+                     * They were two grid cells with the area stacked over the counts, which is
+                     * the shape a column forces: the cell was narrow, so the answer wrapped. In
+                     * a card the meta line has the whole width of the card minus two buttons, so
+                     * `2.4M sqft · 4 sites · 10 filters` reads as one sentence about coverage
+                     * rather than two facts in a stack.
+                     *
+                     * A zone with no shape starts at the counts and says nothing about an area
+                     * it has not got — the same reason "Not defined yet" came out. Membership is
+                     * a field on the site, so an undrawn zone still covers whatever points at
+                     * it, and the counts are true either way.
+                     */}
+                    <Box className={classes.zoneCardText}>
+                      <Typography variant="subtitle2" className={classes.zoneNameText}>
+                        {zone.name}
+                      </Typography>
+                      {/* Same size as the name beside it — the weight and colour step is
+                          what separates them, not a second type size on a one-line card. */}
+                      <Typography variant="body2" className={classes.zoneCovers}>
+                        {definition ? `${definition} · ${counts}` : counts}
+                      </Typography>
+                    </Box>
+
+                    {/**
+                     * **Icons, and therefore tooltips — an icon-only control has to say its own
+                     * name twice over.** `aria-label` names it for a screen reader and the
+                     * `Tooltip` names it for anyone who cannot read a pencil, and both name the
+                     * *zone* as well as the verb, because four identical pairs down a stack are
+                     * otherwise four buttons called "Edit".
+                     *
+                     * **The box around each glyph came off.** They were bordered
+                     * `variant="secondaryGrey"` `Button`s, and an outline is a promise that
+                     * something inside is enterable — a field to fill, a menu to open. These are
+                     * single-press actions on the card they already sit in, and two of them per
+                     * card meant eight outlined boxes down a list of four zones, which read as a
+                     * grid of controls beside the names they belong to rather than as two things
+                     * a zone can do. `IconButton` is the app's own control for that: the glyph
+                     * carries the meaning, and the hover ground carries the affordance the border
+                     * used to.
+                     *
+                     * No `describeChild`, for the reason recorded on this screen's info buttons.
+                     */}
+                    <Box className={classes.zoneCardActions}>
+                      <Tooltip arrow placement="top" title={tt('zoneEdit')} enterTouchDelay={0}>
+                        <IconButton
+                          className={classes.zoneIconButton}
+                          aria-label={tt('zoneEditAria', { zone: zone.name })}
+                          onClick={() =>
+                            setZoneEditor({
+                              zoneId: zone.id,
+                              mode: shapeKind || solution,
+                            })
+                          }
+                        >
+                          <EditIcon aria-hidden="true" />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip arrow placement="top" title={tt('zoneRemove')} enterTouchDelay={0}>
+                        <IconButton
+                          className={`${classes.zoneIconButton} ${classes.zoneIconButtonDanger}`}
+                          aria-label={tt('zoneRemoveAria', { zone: zone.name })}
+                          onClick={() => deleteZone(zone.id)}
+                        >
+                          <TrashIcon aria-hidden="true" />
+                        </IconButton>
+                      </Tooltip>
+                    </Box>
                   </Box>
+                );
+              })}
 
-                  {/**
-                   * **Icons, and therefore tooltips — an icon-only control has to say its own
-                   * name twice over.** `aria-label` names it for a screen reader and the
-                   * `Tooltip` names it for anyone who cannot read a pencil, and both name the
-                   * *zone* as well as the verb, because four identical pairs down a stack are
-                   * otherwise four buttons called "Edit".
-                   *
-                   * **The box around each glyph came off.** They were bordered
-                   * `variant="secondaryGrey"` `Button`s, and an outline is a promise that
-                   * something inside is enterable — a field to fill, a menu to open. These are
-                   * single-press actions on the card they already sit in, and two of them per
-                   * card meant eight outlined boxes down a list of four zones, which read as a
-                   * grid of controls beside the names they belong to rather than as two things
-                   * a zone can do. `IconButton` is the app's own control for that: the glyph
-                   * carries the meaning, and the hover ground carries the affordance the border
-                   * used to.
-                   *
-                   * No `describeChild`, for the reason recorded on this screen's info buttons.
-                   */}
-                  <Box className={classes.zoneCardActions}>
-                    <Tooltip arrow placement="top" title={tt('zoneEdit')} enterTouchDelay={0}>
-                      <IconButton
-                        className={classes.zoneIconButton}
-                        aria-label={tt('zoneEditAria', { zone: zone.name })}
-                        onClick={() =>
-                          setZoneEditor({
-                            zoneId: zone.id,
-                            mode: shapeKind || solution,
-                          })
-                        }
-                      >
-                        <EditIcon aria-hidden="true" />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip arrow placement="top" title={tt('zoneRemove')} enterTouchDelay={0}>
-                      <IconButton
-                        className={`${classes.zoneIconButton} ${classes.zoneIconButtonDanger}`}
-                        aria-label={tt('zoneRemoveAria', { zone: zone.name })}
-                        onClick={() => deleteZone(zone.id)}
-                      >
-                        <TrashIcon aria-hidden="true" />
-                      </IconButton>
-                    </Tooltip>
-                  </Box>
-                </Box>
-              );
-            })}
-
-            {/* Adding, as a card in the same stack: a name is all a zone needs to exist and be
+              {/* Adding, as a card in the same stack: a name is all a zone needs to exist and be
                 pickable in the day table, and the shape comes later from its own Edit button.
                 Dashed, because it is not a zone yet. */}
-            {inlineName !== null ? (
-              <Box className={classes.zoneInlineRow}>
-                <TextField
-                  className={classes.zoneInlineField}
-                  value={inlineName}
-                  autoFocus
-                  onChange={(event) => setInlineName(event.target.value.slice(0, 40))}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter') commitInlineZone();
-                    if (event.key === 'Escape') setInlineName(null);
-                  }}
-                  placeholder={tt('zoneNamePlaceholder')}
-                />
-                <Box className={classes.zoneInlineActions}>
-                  <Button variant="tertiaryGrey" onClick={() => setInlineName(null)}>
-                    {tt('cancel')}
-                  </Button>
-                  <Button
-                    variant="primary"
-                    onClick={commitInlineZone}
-                    disabled={!inlineName.trim()}
-                  >
-                    {tt('zoneInlineAdd')}
-                  </Button>
+              {inlineName !== null ? (
+                <Box className={classes.zoneInlineRow}>
+                  <TextField
+                    className={classes.zoneInlineField}
+                    value={inlineName}
+                    autoFocus
+                    onChange={(event) => setInlineName(event.target.value.slice(0, 40))}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter') commitInlineZone();
+                      if (event.key === 'Escape') setInlineName(null);
+                    }}
+                    placeholder={tt('zoneNamePlaceholder')}
+                  />
+                  <Box className={classes.zoneInlineActions}>
+                    <Button variant="tertiaryGrey" onClick={() => setInlineName(null)}>
+                      {tt('cancel')}
+                    </Button>
+                    <Button
+                      variant="primary"
+                      onClick={commitInlineZone}
+                      disabled={!inlineName.trim()}
+                    >
+                      {tt('zoneInlineAdd')}
+                    </Button>
+                  </Box>
                 </Box>
-              </Box>
-            ) : null}
-          </Box>
-        ) : (
-          <Box className={classes.zoneEmpty}>
-            <Box className={classes.zoneEmptyText}>
-              <Typography variant="subtitle2" className={classes.coverageTitle}>
-                {tt(isRadiusSolution ? 'zoneEmptyTitleRadius' : 'zoneEmptyTitleBoundary')}
-              </Typography>
-              <Typography variant="body2" className={classes.sectionText}>
-                {tt('zoneEmptyText')}
-              </Typography>
+              ) : null}
             </Box>
-          </Box>
-        )}
+          ) : (
+            <Box className={classes.zoneEmpty}>
+              <Box className={classes.zoneEmptyText}>
+                <Typography variant="subtitle2" className={classes.coverageTitle}>
+                  {tt('zoneEmptyTitleBoundary')}
+                </Typography>
+                <Typography variant="body2" className={classes.sectionText}>
+                  {tt('zoneEmptyText')}
+                </Typography>
+              </Box>
+            </Box>
+          )}
 
-        <Box className={classes.zoneAddRow}>
-          {/**
-           * **One way in.** There was a second button here that opened the map on a nameless
-           * zone, which made two paths to one outcome and left the panel having to invent a
-           * name for a zone that did not exist yet. Adding is naming; drawing is the row's
-           * own Edit button. Each step now has exactly one place it happens.
-           */}
-          <Button
-            variant="secondaryGrey"
-            onClick={() => setInlineName('')}
-            disabled={inlineName !== null}
-          >
-            {tt('zoneInlineAddOpen')}
-          </Button>
-        </Box>
+          <Box className={classes.zoneAddRow}>
+            {/**
+             * **One way in.** There was a second button here that opened the map on a nameless
+             * zone, which made two paths to one outcome and left the panel having to invent a
+             * name for a zone that did not exist yet. Adding is naming; drawing is the row's
+             * own Edit button. Each step now has exactly one place it happens.
+             */}
+            <Button
+              variant="secondaryGrey"
+              onClick={() => setInlineName('')}
+              disabled={inlineName !== null}
+            >
+              {tt('zoneInlineAddOpen')}
+            </Button>
+          </Box>
+        </>
+      </Box>
+      )}
+
+      {/**
+       * The solution switch, **outside the section it used to live in.**
+       *
+       * It sat inside the Zones block, which was harmless while that block always rendered.
+       * It no longer does — the section is gone entirely under Radius — so leaving the switch
+       * in there would have taken the only way *back* to Boundary down with it, stranding a
+       * planner in the solution they had just chosen. It is `position: fixed` anyway, so
+       * where it sits in the tree was never what put it in the corner.
+       */}
+      <Box className={classes.zoneSolutionFloat}>
+        <ZoneMethodMenu value={solution} onChange={setSolution} ariaLabel={tt('zoneSolution')} />
       </Box>
 
       {/* INSTALLATION DAYS ------------------------------------------------ */}
@@ -1203,12 +1276,14 @@ const Harmonization = () => {
        * one heading and one line, because each row names itself.
        */}
       <Box className={`${classes.section} ${classes.sectionLast}`}>
+        {/* Heading only. The line under it — "Select the days you install on, and the longest
+            shift you run on each" — was removed: it named the three columns that already name
+            themselves, which is the same "four layers of text to say one thing" the note above
+            records deleting from this section's earlier design. Its `id` was wired for an
+            `aria-describedby` that nothing ever pointed at, so nothing lost a description. */}
         <Box className={classes.sectionHeader}>
           <Typography variant="h4" className={classes.sectionTitle}>
             {tt('installationDays')}
-          </Typography>
-          <Typography variant="body2" className={classes.sectionText} id={hintIds('days').desc}>
-            {tt('installationDaysText')}
           </Typography>
         </Box>
 
@@ -1245,11 +1320,11 @@ const Harmonization = () => {
 
                 Placed in column 2 explicitly rather than after an empty placeholder cell, so
                 `Day` sits over the weekday names it labels instead of over the checkbox. */}
-            <Typography variant="subtitle3" className={classes.columnLabelDay}>
+            <Typography variant="subtitle2" className={classes.columnLabelDay}>
               {tt('columnDay')}
             </Typography>
             <Box className={classes.columnHeadGroup}>
-              <Typography variant="subtitle3" className={classes.columnLabel}>
+              <Typography variant="subtitle2" className={classes.columnLabel}>
                 {tt('columnShift')}
               </Typography>
               {/* Every worked day needs one, exactly as it needs a zone — stated on the column,
@@ -1281,8 +1356,11 @@ const Harmonization = () => {
             {/* The third column, and the reason the whole table could move onto the form's
                 grid — there was nothing to put here before. See `FORM_COLUMNS`. */}
             <Box className={classes.columnLabelRequired}>
-              <Typography variant="subtitle3" className={classes.columnLabel}>
-                {tt('columnZone')}
+              <Typography variant="subtitle2" className={classes.columnLabel}>
+                {/* Renames with the solution above it, for the reason the Zones section's own
+                    heading gives: a planner picking from a list of radii should not have to
+                    translate "Zone" back into the word the control that made them uses. */}
+                {tt(isRadiusSolution ? 'columnRadius' : 'columnZone')}
               </Typography>
               {/* Every worked day needs one, so the requirement is a standing fact about the
                   column rather than something each row discovers for itself. */}
@@ -1292,6 +1370,11 @@ const Harmonization = () => {
 
           {WEEKDAYS.map(({ weekday, label }) => {
             const day = dayFor(weekday);
+            /* Worked, missing the territory *this solution* asks for, and Save has already
+               asked for it. All three, or nothing is marked — see `handleSave` and
+               `daysMissingZone`, which gates on the same field for the same reason. */
+            const zoneMissing =
+              Boolean(day) && saveAttempted && (isRadiusSolution ? !day.radius : !day.zoneId);
 
             return (
               <Box key={weekday} className={classes.dayRow}>
@@ -1372,43 +1455,108 @@ const Harmonization = () => {
                 {/**
                  * The one zone this day covers (D15 — a day and a runsheet are 1:1).
                  *
-                 * `displayEmpty` with a placeholder rather than a disabled control or an
-                 * error state: a worked day with no zone is legal and means exactly what it
-                 * says — the crew works, and nothing can legally land on them. Refusing to
-                 * store the day until it had a zone would make switching a day on a two-step
-                 * commit. The control marks itself instead, which is all that is left of the
-                 * band that used to report this from above the table.
+                 * `displayEmpty` with a placeholder rather than a disabled control: a worked
+                 * day with no zone is a legal intermediate state, and refusing to store the
+                 * day until it had one would make switching a day on a two-step commit.
+                 *
+                 * **The red only arrives after Save**, which reverses what this did before:
+                 * the select went red and grew a `Required` note the instant its day was
+                 * ticked, so turning Monday on looked like breaking something the planner had
+                 * not been given a chance to fill in yet. `saveAttempted` gates both marks —
+                 * the same rule `ZoneEditorPanel` already applies to its own empty fields.
                  */}
                 {day ? (
                   <Box className={classes.zoneCell}>
-                    <Select
-                      value={day.zoneId || ''}
-                      onChange={(event) => changeDayZone(weekday, event.target.value)}
-                      displayEmpty
-                      className={`${classes.zoneSelect} ${
-                        day.zoneId ? '' : `${classes.zoneSelectEmpty} ${classes.fieldRequired}`
-                      }`}
-                      inputProps={{ 'aria-label': tt('zoneAria', { day: label }) }}
-                      renderValue={(value) => {
-                        if (!value) return tt('zoneNonePlaceholder');
-                        return zoneNameOf(value);
-                      }}
-                    >
-                      <MenuItem value="">{tt('zoneNone')}</MenuItem>
-                      {form.zones.map((zone) => (
-                        <MenuItem key={zone.id} value={zone.id}>
-                          {zone.name}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                    {/* On the field, in the row it belongs to. A worked day with no zone can
-                        take no work — a fact about this select, which the band two hundred
-                        pixels above it was reporting from a distance. */}
-                    {day.zoneId ? null : (
+                    {isRadiusSolution ? (
+                      /**
+                       * **Under Radius the cell is the editor's front door, not a picker.**
+                       *
+                       * There is no list of radii to choose from any more — the day owns its
+                       * circle — so a dropdown would be a menu of one thing that does not
+                       * exist yet. What a planner needs here is the reach at a glance and a
+                       * way into the map, which is what this is: the miles in ink, an edit
+                       * button and a clear button, matching the pair the zone cards already
+                       * use for the same two verbs.
+                       */
+                      <Box className={classes.dayRadiusCell}>
+                        {day.radius ? (
+                          <>
+                            <Typography variant="body2" className={classes.dayRadiusValue}>
+                              {tt('zoneDefRadius', { miles: day.radius.radiusMiles })}
+                            </Typography>
+                            <Box className={classes.dayRadiusActions}>
+                              <Tooltip
+                                arrow
+                                placement="top"
+                                title={tt('zoneEdit')}
+                                enterTouchDelay={0}
+                              >
+                                <IconButton
+                                  className={classes.zoneIconButton}
+                                  aria-label={tt('dayRadiusEditAria', { day: label })}
+                                  onClick={() => setRadiusEditor(weekday)}
+                                >
+                                  <EditIcon aria-hidden="true" />
+                                </IconButton>
+                              </Tooltip>
+                              <Tooltip
+                                arrow
+                                placement="top"
+                                title={tt('zoneRemove')}
+                                enterTouchDelay={0}
+                              >
+                                <IconButton
+                                  className={`${classes.zoneIconButton} ${classes.zoneIconButtonDanger}`}
+                                  aria-label={tt('dayRadiusRemoveAria', { day: label })}
+                                  onClick={() => changeDayRadius(weekday, null)}
+                                >
+                                  <TrashIcon aria-hidden="true" />
+                                </IconButton>
+                              </Tooltip>
+                            </Box>
+                          </>
+                        ) : (
+                          <Button
+                            variant="secondaryGrey"
+                            className={zoneMissing ? classes.dayRadiusAddMissing : ''}
+                            onClick={() => setRadiusEditor(weekday)}
+                          >
+                            {tt('dayRadiusAdd')}
+                          </Button>
+                        )}
+                      </Box>
+                    ) : (
+                      <Select
+                        value={day.zoneId || ''}
+                        onChange={(event) => changeDayZone(weekday, event.target.value)}
+                        displayEmpty
+                        className={`${classes.zoneSelect} ${
+                          day.zoneId ? '' : classes.zoneSelectEmpty
+                        } ${zoneMissing ? classes.fieldRequired : ''}`}
+                        inputProps={{ 'aria-label': tt('zoneAria', { day: label }) }}
+                        renderValue={(value) =>
+                          value ? zoneNameOf(value) : tt('zoneNonePlaceholder')
+                        }
+                      >
+                        <MenuItem value="">{tt('zoneNone')}</MenuItem>
+                        {form.zones.map((zone) => (
+                          <MenuItem key={zone.id} value={zone.id}>
+                            {zone.name}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    )}
+                    {/* Absolutely positioned under the field rather than stacked in the flow.
+                        In the flow it added its own height to the cell, so the row grew by
+                        ~20px the moment the note appeared and the seven rows below it jumped;
+                        the select also stopped being vertically centred against the checkbox
+                        and the shift field beside it. Out of flow, the row keeps `ROW_HEIGHT`
+                        and the note hangs in the gap the row's own padding already leaves. */}
+                    {zoneMissing ? (
                       <Typography variant="body3" className={classes.zoneRequiredNote}>
                         {tt('zoneRequired')}
                       </Typography>
-                    )}
+                    ) : null}
                   </Box>
                 ) : (
                   /* The cell keeps its height whichever child it holds, so switching a day
@@ -1472,12 +1620,47 @@ const Harmonization = () => {
        * a shape replaces membership, so redrawing North to add one site would otherwise
        * drop two others off the far edge silently.
        */}
+      {/**
+       * One installation day's radius, over the page rather than beside it.
+       *
+       * `otherRadii` is the same courtesy `otherZones` pays the boundary editor: every *other*
+       * day's circle, drawn locked underneath, so a planner placing Tuesday can see what
+       * Monday already covers. Keyed by weekday because that is what a day's radius is
+       * identified by now — there is no zone id to borrow.
+       */}
+      <DayRadiusDialog
+        open={radiusEditor !== null}
+        dayLabel={WEEKDAYS.find((entry) => entry.weekday === radiusEditor)?.label || ''}
+        radius={dayFor(radiusEditor)?.radius || null}
+        sites={ZONE_SITES}
+        basePoint={anchorFor('startLocation')}
+        otherRadii={form.routeDays
+          .filter((day) => day.weekday !== radiusEditor && day.radius)
+          .map((day) => ({
+            id: `day-${day.weekday}`,
+            name: WEEKDAYS.find((entry) => entry.weekday === day.weekday)?.label || '',
+            kind: ZONE_SHAPE.RADIUS,
+            points: [],
+            anchor: day.radius.anchor,
+            radiusMiles: day.radius.radiusMiles,
+          }))}
+        onCancel={() => setRadiusEditor(null)}
+        onConfirm={(next) => {
+          changeDayRadius(radiusEditor, next);
+          setRadiusEditor(null);
+        }}
+      />
+
       <ZoneEditorPanel
         open={Boolean(zoneEditor)}
         zone={zoneEditor?.zoneId ? form.zones.find((z) => z.id === zoneEditor.zoneId) : null}
         initialMethod={zoneEditor?.mode || ZONE_SHAPE.BOUNDARY}
         sites={ZONE_SITES}
         basePoint={anchorFor('startLocation')}
+        /* Every *other* defined zone, so the editor draws the territory already taken —
+           radii included, which is what makes "show the radii that exist while I place a new
+           one" work: `ZoneMap` draws a locked circle for each `kind: 'radius'` entry from the
+           `anchor` and `radiusMiles` carried here. */
         otherZones={form.zones
           .filter((zone) => zone.id !== zoneEditor?.zoneId && zone.shape)
           .map((zone) => ({

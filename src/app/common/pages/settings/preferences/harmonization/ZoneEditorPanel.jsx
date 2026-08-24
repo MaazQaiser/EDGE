@@ -15,9 +15,9 @@ import {
   RADIUS_DEFAULT_MILES,
   ZONE_SHAPE,
 } from './harmonizationSettings';
-import { BoundaryIcon, RadiusIcon } from './ZoneGlyphs';
 import ZoneIncluded from './ZoneIncluded';
 import ZoneLassoExperience from './ZoneLassoExperience';
+import ZoneMethodMenu from './ZoneMethodMenu';
 import ZoneRadiusExperience from './ZoneRadiusExperience';
 
 /**
@@ -28,10 +28,10 @@ import ZoneRadiusExperience from './ZoneRadiusExperience';
  * *against* the zones that already exist, so hiding them was hiding the context.
  *
  * **The panel owns the name, the gate, and the containment maths.** How an area is chosen —
- * dragged as a boundary, or measured out from a site — belongs to the two experiences, which
- * are separate interfaces rather than modes: one has no notion of a centre, the other has no
- * notion of a point. The switcher between them floats on the map, because what it changes is
- * how the map behaves.
+ * dragged as a boundary, or measured out from a dropped pin — belongs to the two experiences,
+ * which are separate interfaces rather than modes of one: one has no notion of a centre, the
+ * other no notion of a ring of points. The switcher between them floats on the map, because
+ * what it changes is how the map behaves.
  *
  * **Nothing can be confirmed half-made**, and the way that is said is inline rather than in
  * a box: the name field goes red with its own message, and the map's own outline goes red.
@@ -96,11 +96,23 @@ const ZoneEditorPanel = ({
   const [method, setMethod] = useState(initialMethod);
   const [name, setName] = useState('');
   const [points, setPoints] = useState([]);
-  const [centreSiteId, setCentreSiteId] = useState(null);
+  /* The dropped pin, as `{ lat, lng }` — not a site id. See `sanitiseZoneShape`'s note on
+     why the centre stopped having to be a site. */
+  const [anchor, setAnchor] = useState(null);
   const [radiusMiles, setRadiusMiles] = useState(String(RADIUS_DEFAULT_MILES));
   /* Nothing is marked missing until a confirm has been attempted: a panel that opens
      already showing errors reads as broken rather than as empty. */
   const [attempted, setAttempted] = useState(false);
+  /**
+   * Bumped by the seeding effect below, and the *only* thing that refits the map.
+   *
+   * Not derived from `zone.id`, and that ordering is the whole point. React runs child
+   * effects before the parent's, so a token computed during render changes on the same pass
+   * the zone does — one render *before* this effect has seeded `points`. The map would refit,
+   * correctly, to the shape it was still holding: the previous zone's. Bumping it here means
+   * the token and the new shape land in the same commit.
+   */
+  const [fitToken, setFitToken] = useState(0);
 
   /**
    * Reset on open, not on mount — the panel stays mounted, so without this a planner who
@@ -113,30 +125,31 @@ const ZoneEditorPanel = ({
     setName(zone?.name || '');
     setAttempted(false);
 
+    /* Every field resets to its own empty state first, rather than each branch clearing the
+       others: branching off a `return` the way this once did leaves the untouched kind's
+       leftovers in place the moment a third shape is added back. */
+    setPoints([]);
+    setAnchor(null);
+    setRadiusMiles(String(RADIUS_DEFAULT_MILES));
+
     const shape = zone?.shape || null;
     if (shape?.kind === ZONE_SHAPE.BOUNDARY) {
       setPoints(shape.points);
-      setCentreSiteId(null);
-      setRadiusMiles(String(RADIUS_DEFAULT_MILES));
-      return;
-    }
-    if (shape?.kind === ZONE_SHAPE.RADIUS) {
-      setPoints([]);
-      setCentreSiteId(shape.siteId || null);
+    } else if (shape?.kind === ZONE_SHAPE.RADIUS) {
+      /* `anchor` is the whole answer now. A rule saved under the site-centred model still
+         carries the coordinates of whatever site it was centred on, so its circle reopens
+         exactly where it was — the `siteId` beside it is simply not read. */
+      setAnchor(shape.anchor || null);
       setRadiusMiles(String(shape.radiusMiles));
-      return;
     }
 
-    setPoints([]);
-    setCentreSiteId(null);
-    setRadiusMiles(String(RADIUS_DEFAULT_MILES));
+    setFitToken((previous) => previous + 1);
   }, [open, zone, initialMethod]);
 
   const isBoundary = method === ZONE_SHAPE.BOUNDARY;
-  const centreSite = centreSiteId ? sites.find((site) => site.id === centreSiteId) || null : null;
   const radiusNumber = Number(radiusMiles);
   const hasBoundary = points.length >= 3;
-  const hasRadius = Boolean(centreSite) && Number.isFinite(radiusNumber) && radiusNumber > 0;
+  const hasRadius = Boolean(anchor) && Number.isFinite(radiusNumber) && radiusNumber > 0;
   const hasShape = isBoundary ? hasBoundary : hasRadius;
   const hasName = Boolean(name.trim());
 
@@ -149,7 +162,7 @@ const ZoneEditorPanel = ({
       .map((site) => {
         if (!isBoundary) {
           if (!hasRadius) return { ...site, inside: false, outside: null };
-          const miles = kmToMiles(distanceKm(centreSite, site));
+          const miles = kmToMiles(distanceKm(anchor, site));
           return { ...site, inside: miles <= radiusNumber, outside: miles - radiusNumber };
         }
         if (!hasBoundary) return { ...site, inside: false, outside: null };
@@ -157,7 +170,7 @@ const ZoneEditorPanel = ({
         return { ...site, inside, outside: inside ? 0 : milesOutsideRing(site, points) };
       })
       .sort((a, b) => (a.outside ?? Infinity) - (b.outside ?? Infinity));
-  }, [sites, isBoundary, points, centreSite, radiusNumber, hasRadius, hasBoundary]);
+  }, [sites, isBoundary, points, anchor, radiusNumber, hasRadius, hasBoundary]);
 
   const captured = measured.filter((site) => site.inside);
   const excluded = measured.filter((site) => !site.inside);
@@ -170,25 +183,25 @@ const ZoneEditorPanel = ({
   );
 
   /**
-   * How far the chosen centre is from where every runsheet starts.
+   * How far the dropped pin is from where every runsheet starts.
    *
-   * The number the map cannot show: at a metro-wide zoom, a site forty miles from the depot
+   * The number the map cannot show: at a metro-wide zoom, a centre forty miles from the depot
    * and one ten miles away look much the same, and the difference is an hour of the day.
    */
   const distanceFromBase = useMemo(() => {
-    if (!centreSite || !basePoint) return null;
-    return kmToMiles(distanceKm(basePoint, centreSite));
-  }, [centreSite, basePoint]);
+    if (!anchor || !basePoint) return null;
+    return kmToMiles(distanceKm(basePoint, anchor));
+  }, [anchor, basePoint]);
 
   const leaving = (currentSiteIds || []).filter((id) => !capturedIds.has(id));
 
   const switchMethod = (next) => {
     if (next === method) return;
-    /* The shape is abandoned rather than converted: a dragged ring of points is not a site
-       and a distance, and guessing one from the other would centre a zone somewhere the
+    /* The shape is abandoned rather than converted: a dragged ring of points is not a centre
+       and a distance, and guessing one from the other would give a zone a territory the
        planner never chose. The name survives, because that is the part they typed. */
     setPoints([]);
-    setCentreSiteId(null);
+    setAnchor(null);
     setRadiusMiles(String(RADIUS_DEFAULT_MILES));
     setAttempted(false);
     setMethod(next);
@@ -202,8 +215,10 @@ const ZoneEditorPanel = ({
       ? { kind: ZONE_SHAPE.BOUNDARY, points }
       : {
           kind: ZONE_SHAPE.RADIUS,
-          siteId: centreSite.id,
-          anchor: { address: centreSite.name, lat: centreSite.lat, lng: centreSite.lng },
+          /* No `address`: nothing reverse-geocodes a dropped pin on this screen, and writing
+             an empty string would be a field that looks populated and is not. `sanitiseLocation`
+             defaults it, so the stored shape stays the same shape either way. */
+          anchor: { lat: anchor.lat, lng: anchor.lng },
           radiusMiles: clampRadiusMiles(radiusNumber),
         };
 
@@ -220,24 +235,7 @@ const ZoneEditorPanel = ({
 
   /* Rendered by the map, in its bottom-right corner. */
   const switcher = (
-    <>
-      <Button
-        className={`${classes.mapSwitcherOption} ${isBoundary ? classes.mapSwitcherOptionOn : ''}`}
-        onClick={() => switchMethod(ZONE_SHAPE.BOUNDARY)}
-        aria-pressed={isBoundary}
-      >
-        <BoundaryIcon />
-        {tt('zoneMethodBoundary')}
-      </Button>
-      <Button
-        className={`${classes.mapSwitcherOption} ${!isBoundary ? classes.mapSwitcherOptionOn : ''}`}
-        onClick={() => switchMethod(ZONE_SHAPE.RADIUS)}
-        aria-pressed={!isBoundary}
-      >
-        <RadiusIcon />
-        {tt('zoneMethodRadius')}
-      </Button>
-    </>
+    <ZoneMethodMenu value={method} onChange={switchMethod} ariaLabel={tt('zoneMethod')} />
   );
 
   const shared = {
@@ -264,6 +262,10 @@ const ZoneEditorPanel = ({
     activeZoneId: zone?.id,
     invalid: shapeMissing,
     switcher,
+    /* Refits the map each time the panel opens on a different zone. Without it the view is
+       whatever the last pan left it, and a zone whose boundary sits outside that view opens
+       looking undrawn — see `fitToken` in `ZoneMap`. */
+    fitToken,
   };
 
   return (
@@ -339,18 +341,6 @@ const ZoneEditorPanel = ({
           />
         </Box>
 
-        {/**
-         * What the shape caught, directly under the name and above the map that produces it.
-         *
-         * It used to sit above the name field, which put a result before its own input: the
-         * name is what a planner supplies, and Included is an answer to the drawing they do
-         * afterwards, so reading it first is reading the answer to a question not yet asked.
-         * Below the name it is also adjacent to the map, which is where the number changes —
-         * a count that moves as you drag belongs next to the thing you are dragging, not
-         * three controls away at the top of the panel.
-         */}
-        <ZoneIncluded captured={captured} hasShape={hasShape} />
-
         {isBoundary ? (
           <ZoneLassoExperience
             {...shared}
@@ -361,10 +351,11 @@ const ZoneEditorPanel = ({
         ) : (
           <ZoneRadiusExperience
             {...shared}
-            centreSite={centreSite}
+            anchor={anchor}
             radiusMiles={radiusMiles}
             distanceFromBase={distanceFromBase}
-            onSelectSite={(site) => setCentreSiteId(site?.id || null)}
+            onDropPin={setAnchor}
+            onClearPin={() => setAnchor(null)}
             onRadiusChange={(value) => setRadiusMiles(value.replace(/[^\d]/g, '').slice(0, 3))}
             onRadiusBlur={() => setRadiusMiles(String(clampRadiusMiles(radiusMiles)))}
             onStep={(delta) =>
@@ -381,6 +372,24 @@ const ZoneEditorPanel = ({
             onRadiusDragged={(miles) => setRadiusMiles(String(clampRadiusMiles(Math.round(miles))))}
           />
         )}
+
+        {/**
+         * What the shape caught — **under the map now, and no longer a disclosure.**
+         *
+         * It sat between the name field and the map, collapsed behind a chevron. Two things
+         * were wrong with that once the radius dialog settled the pattern: a result printed
+         * *above* the control that produces it is read before the question is asked, and the
+         * list is what a planner checks against the pins, so a click between the two is a
+         * click between a question and its own answer. Same component, same props the dialog
+         * passes — one shape for "what did this catch" wherever it is asked.
+         */}
+        <ZoneIncluded
+          captured={captured}
+          hasShape={hasShape}
+
+          title={tt(isBoundary ? 'visitsInBoundary' : 'visitsInRadius')}
+          emptyText={tt(isBoundary ? 'visitsInBoundaryEmpty' : 'visitsInRadiusEmpty')}
+        />
       </Box>
 
       <Box className={classes.zonePanelFooter}>

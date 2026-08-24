@@ -406,14 +406,23 @@ export const useStyles = makeStyles((theme) => ({
 
   /* No rule under the intro, and none under either section heading — see the note above
      `section`. Whitespace does the separating; the tables draw the only lines. */
+  /**
+   * The page title's own band.
+   *
+   * **32px above it, up from nothing.** The title sat almost against the tab strip — the
+   * shell contributes no gap of its own — so the screen opened with its heading crowded into
+   * the chrome above it and a 32px void below, which reads as the title belonging to the tabs
+   * rather than to the page. 32/24 puts more air above the heading than the 24 between it and
+   * the first rule, so the block reads top-down, and it matches the `section` rhythm the rest
+   * of the page is set on.
+   */
   header: {
-    padding: `0 ${ROW_INSET}px 8px`,
+    padding: `32px ${ROW_INSET}px 24px`,
   },
 
   headerTitle: {
     '&.MuiTypography-root': {
       color: theme.palette.textPrimary,
-      marginBottom: '6px',
     },
   },
 
@@ -708,6 +717,11 @@ export const useStyles = makeStyles((theme) => ({
     borderBottom: `1px solid ${theme.palette.borderSubtle1}`,
   },
 
+  /* `needByRow`/`needByLabelStack` lived here: a two-block variant that stacked the
+     description under the label to give the track more rail. Reverted — it made this the one
+     row whose label did not share a line with its sentence, and consistency down the left
+     edge is worth more than the extra width. Need by Date is back on `prefRow`. */
+
   /* `prefRowNested` lived here: the indent and the lighter label that made the revealed
      "Custom length" row read as a child of the window row rather than a second setting.
      The row it styled is gone — the window is one field with three shortcuts beside it now
@@ -768,17 +782,28 @@ export const useStyles = makeStyles((theme) => ({
   },
 
   /**
-   * The need-by cell: **`3 ──●────── 14   ±7 days`.**
+   * The need-by cell: **`±3 ──●────── ±14   ±7 days`.**
    *
-   * A track, its two bounds, and the value beside it. Third design for this row; the argument
-   * is written out at the call site in `index.jsx`, and the short version is that the setting
-   * is a *tolerance*, so the control should be a quantity you position rather than a number
-   * you count.
+   * A track, its two bounds, and the value beside it. The setting is a *tolerance*, so the
+   * control is a quantity you position rather than a number you count; the long argument for
+   * the track is at the call site in `index.jsx`.
+   *
+   * **Two fixes from an audit of what made the row confusing**, both about the fact that
+   * three numbers sat on one line saying things in two different ways:
+   *
+   * 1. **The bounds carry `±` now.** They were bare `3` and `14` beside a value reading
+   *    `±7 days`, so the scale said "three to fourteen" while the answer said "plus or minus
+   *    seven" — the same axis in two framings, and the reader had to work out they were the
+   *    same quantity. One unit across all three numbers, and the answer is visibly between
+   *    its own ends.
+   * 2. **The value follows the thumb while dragging** (`valueLabelDisplay="auto"`). The
+   *    readout is up to 250px from the handle at the minimum end, so the old row was
+   *    manipulated on the left and read on the right. The floating label costs nothing at
+   *    rest — it only appears on hover, focus and drag, which is exactly when the distance
+   *    matters — so the row keeps its one-line height either way.
    *
    * One line, inside `CONTROL_HEIGHT`, which is what keeps the row at `PREF_ROW_HEIGHT` and
-   * the two top rows the same height. MUI's `valueLabelDisplay` was the other way to put the
-   * number at the thumb and it wants ~20px above the rail, which this row has not got; the
-   * value sits after the track instead, where it also holds still while the thumb moves.
+   * the two top rows the same height.
    */
   needByCell: {
     display: 'flex',
@@ -800,8 +825,8 @@ export const useStyles = makeStyles((theme) => ({
       color: theme.palette.textPlaceholder,
       whiteSpace: 'nowrap',
       /* Both ends reserve the wider label's width, so the track's ends do not shift between
-         a one- and a two-digit bound. */
-      minWidth: '15px',
+         a one- and a two-digit bound. 26, up from 15, for the `±` the bounds now carry. */
+      minWidth: '26px',
       textAlign: 'center',
     },
   },
@@ -857,23 +882,42 @@ export const useStyles = makeStyles((theme) => ({
         boxShadow: `0px 0px 0px 8px ${theme.palette.surfaceBrandSubtle}`,
       },
     },
+    /**
+     * The value that rides the thumb while it is being moved.
+     *
+     * Only on hover, focus and drag — the trailing readout is still the resting answer, and
+     * two permanent copies of one number would be worse than the distance this fixes. Dark
+     * ink rather than brand: it is a tooltip over a raster-free white row, and the brand fill
+     * MUI defaults to would put a green blob over the rail it is pointing at.
+     */
+    '& .MuiSlider-valueLabel': {
+      ...theme.typography.body3,
+      backgroundColor: theme.palette.textPrimary,
+      color: theme.palette.textOnColor,
+      padding: '2px 6px',
+      borderRadius: '6px',
+      /* MUI's default sits ~2.4em up to clear a 20px thumb. This one is 16px in a 44px cell,
+         so it is pulled in to keep the label inside the row. */
+      top: '-6px',
+    },
   },
 
   /**
    * The live value, after the track.
    *
-   * **The `±` is back, and this time it is carrying something.** Inside the old field it was a
-   * glyph floating in front of a digit: the row read `± 3` while the value you could select,
-   * copy or hear announced was `3`. Beside a scale whose ends are plainly 3 and 14, `±7 days`
-   * is the one reading that cannot be confused with the numbers either side of it — seven
-   * *either way*, not seven out of fourteen.
+   * **The `±` is carrying something.** Inside the old field it was a glyph floating in front
+   * of a digit: the row read `± 3` while the value you could select, copy or hear announced
+   * was `3`. Here it names the *kind* of quantity — seven either way, not seven out of
+   * fourteen — and since the audit it is the framing the two bounds use as well, so all three
+   * numbers in the cell speak one unit.
    *
-   * `subtitle2` weight, so it is the heaviest thing in the cell. It is the value; the track is
-   * only how you set it.
+   * `subtitle2` weight in `textPrimary`, so it is unambiguously the heaviest thing in the
+   * cell: the two bounds are placeholder-grey scale captions and this is the answer. It read
+   * `textSecondary1` before, which put it only one step above its own axis labels.
    */
   needByValue: {
     '&.MuiTypography-root': {
-      color: theme.palette.textSecondary1,
+      color: theme.palette.textPrimary,
       whiteSpace: 'nowrap',
       /* Reserves the two-digit width, so the track does not shorten as the value grows. */
       minWidth: '58px',
@@ -1299,6 +1343,75 @@ export const useStyles = makeStyles((theme) => ({
     },
   },
 
+  /* ------------------------------------ One day's radius, in its own overlay */
+
+  /**
+   * The day-radius dialog's title, which needs more room under it than the location picker's.
+   *
+   * That one is followed by a line of instruction; this is followed straight by a labelled
+   * field, so at the shared 12px the heading and the word `Center point` read as a
+   * two-line stack rather than a title over a form. 28px is the same step `sectionHeader`
+   * puts between a group heading and its first control.
+   */
+  dayRadiusDialogTitle: {
+    '&.MuiDialogTitle-root': {
+      padding: '24px 24px 0',
+      fontSize: '18px',
+      lineHeight: '26px',
+      fontWeight: 600,
+      color: theme.palette.textPrimary,
+    },
+  },
+
+  /**
+   * `&&`, not `&`, and it is load-bearing.
+   *
+   * MUI ships `.MuiDialogTitle-root + .MuiDialogContent-root { padding-top: 0 }` to close the
+   * gap under a title, at 0-2-0 — the same specificity a plain `&.MuiDialogContent-root`
+   * gives, and emotion injects after JSS, so MUI won and the 28px measured as 0. The title
+   * and the first field label were touching. Doubling the ampersand takes this to 0-3-0.
+   */
+  dayRadiusDialogContent: {
+    '&&.MuiDialogContent-root': {
+      display: 'flex',
+      flexDirection: 'column',
+      /* 24, up from 20. The two field blocks and the map are three separate things, and at 20
+         the gap between the reach stepper and the map read the same as the gap *inside* the
+         field block (label to control, plus its own distance line) — so the map looked
+         attached to the fields rather than sitting under them. */
+      gap: '24px',
+      padding: '28px 24px 4px',
+      /**
+       * **It scrolls, unlike the location picker's content, and that is safe here.**
+       *
+       * That dialog refuses a scrollport on the grounds that one around a map turns the
+       * map's own drag and wheel into page scroll at the edges. Both are handled here:
+       * `ZoneMap` calls `preventDefault` on `wheel` (it owns zoom) and captures the pointer
+       * for a drag, so neither gesture reaches this container. What a scrollport *does* fix
+       * is real — with the Includes list expanded the content is taller than the viewport,
+       * and at `overflow: visible` the map and the Confirm button were simply clipped off
+       * the bottom of the paper with no way to reach them.
+       */
+      overflowY: 'auto',
+    },
+  },
+
+  /**
+   * The map, taller than the panel's own.
+   *
+   * The panel gives its map whatever the drawer has spare; a dialog has no such slack, so
+   * this states the height. 440px against the paper's ~900 is close to 2:1, which is the
+   * aspect a street map wants — the fields above it are two short rows, so the height spent
+   * here is the height that makes the circle and the pins it catches legible at metro zoom.
+   *
+   * `&&` again, for a different collision: `zoneMapRoot` carries `minHeight: 320` and is
+   * declared **later in this same sheet**, so at equal specificity it wins on source order
+   * and the map came out at 320 regardless of what this said.
+   */
+  dayRadiusMap: {
+    '&&': { minHeight: '440px' },
+  },
+
   /* A marker, not an alarm: the draft is already safe by the time this appears, so
      it only has to answer "did my edit register?". Amber or an icon here would
      promise a problem that does not exist. */
@@ -1418,15 +1531,25 @@ export const useStyles = makeStyles((theme) => ({
    * and `trash-2.svg` a `#E43F32` one, at 16 and 20 respectively, so left alone the pair would
    * arrive as one grey and one red icon of different sizes. Forcing both to the button's own
    * colour and size is what makes them a pair rather than two borrowed assets.
+   *
+   * **`textSecondary3` at rest, not `textSecondary2`.** Two of these sat at the end of every
+   * row down a list of four zones — eight mid-grey marks that read as loud as the zone names
+   * beside them, on a screen whose actual subject is coverage rather than the ability to edit
+   * it. Quieter at rest and a full step to `textPrimary` on hover and focus: the darkening
+   * *is* the affordance now, doing the job the hover ground alone used to carry on its own.
    */
   zoneIconButton: {
     '&.MuiIconButton-root': {
       padding: '6px',
-      color: theme.palette.textSecondary2,
+      color: theme.palette.textSecondary3,
       '& svg': { width: '18px', height: '18px', display: 'block' },
       '& svg path': { stroke: 'currentColor' },
-      '&:hover': { backgroundColor: theme.palette.surfaceGreySubtle },
+      '&:hover': {
+        color: theme.palette.textPrimary,
+        backgroundColor: theme.palette.surfaceGreySubtle,
+      },
       '&.Mui-focusVisible': {
+        color: theme.palette.textPrimary,
         backgroundColor: theme.palette.surfaceGreySubtle,
         outline: `2px solid ${theme.palette.borderBrand}`,
         outlineOffset: '-2px',
@@ -1460,20 +1583,16 @@ export const useStyles = makeStyles((theme) => ({
   /* ---------------------------------------- Zones: one solution at a time */
 
   /**
-   * The section heading and the solution switch, on one line.
+   * The section heading, on its own line now.
    *
-   * Drawing a boundary and measuring a distance are two different answers to "which sites",
-   * so the section shows one at a time rather than mixing both in a list and describing
-   * both in one paragraph. The switch is what picks; the description under it changes with
-   * it, because a sentence that covers both says nothing precise about either.
+   * The solution switch used to share this row, on the right — it moved to a floating
+   * `ZoneMethodMenu` at the section's bottom-right (`zoneSolutionFloat`) so a third method
+   * did not have to fight the title for width, the same move the map's own switcher made.
+   * Drawing a boundary, measuring a distance and naming zip codes are still one at a time:
+   * the switch is what picks; the description under it changes with it.
    */
   zoneSectionHead: {
-    display: 'flex',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    gap: '24px',
     padding: `0 ${ROW_INSET}px 16px`,
-    flexWrap: 'wrap',
   },
 
   zoneSectionHeadText: {
@@ -1482,43 +1601,8 @@ export const useStyles = makeStyles((theme) => ({
     minWidth: 0,
   },
 
-  solutionSwitch: {
-    display: 'flex',
-    gap: '2px',
-    padding: '3px',
-    borderRadius: '10px',
-    border: `1px solid ${theme.palette.borderSubtle2}`,
-    backgroundColor: theme.palette.surfaceGreySubtle,
-    flexShrink: 0,
-  },
-
-  solutionOption: {
-    '&.MuiButtonBase-root': {
-      display: 'flex',
-      alignItems: 'center',
-      gap: '6px',
-      minHeight: '32px',
-      padding: '0 12px',
-      borderRadius: '7px',
-      border: 0,
-      backgroundColor: 'transparent',
-      color: theme.palette.textSecondary2,
-      fontSize: '13px',
-      fontWeight: 500,
-      lineHeight: '18px',
-      whiteSpace: 'nowrap',
-      '& svg': { width: '14px', height: '14px', display: 'block', flexShrink: 0 },
-      '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.7)' },
-    },
-  },
-
-  solutionOptionOn: {
-    '&.MuiButtonBase-root': {
-      backgroundColor: theme.palette.surfaceWhite,
-      color: theme.palette.textPrimary,
-      boxShadow: '0 1px 2px rgba(16, 24, 40, 0.08)',
-    },
-  },
+  /* `solutionSwitch`/`solutionOption`/`solutionOptionOn` lived here: the two-segment pill
+     the heading row carried before the switch became a floating `ZoneMethodMenu`. */
 
   /* `zoneUndefined` lived here: the grey "Not defined yet" that stood in the Covers cell
      when a zone had no shape. Removed on request — the cell reports what a zone covers, and
@@ -1720,13 +1804,24 @@ export const useStyles = makeStyles((theme) => ({
     gap: '2px',
   },
 
-  /* The select and the note under it. The cell keeps the row's height either way, so a day
-     gaining a zone does not shift the six rows beneath it. */
+  /**
+   * The select, and the `Required` note that hangs beneath it.
+   *
+   * **The note is out of the flow**, which is the fix for a row that used to grow by the
+   * note's own height the moment it appeared: the cell was a flex column holding both, so a
+   * day going red pushed its row ~20px taller, shunted the six rows below it, and knocked the
+   * select out of vertical centre against the checkbox and shift field on the same line.
+   * Anchored instead, the row holds `ROW_HEIGHT` whatever the field is saying.
+   *
+   * It overhangs the row's bottom edge by design — `ROW_HEIGHT` has no room for a second line
+   * — and that is safe because it is the last thing in a row whose neighbour below is a 1px
+   * rule and 12px of the next row's own padding. `pointerEvents: none` so a note sitting over
+   * that boundary cannot eat a click meant for the row underneath.
+   */
   zoneCell: {
+    position: 'relative',
     display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'center',
-    gap: '4px',
+    alignItems: 'center',
     width: '100%',
     minHeight: `${CONTROL_HEIGHT}px`,
   },
@@ -1749,13 +1844,79 @@ export const useStyles = makeStyles((theme) => ({
 
   zoneRequiredNote: {
     '&.MuiTypography-root': {
+      position: 'absolute',
+      top: '100%',
+      left: 0,
+      marginTop: '2px',
       color: theme.palette.textAlert,
       fontWeight: 500,
+      lineHeight: '16px',
+      whiteSpace: 'nowrap',
+      pointerEvents: 'none',
     },
   },
 
   zoneSelectEmpty: {
     '& .MuiSelect-select': { color: theme.palette.textPlaceholder },
+  },
+
+  /**
+   * The Radius column's cell: the reach, and the two things you can do to it.
+   *
+   * Not a field, because there is nothing to type here and nothing to pick from — a day owns
+   * its circle and the map overlay is where it gets set. So the resting state is a value and
+   * two glyph buttons, which is the same shape the zone cards use for the same pair of verbs,
+   * and an empty day is a single button that opens the map.
+   */
+  /**
+   * The Radius column's cell: the reach, and the two things you can do to it.
+   *
+   * **The actions sit against the value, not at the far edge of the column** — and they are
+   * hidden until the row is hovered. Pushed apart by `space-between` they were ~200px from
+   * the number they act on, which is a long way to travel to edit a two-word value and reads
+   * as two unrelated cells; and seven rows of two permanently-visible glyphs put fourteen
+   * marks down a column whose actual content is a distance. `flex-start` with an 8px gap
+   * groups them with what they belong to, and revealing them on hover leaves the resting
+   * table showing seven distances and nothing else.
+   *
+   * Keyboard focus reveals them too (`:focus-within`), which is the part a hover-only control
+   * usually forgets: without it the buttons are reachable by Tab and invisible while focused.
+   */
+  dayRadiusCell: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    width: '100%',
+    maxWidth: `${COLUMN_CONTROL}px`,
+    minHeight: `${CONTROL_HEIGHT}px`,
+  },
+
+  dayRadiusValue: {
+    '&.MuiTypography-root': {
+      color: theme.palette.textPrimary,
+      fontVariantNumeric: 'tabular-nums',
+      whiteSpace: 'nowrap',
+    },
+  },
+
+  /* `visibility` rather than `display`, so the buttons keep their footprint and the value
+     beside them does not shift sideways as the pointer arrives. */
+  dayRadiusActions: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '2px',
+    flexShrink: 0,
+    visibility: 'hidden',
+    '$dayRow:hover &, &:focus-within': { visibility: 'visible' },
+  },
+
+  /* The empty day's button, once Save has asked for it. A red outline rather than a red fill:
+     the button is still the way forward, not the thing that went wrong. */
+  dayRadiusAddMissing: {
+    '&.MuiButton-root': {
+      borderColor: theme.palette.borderAlert,
+      color: theme.palette.textAlert,
+    },
   },
 
   /* ------------------------------------------------- The zone editor's map */
@@ -2017,17 +2178,20 @@ export const useStyles = makeStyles((theme) => ({
   /**
    * **The switcher, and why it is a switcher rather than a mode flag.**
    *
-   * Drawing a boundary and setting a distance are two different answers to "which sites",
-   * not two settings on one control: one is a shape you author, the other is a point plus a
-   * number. So the two sides of this render **different interfaces** — different inputs,
-   * different guidance, different map affordances — and this only chooses between them.
+   * Drawing a boundary, setting a distance and naming zip codes are three different answers
+   * to "which sites", not three settings on one control: each is a genuinely different
+   * interface — different inputs, different guidance, different map affordances — and this
+   * only chooses between them.
    *
-   * A segmented control rather than tabs: tabs imply two views of one thing, and these are
-   * two ways of making one thing. Full width so it reads as the panel's top-level choice
-   * rather than a control belonging to whatever sits under it.
+   * **A trigger that opens a menu, not a row of segments.** Two segments read fine side by
+   * side; a third either crowds three labels into the same width or grows the control until
+   * it competes with the map it floats over. `ZoneMethodMenu` names the live choice and opens
+   * the other two on demand instead, which is the same move the scheduler's own
+   * `ReviewOptionsMenu` made when a third segmented pill made that row read as three unrelated
+   * dials rather than one control.
    */
   /**
-   * The switcher, floating at the map's bottom-right.
+   * The switcher's trigger, floating at the map's bottom-right.
    *
    * It moved out of the panel header because of what it actually does: it changes how you
    * *interact with the map*, so it belongs on the map, near the hand. In the header it read
@@ -2036,46 +2200,139 @@ export const useStyles = makeStyles((theme) => ({
    *
    * Bottom-right rather than top, so it never sits over the active-zone badge or the zoom
    * controls, and so it is furthest from the part of a boundary a right-handed drag tends to
-   * finish on.
+   * finish on. Positioning only — the pill's own chrome (border, fill, shadow) lives on
+   * `zoneMethodTrigger` now that there is one button here instead of a segmented pair, so the
+   * same wrapper works unchanged wherever `ZoneMethodMenu` is dropped.
    */
   mapSwitcher: {
     position: 'absolute',
     right: '12px',
     bottom: '12px',
+  },
+
+  /**
+   * `ZoneMethodMenu`'s trigger button — the pill itself, wherever it is anchored.
+   *
+   * Carries the border, fill and shadow the old `mapSwitcher` container used to, because a
+   * single button standing alone (rather than two segments inside a shared track) has to
+   * read as pressable chrome on its own.
+   */
+  zoneMethodTrigger: {
     display: 'flex',
-    gap: '2px',
-    padding: '3px',
-    borderRadius: '10px',
+    alignItems: 'center',
+    gap: '6px',
+    height: '32px',
+    padding: '0 10px 0 12px',
     border: `1px solid ${theme.palette.borderSubtle2}`,
+    borderRadius: '10px',
     backgroundColor: 'rgba(255, 255, 255, 0.96)',
     boxShadow: '0 2px 8px rgba(16, 24, 40, 0.12)',
+    color: theme.palette.textPrimary,
+    cursor: 'pointer',
+    transition: 'background-color 120ms ease',
+    '& svg': { width: '14px', height: '14px', display: 'block', flexShrink: 0 },
+    '&:hover': { backgroundColor: theme.palette.surfaceGreySubtle },
+    '&:focus-visible': { outline: `2px solid ${theme.palette.borderBrand}`, outlineOffset: 2 },
   },
 
-  mapSwitcherOption: {
-    '&.MuiButtonBase-root': {
+  /* Held open-looking for as long as its menu is, so the pill and the panel read as one
+     object rather than a panel floating over an idle button — the same reasoning
+     `ReviewOptionsMenu`'s `triggerOpen` gives. */
+  zoneMethodTriggerOpen: {
+    backgroundColor: theme.palette.surfaceGreySubtle,
+  },
+
+  zoneMethodTriggerLabel: {
+    ...theme.typography.subtitle2,
+    color: 'inherit',
+    whiteSpace: 'nowrap',
+  },
+
+  zoneMethodCaret: {
+    display: 'flex',
+    flexShrink: 0,
+    width: '11px',
+    height: '11px',
+    color: theme.palette.textSecondary3,
+    transition: 'transform 140ms ease',
+    /* Closed: points up, at the menu that will appear above. */
+    transform: 'rotate(180deg)',
+    '& svg': { width: '11px', height: '11px', display: 'block' },
+  },
+
+  zoneMethodCaretOpen: {
+    /* Open: points down, back at the trigger the next click collapses. */
+    transform: 'rotate(0deg)',
+  },
+
+  /** One fixed width, so the paper does not resize itself around whichever label is longest. */
+  zoneMethodMenuPaper: {
+    '&.MuiPaper-root': {
+      width: 200,
+      marginBottom: '8px',
+      borderRadius: 10,
+      border: `1px solid ${theme.palette.borderSubtle1}`,
+      overflow: 'hidden',
+      boxShadow: '0px 4px 16px rgba(16, 24, 40, 0.12)',
+    },
+  },
+
+  zoneMethodMenuList: {
+    '&.MuiList-root': { padding: '4px 0' },
+  },
+
+  zoneMethodMenuItem: {
+    '&&': {
       display: 'flex',
       alignItems: 'center',
-      gap: '6px',
-      minHeight: '32px',
-      padding: '0 10px',
-      borderRadius: '7px',
-      border: 0,
-      backgroundColor: 'transparent',
-      color: theme.palette.textSecondary2,
-      fontSize: '13px',
-      fontWeight: 500,
-      lineHeight: '18px',
-      whiteSpace: 'nowrap',
-      '& svg': { width: '14px', height: '14px', display: 'block', flexShrink: 0 },
-      '&:hover': { backgroundColor: theme.palette.surfaceGreySubtle },
+      gap: '8px',
+      minHeight: '36px',
+      padding: '6px 12px',
+      '& > svg': { flexShrink: 0 },
+      '&:hover': { background: theme.palette.surfaceGreySubtle },
+      '&.Mui-selected': { background: 'transparent' },
+      '&.Mui-selected:hover, &.Mui-selected:focus': {
+        background: theme.palette.surfaceGreySubtle,
+      },
     },
   },
 
-  mapSwitcherOptionOn: {
-    '&.MuiButtonBase-root': {
-      backgroundColor: theme.palette.surfaceBrandSubtle,
+  zoneMethodMenuItemLabel: {
+    '&&': {
+      ...theme.typography.subtitle2,
       color: theme.palette.textPrimary,
+      flex: '1 1 auto',
+      minWidth: 0,
     },
+  },
+
+  zoneMethodMenuItemLabelOn: {
+    '&&': { color: theme.palette.textBrand },
+  },
+
+  zoneMethodMenuCheck: {
+    width: 14,
+    height: 14,
+    flex: '0 0 auto',
+    display: 'grid',
+    placeItems: 'center',
+    color: theme.palette.textBrand,
+    '& svg': { width: '14px', height: '14px', display: 'block' },
+  },
+
+  /**
+   * Where the solution menu floats: fixed to the screen's bottom-right corner, the same
+   * way the scheduler's own review menu is pinned over its grid — not to the Zones
+   * section's box, which scrolls the trigger away with the rest of the card stack the
+   * moment a planner scrolls past it. `zIndex` clears the sticky Save bar so the two
+   * cannot paint over each other, and `bottom` sits above that bar's own height (69px,
+   * measured) with the same 24px gutter the scheduler's floating shell uses.
+   */
+  zoneSolutionFloat: {
+    position: 'fixed',
+    right: '24px',
+    bottom: '93px',
+    zIndex: 2,
   },
 
   /* ------------------------- What the shape caught, under the name that owns it */
@@ -2146,12 +2403,65 @@ export const useStyles = makeStyles((theme) => ({
     },
   },
 
+  /**
+   * **One font style across the whole block**, which is a reversal.
+   *
+   * The line used to run three sizes — `body3` label, `h5` count, `body3` detail — on the
+   * argument that the site count is the one thing worth reading at a glance and should
+   * therefore be the only bold thing in the panel. Asked to stop: four type sizes inside one
+   * 28px sentence (and two more in the list behind it) made a summary read as a headline with
+   * annotations. Everything is `body2` now, in the panel's own body size, and the only thing
+   * still separating the three parts is colour — label and detail grey, the count in ink.
+   */
   includedLabel: {
     '&.MuiTypography-root': { color: theme.palette.textSecondary3 },
   },
 
-  /* The one thing worth reading at a glance, so it is the only bold thing in the block.
-     Tabular figures because a planner redraws and compares — proportional digits make the
+  /* ---------------- The always-open variant, under the radius dialog's map */
+
+  includedStatic: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '8px',
+  },
+
+  /**
+   * Heading left, counts right, and a rule underneath.
+   *
+   * The rule is the only line in the whole block. It does two jobs a border box was doing
+   * badly: it separates the summary from the rows it summarises, and it gives a scrolling
+   * list a top edge to run under — without drawing a container around content that is not a
+   * table and should not read as one.
+   */
+  includedStaticHead: {
+    display: 'flex',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+    gap: '12px',
+    paddingBottom: '8px',
+    borderBottom: `1px solid ${theme.palette.borderSubtle2}`,
+  },
+
+  /**
+   * Nothing caught yet, in the box the list will occupy.
+   *
+   * Bordered and roughly two rows tall, so the panel does not jump by 100px the first time a
+   * centre is placed — and so the section reads as *waiting* rather than missing. Dashed,
+   * which is this screen's own mark for a container holding something not made yet (see
+   * `zoneInlineRow`).
+   */
+  includedEmptyState: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: '76px',
+    padding: '12px 16px',
+    border: `1px dashed ${theme.palette.borderSubtle2}`,
+    borderRadius: '8px',
+    textAlign: 'center',
+  },
+
+  /* Tabular figures because a planner redraws and compares — proportional digits make the
      number jump sideways between two drags that caught 8 and 11 sites. */
   includedCount: {
     '&.MuiTypography-root': {
@@ -2199,40 +2509,66 @@ export const useStyles = makeStyles((theme) => ({
    * animation from the wrapper's `offsetHeight`, and a top margin is not in that number, so
    * the last row would be clipped by exactly the gap.
    */
+  /**
+   * **A bordered panel now, not a list hanging off a left rule.**
+   *
+   * The rule was the cheapest thing that tied the rows to the line that opened them, and at
+   * four tight rows with a scrollbar running down the middle of the dialog it read as text
+   * that had come loose rather than as a disclosed list. A bordered box says "this belongs to
+   * the control above it" without a fill — the page surface here is white, and greying a
+   * block on white reads as disabled.
+   *
+   * Full width of its container rather than the old 420px cap: that number was measured for
+   * the 571px editor panel and leaves a 900px dialog with a narrow column of text and a
+   * scrollbar floating in the middle of it. The row's own `space-between` is what keeps the
+   * name and its count apart, and 640px is the point past which that gap stops reading as a
+   * pair.
+   *
+   * `paddingTop` on the wrapper rather than `marginTop`: this is a `Collapse` child, and the
+   * animation is sized from `offsetHeight`, which a top margin is not part of.
+   */
   includedList: {
-    paddingTop: '8px',
-    paddingLeft: '11px',
-    marginLeft: '1px',
-    borderLeft: `1px solid ${theme.palette.borderSubtle2}`,
-    /* As wide as a row needs and no wider. Measured: the longest seeded site name is 22
-       characters at 14px (~150px, and a 40-character name would be ~280px), a 12px gap, and
-       "1 visit · 12 filters" at 12px is about 110px — so 420px holds the worst case. Left to
-       span the panel's full 571px the name and its counts ended up 540px apart with nothing
-       between them, which is a lot of eye travel for a pair meant to be read as one fact. */
-    maxWidth: '420px',
-    /* Five two-line rows before it scrolls. Long enough to answer "did it catch the right
-       ones" without the list pushing the map under the footer. */
-    maxHeight: '184px',
+    /* No border, no radius, no fill — the header's rule is the edge. A box here nested a
+       table inside a dialog that already has one frame too many. */
+    width: '100%',
+    /* About four rows before it scrolls: enough to answer "did it catch the right ones"
+       without the list pushing the dialog's own actions off the bottom. */
+    maxHeight: '212px',
     overflowY: 'auto',
+    /* A thin, quiet scrollbar. The default 15px channel is wider than the gap it sits in and
+       draws more than the rows it scrolls. */
+    scrollbarWidth: 'thin',
+    scrollbarColor: `${theme.palette.borderStrong1} transparent`,
+    '&::-webkit-scrollbar': { width: '6px' },
+    '&::-webkit-scrollbar-thumb': {
+      backgroundColor: theme.palette.borderSubtle2,
+      borderRadius: '3px',
+    },
+    '&::-webkit-scrollbar-track': { backgroundColor: 'transparent' },
   },
 
+  /* Rows held apart by air rather than by rules — the name/company pair is already a visual
+     block, so a line between blocks is a third signal doing the second one's job. */
   includedRow: {
     display: 'flex',
-    alignItems: 'baseline',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    gap: '12px',
-    padding: '4px 0',
+    gap: '16px',
+    padding: '10px 0',
   },
 
+  /* 2px, not the 4 a stack would normally take: the company is a qualifier on the name
+     above it, and the pair has to read as one row against the 20px between rows. */
   includedRowMain: {
     display: 'flex',
     flexDirection: 'column',
+    gap: '2px',
     minWidth: 0,
   },
 
   includedSiteName: {
     '&.MuiTypography-root': {
-      color: theme.palette.textSecondary1,
+      color: theme.palette.textPrimary,
       overflow: 'hidden',
       textOverflow: 'ellipsis',
       whiteSpace: 'nowrap',
@@ -2240,57 +2576,72 @@ export const useStyles = makeStyles((theme) => ({
   },
 
   includedCompany: {
-    '&.MuiTypography-root': { color: theme.palette.textPlaceholder },
+    '&.MuiTypography-root': {
+      color: theme.palette.textSecondary3,
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
+    },
   },
 
+  /* Right-aligned and tabular, so seven of these read as a column of numbers rather than
+     seven independent labels. */
   includedRowMeta: {
-    '&.MuiTypography-root': { color: theme.palette.textPlaceholder, whiteSpace: 'nowrap' },
+    '&.MuiTypography-root': {
+      color: theme.palette.textSecondary1,
+      whiteSpace: 'nowrap',
+      fontVariantNumeric: 'tabular-nums',
+      flexShrink: 0,
+    },
   },
 
   /* ------------------------------------------- The radius centre, and its site */
 
-  centreSelect: {
-    width: '100%',
-    '& .MuiInputBase-root': {
-      height: `${CONTROL_HEIGHT}px`,
-      maxHeight: `${CONTROL_HEIGHT}px`,
-      borderRadius: '8px',
-    },
-    '& .MuiSelect-select': {
-      display: 'flex',
-      alignItems: 'center',
-      gap: '8px',
-      fontSize: '14px',
-      lineHeight: '20px',
-      padding: `0 32px 0 ${FIELD_INSET}px !important`,
-    },
-    '& .MuiOutlinedInput-notchedOutline': { borderColor: theme.palette.borderSubtle2 },
-    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-      borderColor: theme.palette.borderBrand,
-    },
-  },
-
-  centreSelectEmpty: {
-    '& .MuiSelect-select': { color: theme.palette.textPlaceholder },
-  },
+  /* `centreSelect`/`centreSelectEmpty`/`centreDistance`/`centreDistanceValue` lived here:
+     the site dropdown that used to pick a radius centre, and the distance line beneath it.
+     The centre is a dropped pin now — there is no list to choose from — so the field is a
+     readout (`centrePlaced`) rather than a control. */
 
   /**
-   * How far the chosen centre is from where runsheets start.
+   * The placed pin: what it is, and the one verb it has.
    *
-   * Not decoration: a zone centred forty miles from the depot costs eighty miles of the
-   * day before a single filter is changed, and that is invisible on a map at this zoom.
-   * Tabular figures so the number does not jitter as the planner tries different sites.
+   * It reports the distance from the start point rather than coordinates, because that is
+   * the fact the map cannot show — a centre forty miles from the depot costs eighty miles of
+   * the day before a filter is changed, and at this zoom that is invisible. Coordinates would
+   * be precise and useless: nobody checks a zone by reading latitude.
+   *
+   * Sized to `CONTROL_HEIGHT` so the row keeps the height it had when a select sat here and
+   * the reach stepper beside it stays on the same baseline.
    */
-  centreDistance: {
+  centrePlaced: {
     display: 'flex',
     alignItems: 'center',
-    gap: '6px',
+    justifyContent: 'space-between',
+    gap: '12px',
+    minHeight: `${CONTROL_HEIGHT}px`,
   },
 
-  centreDistanceValue: {
+  centrePlacedText: {
     '&.MuiTypography-root': {
       color: theme.palette.textSecondary1,
       fontVariantNumeric: 'tabular-nums',
+    },
+  },
+
+  /* The distance's reserved line. Height held whether or not there is a centre, so placing
+     the first pin fills this slot rather than pushing the map down by a line of text. */
+  centreDistanceSlot: {
+    display: 'flex',
+    alignItems: 'center',
+    minHeight: '18px',
+  },
+
+  centreEmptyText: {
+    '&.MuiTypography-root': {
+      display: 'flex',
+      alignItems: 'center',
+      minHeight: `${CONTROL_HEIGHT}px`,
+      color: theme.palette.textPlaceholder,
     },
   },
 
@@ -2316,10 +2667,13 @@ export const useStyles = makeStyles((theme) => ({
     '&.MuiTypography-root': { color: theme.palette.textPrimary },
   },
 
+  /* 8px between a label and its control, up from 6. At 6 the label sat close enough to the
+     field to read as part of its border rather than as a heading over it — the same step the
+     settings rows use between a label and the thing it names. */
   zoneField: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '6px',
+    gap: '8px',
   },
 
   /**
@@ -2379,7 +2733,7 @@ export const useStyles = makeStyles((theme) => ({
   zoneRadiusInputs: {
     display: 'grid',
     gridTemplateColumns: 'minmax(0, 1fr) auto',
-    gap: '16px 24px',
+    gap: '16px 32px',
     alignItems: 'start',
     [STACK_QUERY]: { gridTemplateColumns: 'minmax(0, 1fr)' },
   },
@@ -2421,6 +2775,73 @@ export const useStyles = makeStyles((theme) => ({
   unsavedText: {
     '&.MuiTypography-root': {
       color: theme.palette.textSecondary2,
+    },
+  },
+
+  /* ------------------------------------------- The zip-codes experience */
+
+  /** The field and the Add button, on one row like the radius experience's centre/reach pair. */
+  zoneZipInputRow: {
+    display: 'flex',
+    alignItems: 'flex-start',
+    gap: '8px',
+  },
+
+  zoneZipField: {
+    width: '140px',
+    '& .MuiInputBase-root': {
+      height: `${CONTROL_HEIGHT}px`,
+      maxHeight: `${CONTROL_HEIGHT}px`,
+      borderRadius: '8px',
+    },
+  },
+
+  zoneZipAddButton: {
+    '&.MuiButton-root': {
+      height: `${CONTROL_HEIGHT}px`,
+    },
+  },
+
+  /** One line, so a bad entry is read against the field that produced it rather than
+      floating free somewhere else on the panel. */
+  zoneZipError: {
+    '&.MuiTypography-root': { color: theme.palette.textAlert },
+  },
+
+  /**
+   * The entered codes, as chips rather than a bare comma list — each one needs its own
+   * remove control, and a list of text has nowhere to hang one.
+   */
+  zoneZipChips: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: '8px',
+    marginTop: '4px',
+  },
+
+  zoneZipChip: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+    height: '28px',
+    padding: '0 6px 0 10px',
+    borderRadius: '7px',
+    border: `1px solid ${theme.palette.borderSubtle2}`,
+    backgroundColor: theme.palette.surfaceGreySubtle,
+    color: theme.palette.textPrimary,
+    fontSize: '13px',
+    fontWeight: 500,
+    lineHeight: '18px',
+  },
+
+  zoneZipChipRemove: {
+    '&.MuiIconButton-root': {
+      width: '18px',
+      height: '18px',
+      padding: 0,
+      color: theme.palette.textSecondary3,
+      '&:hover': { color: theme.palette.textAlert, backgroundColor: 'transparent' },
+      '& svg': { width: '10px', height: '10px', display: 'block' },
     },
   },
 }));

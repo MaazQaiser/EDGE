@@ -262,7 +262,15 @@ const emptyLocation = () => null;
  *    exists reports no zone at all — which is the truthful answer and the one the
  *    coverage panel can act on.
  */
-export const ZONE_SHAPE = { BOUNDARY: 'boundary', RADIUS: 'radius' };
+/**
+ * **Two ways, and `RADIUS` leads.** A zip-code method was built and removed on the same
+ * day at the user's direction: a franchise's territory is drawn on a map, and a list of
+ * postal codes is a different product's model of the same question. Nothing migrates —
+ * a stored `zipcodes` shape falls through `sanitiseZoneShape` to `null`, which is the
+ * existing "unusable shape, keep the zone" path and costs the zone its shape rather than
+ * its sites.
+ */
+export const ZONE_SHAPE = { RADIUS: 'radius', BOUNDARY: 'boundary' };
 
 const ZONE_NAME_MAX = 40;
 
@@ -273,6 +281,44 @@ const ZONE_NAME_MAX = 40;
  */
 const ZONE_POINTS_MIN = 3;
 const ZONE_POINTS_MAX = 60;
+
+/** Miles to a degree of latitude, and of a square mile in square feet — the same flat-earth
+ *  approximation `ZoneEditorPanel`'s own `milesOutsideRing` uses, good at the scale a zone
+ *  actually spans. */
+const AREA_MILES_PER_DEGREE_LAT = 69.0;
+const SQFT_PER_SQ_MILE = 5280 * 5280;
+
+/**
+ * What a drawn boundary encloses, in square feet.
+ *
+ * The zone list shows a boundary's **area** rather than its point count — "8 points" says
+ * how carefully a planner drew, not how much ground the zone covers, and coverage is the
+ * fact the card is for. Projected onto a local flat plane in miles (longitude scaled by the
+ * cosine of the first vertex's latitude, the same simplification the panel's own distance
+ * maths makes) and then the shoelace formula, which is exact for any simple polygon on a
+ * flat plane and wrong only by the amount the flat-earth assumption is — negligible at the
+ * few dozen miles a zone spans, and nothing here draws at continental scale.
+ */
+export const boundaryAreaSqFt = (points) => {
+  if (!Array.isArray(points) || points.length < 3) return 0;
+
+  const lngDegreeLength =
+    AREA_MILES_PER_DEGREE_LAT * Math.cos((Number(points[0].lat) * Math.PI) / 180);
+  const projected = points.map((point) => ({
+    x: Number(point.lng) * lngDegreeLength,
+    y: Number(point.lat) * AREA_MILES_PER_DEGREE_LAT,
+  }));
+
+  let twiceArea = 0;
+  for (let i = 0; i < projected.length; i += 1) {
+    const a = projected[i];
+    const b = projected[(i + 1) % projected.length];
+    twiceArea += a.x * b.y - b.x * a.y;
+  }
+
+  const sqMiles = Math.abs(twiceArea) / 2;
+  return sqMiles * SQFT_PER_SQ_MILE;
+};
 
 /**
  * The zones a franchise has before anybody opens this screen.
@@ -367,6 +413,27 @@ const sanitiseLocation = (raw) => {
  * would take the *assignments* with it. Losing a boundary means "open the editor and
  * draw it again"; losing the zone means five sites silently stop being schedulable.
  */
+/**
+ * One installation day's own radius, or nothing.
+ *
+ * The same two facts a radius zone carries — a centre and a reach — held on the day rather
+ * than in a named list, and validated through the same two guards so the two cannot drift:
+ * `sanitiseLocation` refuses a circle around `NaN, NaN`, and `clampRadiusMiles` keeps the
+ * day inside the range every other radius on the screen obeys.
+ *
+ * A centre with no usable coordinates is no radius at all rather than a radius at the
+ * origin, for the reason `sanitiseZoneShape` gives: the alternative puts a circle in the
+ * Gulf of Guinea instead of failing where somebody can see it.
+ */
+const sanitiseDayRadius = (raw) => {
+  if (!raw || typeof raw !== 'object') return null;
+
+  const anchor = sanitiseLocation(raw.anchor);
+  if (!anchor) return null;
+
+  return { anchor, radiusMiles: clampRadiusMiles(raw.radiusMiles) };
+};
+
 const sanitiseZoneShape = (raw) => {
   if (!raw || typeof raw !== 'object') return null;
 
@@ -380,18 +447,22 @@ const sanitiseZoneShape = (raw) => {
     return {
       kind: ZONE_SHAPE.RADIUS,
       /**
-       * **A radius is centred on a site, not on an arbitrary point.**
+       * **A radius is centred on a dropped pin — a reversal, recorded so nobody re-derives
+       * the rule that used to sit here.**
        *
-       * `siteId` is the answer; `anchor` is that site's coordinates, denormalised so the
-       * shape can still be drawn if the site book is unavailable — the same reasoning that
-       * stores an officer's name beside their id. A dropped pin with no address was the
-       * earlier model and it produced zones described as "12 mi around a dropped pin",
-       * which is not something a planner can check.
+       * The old model required the centre to be a *site* (`siteId` the answer, `anchor` its
+       * denormalised coordinates), argued for on the grounds that "12 mi around a dropped
+       * pin" is a zone nobody can verify. Reversed at the user's direction, and the argument
+       * it loses to is stronger: a territory's natural centre is very often not a site at all
+       * — a depot, a junction, the middle of a city — and forcing it onto the nearest site in
+       * the book means the shape a planner wanted is one they cannot express. The map is the
+       * verification: the circle is drawn over real streets with the caught pins inside it.
        *
-       * The id is optional rather than required so a rule saved under the old model keeps
-       * its circle instead of losing the zone.
+       * `anchor` is now the whole answer, and it keeps its optional `address` for a pin that
+       * has been reverse-geocoded. `siteId` is **read but never written**: a rule saved under
+       * the old model keeps its circle exactly where it was, because `anchor` already carried
+       * those coordinates.
        */
-      siteId: typeof raw.siteId === 'string' && raw.siteId.trim() ? raw.siteId.trim() : null,
       anchor: anchorPoint,
       /* The same clamp the rule-level radius uses, so a zone cannot reach further than
          the setting elsewhere on this screen allows. One range, stated once. */
@@ -596,6 +667,21 @@ const sanitise = (input) => {
         isRecord && typeof entry.zoneId === 'string' && liveZoneIds.has(entry.zoneId.trim())
           ? entry.zoneId.trim()
           : null,
+      /**
+       * **The day's own radius, and why it sits here rather than in the zone list.**
+       *
+       * Under the Radius solution a territory is no longer a named thing many days point at
+       * — the zone list is gone from that view entirely, and each installation day carries
+       * the circle it covers. So a day holds *both* fields: `zoneId` answers "which drawn
+       * boundary" and `radius` answers "which circle", and the screen reads whichever the
+       * live solution is about.
+       *
+       * They are deliberately not merged into one polymorphic field. A day that had a
+       * boundary, was switched to radius and switched back should find its boundary still
+       * chosen, and one field cannot remember two answers. The cost is that a day can hold
+       * an answer for a solution nobody is looking at, which is the cheaper of the two.
+       */
+      radius: sanitiseDayRadius(isRecord ? entry.radius : undefined),
     });
   });
 

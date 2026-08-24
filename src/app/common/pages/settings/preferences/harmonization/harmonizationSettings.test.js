@@ -1,4 +1,5 @@
 import {
+  boundaryAreaSqFt,
   clampNeedBy,
   clampRadiusMiles,
   clampShiftHours,
@@ -210,6 +211,61 @@ describe('clampRadiusMiles', () => {
   });
 });
 
+describe('boundaryAreaSqFt', () => {
+  const SQFT_PER_SQ_MILE = 5280 * 5280;
+
+  /* A square built from the same flat-plane projection the function itself uses: two miles
+     of latitude, and the longitude delta that spans two miles at this square's own latitude.
+     Any lower-latitude square would do — the point is that the shape is a *known* area in
+     the function's own units, not a real place. */
+  it('measures a known square at its own projection', () => {
+    const lat0 = 28;
+    const milesPerSide = 2;
+    const latDelta = milesPerSide / 69;
+    const lngDegreeLength = 69 * Math.cos((lat0 * Math.PI) / 180);
+    const lngDelta = milesPerSide / lngDegreeLength;
+
+    const square = [
+      { lat: lat0, lng: 0 },
+      { lat: lat0, lng: lngDelta },
+      { lat: lat0 + latDelta, lng: lngDelta },
+      { lat: lat0 + latDelta, lng: 0 },
+    ];
+
+    expect(boundaryAreaSqFt(square)).toBeCloseTo(milesPerSide * milesPerSide * SQFT_PER_SQ_MILE, 0);
+  });
+
+  it('does not care which way the ring winds', () => {
+    const lat0 = 28;
+    const latDelta = 1 / 69;
+    const lngDelta = 1 / (69 * Math.cos((lat0 * Math.PI) / 180));
+
+    const clockwise = [
+      { lat: lat0, lng: 0 },
+      { lat: lat0, lng: lngDelta },
+      { lat: lat0 + latDelta, lng: lngDelta },
+      { lat: lat0 + latDelta, lng: 0 },
+    ];
+    /* Reverse the traversal but keep the same first vertex — the function scales longitude
+       off `points[0]`'s own latitude, so swapping which vertex is first would confound the
+       thing this test is isolating, which is winding direction alone. */
+    const counterClockwise = [clockwise[0], clockwise[3], clockwise[2], clockwise[1]];
+
+    expect(boundaryAreaSqFt(counterClockwise)).toBeCloseTo(boundaryAreaSqFt(clockwise), 6);
+  });
+
+  it('is zero for a line or a point, which enclose nothing', () => {
+    expect(boundaryAreaSqFt([])).toBe(0);
+    expect(boundaryAreaSqFt([{ lat: 28, lng: -82 }])).toBe(0);
+    expect(
+      boundaryAreaSqFt([
+        { lat: 28, lng: -82 },
+        { lat: 28.1, lng: -82.1 },
+      ]),
+    ).toBe(0);
+  });
+});
+
 describe('clampNeedBy', () => {
   it.each([
     ['inside the range', 5, 5],
@@ -343,8 +399,8 @@ describe('readHarmonizationSettings', () => {
     /* The days survive and each gains the default shift, which is the point of migrating
        rather than resetting: the weekdays are the expensive part of this setting. */
     expect(settings.routeDays).toEqual([
-      { weekday: 1, shiftHours: SHIFT_HOURS_DEFAULT, officers: [], zoneId: null },
-      { weekday: 4, shiftHours: SHIFT_HOURS_DEFAULT, officers: [], zoneId: null },
+      { weekday: 1, shiftHours: SHIFT_HOURS_DEFAULT, officers: [], zoneId: null, radius: null },
+      { weekday: 4, shiftHours: SHIFT_HOURS_DEFAULT, officers: [], zoneId: null, radius: null },
     ]);
     /* 40km is 24.85 miles, rounded to 25. */
     expect(settings.radiusMiles).toBe(25);
@@ -390,8 +446,9 @@ describe('readHarmonizationSettings', () => {
           shiftHours: 8,
           officers: [{ id: '7', name: 'Alex Rivera' }],
           zoneId: 'north',
+          radius: { anchor: { address: 'Depot', lat: 28.0, lng: -82.5 }, radiusMiles: 12 },
         },
-        { weekday: 4, shiftHours: 6, officers: [], zoneId: null },
+        { weekday: 4, shiftHours: 6, officers: [], zoneId: null, radius: null },
       ],
       zones: DEFAULT_SETTINGS.zones,
       siteZones: { fenchurch: 'east' },
@@ -794,6 +851,115 @@ describe('zones', () => {
 
       expect(zones).toEqual([{ id: 'north', name: 'North', shape: null }]);
     });
+
+    describe('a radius centred on a dropped pin', () => {
+      it('keeps a pin-centred radius that names no site at all', () => {
+        /* The post-reversal shape: an anchor and a distance, no `siteId` anywhere. */
+        const { zones } = normaliseSettings({
+          zones: [
+            {
+              id: 'north',
+              name: 'North',
+              shape: {
+                kind: ZONE_SHAPE.RADIUS,
+                anchor: { address: '', lat: 28.0, lng: -82.5 },
+                radiusMiles: 12,
+              },
+            },
+          ],
+        });
+
+        expect(zones[0].shape).toEqual({
+          kind: ZONE_SHAPE.RADIUS,
+          anchor: { address: '', lat: 28.0, lng: -82.5 },
+          radiusMiles: 12,
+        });
+      });
+
+      it('keeps a rule saved under the site-centred model, and stops storing its siteId', () => {
+        /* The migration that matters: the old shape carried `siteId` beside the anchor, and
+           the anchor already held that site's coordinates — so the circle survives exactly
+           where it was and only the now-unread id is dropped. */
+        const { zones } = normaliseSettings({
+          zones: [
+            {
+              id: 'east',
+              name: 'East',
+              shape: {
+                kind: ZONE_SHAPE.RADIUS,
+                siteId: 'harborview',
+                anchor: { address: 'Harborview Logistics Hub', lat: 28.1, lng: -82.3 },
+                radiusMiles: 9,
+              },
+            },
+          ],
+        });
+
+        expect(zones[0].shape.anchor).toEqual({
+          address: 'Harborview Logistics Hub',
+          lat: 28.1,
+          lng: -82.3,
+        });
+        expect(zones[0].shape.radiusMiles).toBe(9);
+        expect(zones[0].shape).not.toHaveProperty('siteId');
+      });
+    });
+
+    it('drops a retired zip-codes shape without taking the zone with it', () => {
+      /* The zip-code method was removed. A rule saved while it existed falls through to the
+         same "unusable shape" path a corrupt boundary takes: the zone keeps its name and its
+         sites, and loses only the shape. */
+      const { zones } = normaliseSettings({
+        zones: [{ id: 'south', name: 'South', shape: { kind: 'zipcodes', zipCodes: ['33721'] } }],
+      });
+
+      expect(zones).toEqual([{ id: 'south', name: 'South', shape: null }]);
+    });
+  });
+
+  describe("a day's own radius", () => {
+    const dayWith = (radius) =>
+      normaliseSettings({ routeDays: [{ weekday: MON, radius }] }).routeDays[0];
+
+    it('keeps a centre and a reach', () => {
+      expect(
+        dayWith({ anchor: { address: 'Depot', lat: 28.0, lng: -82.5 }, radiusMiles: 12 }).radius,
+      ).toEqual({ anchor: { address: 'Depot', lat: 28.0, lng: -82.5 }, radiusMiles: 12 });
+    });
+
+    it('clamps the reach to the same range every other radius obeys', () => {
+      expect(
+        dayWith({ anchor: { address: '', lat: 28.0, lng: -82.5 }, radiusMiles: 5000 }).radius
+          .radiusMiles,
+      ).toBe(RADIUS_MAX_MILES);
+    });
+
+    it('refuses a circle around coordinates that are not coordinates', () => {
+      expect(dayWith({ anchor: { address: 'Nowhere' }, radiusMiles: 10 }).radius).toBeNull();
+    });
+
+    it('is null on a day that has never been given one', () => {
+      expect(dayWith(undefined).radius).toBeNull();
+      expect(normaliseSettings({ routeDays: [MON] }).routeDays[0].radius).toBeNull();
+    });
+
+    it('is carried independently of the day zone, so switching solution loses neither', () => {
+      /* A day can hold both answers at once — see the note on `radius` in the day sanitiser.
+         The boundary a planner chose must survive a trip through the Radius view. */
+      const { routeDays } = normaliseSettings({
+        zones: [{ id: 'north', name: 'North' }],
+        routeDays: [
+          {
+            weekday: MON,
+            zoneId: 'north',
+            radius: { anchor: { address: '', lat: 28.0, lng: -82.5 }, radiusMiles: 8 },
+          },
+        ],
+      });
+
+      expect(routeDays[0].zoneId).toBe('north');
+      expect(routeDays[0].radius.radiusMiles).toBe(8);
+    });
   });
 
   describe('a day and its zone', () => {
@@ -829,6 +995,7 @@ describe('zones', () => {
         shiftHours: 4,
         officers: [],
         zoneId: null,
+        radius: null,
       });
     });
   });
