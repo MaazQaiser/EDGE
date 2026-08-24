@@ -111,19 +111,29 @@ const CARD_FLIP_ABOVE = 190;
  * does not. The separation is doing the work the closeness used to prevent.
  *
  * There is no `idle` any more. A zone no day works is not drawn — see `emphasisFor`.
+ *
+ * **`muted` came down again, 0.07 → 0.04, on instruction** — *"reduce the gray for non selected
+ * day radius a little bit more"* — and the overlap change is what made room for it. Circles now
+ * intersect (see `RADIUS_PADDING_MILES`), and translucent fills compound in a lens: two greys at
+ * 0.07 read as 0.135 in the overlap, which put the busiest tone on the map in the one place
+ * nothing is being said. At 0.04 the lens is 0.078 — still under a single circle's old weight.
  */
-const ZONE_FILL = { open: 0.18, muted: 0.07 };
+const ZONE_FILL = { open: 0.18, muted: 0.04 };
 
 /**
  * The grey a subordinate circle is drawn in.
  *
- * `borderStrong1`'s value, copied rather than read: this is an SVG attribute, so it cannot
- * take a theme token, and picking the palette entry that is already this product's "present
- * but not the subject" line keeps the map speaking the app's language. Dark enough to hold a
- * 1.4px stroke over CARTO's yellow arterials, light enough that the open circle beside it is
- * unambiguously the loud one.
+ * An SVG attribute, so it cannot take a theme token. It began as `borderStrong1`'s `#9E9E9E` —
+ * the palette's "present but not the subject" line — and is now **two steps lighter**, with the
+ * fill and the stroke opacity dropping alongside it. Three quiet things rather than one, because
+ * a subordinate circle is a *boundary the eye should skip*, and the only way a 1.4px ring gets
+ * quieter without vanishing is to lose weight on every axis at once rather than half of one.
+ *
+ * The floor is legibility over CARTO's yellow arterials, which is what stops this going lighter
+ * still: at around `#C8C8CC` the ring breaks up where it crosses a major road, and a circle that
+ * is *sometimes* there is worse than either a visible one or none.
  */
-const MUTED_INK = '#9E9E9E';
+const MUTED_INK = '#B4B4B8';
 
 /**
  * The route weight for a day that is not the open one.
@@ -403,9 +413,14 @@ const useMapStyles = makeStyles((theme) => ({
  *
  * `dulled` is a pin outside the open day's territory. It keeps its hue and its size — it is
  * still real work at a real address, and greying it would make it look excluded rather than
- * subordinate — and loses about half its presence to a group opacity. Without this the circles
+ * subordinate — and gives up most of its presence to a group opacity. Without this the circles
  * grey and the pins inside them do not, which reads as the emphasis having failed rather than
  * as a hierarchy: a pale grey ring full of saturated orange pins says *look here* twice.
+ *
+ * **0.32, tracking the circles down from 0.45.** This figure is not independent of `MUTED_INK`:
+ * when the ring around a group of pins gets quieter, pins left at their old strength become the
+ * loudest thing in a region that is supposed to be background — the emphasis inverts and the
+ * *unselected* days start reading as the subject.
  */
 const SitePin = ({ at, color, hovered, hollow, dulled }) => {
   const scale = (SITE_PIN_SIZE / PIN_ART_BOX) * (hovered ? 1.15 : 1);
@@ -416,7 +431,7 @@ const SitePin = ({ at, color, hovered, hollow, dulled }) => {
   return (
     <g
       transform={transform}
-      opacity={dulled && !hovered ? 0.45 : 1}
+      opacity={dulled && !hovered ? 0.32 : 1}
       style={{ pointerEvents: 'none', transition: 'opacity 200ms ease' }}
     >
       <path d={STOP_PIN_PATH} fill="#FFFFFF" stroke="#FFFFFF" strokeWidth={4.5} />
@@ -944,7 +959,10 @@ const ZoneRouteMap = ({
               points={ringPath(zone.ring)}
               fill="none"
               stroke={muted ? MUTED_INK : zone.color}
-              strokeOpacity={emphasis === 'open' || hovered ? 0.95 : 0.55}
+              /* 0.32 for a muted ring, down from 0.55 — the second of the three axes the grey
+                 lost. Hover restores the full 0.95 along with the hue, so a circle the planner
+                 asks about is never one they have to squint at. */
+              strokeOpacity={emphasis === 'open' || hovered ? 0.95 : 0.32}
               strokeWidth={
                 emphasis === 'open'
                   ? ZONE_STROKE.open

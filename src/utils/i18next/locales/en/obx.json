@@ -1760,9 +1760,9 @@
       "applyRoutes_one": "Apply {{count}} route",
       "applyRoutes_other": "Apply {{count}} routes",
       "applyNote": "Applying replaces the arrival times already given to customers for these {{visits}}.",
-      "scopeSubtitle": "Pick the dates for this run, then choose which visits to include.",
+      "scopeSubtitle": "Select the date range to harmonize visits.",
       "range": "Range",
-      "scope": "Run summary",
+      "scope": "Visits summary",
       "miles": "{{value}} mi",
       "stripLabel": "Days in this run",
       "over": "{{amount}} over",
@@ -1819,8 +1819,8 @@
       "raisedNote": "This run only — your settings still say {{original}}. Changing the hours re-ran the sequence, which is the one thing that does.",
       "backToHours": "Back to {{hours}}",
       "alsoChangeSettings": "Also change my settings",
-      "issuesTitleCount_one": "{{count}} visit does not fit",
-      "issuesTitleCount_other": "{{count}} visits do not fit",
+      "issuesTitleCount_one": "{{count}} visit left uncovered: maximum shift time reached.",
+      "issuesTitleCount_other": "{{count}} visits left uncovered: maximum shift time reached.",
       "reason": {
         "zoneNotWorked": "Zone {{zone}} is not worked on any day in this range.",
         "noLegalDay": "Zone {{zone}} is worked, but not on a date this visit's window reaches.",
@@ -1902,10 +1902,10 @@
       "noWorkedDays": "No working day falls inside this range.",
       "scopeChipPlan": "{{work}} of {{available}} · {{placed}} of {{total}} visits placed",
       "stat": {
-        "visits": "visits",
-        "filters": "filters"
+        "visits": "Visits",
+        "filters": "Filters",
+        "work": "Est. work / shift hours"
       },
-      "statOfShift": "of {{available}} shift",
       "harmonize": "Harmonize",
       "applyPlain": "Apply",
       "emptyText": "Your harmonized route will appear here.",

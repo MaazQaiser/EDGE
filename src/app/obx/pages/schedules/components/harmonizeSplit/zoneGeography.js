@@ -251,11 +251,32 @@ const milesBetween = (a, b) => {
  * How much air a derived circle leaves outside its furthest site.
  *
  * A circle drawn exactly through the outermost site puts that pin *on* the boundary, which
- * looks like a rounding error rather than a territory — and a zone is the ground a van
- * covers, not the convex hull of the addresses currently on the books. A mile and a half at
- * a forty-mile view is enough to read as containment without swallowing the neighbour.
+ * looks like a rounding error rather than a territory — and a zone is the ground a van covers,
+ * not the convex hull of the addresses currently on the books.
+ *
+ * **4.5 miles, up from 1.5, and the extra three are for the neighbours rather than the pins.**
+ * At 1.5 every circle cleared its own sites comfortably and the set came out *completely
+ * disjoint* — three islands with four-to-ten miles of no-man's-land between them, which is not
+ * what a franchise's ground looks like and read as three unrelated areas rather than as one
+ * book divided up. Asked for directly: *"make the radiuses overlap a little."*
+ *
+ * The figures, measured rather than guessed (centre-to-centre distance minus the two radii):
+ *
+ * | Pair | Was | Now |
+ * | --- | --- | --- |
+ * | East ↔ South | 3.30 mi apart | **2.70 mi of overlap** |
+ * | North ↔ East | 4.78 mi apart | **1.22 mi of overlap** |
+ * | North ↔ South | 10.36 mi apart | 4.36 mi apart |
+ *
+ * **North and South staying apart is the right answer, not an unfinished one.** Their centres
+ * are 28.7 miles apart — they are not neighbours — and closing that gap needs another 2.2 miles
+ * on every radius, which takes East ↔ South to a seven-mile lens. Adjacent territories touch;
+ * the two ends of the book do not.
+ *
+ * The containment tests are what hold the upper bound: past roughly this figure a circle starts
+ * capturing a neighbour's sites, and three-way stacking turns the fills to mud.
  */
-const RADIUS_PADDING_MILES = 1.5;
+const RADIUS_PADDING_MILES = 4.5;
 
 /**
  * The smallest radius a derived circle is allowed to have.

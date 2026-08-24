@@ -83,32 +83,39 @@ const ScopePanel = ({ classes, range, forecast, onRangeChange, quiet }) => {
   }, [range.from, range.to]);
 
   /**
-   * The forecast, as two counts and a ratio — **not as three equal figures.**
+   * The forecast — **the drawer's own three figures, and the bar is gone.**
    *
-   * They used to be a row of three identical `value over label` stacks, which spaced them
-   * evenly and so claimed they were the same kind of fact. They are not. `Visits` and
-   * `Filters` are counts of what is in scope: plain integers, complete on their own, and
-   * they belong together because filters are what the visits are *made of* — the cost model
-   * is `10 + 20 × filters`, so the second number is the first one priced.
+   * ## This reverses the two-counts-and-a-meter pass
    *
-   * `Est. work / shift hours` was never a third statistic. It is a **comparison**, it is the
-   * only one of the three that can come out wrong, and it is the reason a planner reads this
-   * panel at all. So it gets its own line and a bar, and the four-word caption that used to
-   * explain what the slash meant is unnecessary once the bar is drawing it.
+   * That pass split these into `15 visits · 57 filters` on one line and `21h 30m` over a 4px
+   * capacity bar on the next, on the argument that the ratio is not a third statistic but a
+   * *comparison* — the only one of the three that can come out wrong, and the reason a planner
+   * reads the panel at all. The argument still looks right to me and it is overruled on
+   * instruction: *"the hour meter in the top grey summary box. It should be the same component
+   * as in the side drawer."*
+   *
+   * So this is `ScopeState`'s stat row again, and **literally** so rather than by resemblance —
+   * `index.jsx` hands this panel `statRow`/`stat`/`statValue`/`statLabel` off
+   * `harmonizeFlow.styles.js`, so the two shells cannot drift by a pixel. The only thing Split
+   * still owns here is the grey `scopeBox` around them.
+   *
+   * `statOfShift` and the whole `statBar*` family are deleted rather than left dormant.
+   *
+   * Counts first, then the ratio that decides. Filters lead the pair of counts — the cost model
+   * is `10 + 20 × filters`, so filters are what the hours are made of — and the work figure is
+   * the plain ratio this feature quotes everywhere else, with the label underneath naming both
+   * halves rather than the value trying to spell it out inline.
    */
-  const counts = [
+  const stats = [
     { key: 'visits', value: String(forecast.visitCount) },
     { key: 'filters', value: String(forecast.filterCount) },
+    {
+      key: 'work',
+      value: `${formatCompact(forecast.workMins)} / ${formatCompact(forecast.availableMins)}`,
+      /* The pool exceeds the shifts before a mile is driven. Amber ink on the figure, once. */
+      warn: forecast.workMins > forecast.availableMins,
+    },
   ];
-
-  const work = formatCompact(forecast.workMins);
-  const available = formatCompact(forecast.availableMins);
-  const overCapacity = forecast.workMins > forecast.availableMins;
-  /* Clamped at 1, and the `statBarOver` colour is what carries the excess. A bar drawn past
-     its own trough is not a bar; a full amber one beside an amber figure is unambiguous. */
-  const fillRatio = forecast.availableMins
-    ? Math.min(1, forecast.workMins / forecast.availableMins)
-    : 0;
 
   /**
    * **① does not fold, and there is no control that folds it.**
@@ -171,57 +178,26 @@ const ScopePanel = ({ classes, range, forecast, onRangeChange, quiet }) => {
        */}
       <Box className={classes.scopeBox}>
         {settling ? (
-          <Box className={classes.statLines} aria-hidden="true">
-            <Box className={classes.statCounts}>
-              {counts.map((count) => (
-                <Box
-                  className={classNames(classes.skeletonBar, classes.skeletonStatValue)}
-                  key={count.key}
-                />
-              ))}
-            </Box>
-            <Box className={classes.statCapacity}>
-              <Box className={classNames(classes.skeletonBar, classes.skeletonStatValue)} />
-              <Box className={classNames(classes.skeletonBar, classes.skeletonStatBar)} />
-            </Box>
+          <Box className={classes.statRow} aria-hidden="true">
+            {stats.map((stat) => (
+              <Box className={classes.stat} key={stat.key}>
+                <Box className={classNames(classes.skeletonBar, classes.skeletonStatValue)} />
+                <Box className={classNames(classes.skeletonBar, classes.skeletonStatLabel)} />
+              </Box>
+            ))}
           </Box>
         ) : (
-          <Box className={classes.statLines} role="status" aria-live="polite">
-            <Box className={classes.statCounts}>
-              {counts.map((count) => (
-                <Box className={classes.statCount} key={count.key}>
-                  <Typography component="span" className={classes.statValue}>
-                    {count.value}
-                  </Typography>
-                  <Typography component="span" className={classes.statUnit}>
-                    {tt(`stat.${count.key}`)}
-                  </Typography>
-                </Box>
-              ))}
-            </Box>
-
-            <Box className={classes.statCapacity}>
-              <Box className={classes.statCapacityRow}>
+          <Box className={classes.statRow} role="status" aria-live="polite">
+            {stats.map((stat) => (
+              <Box className={classes.stat} key={stat.key}>
                 <Typography
-                  component="span"
-                  className={classNames(classes.statValue, overCapacity && classes.statValueWarn)}
+                  className={classNames(classes.statValue, stat.warn && classes.statValueWarn)}
                 >
-                  {work}
+                  {stat.value}
                 </Typography>
-                <Typography component="span" className={classes.statUnit}>
-                  {tt('statOfShift', { available })}
-                </Typography>
+                <Typography className={classes.statLabel}>{tt(`stat.${stat.key}`)}</Typography>
               </Box>
-              {/* `aria-hidden`: the figure and its unit beside it already say the whole of
-                  what the bar says, and a second announcement of the same ratio is noise in
-                  a live region that has just announced it. */}
-              <Box className={classes.statBar} aria-hidden="true">
-                <Box
-                  className={classNames(classes.statBarFill, overCapacity && classes.statBarOver)}
-                  style={{ transform: `scaleX(${fillRatio})` }}
-                />
-              </Box>
-            </Box>
+            ))}
           </Box>
         )}
       </Box>

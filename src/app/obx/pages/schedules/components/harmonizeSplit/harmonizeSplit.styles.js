@@ -19,23 +19,11 @@ import { makeStyles } from '@mui/styles';
 /** `textPrimary` at 6%, the same lift the drawer's own bands use. */
 const EDGE_SHADOW = 'rgba(38, 37, 39, 0.06)';
 
-/**
- * The amber warning **text** is written in.
- *
- * `textWarning` (`#f19f02`) is an amber-500 — about 2.2:1 on white, fine for a bar or a
- * border and nowhere near enough for a figure. The drawer names the same value for the
- * same reason; copied by value so the two shells say *this does not fit* in one voice.
- */
-const WARNING_INK = '#B54708';
-
-/**
- * The amber a bar turns when the work does not fit.
- *
- * `harmonize.styles.js`'s own `SPILL_LINE`, copied by value for the same reason
- * `WARNING_INK` is: the fill amber survives against a coloured trough, which is where both
- * of these use it, and the two shells have to say *this does not fit* in one voice.
- */
-const SPILL_LINE = '#FEDF89';
+/* `WARNING_INK` and `SPILL_LINE` are **gone with the figures they inked.** The amber stat
+   value and the amber-when-over capacity bar both moved out of this sheet: the summary box is
+   the drawer's component now (see the forecast note below), so the amber ink that says *this
+   does not fit* is the drawer's `WARNING_INK` and there is one of it again rather than two
+   copies agreeing by hand. */
 
 /**
  * The left column's width, and why it is a clamp rather than a percentage.
@@ -400,31 +388,29 @@ export const useStyles = makeStyles((theme) => {
     rangePicker: w({ width: '100%' }),
 
     /**
-     * ① Scope, in a **container** rather than loose on the paper.
+     * ① Scope — **loose on the paper, not in a container.**
      *
-     * Asked for directly: *"Scope should be grey container/box. This gray is going to be
-     * subtle and light."* And it earns the box, because Scope is the one region of this
-     * column that is **quoted rather than authored** — the heading, the three figures and
-     * the way out to Settings are all a read-only mirror of Config A, sitting directly under
-     * a field the planner does edit. A container is how this product already distinguishes
-     * *what you set* from *what setting it produced*.
+     * It was a grey box, asked for at the time (*"Scope should be grey container/box. This
+     * gray is going to be subtle and light"*) and argued for on the grounds that Scope is the
+     * one region of this column **quoted rather than authored** — a read-only mirror of Config
+     * A sitting directly under a field the planner does edit.
      *
-     * **Fill only, no border.** `surfaceGreySubtle` (`#F5F5F6`) against `surfaceWhite` is
-     * about a 2% step, which is the "subtle and light" that was asked for; adding a
-     * `borderSubtle1` hairline on top of a fill draws the same edge twice and makes a quiet
-     * panel look like an input group. This is also why the row above gave up its rule.
+     * **The grey is now gone**, on instruction. It was `surfaceGreySubtle` at radius 10, argued
+     * for because Scope is the one region of the column *quoted* from Config A rather than
+     * authored, sitting directly under a field the planner edits — so a container marked it as
+     * a reading rather than a decision.
      *
-     * There is a note in the drawer's own sheet that a grey box "reads as an input group"
-     * and that read-only values should use hairlines instead. That note is about a **table**
-     * of quoted values inside a 475px drawer, where a filled panel would have to compete
-     * with the table's own rules; this is three figures and a heading in a 600px column with
-     * no rules of its own, and nothing inside it looks like a field.
+     * That argument was answered by the screen changing under it. ① is a **list** now, and the
+     * list's own rows carry a hover ground and a hairline header: a filled panel above them
+     * made two competing surfaces in a column that had none, and the figures — which are the
+     * denominator for everything below — read as a boxed aside rather than as the column's
+     * opening statement.
+     *
+     * So no fill, no border, and no radius. What separates it from the list is the list's own
+     * header rule plus the space above it, which is one separator doing one job.
      */
-    scopeBox: w({
-      background: theme.palette.surfaceGreySubtle,
-      borderRadius: 10,
-      padding: '12px 14px 14px',
-    }),
+    scopeBox: w({ paddingBottom: 18 }),
+
     /* `sectionHead` and `sectionHeading` are **gone**, and with them the `Scope` word and
        the `Configuration` link that sat opposite it. Both removed on instruction; the
        argument for each is in `ScopePanel`. The box below them keeps its own padding, so
@@ -475,9 +461,14 @@ export const useStyles = makeStyles((theme) => {
       /* 8px, where the underlined row used 20. An underlined tab needs air around its label
          because the label *is* the tab and nothing else bounds it; a bordered box carries its
          own edge, so the gap only has to separate two boxes. 20px between containers reads as
-         three unrelated buttons rather than as one control with three positions. */
+         three unrelated buttons rather than as one control with three positions.
+
+         It stays 8 as the boxes grow. A gap that scaled with the tabs would separate them
+         further at the moment they became more clearly one control — the ratio of gap to box
+         is what makes a row of boxes read as a segmented control rather than as three
+         buttons, and growing the boxes alone tightens that ratio in the right direction. */
       gap: 8,
-      marginTop: 16,
+      marginTop: 14,
       /* **No hairline under the row.** It was the underline pattern's baseline — the thing the
          selected tab's 2px rule sat on and interrupted. With boxes there is nothing to
          interrupt it, so it would just be a rule under some buttons, and it was one of the two
@@ -491,21 +482,62 @@ export const useStyles = makeStyles((theme) => {
       '&::-webkit-scrollbar': { display: 'none' },
     }),
 
+    /**
+     * **Bigger, on instruction** — *"make them a little bigger and make them more prominent."*
+     *
+     * Three changes, and only one of them is size:
+     *
+     * - **`subtitle1` (16/500) over `subtitle2` (14/500).** One step up the scale the product
+     *   already has, not an invented figure. 16px is the size the route title below it uses, so
+     *   the tab row now reads at the same weight as the thing it selects rather than as chrome
+     *   above it.
+     * - **`10px 15px` of padding over `6px 12px`**, which takes the box from 34px tall to 42px.
+     *   The vertical growth is the larger share deliberately: a tab is hit with a pointer along
+     *   its whole width already, and it was the *height* that made the row read as a strip of
+     *   labels rather than as a set of buttons.
+     * - **Radius 10 over 8**, tracking `scopeBox`'s own 10 now the box is the same order of
+     *   size as it.
+     *
+     * They earn the room because the row is no longer competing for it. It used to sit at ①
+     * above a route header and an empty state; ① is the visit list now and the tabs only exist
+     * once there is a plan, so at ③ this is the first thing under the summary box and the
+     * control the planner reaches for first.
+     */
     splitTab: w({
-      ...theme.typography.subtitle2,
+      ...theme.typography.subtitle1,
+      /* **Lighter, on instruction.** `subtitle1` ships at 500; a row of three dates does not
+         need semibold to be found once each one is a box you can see. The boxes carry the
+         weight now, so the type does not have to. */
+      fontWeight: 400,
       display: 'flex',
       alignItems: 'center',
-      gap: 7,
+      gap: 8,
       flex: '0 0 auto',
       whiteSpace: 'nowrap',
       cursor: 'pointer',
       /* 8px, `scopeBox`'s radius at a smaller box. Not fully rounded: a pill reads as a filter
          chip — something switched on and off independently — and these are mutually exclusive
          positions of one control, which is what a slightly-rounded rectangle says. */
-      borderRadius: 8,
-      padding: '6px 12px',
-      border: `1px solid ${theme.palette.borderSubtle1}`,
-      background: theme.palette.surface,
+      borderRadius: 10,
+      padding: '10px 15px',
+      /**
+       * **`borderSubtle2` on a transparent ground, and both halves of that were measured.**
+       *
+       * This first shipped as `borderSubtle1` on `theme.palette.surface`, and neither did what
+       * it says. **There is no `surface` token** — the white in this palette is `surfaceWhite`
+       * — so the declaration resolved to the tenant theme's own fallback and painted the
+       * resting tabs a grey slab. Worse, `borderSubtle1` (`#e6e6e7`) against that grey measured
+       * **1.08:1**: the bordered container had no visible border at all, which is the whole
+       * idea of the design gone.
+       *
+       * Transparent is also the right answer rather than merely a correct one — *unfilled* is
+       * what an unselected segment should be, and at ③ it lets the plan region's own wash
+       * through, so the row belongs to the band it sits in. On that ground `borderSubtle2`
+       * (`#d0cfd2`) reads at about 1.6:1, which is how every card edge in this product reads;
+       * `borderSubtle1` does not, and the note on `previewTrack` records the same trap.
+       */
+      border: `1px solid ${theme.palette.borderSubtle2}`,
+      background: 'transparent',
       color: theme.palette.textSecondary1,
       transition: 'background 140ms ease, border-color 140ms ease, color 140ms ease',
       /* Scoped away from the drag verdicts for the reason the drawer's own `tab` records: the
@@ -531,10 +563,37 @@ export const useStyles = makeStyles((theme) => {
      * going from `borderSubtle1` to `borderBrand` is the part that reads at a glance.
      */
     splitTabSelected: w({
-      background: theme.palette.surfaceBrandSubtle,
-      borderColor: theme.palette.borderBrand,
-      color: theme.palette.textBrand,
-      fontWeight: 600,
+      /**
+       * **Solid brand fill, on instruction** — *"give the selected one primary green fill."*
+       *
+       * This reverses the subtle-fill pass, whose argument was that a second solid green block
+       * 300px above the footer's `Harmonize` would make the row look like it held the primary
+       * action. That argument is weaker now than when it was made: at ③ the footer's button is
+       * `Apply 3 routes`, the row is the first thing under the summary, and a segmented control
+       * whose selected segment is *filled* is the plainest statement of "this one" there is.
+       *
+       * The ink goes white with it, which also settles the contrast problem the subtle fill had
+       * — brand-on-brand-subtle measured 2.87:1 and had to borrow `textPrimary`. White on
+       * `surfaceBrand` is a standard button pairing and needs no workaround.
+       */
+      background: theme.palette.surfaceBrand,
+      borderColor: theme.palette.surfaceBrand,
+      /**
+       * **`textPrimary`, not `textBrand` — and this is a measurement, not a preference.**
+       *
+       * A brand label on a brand-subtle ground measures **2.87:1** on the FilterGo tenant
+       * (`#2DA551` on `#E8F7ED`, computed in the browser). That is under the 4.5:1 a 14px label
+       * needs, and it made the *selected* tab the hardest text in the row to read — the exact
+       * inversion of what a selected state is for. The drawer's own `tabDropLegal` hit this
+       * same pair and made the same call for the same reason; the figure even matches.
+       *
+       * Nothing is lost by it. The ground and the 1px edge going brand carry the state on
+       * their own — a `borderBrand` box against a `borderSubtle2` one is unmistakable — and the
+       * label going from `textSecondary1` to `textPrimary` at 600 is a third cue that survives
+       * greyscale, which a hue never does.
+       */
+      color: theme.palette.surfaceWhite,
+      fontWeight: 500,
     }),
 
     /* The stop count, inside a box. **Plain text, not the drawer's grey pill** — a pill inside
@@ -545,7 +604,9 @@ export const useStyles = makeStyles((theme) => {
       ...theme.typography.subtitle3,
       fontWeight: 600,
       color: 'inherit',
-      opacity: 0.75,
+      /* 0.7 on white ink over the brand fill, 0.75 on grey — one value reads correctly on both
+         because it is the *same* relationship: a count is secondary to the date beside it. */
+      opacity: 0.72,
       fontVariantNumeric: 'tabular-nums',
     }),
 
@@ -556,9 +617,11 @@ export const useStyles = makeStyles((theme) => {
       flex: '0 0 auto',
       display: 'grid',
       placeItems: 'center',
-      width: 33,
-      height: 33,
-      borderRadius: 8,
+      /* Square at the tabs' own height, so the row has one baseline and one cap line. This
+         tracks `splitTab`'s box: 16px line box + 2×10 padding + 2×1 border = 42. */
+      width: 42,
+      height: 42,
+      borderRadius: 10,
       border: `1px dashed ${theme.palette.borderStrong1}`,
       background: 'transparent',
       color: theme.palette.textSecondary3,
@@ -591,76 +654,128 @@ export const useStyles = makeStyles((theme) => {
     }),
 
     /* ── The forecast ──────────────────────────────────────────────────────────
-       **Two counts and a meter, not three equal columns — and that is the change.**
+       **Not here any more — it is the drawer's.** `statRow`, `stat`, `statValue`,
+       `statValueWarn` and `statLabel` are handed to `ScopePanel` off
+       `harmonizeFlow.styles.js` by `index.jsx`, so the summary box is literally the drawer's
+       component rather than a copy that resembles it. Asked for directly.
 
-       The three figures used to be a flex row of identical `value over label` stacks:
-       `15 / Visits`, `57 / Filters`, `21h 30m / 24h / Est. work / shift hours`. Even
-       spacing is a claim that three things are the same kind of thing, and these are not.
-       Two of them are **counts of work in scope** — plain integers, complete on their own.
-       The third is a **ratio against a capacity**, which is the only one of the three that
-       can be wrong, and the one the planner is actually reading the panel to find out.
-       Giving it a third of a row and a four-word caption made the question look like a
-       statistic.
+       What went with that: `statLines`, `statCounts`, `statCount`, `statCapacity`,
+       `statCapacityRow`, `statUnit`, `statBar`, `statBarFill` and `statBarOver` — the whole
+       two-counts-and-a-meter pass, including the 4px hours bar. `ScopePanel` carries the
+       argument that was overruled. `scopeBox`, the grey container around them, is still
+       Split's own; the drawer has no equivalent. */
 
-       So the counts pair off on one line and the ratio gets the second line to itself,
-       with the bar this feature already draws for exactly this comparison — 4px, fully
-       rounded, `#EEF5FF` trough under a `#146DFF` fill, `proposedBar`'s own values copied
-       so the forecast in ① and the outturn on a route card are one gauge at two moments.
-       The mouthful goes with it: the bar says *of what*, so the words only have to say
-       `of 24h shift`.
+    /* ── ① — the visit pick list ────────────────────────────────────────────────
+       The rows are the *route's* rows, imported — see `VisitPickList`, which owns the
+       reasoning. What lives here is the section around them and the three `stop*` keys that
+       had to be overridden because this list has no sequence in it. */
+    pickSection: w({ paddingTop: 4 }),
 
-       A hairline between the two lines was tried and dropped. Inside a `surfaceGreySubtle`
-       box a `borderSubtle1` rule is about 1.1:1 — in the markup and not on the screen —
-       and the 14px of air is doing the separating anyway. */
-    statLines: w({ display: 'flex', flexDirection: 'column', gap: 14 }),
+    /* ② — the orb's own slot, now that it no longer runs inside a route card. Centred in
+       whatever height the body has, which is what the card's `previewBody` was doing for it. */
+    computingSlot: w({
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      minHeight: 260,
+      paddingTop: 8,
+    }),
 
-    /* The counts. `baseline`, not `center`: the figure is 20px and its unit is 14px, and
-       sitting them on a shared baseline is what makes the pair read as one phrase — `15
-       visits` — rather than as a number with a label parked beside it. */
-    statCounts: w({ display: 'flex', alignItems: 'baseline', gap: 20, flexWrap: 'wrap' }),
-    statCount: w({ display: 'flex', alignItems: 'baseline', gap: 5 }),
-
-    /* The capacity line: figure, its unit, and the bar under both. */
-    statCapacity: w({ display: 'flex', flexDirection: 'column', gap: 7 }),
-    statCapacityRow: w({ display: 'flex', alignItems: 'baseline', gap: 5 }),
-
-    statValue: w({
-      ...theme.typography.h3,
+    /* Heading left, the one column label right, on a shared baseline. `space-between` on a
+       baseline rather than two stacked rows: a 12px label alone on a line reads as floating
+       rather than as belonging to the numerals under it. */
+    pickHead: w({
+      display: 'flex',
+      alignItems: 'baseline',
+      justifyContent: 'space-between',
+      gap: 8,
+      paddingBottom: 8,
+      marginBottom: 4,
+      borderBottom: `1px solid ${theme.palette.borderSubtle1}`,
+    }),
+    pickHeading: w({
+      ...theme.typography.h4,
+      /* `h4` is 700, a step heavier than a heading earns beside a 12px column label. The
+         drawer's own `sectionHeading` makes the same adjustment. */
+      fontWeight: 500,
       color: theme.palette.textPrimary,
-      /* Tabular figures, so the width of `21h 30m` does not shuffle as the range changes
-         and the bar below it does not appear to start from a different place. */
-      fontVariantNumeric: 'tabular-nums',
-      lineHeight: '28px',
     }),
-    /* The pool exceeds the shifts before a mile is driven. Amber ink on the figure, once
-       — the same treatment and the same argument as the drawer's own. */
-    statValueWarn: w({ color: WARNING_INK }),
-    /* The unit that finishes the phrase: `visits`, `filters`, `of 24h shift`. Sentence case
-       in `body2` — the 11px uppercase letterspaced micro-label is a convention from
-       somewhere else, nothing in this product wears it, and beside a 20px figure it read
-       as a chart legend rather than as part of the sentence. */
-    statUnit: w({ ...theme.typography.body2, color: theme.palette.textSecondary2 }),
+    /* `pickHeadNum` is **gone with the `Filters` column label** — it named the wrong column
+       (the figure pair is right-aligned as a unit, so a label on that edge sat over the
+       duration) and there is no bare numeral left to name now that the count is in the meta
+       line. `VisitPickList` carries the argument. */
 
-    /* `proposedBar`'s geometry and colours, copied by value. See the note above. */
-    statBar: w({
-      position: 'relative',
-      height: 4,
-      background: '#EEF5FF',
-      borderRadius: 24,
-      overflow: 'hidden',
+    pickList: w({ display: 'flex', flexDirection: 'column' }),
+
+    /**
+     * The row's frame — **and the pitch is the point of it.**
+     *
+     * The workspace's `stopLine` carries `marginBottom: 28` against `stopTrackColumn`'s
+     * `-28`, one mechanism whose only job is to let the dashed connector run out of the
+     * painted box and across the gap to the next pin. This list has no connector, so the 28px
+     * is dead air — and fifteen visits at that pitch is about 900px of scrolling through a
+     * list whose whole purpose is to be read before anything is decided.
+     *
+     * `pickTrackColumn` drops the negative twin in the same breath. They move together or the
+     * dash stops short of the next pin; here neither exists, and leaving one behind would be a
+     * row whose box and whose column disagree about where it ends.
+     *
+     * Everything else is the workspace's: `stretch`, the 8px column gap, the 6/8 padding and
+     * the hover ground, so the row a planner ticks at ① is the row they read at ③.
+     */
+    pickStopLine: w({
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'stretch',
+      gap: 8,
+      padding: '7px 8px',
+      marginBottom: 2,
+      borderRadius: 8,
+      cursor: 'default',
+      transition: 'background 120ms ease',
+      '&:hover': { background: theme.palette.surfaceGreySubtle },
     }),
-    statBarFill: w({
-      position: 'absolute',
-      inset: 0,
-      background: '#146DFF',
-      borderRadius: 24,
-      transformOrigin: 'left center',
-      transition: 'transform 260ms ease',
+    /* The pin's column, without the connector's overhang. `center`, because with the dash
+       hidden the pin is the column's only child and would otherwise hang from the top of a
+       two-line row instead of sitting on the name's own centre line. */
+    /* `display: none` — the pin came off the row on instruction, so the 16px column that held
+       it would be 16px of nothing plus the row's 8px gap. */
+    pickTrackColumn: w({ display: 'none' }),
+    /* `display: none`, not a transparent colour — a hidden-but-present rule is a `flex: 1`
+       child that still claims height in a stretch row. */
+    pickTrackHidden: w({ display: 'none' }),
+
+    /* A cleared row dims. It does not strike through, reorder, or lose its figures — it is
+       still a visit, and every fact about it is still true; it is simply not in this run.
+
+       **`pickRowOut` is gone and the opacity is set inline**, because the class version
+       measurably did not apply — live sheet, matching selector, only opacity rule on the
+       element, and `getComputedStyle` still returned 1. Second instance of the pathology
+       `planRegion`'s `--plan-wash` records; `VisitPickList` carries the evidence. Only the
+       toggled declaration moved — the transition works fine as a class. */
+    pickRow: w({ transition: 'opacity 160ms ease' }),
+
+    /* 16px, matching the drag handle it stands in for, so the site name starts at the same x
+       in this list as in the route's. MUI's own `size="small"` root carries 9px of padding
+       and a 20px glyph, both of which have to go for that to hold. */
+    pickCheckbox: w({
+      '&.MuiCheckbox-root': {
+        width: 16,
+        height: 16,
+        padding: 0,
+        flexShrink: 0,
+        marginTop: 3,
+        alignSelf: 'flex-start',
+      },
+      '& svg': { fontSize: 18 },
     }),
-    /* Over capacity: the trough fills completely and turns amber, because a bar that stops
-       at 100% while the figure above it reads `26h of 24h` is a bar contradicting its own
-       caption. Amber and not red — D3 makes the cap soft. */
-    statBarOver: w({ background: SPILL_LINE }),
+
+    pickHint: w({
+      ...theme.typography.body2,
+      color: theme.palette.textSecondary2,
+      marginTop: 10,
+    }),
 
     hint: w({ ...theme.typography.body2, color: theme.palette.textSecondary2, marginTop: 10 }),
 
@@ -841,6 +956,7 @@ export const useStyles = makeStyles((theme) => {
      * would eat the wheel and the drag over the last 22px of a list a planner is dragging
      * out of.
      */
+    /* `planTrail` — the Reasoning band's frame — is unused; the disclosure was removed. */
     planTrail: w({
       flex: '0 0 auto',
       padding: `0 ${GUTTER}px 10px`,

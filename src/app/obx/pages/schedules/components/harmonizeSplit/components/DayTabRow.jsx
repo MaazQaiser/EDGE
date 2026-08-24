@@ -71,6 +71,7 @@ const DayTabRow = ({
   onDropOn,
   onDragOverDay,
   onAddRoute,
+  showAdd,
 }) => {
   const { t } = useTranslation();
   const tt = (key, options) => t(`obx.runsheet.harmonizeFlow.${key}`, options);
@@ -185,7 +186,7 @@ const DayTabRow = ({
       {/* The ghost tab — the drawer's own, including its reasoning: no count, no underline,
           no selected state, quiet until hovered, because it does not *select* a panel, it
           makes a new one. Only once there is a plan to add a route to. */}
-      {planned ? (
+      {planned && showAdd ? (
         <Tooltip arrow title={tt('addRouteHint')}>
           <Box
             component="button"
@@ -218,8 +219,10 @@ DayTabRow.propTypes = {
   onDropOn: PropTypes.func.isRequired,
   onDragOverDay: PropTypes.func.isRequired,
   onAddRoute: PropTypes.func.isRequired,
+  /** The `+` ghost tab. Split turns it off; the drawer keeps it. */
+  showAdd: PropTypes.bool,
 };
 
-DayTabRow.defaultProps = { runsheets: [], accepted: [] };
+DayTabRow.defaultProps = { runsheets: [], accepted: [], showAdd: true };
 
 export default DayTabRow;

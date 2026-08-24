@@ -39,15 +39,15 @@
  * **The boundaries a planner lassoed**, in grid coordinates — the same `{ x, y }` notional
  * miles the sites are placed on.
  *
- * ## These are control points, not the shape
+ * ## Nothing reads these any more
  *
- * Seven or eight vertices per zone is the *intent*; what gets drawn is `handDrawnRing` in
- * `zoneGeography.js`, resampling and wobbling them into forty-odd points. That is not
- * decoration. A zone here is made by dragging a lasso across a map, and a freehand drag
- * does not produce clean straight runs between eight corners — it produces a slightly
- * shaky closed curve that overshoots on the fast parts. A tidy octagon reads as something
- * the *system* generated, which is a lie about where these came from and about how much
- * precision to credit them with.
+ * They were control points for `handDrawnRing` in `harmonizeSplit/zoneGeography.js`, which
+ * resampled and wobbled them into a lassoed-looking outline. **That function is gone and so
+ * is the model behind it**: a zone is a radius around a point now, and the circle is derived
+ * from the zone's own sites rather than from any shape stored here. See that module's header.
+ *
+ * Left in place rather than deleted because the fixture is shared and nothing depends on
+ * their absence — but do not add to them, and do not read them as the zones' geometry.
  *
  * ## They overlap, and that is the honest part
  *

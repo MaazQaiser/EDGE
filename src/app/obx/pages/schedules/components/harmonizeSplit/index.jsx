@@ -9,15 +9,11 @@ import { prefersReducedMotion } from 'src/app/obx/pages/schedules/components/har
 import ComputingState from 'src/app/obx/pages/schedules/components/harmonizeFlow/components/ComputingState';
 import DayPane from 'src/app/obx/pages/schedules/components/harmonizeFlow/components/DayPane';
 import ExitPanel from 'src/app/obx/pages/schedules/components/harmonizeFlow/components/ExitPanel';
-import ReasoningTrail from 'src/app/obx/pages/schedules/components/harmonizeFlow/components/ReasoningTrail';
 import SpillTray from 'src/app/obx/pages/schedules/components/harmonizeFlow/components/SpillTray';
 import { useStyles as useFlowStyles } from 'src/app/obx/pages/schedules/components/harmonizeFlow/harmonizeFlow.styles';
 import { formatCompact } from 'src/app/obx/pages/schedules/components/harmonizeFlow/model/durations';
-import { SITES, VISITS } from 'src/app/obx/pages/schedules/components/harmonizeFlow/model/fixtures';
-import {
-  droppableDatesFor,
-  legalDaysFor,
-} from 'src/app/obx/pages/schedules/components/harmonizeFlow/model/planner';
+import { VISITS } from 'src/app/obx/pages/schedules/components/harmonizeFlow/model/fixtures';
+import { droppableDatesFor } from 'src/app/obx/pages/schedules/components/harmonizeFlow/model/planner';
 import {
   FLOW_STATE,
   holdMsForLine,
@@ -26,8 +22,8 @@ import {
 import { Clossicon } from 'src/assets/svg';
 
 import DayTabRow from './components/DayTabRow';
-import RoutePreview from './components/RoutePreview';
 import ScopePanel from './components/ScopePanel';
+import VisitPickList from './components/VisitPickList';
 import ZoneRouteMap from './components/ZoneRouteMap';
 import { useStyles } from './harmonizeSplit.styles';
 import { announcedDates, zoneRings } from './zoneGeography';
@@ -98,8 +94,6 @@ const HarmonizeSplit = ({ open, onClose, onApplied }) => {
   /** `null` | `'closing'` | `'committing'` — the exit differs by reason, so it is not a boolean. */
   const [leaving, setLeaving] = useState(null);
   const [spillOpen, setSpillOpen] = useState(false);
-  /** Shut by default, the same reasoning `spillOpen` gets — see `ReasoningTrail`. */
-  const [reasoningOpen, setReasoningOpen] = useState(false);
   /* Which zone the pointer is over, wherever it came from — a day pill, a legend row, a
      forecast row. View state, so it lives here and not in the flow hook, which holds only
      what a planner has *decided*. */
@@ -172,7 +166,9 @@ const HarmonizeSplit = ({ open, onClose, onApplied }) => {
   const drawerClasses = useMemo(
     () => ({
       ...flowClasses,
-      spillTray: classes.flowSpillTray,
+      /* **`flowSpillTray` is gone** — the tray is the drawer's floating accordion exactly as
+         the drawer draws it, on instruction. The override widened it for this shell's column;
+         the drawer's own geometry is what was asked for, so there is nothing to override. */
       routeBody: classNames(flowClasses.routeBody, classes.flowRouteBody),
       /**
        * **The whole tab treatment, replaced rather than composed onto.**
@@ -200,18 +196,31 @@ const HarmonizeSplit = ({ open, onClose, onApplied }) => {
     [flowClasses, classes],
   );
 
-  /* Every visit's legal days, once per render: the tray needs it, and X1 needs it to know
-     whether `Move day` can be offered at all. */
-  const legalDaysByVisit = useMemo(
-    () =>
-      Object.fromEntries(
-        VISITS.map((visit) => [
-          visit.id,
-          legalDaysFor(visit, SITES.find((site) => site.id === visit.siteId) || {}, days),
-        ]),
-      ),
-    [days],
+  /**
+   * ①'s classes: Split's sheet, with the summary box's five rules taken from the drawer.
+   *
+   * Listed by name rather than spread wholesale — the two sheets share several key names
+   * (`hint`, `section`, `sectionHead`) and a blanket spread would silently hand the drawer's
+   * version of each to a panel composed against Split's.
+   */
+  const scopeClasses = useMemo(
+    () => ({
+      ...classes,
+      statRow: flowClasses.statRow,
+      stat: flowClasses.stat,
+      statValue: flowClasses.statValue,
+      statValueWarn: flowClasses.statValueWarn,
+      statLabel: flowClasses.statLabel,
+      skeletonBar: flowClasses.skeletonBar,
+      skeletonStatValue: flowClasses.skeletonStatValue,
+      skeletonStatLabel: flowClasses.skeletonStatLabel,
+    }),
+    [classes, flowClasses],
   );
+
+  /* `legalDaysByVisit` went too — its last reader was `dueOnActiveDay`. X1's `Move day` uses
+     `droppableDatesFor(days)` instead, which is the *droppable* set rather than the engine's
+     legal one, and that distinction is deliberate; see its call site. */
 
   /**
    * The day the column is showing — **defaulted, because the tab row now exists early.**
@@ -224,54 +233,17 @@ const HarmonizeSplit = ({ open, onClose, onApplied }) => {
    * makes the operator click before they can read anything.
    */
   const activeDay = openDay || workedDays[0]?.date || null;
-  const activeDayRecord = workedDays.find((day) => day.date === activeDay) || null;
 
   const openSheet = plan.runsheets.find((sheet) => sheet.date === activeDay) || null;
 
-  /**
-   * What is **due** in the open day's zone, before anything sequences it.
-   *
-   * Counted from the visits' own legal days rather than from `plan.runsheets`, and that
-   * distinction is the whole point: a runsheet is an answer and this is a question. A
-   * visit counts here if this day is one it could legally be served on — which is exactly
-   * the set the engine is about to choose from, so the caption is a true statement of the
-   * input rather than a preview of the output.
-   */
-  const dueOnActiveDay = useMemo(() => {
-    if (!activeDay) return { visits: 0, filters: 0 };
-    return VISITS.reduce(
-      (total, visit) =>
-        legalDaysByVisit[visit.id]?.includes(activeDay)
-          ? { visits: total.visits + 1, filters: total.filters + (visit.filterCount || 0) }
-          : total,
-      { visits: 0, filters: 0 },
-    );
-  }, [activeDay, legalDaysByVisit]);
+  /* `activeDayRecord` and `dueOnActiveDay` are **gone with `RoutePreview`** — both existed
+     only to fill its header and caption at ① and ②, and neither state draws a day header any
+     more. `legalDaysByVisit` went with them; see above. */
 
-  /* `RoutePreview` needs two rules the drawer's sheet has no equivalent for; everything
-     else it draws is the drawer's own. Merged at the call site rather than folded into
-     `drawerClasses`, so the solved card cannot accidentally pick up a preview rule. */
-  const previewClasses = useMemo(
-    () => ({
-      previewTitle: classes.previewTitle,
-      /* `previewMetricEmpty` is gone with the em dash it dressed; `previewMetricRow` holds
-         the height it was really there for. Both of the new keys have to be listed here —
-         this object is a **whitelist**, not a spread, so a rule added to the sheet and not
-         added here reaches the component as `undefined` and renders unstyled without
-         failing. That is exactly how the centred body slot first shipped flat. */
-      previewMetricRow: classes.previewMetricRow,
-      previewTrack: classes.previewTrack,
-      previewBody: classes.previewBody,
-      previewEmpty: classes.previewEmpty,
-      /* `previewEmptyIcon` is gone with the 22px glyph; `previewIllustration` replaces it.
-         Renaming a key in the sheet without renaming it *here* is what made the empty state
-         render a 550px unstyled black glyph for a few minutes — this object is a whitelist,
-         so a missing key is `undefined` and an unclassed element, not an error. */
-      previewIllustration: classes.previewIllustration,
-      previewEmptyText: classes.previewEmptyText,
-    }),
-    [classes],
-  );
+  /* `previewClasses` — the whitelist that fed `RoutePreview` — is gone with it. Worth
+     remembering it existed: it was a *whitelist*, not a spread, so a sheet rule not listed in
+     it reached the component as `undefined` and rendered unstyled without failing. That trap
+     bit twice. Nothing in this shell has that shape any more. */
 
   /* The stop the shift expires during — derived, so the sentence naming it stays true when
      the sequence changes rather than pointing at a fixed index. */
@@ -297,6 +269,10 @@ const HarmonizeSplit = ({ open, onClose, onApplied }) => {
 
   const isProposal = state === FLOW_STATE.PROPOSAL;
   const isComputing = state === FLOW_STATE.COMPUTING;
+  /* Named rather than derived at the call site as `!isProposal && !isComputing`: the column
+     now shows three genuinely different things in this region — a list, an orb, a route — and
+     a negated pair reads as "the leftovers" rather than as the first act. */
+  const isScope = state === FLOW_STATE.SCOPE;
 
   /**
    * The recompute acknowledgement — what `Harmonize again` turned into.
@@ -519,27 +495,39 @@ const HarmonizeSplit = ({ open, onClose, onApplied }) => {
           <Typography component="h2" className={classes.title}>
             {tt('title')}
           </Typography>
-          {/* What is being harmonized, stated once for the whole screen. Every count in
-              either column is a count of this, and without it they have no denominator.
-              Beside the title now, because that is what it is the summary *of*. */}
-          <Typography className={classes.scopeChip}>
-            {isProposal
-              ? tt('scopeChipPlan', {
-                  work: formatCompact(plan.totals.placedMins),
-                  available: formatCompact(plan.totals.availableMins),
-                  placed: plan.totals.placedCount,
-                  total: plan.totals.visitCount,
-                })
-              : tt('scopeChipRange', {
-                  /* Formatted here rather than interpolated raw — `range` holds
-                     `YYYY-MM-DD`, which is the right shape for a key and the wrong one for
-                     a sentence a planner reads. `ddd D MMM` is what every other date in
-                     this feature prints. */
-                  from: dayjs(flow.range.from).format('ddd D MMM'),
-                  to: dayjs(flow.range.to).format('ddd D MMM'),
-                  count: flow.forecast.visitCount,
-                })}
-          </Typography>
+          {/**
+           * The run's outturn — **and only once there is one.**
+           *
+           * This used to print at ① too, as `15 visits · Sat 15 Aug – Fri 21 Aug`, on the
+           * argument that every count in either column is a count of *this* and without it
+           * they have no denominator. The argument was sound when it was written and ① has
+           * since grown the parts that answer it: the range is in a field 60px below this
+           * line, and the count is the first figure in the forecast box under that. Both of
+           * the chip's facts were being restated, in full, within about 120 pixels — which is
+           * the single clearest piece of duplication on the surface and reads as clutter
+           * before it reads as a summary.
+           *
+           * At ③ it is not a summary of anything above it. `20h 17m of 24h · 12 of 15 visits
+           * placed` is the **answer** — what the engine actually did with the question ① asked
+           * — and nothing else on screen states it, so it earns the top bar outright. The
+           * denominator argument survives there too: it is the one place the whole run's
+           * totals appear while the column below is discussing a single day.
+           *
+           * So the title stands alone at ①. That is not a regression to the void this bar was
+           * rearranged to fix — a lone title left, a lone close button right, is what every
+           * dialog in this product does; the void was only a problem when a *third* element
+           * sat between them.
+           */}
+          {isProposal ? (
+            <Typography className={classes.scopeChip}>
+              {tt('scopeChipPlan', {
+                work: formatCompact(plan.totals.placedMins),
+                available: formatCompact(plan.totals.availableMins),
+                placed: plan.totals.placedCount,
+                total: plan.totals.visitCount,
+              })}
+            </Typography>
+          ) : null}
         </Box>
 
         <Box className={classes.grow} />
@@ -593,7 +581,15 @@ const HarmonizeSplit = ({ open, onClose, onApplied }) => {
           ) : null}
 
           <ScopePanel
-            classes={classes}
+            /**
+             * Split's sheet, with the **drawer's** stat row spliced in.
+             *
+             * *"It should be the same component as in the side drawer"* — so rather than a
+             * copy of the drawer's five rules kept in step by hand, the drawer's own keys are
+             * handed straight through. `scopeBox` (the grey container) and `rangeRow` stay
+             * Split's, because the drawer has no equivalent of either.
+             */
+            classes={scopeClasses}
             range={flow.range}
             forecast={flow.forecast}
             onRangeChange={actions.setRangeDates}
@@ -625,10 +621,27 @@ const HarmonizeSplit = ({ open, onClose, onApplied }) => {
              */
             style={{ '--plan-wash': isComputing || recomputing ? 1 : isProposal ? 0.3 : 0 }}
           >
-            {/* **Always on screen**, where the drawer's row arrives with the proposal.
-                It is the column's day index and the map's selector, and both of those are
-                useful before anything is solved — see `DayTabRow`. */}
-            {workedDays.length ? (
+            {/**
+             * **The tabs arrive with the proposal — and that reverses the reason this row was
+             * built early.**
+             *
+             * It used to be on screen from the first frame, on the argument that a planner
+             * could pick a day, watch the route header fill with that day's zone and shift and
+             * the map focus its territory, all before anything was sequenced — so pressing
+             * Harmonize changed a layout's contents rather than conjuring one, and drift across
+             * the press measured 0px.
+             *
+             * Reversed on instruction: ① is the visit list now, and *"once the user confirms
+             * those, start the harmonization, and then the tabs will appear for the day tabs."*
+             * The argument for the early row was about a smooth transition; what it cost was a
+             * screen that offered three solved days to choose between before it had asked which
+             * work was in the run. A day index over an empty answer is chrome.
+             *
+             * The map keeps following `activeDay` regardless — `workedDays` supplies the day →
+             * zone pairing whether or not a plan exists, so the territory a day works is drawn
+             * from the first frame even though there is no tab to press yet.
+             */}
+            {isProposal && workedDays.length ? (
               <Box className={classes.planTabBand}>
                 <DayTabRow
                   classes={drawerClasses}
@@ -646,6 +659,10 @@ const HarmonizeSplit = ({ open, onClose, onApplied }) => {
                     flow.setDrag((current) => (current ? { ...current, overDate: date } : current))
                   }
                   onAddRoute={actions.addRoute}
+                  /* **No `+` tab here**, on instruction. `actions.addRoute` stays wired and is
+                     still reachable from the drawer's own row, so this is a shell difference
+                     rather than a lost capability. */
+                  showAdd={false}
                 />
               </Box>
             ) : null}
@@ -660,27 +677,48 @@ const HarmonizeSplit = ({ open, onClose, onApplied }) => {
                   }
                 : {})}
             >
-              {/* **One card across ① and ②.** The header is the same in both; only its
-                  body changes, from the note to the orb. See `RoutePreview`. */}
-              {!isProposal ? (
-                <RoutePreview
-                  classes={{ ...drawerClasses, ...previewClasses }}
-                  day={activeDayRecord}
-                  filterCount={dueOnActiveDay.filters}
-                  visitCount={dueOnActiveDay.visits}
-                >
-                  {isComputing ? (
-                    <ComputingState
-                      classes={drawerClasses}
-                      line={flow.revealLines[Math.min(flow.step, flow.revealLines.length - 1)]}
-                      lineIndex={Math.min(flow.step, flow.revealLines.length - 1)}
-                      lineCount={flow.revealLines.length}
-                      holdMs={holdMsForLine(
-                        flow.revealLines[Math.min(flow.step, flow.revealLines.length - 1)],
-                      )}
-                    />
-                  ) : null}
-                </RoutePreview>
+              {/**
+               * ① — the work, one row per visit, with a box you can clear.
+               *
+               * This is the screen now: the planner says what the run is about, and the footer's
+               * `Harmonize` is the confirmation. See `VisitPickList` for why it wears the
+               * route's own row and what that costs.
+               */}
+              {isScope ? (
+                <VisitPickList
+                  classes={classes}
+                  flowClasses={flowClasses}
+                  visits={VISITS}
+                  excluded={flow.excluded}
+                  onToggle={actions.toggleVisit}
+                />
+              ) : null}
+
+              {/**
+               * ② — **the orb and the narration, and nothing about a day.**
+               *
+               * It used to run inside `RoutePreview`, so while the engine worked the column
+               * showed `Route for Mon 17 Aug`, a zone, `4h shift` and a due count above the
+               * spinner. Removed on instruction: *"when the AI is loading do not show anything
+               * of the days."* And it was making a claim it had no right to — Monday was only
+               * the *first worked day*, not an answer, so the header named a route the engine
+               * had not chosen yet and might not produce.
+               *
+               * `RoutePreview` is now unreferenced from this shell. Left on disk rather than
+               * deleted: it records the header's slot geometry, and ③'s header is `DayPane`'s.
+               */}
+              {isComputing ? (
+                <Box className={classes.computingSlot}>
+                  <ComputingState
+                    classes={drawerClasses}
+                    line={flow.revealLines[Math.min(flow.step, flow.revealLines.length - 1)]}
+                    lineIndex={Math.min(flow.step, flow.revealLines.length - 1)}
+                    lineCount={flow.revealLines.length}
+                    holdMs={holdMsForLine(
+                      flow.revealLines[Math.min(flow.step, flow.revealLines.length - 1)],
+                    )}
+                  />
+                </Box>
               ) : null}
 
               {isProposal && openSheet ? (
@@ -743,30 +781,11 @@ const HarmonizeSplit = ({ open, onClose, onApplied }) => {
               ) : null}
             </Box>
 
-            {/**
-             * ②'s narration, kept — the drawer's own disclosure, imported.
-             *
-             * **At the foot of the answer, after the route it explains.** It has now been
-             * above the tab row and above the route card, and both were the same mistake in
-             * two places: a disclosure nobody opens on most visits, sitting in the path
-             * between the day a planner has just picked and the route they picked it to
-             * read. Anything parked on that path is an interruption however small it is.
-             *
-             * Reading order settles it — *here is the route; here, if you want it, is how
-             * it was arrived at* — and a footnote goes at the foot. Its own band rather
-             * than the last child of the scrolling body, because a footnote you have to
-             * scroll a nine-stop route to reach is one nobody finds.
-             */}
-            {isProposal ? (
-              <Box className={classes.planTrail}>
-                <ReasoningTrail
-                  classes={drawerClasses}
-                  lines={flow.revealLines}
-                  open={reasoningOpen}
-                  onToggle={() => setReasoningOpen((previous) => !previous)}
-                />
-              </Box>
-            ) : null}
+            {/* **`Reasoning` is gone**, on instruction — the disclosure, its `planTrail` band
+                and the `reasoningOpen` state with it. It printed ②'s narration back as a
+                footnote under the answer. What that costs: the trail was the only place the
+                engine's account of its working survived after ② finished, so a planner who
+                missed the narration has no way back to it. Accepted. */}
 
             {/* **Between the body and the footer, and that ordering is the design.** The
                 drag travels upward — out of the tray, past the route it is about to join,
@@ -854,7 +873,14 @@ const HarmonizeSplit = ({ open, onClose, onApplied }) => {
                     <Button
                       disableRipple
                       variant="primary"
-                      disabled={isProposal ? !plan.runsheets.length : !workedDays.length}
+                      /* Closed with no worked day to run onto **or nothing ticked** — the second is new
+                         with the pick list, and `VisitPickList`'s own hint under the list is what
+                         explains it, since a disabled button explains nothing. */
+                      disabled={
+                        isProposal
+                          ? !plan.runsheets.length
+                          : !workedDays.length || !flow.scopeVisits.length
+                      }
                       onClick={isProposal ? actions.apply : actions.run}
                     >
                       {/* **`route`, not `runsheet`.** The drawer's own key interpolates
