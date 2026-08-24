@@ -45,6 +45,7 @@ import PatrolHeader from './components/patrolHeader';
 import RunsheetHeaderEditButton from './components/runsheetHeaderEditButton';
 import EditRunsheetModal from './editRunsheetModal';
 import Header from './Header';
+import { PANEL_ACCENT } from './panelAccent';
 
 const Activities = lazy(() => import('./Activities'));
 const Details = lazy(() => import('./Details'));
@@ -52,17 +53,18 @@ const HitDetail = lazy(() => import('./hitDetail'));
 const Logs = lazy(() => import('./Logs'));
 const Notes = lazy(() => import('./Notes'));
 const RunsheetDetail = lazy(() => import('./RunsheetDetail'));
+const ShiftTracking = lazy(() => import('./ShiftTracking'));
 
 const useStyles = makeStyles((theme) => ({
   dutyDetailTabFirst: {
     padding: '24px',
   },
-  /* The visit drawer's own sections already carry `20px 24px` of their own — see
-     `VisitAssignment.wrapper` and `runsheetHits.hitCardWrapper` — so this panel's
-     24px was doubling it and the visit drawer's content sat 48px from the edge
-     while the runsheet drawer, whose body brings no padding of its own, sat at 24.
-     Side by side the visit drawer looked narrower than it is. Flush here; the
-     children provide the inset. */
+  /* The visit drawer's own content already carries `20px 24px` of its own — see
+     `runsheetHits.hitCardWrapper` — so this panel's 24px was doubling it and the
+     visit drawer's content sat 48px from the edge while the runsheet drawer,
+     whose body brings no padding of its own, sat at 24. Side by side the visit
+     drawer looked narrower than it is. Flush here; the children provide the
+     inset. */
   dutyDetailTabFirstFlush: {
     padding: 0,
   },
@@ -77,8 +79,13 @@ const useStyles = makeStyles((theme) => ({
       minHeight: '50px',
       borderBottom: `1px solid ${theme.palette.borderSubtle1}`,
       '& .MuiTabs-scroller': {
+        /* **Green, not the brand blue.** Asked for directly against the reference designs:
+           these panels are identical to them except that every accent on them is this
+           product's green. The map keeps its blue, which is not an accent — see
+           `RunsheetDetail`'s legend, where blue means *the planned route* and green means
+           *covered*, and recolouring either would change what the map says. */
         '& .MuiTabs-indicator': {
-          backgroundColor: theme.palette.surfaceBrand,
+          backgroundColor: PANEL_ACCENT,
         },
         '& .MuiTabs-flexContainer': {
           gap: '16px',
@@ -91,7 +98,7 @@ const useStyles = makeStyles((theme) => ({
             lineHeight: '20px',
 
             '&.Mui-selected': {
-              color: theme.palette.textBrand,
+              color: PANEL_ACCENT,
               fontWeight: 500,
             },
 
@@ -217,21 +224,31 @@ const composeDrawerTitle = (name, context) => {
   return `${primary} - ${suffix}`;
 };
 
+/**
+ * **Five tabs for a shift. Two for a visit.**
+ *
+ * This has been round the houses: four everywhere, then one for a visit, then all five on
+ * both panels. Five survives for a shift — every one of them already handles having nothing
+ * to show, so a tab that says "nothing yet" is a smaller surprise than a panel whose tab set
+ * changes with what you clicked. A visit is the exception on its own terms: Notes, Activity
+ * Logs and `shiftTracking` all describe a shift's own clock-in history, which a single stop
+ * never has, so they would open onto content that is not just empty but inapplicable. Its own
+ * report is not — `activities.title` is "Reports" already, read the same way a shift's own
+ * Reports tab is.
+ */
 const getShiftDetailTabs = (t, shiftType) => {
-  // A visit's drawer shows only its Details — the RunsheetHits-style summary
-  // (service time, checkpoints, report, instructions) is the whole story for a
-  // single stop. Activities/Notes/Logs describe a shift with its own clock-in
-  // history, which a visit does not have; offering those tabs here just opened
-  // onto empty or misleading content. Patrol/dedicated keep all four tabs
-  // unchanged — this is scoped to visits only.
   if (shiftType === SCHEDULE_DUTIES.HIT) {
-    return [t('obx.schedules.dutyDetail.detail.title')];
+    return [
+      t('obx.schedules.dutyDetail.detail.title'),
+      t('obx.schedules.dutyDetail.activities.title'),
+    ];
   }
   return [
     t('obx.schedules.dutyDetail.detail.title'),
     t('obx.schedules.dutyDetail.activities.title'),
     t('obx.schedules.dutyDetail.notes.title'),
     t('obx.schedules.dutyDetail.logs.title'),
+    t('obx.schedules.dutyDetail.shiftTracking.title'),
   ];
 };
 
@@ -508,6 +525,45 @@ const DutyDetail = ({
     setIsReassignHitToRunsheet(false);
   };
 
+  /**
+   * Switches the open drawer from a visit to the route it is on — the same
+   * `setShowDrawer` plumbing the grid already uses to open a route drawer from a
+   * click, fired here from inside the visit's own panel instead. `runsheetId`
+   * is the one this drawer was opened with (`drawerData`), not a field off the
+   * fetched hit — the hit response is not guaranteed to echo it back. The
+   * visit's own window doubles as the date context the runsheet fetch needs,
+   * since a visit always falls on the same day as the route carrying it.
+   *
+   * `cameFromVisit` carries this visit's own click-open data (`rest`, the exact
+   * shape `setShowDrawer` already expects) through to the route drawer, so its
+   * header can offer a way back — see `handleBackFromRoute`.
+   */
+  const openRouteDrawer = () => {
+    if (!runsheetId) return;
+    setShowDrawer({
+      open: DRAWER_TYPE.DETAIL,
+      data: {
+        id: runsheetId,
+        shiftId: runsheetId,
+        shiftType: SCHEDULE_DUTIES.PATROL,
+        startsAt,
+        endsAt,
+        cameFromVisit: rest,
+      },
+      activeIndex: 0,
+    });
+  };
+
+  /** Reopens the visit whose route link led here — see `openRouteDrawer`. */
+  const handleBackFromRoute = () => {
+    if (!rest?.cameFromVisit) return;
+    setShowDrawer({
+      open: DRAWER_TYPE.DETAIL,
+      data: rest.cameFromVisit,
+      activeIndex: 0,
+    });
+  };
+
   const showSideDrawer = (value) => (data) => {
     setShowTourDrawer({ open: value, data: value ? data : null });
   };
@@ -696,6 +752,7 @@ const DutyDetail = ({
                 shiftData={shiftData}
                 closeDrawer={closeDrawer}
                 shiftType={shiftType}
+                handleBackBtn={rest?.cameFromVisit ? handleBackFromRoute : undefined}
                 headerTitle={composeDrawerTitle(shiftData?.name, shiftData?.site?.name)}
                 editButtons={
                   <RenderIfHasPermission name={ACL_OBX_SCHEDULES_UPDATE}>
@@ -773,6 +830,10 @@ const DutyDetail = ({
 
                 <CustomTabPanel value={value} index={0}>
                   <Box
+                    /* The visit panel's own sections carry `20px 24px` of their own — see
+                       `runsheetHits.hitCardWrapper` — so this panel's 24px would double it.
+                       Flush for a visit; the runsheet panel keeps this padding, since its own
+                       body brings none. */
                     className={`${classes.dutyDetailTabFirst} ${
                       shiftType === SCHEDULE_DUTIES.HIT ? classes.dutyDetailTabFirstFlush : ''
                     }`}
@@ -780,30 +841,13 @@ const DutyDetail = ({
                     {shiftType === SCHEDULE_DUTIES.HIT ? (
                       <Box>
                         <Suspense fallback={null}>
+                          {/* No assignment callout — that state now lives in the route link's
+                              click-through and the header's kebab, not a panel of its own. */}
                           <HitDetail
-                            {...{
-                              loading,
-                              shiftData,
-                              // Unassigned demand is the reason this drawer gets
-                              // opened from the visits grid, so the fix is one
-                              // click away rather than buried in the kebab.
-                              onAssignToRoute: () => setIsReassignHit(true),
-                              // A visit with no tour cannot be routed at all, so
-                              // the drawer offers the tour first instead of an
-                              // action the backend would reject.
-                              onAssignTour: changeOnlyDrawerType(DRAWER_TYPE.TOUR_ASSIGNMENT),
-                              /* The dropdown proposes; the existing reassign flow
-                                 commits. That flow owns the part that cannot be
-                                 duplicated inline — it recalculates the route's
-                                 polyline through the Maps API before writing, so a
-                                 second write path here would produce a runsheet
-                                 with a stale route. */
-                              onChangeRunsheet: () => setIsReassignHit(true),
-                              callbackUponAssignment: () => {
-                                getHitDetail(shiftId);
-                                getAllDuties();
-                              },
-                            }}
+                            shiftData={shiftData}
+                            loading={loading}
+                            callbackUponAssignment={() => getHitDetail(shiftId)}
+                            onOpenRoute={openRouteDrawer}
                           />
                         </Suspense>
                       </Box>
@@ -891,6 +935,13 @@ const DutyDetail = ({
                       }}
                     />
                   </Suspense>
+                </CustomTabPanel>
+                <CustomTabPanel value={value} index={4}>
+                  <Box className={classes.dutyDetailTabFirst}>
+                    <Suspense fallback={null}>
+                      <ShiftTracking shiftData={shiftData} loading={loading} />
+                    </Suspense>
+                  </Box>
                 </CustomTabPanel>
               </>
             </Box>

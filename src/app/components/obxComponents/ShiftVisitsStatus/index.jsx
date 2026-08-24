@@ -7,6 +7,7 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { dayjsWithStandardOffset } from 'src/app/obx/pages/schedules/helper';
+import { PANEL_ACCENT } from 'src/app/obx/pages/schedules/shiftDetail/panelAccent';
 import { useTenantLabel } from 'src/helper/utilityHooks';
 import useDateTime from 'src/hooks/useDateTime';
 import { dayjsFormatsEnum } from 'src/utils/constants';
@@ -66,9 +67,18 @@ const useStyles = makeStyles((theme) => ({
     backgroundColor: theme.palette.surfaceWarningStrong,
   },
 
+  /**
+   * The tour count, in the panels' green rather than the brand blue.
+   *
+   * These cards only ever appear inside the shift-detail drawers, and those were rebuilt
+   * against a design whose only stated departure is that every accent is green — see
+   * `shiftDetail/panelAccent`. `indicatorBlue` above is deliberately *not* changed: it is a
+   * status colour (in progress, on schedule), and a status that changed colour to match a
+   * panel's accent would stop meaning what the legend says it means.
+   */
   shiftVisitStatusVisits: {
     '&.MuiTypography-root': {
-      color: theme.palette.textBrand,
+      color: PANEL_ACCENT,
     },
   },
 
@@ -124,6 +134,7 @@ const ShiftVisitsStatus = ({
   status,
   totalTours,
   isVisit = false,
+  bordered = true,
 }) => {
   const classes = useStyles();
   const { t } = useTranslation();
@@ -145,7 +156,14 @@ const ShiftVisitsStatus = ({
   };
 
   return (
-    <Box className={classes.shiftVisitStatus}>
+    <Box
+      className={classes.shiftVisitStatus}
+      /* `sx` wins over the makeStyles class it's paired with — see the note on
+         `RouteLink`, which nests this card inside a card of its own and needs
+         this one stripped down to a plain content block instead of doubling up
+         the border and padding. */
+      sx={bordered ? undefined : { border: 'none', padding: 0, borderRadius: 0 }}
+    >
       {startsAt && endsAt && (
         <Typography variant="subtitle2" className={classes.shiftVisitStatusTitle}>
           <ClockIcon className={classes.assignDrawerCalendarBodyIcon} />
@@ -179,6 +197,7 @@ ShiftVisitsStatus.propTypes = {
   status: PropTypes.string,
   completedTours: PropTypes.number,
   totalTours: PropTypes.number,
+  bordered: PropTypes.bool,
   isVisit: PropTypes.bool,
 };
 

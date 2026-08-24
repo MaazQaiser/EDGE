@@ -20,6 +20,8 @@ const RunsheetHits = ({
   fetchingHitLoading,
   hitStatus,
   readOnly = false,
+  extraFields = null,
+  belowFields = null,
 }) => {
   const classes = useStyles();
   const { t } = useTranslation();
@@ -99,7 +101,11 @@ const RunsheetHits = ({
                 </Typography>
               </Box>
             )}
+            {/* A fourth field the three-track grid gives its own row for free — see
+                `RunsheetDetail`'s identical pay-rate-override placement. */}
+            {extraFields}
           </Box>
+          {belowFields}
           {/* //checkpoints? */}
           {hitDetails?.tour && (
             <Box className={classes.checkPointsWrapper}>
@@ -148,9 +154,12 @@ const RunsheetHits = ({
           )}
           {/* //Instruction ? */}
           <Box className={classes.instructionWrapper}>
-            <Typography variant="h6" className={classes.title}>
-              {t('obx.runsheet.instructionsSection')}
-            </Typography>
+            <Box className={classes.instructionHeading}>
+              <Typography variant="h4" className={classes.instructionTitle}>
+                {t('obx.runsheet.instructionsSection')}:
+              </Typography>
+              <Box className={classes.instructionDivider} />
+            </Box>
             {hitDetails?.instructions ? (
               <Box className={classes.instructionTextStyle}>
                 <span dangerouslySetInnerHTML={{ __html: hitDetails?.instructions }} />
@@ -185,6 +194,8 @@ RunsheetHits.propTypes = {
   fetchingHitLoading: PropTypes.bool,
   hitStatus: PropTypes.string,
   readOnly: PropTypes.bool,
+  extraFields: PropTypes.node,
+  belowFields: PropTypes.node,
 };
 
 RunsheetHits.defaultProps = {
@@ -193,6 +204,8 @@ RunsheetHits.defaultProps = {
   fetchingHitLoading: true,
   hitStatus: '',
   readOnly: false,
+  extraFields: null,
+  belowFields: null,
 };
 
 export default RunsheetHits;

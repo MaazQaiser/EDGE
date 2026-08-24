@@ -1,4 +1,8 @@
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
   Avatar,
   Box,
   Button,
@@ -44,6 +48,8 @@ import HitsAccordionListing from '../../../runSheets/components/hitsAccordionLis
 import { ScheduleStatusChips } from '../../components/scheduleStatusChips';
 import { getCurrentStandardTimeInIsoWrtTimezone } from '../../helper';
 import { ASSIGN_RUNSHEET_OPTIONS } from '..';
+import { breakConfiguration, shiftPayRateOverride } from '../demoPanelFields';
+import { PANEL_ACCENT_LIGHT } from '../panelAccent';
 import { useStyles } from './runsheetDetailsStyles';
 
 const RunsheetDetail = ({
@@ -149,6 +155,8 @@ const RunsheetDetail = ({
 
   const finalTimeVal = `${convertRunSheetMinutesToHoursAndMinutes(timeTravelled) || `${0}s`} / ${convertRunSheetMinutesToHoursAndMinutes(totalTime) || `${0}s`}`;
 
+  const breakRule = breakConfiguration(shiftData);
+
   const isPastRunsheet = getCurrentStandardTimeInIsoWrtTimezone() > shiftData?.endsAt;
   const disableAssignment = userHasPermission(ACL_OBX_SCHEDULES_UPDATE)
     ? isPastRunsheet ||
@@ -163,8 +171,12 @@ const RunsheetDetail = ({
         <Box className={classes.HitStats}>
           <Box className={classes.hitItem}>
             <Typography variant="body3" className={classes.hitItemTitle}>
+              {/* The tenant's word with the generic one behind it: this label's locale entry is
+                  `{{hits}} Done`, so a tenant with no label set rendered a bare "Done" — and
+                  the officer field below rendered *nothing at all*. A field with a value and
+                  no label reads as a broken panel. */}
               {t('obx.schedules.dutyDetail.runsheetDetail.hitsDone', {
-                hits: getLabel('terms', 'hits', t),
+                hits: getLabel('terms', 'hits', t) || 'Hits',
               })}
             </Typography>
             {loading ? (
@@ -178,7 +190,7 @@ const RunsheetDetail = ({
           <Box className={classes.hitItem}>
             <Typography variant="body3" className={classes.hitItemTitle}>
               {t('obx.schedules.dutyDetail.runsheetDetail.officer', {
-                officer: getLabel('roles', 'officer', t),
+                officer: getLabel('roles', 'officer', t) || 'Officer',
               })}
             </Typography>
             {loading ? (
@@ -304,8 +316,52 @@ const RunsheetDetail = ({
               </Typography>
             )}
           </Box>
+          {/* Its own row in the design rather than a fourth column, which the three-track
+              grid gives it for free — it is the only money on the panel and reads as a
+              different kind of fact from the five above it. */}
+          <Box className={classes.hitItem}>
+            <Typography variant="body3" className={classes.hitItemTitle}>
+              {t('obx.schedules.dutyDetail.detail.payRateOverride')}
+            </Typography>
+            {loading ? (
+              <Skeleton variant="rectangular" className={classes.fieldSkelton} />
+            ) : (
+              <Typography variant="subtitle2" className={classes.hitItemSubTitle}>
+                {shiftPayRateOverride(shiftData)}
+              </Typography>
+            )}
+          </Box>
         </Box>
       </Box>
+      {/* **Closed by default, and it stays closed.** A break rule is a policy the runsheet
+          inherits — it is read when something has gone wrong with a clock-out, not while
+          reading the round — so it earns a line, not a section. The panel above it is the
+          six facts a dispatcher opens this drawer for. */}
+      <Accordion disableGutters elevation={0} square className={classes.breakAccordion}>
+        <AccordionSummary
+          expandIcon={<KeyboardArrowDownIcon className={classes.breakChevron} />}
+          className={classes.breakSummary}
+        >
+          <Typography variant="h5" className={classes.breakTitle}>
+            {t('obx.runsheet.breakConfigurations')}
+          </Typography>
+        </AccordionSummary>
+        <AccordionDetails className={classes.breakDetails}>
+          <Typography variant="subtitle2" className={classes.breakRuleName}>
+            {breakRule.name}
+          </Typography>
+          {breakRule.rows.map((row) => (
+            <Box key={row.label} className={classes.breakRow}>
+              <Typography variant="body3" className={classes.hitItemTitle}>
+                {row.label}
+              </Typography>
+              <Typography variant="body3" className={classes.hitItemSubTitle}>
+                {row.value}
+              </Typography>
+            </Box>
+          ))}
+        </AccordionDetails>
+      </Accordion>
       <Box className={classes.shiftProgressWrapper}>
         {[
           calendarShiftStatusEnum.NOT_STARTED,
@@ -335,6 +391,16 @@ const RunsheetDetail = ({
           </Box>
           <Box className={classes.autoRight}>
             <Switch
+              /* Green, like every other accent on this panel — see `panelAccent`. Inline
+                 rather than a class because MUI's switch is three nested elements and the
+                 checked state lives on the inner one; a `makeStyles` class here would have to
+                 restate the same two selectors anyway. */
+              sx={{
+                '& .MuiSwitch-switchBase.Mui-checked': { color: PANEL_ACCENT_LIGHT },
+                '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                  backgroundColor: PANEL_ACCENT_LIGHT,
+                },
+              }}
               checked={!autoShiftToggle}
               onChange={toggleAutoShift}
               disabled={

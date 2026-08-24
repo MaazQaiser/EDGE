@@ -14,6 +14,7 @@ import { toaster } from 'src/utils/toast';
 
 import HitsAccordionListing from '../../../runSheets/components/hitsAccordionListing';
 import { getCurrentStandardTimeInIsoWrtTimezone } from '../../helper';
+import { PANEL_ACCENT_LIGHT } from '../panelAccent';
 import { useStyles } from './details.styles';
 
 const Details = ({ shiftData, loading, loadInstructions, shiftId }) => {
@@ -224,6 +225,13 @@ const Details = ({ shiftData, loading, loadInstructions, shiftId }) => {
                 </Box>
                 <Box className={classes.autoRight}>
                   <Switch
+                    /* The same green the drawer's tabs use — see `panelAccent`. */
+                    sx={{
+                      '& .MuiSwitch-switchBase.Mui-checked': { color: PANEL_ACCENT_LIGHT },
+                      '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                        backgroundColor: PANEL_ACCENT_LIGHT,
+                      },
+                    }}
                     checked={!autoShiftToggle}
                     onChange={toggleAutoShift}
                     disabled={

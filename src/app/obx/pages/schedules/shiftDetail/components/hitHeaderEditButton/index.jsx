@@ -36,7 +36,13 @@ import { toaster } from 'src/utils/toast';
 import { getCurrentStandardTimeInIsoWrtTimezone } from '../../../helper';
 import NoteModal, { notesCharacterLimit } from '../../Notes/createNotesModal/NoteModal';
 
-const HitHeaderEditButtons = ({ closeDrawer, getAllDuties, hitData, changeOnlyDrawerType }) => {
+const HitHeaderEditButtons = ({
+  closeDrawer,
+  getAllDuties,
+  hitData,
+  changeOnlyDrawerType,
+  setIsReassignHit,
+}) => {
   const { t } = useTranslation();
   const { getLabel } = useTenantLabel();
   const [isCancelHit, setIsCancelHit] = useState(false);
@@ -144,15 +150,20 @@ const HitHeaderEditButtons = ({ closeDrawer, getAllDuties, hitData, changeOnlyDr
             </Typography>
           </Box>
         )}
-        {/*{allowCancelOrReassignHit && (*/}
-        {/*  <Box className={classes.dropItem} onClick={() => setIsReassignHit(true)}>*/}
-        {/*    <Typography variant="subtitle2" sx={{ color: '#737378' }}>*/}
-        {/*      {t('obx.schedules.dutyDetail.hitDetail.editButtons.reassignHit', {*/}
-        {/*        hit: getLabel('terms', 'hit', t),*/}
-        {/*      })}*/}
-        {/*    </Typography>*/}
-        {/*  </Box>*/}
-        {/*)}*/}
+        {/* **Back, because the panel below it lost its own.** The visit body used to open on an
+            assignment callout carrying this action; the body is now the design's fields and
+            nothing else, so without this the drawer could show an unrouted visit and offer no
+            way to route it. Same guard as Cancel — a visit that cannot be reassigned cannot be
+            cancelled either. */}
+        {allowCancelOrReassignHit && setIsReassignHit && (
+          <Box className={classes.dropItem} onClick={() => setIsReassignHit(true)}>
+            <Typography variant="subtitle2" sx={{ color: '#737378' }}>
+              {t('obx.schedules.dutyDetail.hitDetail.editButtons.reassignHit', {
+                hit: getLabel('terms', 'hit', t),
+              })}
+            </Typography>
+          </Box>
+        )}
       </PopoverButton>
 
       <NoteModal

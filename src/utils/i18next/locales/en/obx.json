@@ -511,6 +511,12 @@
       "officers": {
         "label": "All {{officers}}",
         "all": "All Officers"
+      },
+      "shift": {
+        "label": "Shift",
+        "all": "All",
+        "filterReplacement": "Filter Replacement Shift",
+        "overtime": "Overtime"
       }
     },
     "calendar": {
@@ -685,7 +691,9 @@
       },
       "resourceHeaders": {
         "locations": "Locations"
-      }
+      },
+      "routeMonthChipTip": "Route · {{count}} {{hits}} on this day",
+      "routeMonthChipTipPlain": "Route"
     },
     "legends": {
       "dedicated": "{{dedicated}}",
@@ -737,7 +745,15 @@
           "behindSchedule": "Behind schedule",
           "onSchedule": "On schedule"
         },
-        "outOfShiftTime": "Out of Shift Time"
+        "outOfShiftTime": "Out of Shift Time",
+        "jobDuration": "Job Duration",
+        "payRateOverride": "Shift Pay Rate Override ($)",
+        "autoClockOut": "Auto Clock-out",
+        "enabled": "Enabled",
+        "disabled": "Disabled",
+        "site": "Site",
+        "location": "Location",
+        "filterCount": "Filter Count"
       },
       "activities": {
         "title": "Reports",
@@ -904,6 +920,12 @@
         "cancelBtn": "Cancel",
         "update": "Update",
         "assign": "Assign"
+      },
+      "shiftTracking": {
+        "title": "Shift Tracking",
+        "emptyTitle": "No tracking yet",
+        "emptyText": "Once the {{officer}} starts the shift, every point they reach appears here in order.",
+        "notReached": "Not reached yet"
       }
     },
     "editDedicatedShift": "Edit Shift Time!",
@@ -1895,7 +1917,7 @@
       "visits_one": "{{count}} visit",
       "visits_other": "{{count}} visits",
       "previewCaption": "{{visits}} · {{filters}} due in this zone",
-      "shiftBudget": "{{shift}} shift",
+      "shiftLabel": "shift",
       "anyZoneShort": "No zone",
       "milesFromBase": "{{miles}} mi from base",
       "cardFilters": "Filters",
@@ -3909,14 +3931,11 @@
         "locationDialogConfirm": "Use this location",
         "cancel": "Cancel",
         "needBy": "Need by Date",
-        "needByReadout": "{{posture}} · up to {{days}} days either side — a {{span}}-day window.",
+        "needByStaticText": "The window around the need by date within which a visit must be performed.",
         "needByTooltip": "The need by date is the first installation date for the site, as set in its contract.",
-        "needByTight": "Tight",
-        "needByBalanced": "Balanced",
-        "needByFlexible": "Flexible",
         "needBySliderAria": "Need by date window, in days either side",
         "needByValueText": "{{days}} days either side",
-        "needByWindowValue": "\u00b1{{days}} days",
+        "needByWindowValue": "±{{days}} days",
         "days": "days",
         "save": "Save",
         "unsaved": "Unsaved changes",
@@ -3924,8 +3943,10 @@
         "saveFailed": "Couldn't save, but your changes are still here. Try again in a normal browser window, not a private one.",
         "zones": "Zones",
         "columnZone": "Zone",
-        "zoneDefBoundary": "Drawn boundary · {{points}} points",
-        "zoneDefRadius": "{{miles}} mi around {{place}}",
+        "zoneDefBoundary": "{{area}} sqft",
+        "zoneDefRadius": "{{miles}} mi radius",
+        "zoneDefZipCodes_one": "{{count}} zip code",
+        "zoneDefZipCodes_other": "{{count}} zip codes",
         "zoneSitesFilters": "{{sites}} · {{filters}}",
         "zoneEdit": "Edit",
         "zoneRemove": "Remove",
@@ -3940,6 +3961,7 @@
         "zoneMethod": "How this zone is defined",
         "zoneMethodBoundary": "Boundary",
         "zoneMethodRadius": "Radius",
+        "zoneMethodZipCodes": "Zip codes",
         "zoneNameLabel": "Zone name",
         "zoneNamePlaceholder": "North, Lahore East, Airport corridor…",
         "zoneRadiusLabel": "Reach",
@@ -3956,33 +3978,41 @@
         "zoneNameMissing": "Give the zone a name",
         "zoneBoundaryMissing": "Draw a boundary on the map",
         "zoneCentreMissing": "Pick a site to centre the zone on",
+        "zoneZipCodesMissing": "Add at least one zip code",
         "zoneBoundaryLabel": "Boundary",
         "zoneCentreLabel": "Centred on",
         "zoneCentrePlaceholder": "Pick a site",
         "zoneCentreHint": "Pick a site here, or click one on the map.",
+        "zoneZipCodesLabel": "Zip codes",
+        "zoneZipCodesPlaceholder": "e.g. 33701",
+        "zoneZipCodesHint": "Every site whose zip code is on this list belongs to the zone.",
+        "zoneZipCodeAdd": "Add",
+        "zoneZipCodeInvalid": "Enter a 5-digit zip code",
+        "zoneZipCodeDuplicate": "That zip code is already on the list",
+        "zoneZipCodeLimit": "Up to {{max}} zip codes per zone",
+        "zoneZipCodeRemoveAria": "Remove {{zip}}",
+        "zoneHintZipCodes": "Add a zip code to see which sites it catches",
+        "zoneHintZipCodesSet": "Add or remove a zip code to change which sites are caught",
         "zoneSiteCount_one": "{{count}} site",
         "zoneSiteCount_other": "{{count}} sites",
         "zoneFilterCount_one": "{{count}} filter",
         "zoneFilterCount_other": "{{count}} filters",
-        "zoneVisitCount_one": "{{count}} visit",
-        "zoneVisitCount_other": "{{count}} visits",
-        "zoneIncluded": "Included",
-        "zoneIncludedCount": "{{visits}} · {{filters}}",
+        "zoneIncluded": "Includes",
         "zoneIncludedNoShape": "Nothing yet",
-        "zoneIncludedRowMeta": "{{visits}} · {{filters}}",
         "zoneHintDraw": "Drag on the map to draw around the sites",
         "zoneHintRedraw": "Drag again to redraw · scroll to zoom",
         "zoneCentreDistance": "{{miles}} mi from your start location",
         "zoneHintCentre": "Click a site to centre the zone on it",
         "zoneHintCentreSet": "Drag the ring to resize · click another site to move the centre",
-        "zoneDefRadiusUnnamed": "{{miles}} mi radius",
         "zonesTextBoundary": "Draw the area a day covers on the map. Every site inside the boundary belongs to that zone.",
         "zonesTextRadius": "Centre a zone on one site and set how far it reaches. Every site inside that distance belongs to it.",
+        "zonesTextZipCodes": "List the zip codes a zone covers. Every site whose zip code is on the list belongs to it.",
         "zoneSolution": "How zones are defined",
         "zoneInlineAddOpen": "Add zone",
         "zoneInlineAdd": "Add",
         "zoneEmptyTitleBoundary": "No zones drawn yet.",
         "zoneEmptyTitleRadius": "No zones measured out yet.",
+        "zoneEmptyTitleZipCodes": "No zones listed yet.",
         "zoneRequired": "Required"
       },
       "runsheetSettings": {

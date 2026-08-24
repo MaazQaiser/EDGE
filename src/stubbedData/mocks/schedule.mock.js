@@ -842,6 +842,29 @@ const visitIdFor = (site, dayIndex) => 500000 + site.id * 10000 + (dayIndex + 50
  */
 const filterCountFor = (site) => 1 + (((site.id * 7 + 3) % 8) | 0);
 
+/**
+ * The sub-location within the site a visit is scoped to.
+ *
+ * A site is a building; a location is a named area inside it — the product's
+ * own Sites > Locations feature (`sites/detail/components/locations`) is
+ * where these are managed, and a checkpoint's `location.locationName` is the
+ * same idea at checkpoint granularity. This is that same concept at the
+ * visit's granularity: which part of the site the visit is for, the way "a
+ * Walmart has a parking lot" is a location inside the Walmart site. Hashed
+ * from the site id for the same reason `filterCountFor` is — one answer per
+ * site, not a reshuffle on every fetch.
+ */
+const SITE_LOCATION_NAMES = [
+  'Parking Lot',
+  'Main Entrance',
+  'Loading Dock',
+  'Rooftop Unit',
+  'Mechanical Room',
+  'Rear Access',
+];
+const siteLocationFor = (site = {}) =>
+  SITE_LOCATION_NAMES[(site.id * 3 + 1) % SITE_LOCATION_NAMES.length];
+
 const makeVisit = ({
   site,
   dayIndex,
@@ -1518,6 +1541,8 @@ export const buildVisitDetail = (hitId, query = {}) => {
     siteId: site.id,
     siteName: site.name,
     name: site.name,
+    companyName: companyNameForSite(site),
+    location: siteLocationFor(site),
     address: SITE_ADDRESSES[site.id],
     startsAt: known?.startsAt || query.startsAt || isoAt(base, 0, 9),
     endsAt: known?.endsAt || query.endsAt || isoAt(base, 0, 11),

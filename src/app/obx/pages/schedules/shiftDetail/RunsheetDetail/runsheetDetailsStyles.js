@@ -1,5 +1,7 @@
 import { makeStyles } from '@mui/styles';
 
+import { PANEL_ACCENT } from '../panelAccent';
+
 export const useStyles = makeStyles((theme) => ({
   // hitCardWrapper: {
   //   padding: '24px 0px 0px 0px',
@@ -36,6 +38,55 @@ export const useStyles = makeStyles((theme) => ({
       textTransform: 'capitalize',
     },
   },
+  /**
+   * The break-configuration disclosure.
+   *
+   * Wearing the same grey bar with a brand rule down its left edge that the app's other
+   * read-only disclosures do, and stripped of MUI's own accordion furniture: no elevation,
+   * no rounded top that stops matching when it opens, and no margin jump between states —
+   * `disableGutters` plus these two rules are what keep the panel from shifting under the
+   * pointer when the section opens.
+   */
+  breakAccordion: {
+    '&.MuiAccordion-root': {
+      marginBottom: '20px',
+      border: 'none',
+      borderRadius: '8px',
+      backgroundColor: theme.palette.surfaceGreySubtle,
+      overflow: 'hidden',
+      '&:before': { display: 'none' },
+    },
+  },
+  breakSummary: {
+    '&.MuiAccordionSummary-root': {
+      minHeight: '48px',
+      padding: '0 16px',
+      /* Green, like the tabs above it — the panels' one stated departure from the reference
+         designs. See `../panelAccent`. */
+      borderLeft: `3px solid ${PANEL_ACCENT}`,
+      '& .MuiAccordionSummary-content': { margin: '12px 0' },
+    },
+  },
+  breakTitle: { '&.MuiTypography-root': { color: theme.palette.textPrimary } },
+  breakChevron: { color: theme.palette.textSecondary2 },
+  breakDetails: {
+    '&.MuiAccordionDetails-root': {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '6px',
+      padding: '0 16px 14px 19px',
+    },
+  },
+  breakRuleName: { '&.MuiTypography-root': { color: theme.palette.textPrimary } },
+  /* Label left, value right on one line — three of these read as a table, which is what a
+     policy is, where label-over-value would read as three more panel fields. */
+  breakRow: {
+    display: 'flex',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+    gap: '12px',
+  },
+
   mapWrapper: {
     height: '300px',
 
