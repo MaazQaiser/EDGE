@@ -477,7 +477,7 @@ export const useStyles = makeStyles((theme) => {
       /* **No hairline under the row.** It was the underline pattern's baseline — the thing the
          selected tab's 2px rule sat on and interrupted. With boxes there is nothing to
          interrupt it, so it would just be a rule under some buttons, and it was one of the two
-         indistinguishable `borderSubtle1` lines 90px apart that `previewTrack` records
+         indistinguishable `borderSubtle1` lines 90px apart the deleted `RoutePreview` recorded
          fighting with. */
       overflowX: 'auto',
       /* 2px of vertical room for the focus ring, which a box tab draws outside its own edge
@@ -535,13 +535,16 @@ export const useStyles = makeStyles((theme) => {
          a list item with an indent. */
       alignItems: 'center',
       justifyContent: 'center',
-      gap: 3,
+      gap: 2,
       flex: '0 0 auto',
       minWidth: 84,
       whiteSpace: 'nowrap',
       cursor: 'pointer',
       borderRadius: 10,
-      padding: '8px 13px',
+      /* 6px, down from 8: `subtitle2`/`subtitle3` bring 20px and 18px line boxes where the
+         off-scale pair brought 18 and 15, so the padding gives back the 5px the correct roles
+         cost and the card stays at the 54px it was measured at. */
+      padding: '6px 13px',
       /**
        * **`borderSubtle2` on a transparent ground, and both halves of that were measured.**
        *
@@ -570,13 +573,20 @@ export const useStyles = makeStyles((theme) => {
     }),
 
     /* Line one. 600 rather than 700: the card is doing the emphasis. */
-    splitTabDay: w({
-      ...theme.typography.subtitle2,
-      fontSize: 13.5,
-      fontWeight: 600,
-      lineHeight: '18px',
-      color: 'inherit',
-    }),
+    /**
+     * Line one — **`subtitle2` exactly, no px overrides.**
+     *
+     * It shipped as `fontSize: 13.5, fontWeight: 600`, and a type census of this column caught
+     * it: 13.5/600 and 11.5/400 existed **nowhere else on the screen**, which are the only two
+     * off-scale sizes in it. That is the same fault this surface has already been corrected for
+     * once — an earlier pass wrote 18/600 figures, 13/600 pill days and an 11px uppercase stat
+     * label, and the rule that came out of it is that type comes from `theme.typography` roles
+     * and never from raw px.
+     *
+     * `subtitle2` is 14/500/20, which is already in this column twice (`Range`, the footer's
+     * button). 500 also happens to be the lighter weight that was asked for.
+     */
+    splitTabDay: w({ ...theme.typography.subtitle2, color: 'inherit' }),
 
     /* Line two, and the overrun dot rides with it rather than beside the date. */
     splitTabCountRow: w({ display: 'flex', alignItems: 'center', gap: 5 }),
@@ -592,13 +602,35 @@ export const useStyles = makeStyles((theme) => {
      * brand fill and grey ink over white are the *same relationship* — a count subordinate to
      * the date above it — and a second colour token would have to be picked twice.
      */
+    /**
+     * Line two — **`subtitle3`, and at full strength on the filled card.**
+     *
+     * `subtitle3` is 12/500/18, the size the route caption under this row already uses, so the
+     * card's two lines are two roles this column already speaks rather than two invented sizes.
+     *
+     * **The 0.72 opacity is gone, and that is a contrast fix rather than a style change.**
+     * Measured on the selected card: white at 0.72 over `#2DA551` composites to about
+     * `#C4E6CE`, which is **2.35:1** against the fill it sits on — well under any threshold, and
+     * materially worse than the day line above it. At full white it is 3.18:1, the same as the
+     * day line and the same as every primary button in this product (`primary.contrastText` is
+     * hardcoded `#ffffff`).
+     *
+     * **That 3.18:1 is a real debt and it is the product's, not this row's.** White on
+     * `surfaceBrand` clears 4.5:1 on the Signal tenant (4.55) and fails on Filter Go's green
+     * (3.18); dark ink inverts it exactly — 4.75 on the green, 3.30 on the blue — so no single
+     * ink is safe for both while the fill is the brand colour at full saturation. Nothing in
+     * the palette fixes it either: `brandHover` is 4.18 and `brandSecondary` is a *different
+     * hue* per tenant (orange on Signal), so neither is a darker-brand token. Clearing this
+     * needs a `brandStrong` token that is dark enough for white in every tenant — which is a
+     * palette change, not a tab change. This row is deliberately no worse than the button in
+     * its own footer.
+     *
+     * Hierarchy therefore comes from size and weight alone, which is enough: 12/500 under
+     * 14/500 reads as subordinate without help from opacity.
+     */
     splitTabCount: w({
-      ...theme.typography.body2,
-      fontSize: 11.5,
-      lineHeight: '15px',
-      fontWeight: 400,
+      ...theme.typography.subtitle3,
       color: 'inherit',
-      opacity: 0.72,
       fontVariantNumeric: 'tabular-nums',
     }),
 
@@ -691,7 +723,7 @@ export const useStyles = makeStyles((theme) => {
     pickSection: w({ paddingTop: 0 }),
 
     /* ② — the orb's own slot, now that it no longer runs inside a route card. Centred in
-       whatever height the body has, which is what the card's `previewBody` was doing for it. */
+       whatever height the body has. */
     /**
      * ② — the orb's slot, **filling the body so it centres in it.**
      *
@@ -809,8 +841,6 @@ export const useStyles = makeStyles((theme) => {
       marginTop: 10,
     }),
 
-    hint: w({ ...theme.typography.body2, color: theme.palette.textSecondary2, marginTop: 10 }),
-
     /* Skeletons, while ① recomputes its forecast. Same 420ms hold as the drawer. */
     skeletonBar: w({
       borderRadius: 4,
@@ -827,7 +857,6 @@ export const useStyles = makeStyles((theme) => {
        the first. */
     skeletonStatValue: w({ width: 78, height: 20 }),
     skeletonStatBar: w({ width: '100%', height: 4, borderRadius: 24 }),
-    skeletonPill: w({ width: 116, height: 44, borderRadius: 8 }),
 
     /* ── The plan region ──────────────────────────────────────────────────────── */
     /**
@@ -952,58 +981,6 @@ export const useStyles = makeStyles((theme) => {
         '@media (prefers-reduced-motion: reduce)': { transition: 'none' },
       },
     }),
-    /* The reasoning footnote's own band, between the scrolling body and the issues tray.
-       Fixed rather than scrolling: it is the last thing said about the answer, and a
-       footnote that has to be scrolled to is one nobody finds. Its panel opens upward into
-       the body's space, so nothing above it moves. */
-    /**
-     * ## The scrim, and the sliced stop row it exists to fix
-     *
-     * `planBody` clips at its own bottom edge, and a nine-stop route means that edge almost
-     * always falls *through* a row rather than between two. Measured on the canonical week:
-     * the last row inside the scrollport was cut at 15px of its 66, leaving a sliver of a
-     * pin and half a site name with `Reasoning` sitting directly under it on a transparent
-     * band. A row cut in half reads as a rendering fault, not as *there is more below* —
-     * and the footnote, which is supposed to be pinned over the list, read as the list's
-     * last item.
-     *
-     * A hairline was the obvious answer and is the wrong one twice over: it draws a border
-     * across the middle of a region whose whole argument is that it is one surface the
-     * machine wrote (see `planRegion`), and `flowSpillTray` already draws the hard rule
-     * 38px below this — two rules that close together are texture, which is the correction
-     * `harmonization-settings.md` §5 records making across a whole screen.
-     *
-     * So the sliver is faded out instead, which is the idiom this feature already uses for
-     * exactly this problem one axis over: `tabRowScrollable` masks the right edge of the
-     * day tabs because "a hidden scrollbar with no other cue makes the trailing tabs look
-     * absent rather than off-screen". Same reasoning, vertical.
-     *
-     * **White rather than the region's own wash**, and that is arithmetic rather than
-     * laziness: `planRegion`'s gradient reaches `surfaceWhite` at 100% and is past 74% of
-     * its own height by the time it gets here, so the ground under this scrim is already
-     * white to within about 1% of a brand tint. Mixing the tint back in would be a second
-     * definition of the same colour, free to drift from the first.
-     *
-     * `pointer-events: none` because it overhangs the scrollport — without it the scrim
-     * would eat the wheel and the drag over the last 22px of a list a planner is dragging
-     * out of.
-     */
-    /* `planTrail` — the Reasoning band's frame — is unused; the disclosure was removed. */
-    planTrail: w({
-      flex: '0 0 auto',
-      padding: `0 ${GUTTER}px 10px`,
-      position: 'relative',
-      '&::before': {
-        content: '""',
-        position: 'absolute',
-        left: 0,
-        right: 0,
-        top: -22,
-        height: 22,
-        pointerEvents: 'none',
-        backgroundImage: `linear-gradient(to top, ${theme.palette.surfaceWhite} 0%, transparent 100%)`,
-      },
-    }),
     /* The tabs pin to the top of the region while the runsheet under them scrolls — they
        are ④'s drop targets, and a target that scrolls away from the pointer carrying
        something towards it is not a target. Transparent, so the wash runs behind them rather than starting under them —
@@ -1054,167 +1031,6 @@ export const useStyles = makeStyles((theme) => {
        See `RoutePreview` for why the header exists this early. These are the only two
        rules it needs that the drawer's sheet does not already supply. */
 
-    /* The static twin of `flowRouteTitle`, which is an `InputBase` and therefore scoped
-       to `.MuiInputBase-root`. Same role, same colour, and the same 4px inset and pull-back
-       so the two titles start on exactly the same pixel — a heading that shifted sideways
-       when the route arrived would undo the point of drawing it early. */
-    /**
-     * The duration's row before there is a duration — **a reserved height, not a value.**
-     *
-     * `previewMetricEmpty` used to live here: `h3` in `textDisabled`, holding an em dash at
-     * the exact size and baseline the duration would arrive at. The dash is gone (see
-     * `RoutePreview`), and what has to survive it is the *height* — that was always the
-     * dash's real job. Without it the row is a lone `body2` line and its box is 20px
-     * against the h3's 28, so the gauge, the caption and the whole stop list below would
-     * rise 8px at the moment of the press. `RoutePreview` exists to make that number zero.
-     *
-     * So the height is stated directly instead of being implied by a glyph nobody needed.
-     * `28px` is `h3`'s own line box — the same figure `flowRouteMetricValue` sets — and
-     * `alignItems: center` keeps the shift's smaller line optically inside it rather than
-     * hung off the taller box's baseline.
-     */
-    previewMetricRow: w({ minHeight: 28, alignItems: 'center' }),
-    /**
-     * The empty gauge — **reserved, and not drawn.**
-     *
-     * ## Why it was visible, and why it is not any more
-     *
-     * An earlier pass made this a neutral hairline grey. The argument was sound as far as
-     * it went: `proposedBar`'s own trough is `#EEF5FF`, the brand blue at its palest, which
-     * vanishes against this region's green wash — so an empty bar read as *no bar*.
-     *
-     * What that missed is that the tab row twelve pixels above ends in a `borderSubtle1`
-     * hairline, and this resolved to **the same `#E6E6E7` at the same full width**. Two
-     * indistinguishable rules ninety pixels apart, with two same-coloured grey captions
-     * loose between them: the header stopped reading as a header and started reading as a
-     * gap between two dividers. Making the empty bar *more* visible had made the region
-     * less legible.
-     *
-     * It is transparent now, and that is also the more honest state: a trough is the frame
-     * of a measurement, and asserting a scale before anything has been measured is the same
-     * class of overclaim as printing the forecast here would be (see `RoutePreview`). The
-     * bar appears with the number it belongs to.
-     *
-     * **The element still renders**, because its 4px is 4px everything below it would jump
-     * by when the answer arrives — which is the whole reason `RoutePreview` exists. Space
-     * reserved, ink withheld.
-     */
-    previewTrack: w({ background: 'transparent' }),
-    previewTitle: w({
-      ...theme.typography.subtitle1,
-      flex: '1 1 auto',
-      minWidth: 0,
-      color: theme.palette.textPrimary,
-      /* **`5px 4px`, not `0 4px`.** `flowRouteTitle` is a `MuiInputBase`, and an input
-         carries its own `4px 0 5px` on top of the line box — so a bare heading at the same
-         type size is 10px shorter, and the title dropped 10px at the moment the route
-         arrived. Matching the box is the difference between "the header fills in" and "the
-         header twitches". */
-      padding: '5px 4px',
-      marginLeft: -4,
-      overflow: 'hidden',
-      textOverflow: 'ellipsis',
-      whiteSpace: 'nowrap',
-    }),
-
-    /**
-     * Where the stop list will be — **and both of its placeholders are centred in it.**
-     *
-     * ## This reverses a top-aligned pass, on instruction
-     *
-     * The note was moved to the top of this space on the argument that the space *is* the
-     * stop list, so its placeholder should begin where the first row will, and that a
-     * centred block in a tall column sits in the middle of a void. The instruction is to
-     * centre it, and taking the two together the instruction wins: a sentence about the
-     * whole region is not a row, and a short block pinned to the top edge of a 300px gap
-     * reads as content that failed to load rather than as a state. The same is true of the
-     * orb, which is the region *working* and had no business being top-aligned either.
-     *
-     * ## One box, so the two cannot drift
-     *
-     * `previewBody` is the slot; `previewEmpty` is only the note's own icon-plus-text row.
-     * The centring lives on the slot, so the note before the press and the orb during ②
-     * land on exactly the same pixel — they are the same state of the same region a moment
-     * apart, and centring them separately would be two chances to disagree.
-     *
-     * `flex: 1` needs a column with a height to resolve against, which is why
-     * `flowRouteBody` below now claims one. Without that the slot collapses to its content
-     * and "centred" silently means "directly under the header", which is where this
-     * started.
-     */
-    previewBody: w({
-      flex: '1 1 auto',
-      minHeight: 0,
-      display: 'flex',
-      flexDirection: 'column',
-      /**
-       * **`stretch`, not `center`** — and this line is the whole of item 6.
-       *
-       * Centring the *items* shrink-wraps them, and `ComputingState`'s `thinkingStage` is
-       * an item: at `center` it measured **93px wide** in a 559px column, so the orb sat
-       * off-centre and `stageContent`'s `width: 100%` inherited 93px, which is what wrapped
-       * a seven-word narration line onto three. The note got away with it because it is
-       * text with a `max-width`; the orb did not.
-       *
-       * Stretched, each child gets the full column and centres its own contents — which
-       * both of them already do, `previewEmpty` with `align-items: center` and the stage
-       * with the centring it was drawn with in the drawer. `justify-content` stays here
-       * because vertical centring is the slot's job in both cases.
-       */
-      alignItems: 'stretch',
-      justifyContent: 'center',
-      /* Air top and bottom so the centred block is never flush against the caption above
-         it on a short viewport, where `flex: 1` has little to give. */
-      padding: '20px 0',
-    }),
-    /* The note itself: the glyph above the sentence rather than beside it, because a
-       centred row of icon-then-text has an optical centre that is neither of them. */
-    previewEmpty: w({
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      /* 14, not 10: the illustration is eight times the height of the glyph it replaced, and
-         at 10 the caption sat close enough to read as the drawing's label rather than as the
-         state's own sentence. */
-      gap: 14,
-      textAlign: 'center',
-    }),
-    /**
-     * The illustration above the note.
-     *
-     * **This replaces a 22px icon**, which was the right weight when the copy under it was
-     * three lines of explanation and the wrong weight the moment that copy became six words:
-     * a small glyph over a short line reads as a list item that lost its row, not as a
-     * state. The slot is now ~168px wide, which is the size at which a drawing can carry
-     * the region without becoming the subject of it.
-     *
-     * **No `color` is set, because the drawing no longer has an accent.** It used to be greys
-     * plus one `currentColor` element, so a tenant's own brand reached the route without the
-     * file knowing anything about tenants. The route is grey glass now, on instruction, so
-     * the drawing is entirely greyscale and `currentColor` is unused — leaving the property
-     * here would be a live-looking hook wired to nothing. `planRegion`'s wash still carries
-     * the tenant's brand, via `color-mix` against `surfaceBrand`, so the region as a whole
-     * has not lost its branding.
-     *
-     * Width rather than height, and `height: auto` from the `viewBox`, so the drawing's own
-     * aspect ratio decides the box. Pinning both is how an illustration ends up subtly
-     * stretched on one breakpoint and nobody notices for a month.
-     */
-    previewIllustration: w({
-      width: 168,
-      maxWidth: '60%',
-      height: 'auto',
-      flex: '0 0 auto',
-      display: 'block',
-    }),
-    previewEmptyText: w({
-      ...theme.typography.body2,
-      color: theme.palette.textSecondary2,
-      /* One short line now, so the measure is only a guard against a long translation
-         setting it as an awkward two. */
-      maxWidth: 330,
-    }),
-
     /* ── The column's footer: the write, and what it costs ────────────────────── */
     footerBand: w({
       flex: '0 0 auto',
@@ -1254,37 +1070,15 @@ export const useStyles = makeStyles((theme) => {
       border: 0,
     }),
 
-    /* ── Overrides on the borrowed drawer parts ───────────────────────────────
-       `DayPane`, `SpillTray` and `ExitPanel` are imported whole and handed
-       `harmonizeFlow`'s own class sheet with these keys swapped in. Two things
-       differ between a 475px drawer and this column, and only two:
-
-       - the tray is the **last** thing above a footer in the drawer, and here it is
-         the last thing above a footer *that also carries the apply note*, so its
-         upward shadow would stack with the footer's own.
-
-       Everything else — the gauge, the rail, the pins, the decision box — is left
-       exactly as the drawer draws it. That is the comparison. */
-    flowSpillTray: w({
-      position: 'relative',
-      flex: '0 0 auto',
-      background: theme.palette.surfaceWhite,
-      borderTop: `1px solid ${theme.palette.borderSubtle1}`,
-      /* No lift. The footer band directly below already casts one, and two shadows
-         40px apart read as a seam rather than as a stack. */
-      boxShadow: 'none',
-    }),
     /**
-     * `routeBody`, with this column's own padding — **and a full-height column.**
+     * `routeBody`, with this column's own padding.
      *
-     * `minHeight: '100%'` is what makes `previewBody`'s `flex: 1` mean anything: percentage
-     * heights resolve against the parent's *content* box, and `planBody` is a scrollport
-     * with a definite height, so this claims all of it. Without it the card is
-     * content-height, `flex: 1` has nothing to distribute, and the centred slot collapses
-     * back to sitting directly under the caption.
-     *
-     * It costs nothing at ③: the solved card is taller than the scrollport anyway, and
-     * `min-height` cannot shrink it.
+     * `minHeight: '100%'` was here for `RoutePreview`'s empty state — it made that card's
+     * `flex: 1` body mean something so the note and the orb could centre in the scrollport.
+     * That card is deleted and ② centres itself now (`computingSlot`), so this is doing
+     * nothing but claiming the scrollport's height for the solved card, which is taller than it
+     * anyway. Kept because `min-height` cannot shrink the card and removing it is a change with
+     * no observable effect either way; it is the padding that earns this key.
      */
     flowRouteBody: w({
       paddingTop: 12,

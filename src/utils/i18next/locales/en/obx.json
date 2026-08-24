@@ -1899,7 +1899,6 @@
       "title": "Harmonize visits",
       "close": "Close",
       "range": "Range",
-      "noWorkedDays": "No working day falls inside this range.",
       "scopeChipPlan": "{{work}} of {{available}} · {{placed}} of {{total}} visits placed",
       "stat": {
         "visits": "Visits",
@@ -1907,8 +1906,6 @@
         "work": "Est. work / shift hours"
       },
       "harmonize": "Harmonize",
-      "applyPlain": "Apply",
-      "emptyText": "Your harmonized route will appear here.",
       "mapAria": "Zones and proposed routes. Drag to pan, scroll to zoom, click a zone to open its day.",
       "zoomIn": "Zoom in",
       "zoomOut": "Zoom out",
@@ -1916,11 +1913,8 @@
       "attribution": "© OpenStreetMap · CARTO",
       "applyRoutes_one": "Apply {{count}} route",
       "applyRoutes_other": "Apply {{count}} routes",
-      "applyNote": "Applying replaces the arrival times already given to customers for these {{visits}}.",
       "visits_one": "{{count}} visit",
       "visits_other": "{{count}} visits",
-      "previewCaption": "{{visits}} · {{filters}} due in this zone",
-      "shiftLabel": "shift",
       "anyZoneShort": "No zone",
       "milesFromBase": "{{miles}} mi from base",
       "cardFilters": "Filters",
@@ -1929,8 +1923,7 @@
       "cardPlacement": "Route",
       "cardOnRoute": "{{day}} · stop {{stop}}",
       "cardZoneNotWorked": "Zone not worked",
-      "cardNotPlaced": "Not placed",
-      "cardWillRunOn": "{{day}}"
+      "cardNotPlaced": "Not placed"
     }
   },
   "obxExtraDuty": {
