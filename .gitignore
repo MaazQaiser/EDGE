@@ -44,3 +44,9 @@ package-lock.json
 .sonar
 sonar-project.properties
 sonar-project.properties
+
+# A vendored copy of the frontend that appeared in the working directory (39MB, ~2700
+# files). Not part of the app. It is also the directory jest.config.js had to scope its
+# `roots` away from, because discovery was collecting its duplicate suites and colliding
+# on the duplicated `__mocks__`.
+/tkxel-signal-frontend-*
