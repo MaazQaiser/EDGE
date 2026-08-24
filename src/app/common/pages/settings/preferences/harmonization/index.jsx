@@ -610,21 +610,10 @@ const Harmonization = () => {
     });
   };
 
-  /**
-   * What the address field says when the planner has set nothing.
-   *
-   * Which rung answered is the whole message, not decoration: "Using your current
-   * location" and "Using the franchise address" are different promises about where a van
-   * leaves from, and a field that showed an address without saying which one it was
-   * would be asking to be trusted for the wrong reason.
-   */
-  const defaultLocationHint = () => {
-    if (isLocating) return tt('locationLocating');
-    if (defaultSource === 'device') return tt('locationFromDevice');
-    if (defaultSource === 'franchise') return tt('locationFromFranchise');
-    if (defaultSource === 'assumed') return tt('locationFromVisits');
-    return tt('locationUnset');
-  };
+  /* `defaultLocationHint` lived here — the sentence that named which rung of the location
+     ladder had answered, shown in the description column until an address was set. The
+     column carries one fixed sentence now (see `locationRow`), and the same fact is on the
+     reset control's tooltip, so the helper had no caller left. */
 
   /**
    * What the reset control promises, and it names the rung it will actually land on.
@@ -636,7 +625,7 @@ const Harmonization = () => {
    * the section description states, worded for a button rather than a paragraph, so the
    * two cannot disagree.
    *
-   * Generic while the device fix is still outstanding, matching `defaultLocationHint`: the
+   * Generic while the device fix is still outstanding: the
    * ladder has not finished resolving, so any specific promise is a guess.
    */
   const resetTargetHint = () => {
@@ -741,8 +730,16 @@ const Harmonization = () => {
             have been is no longer a fact about this field — the reset button's tooltip names
             it, which is where it belongs — so the row explains the field's role instead. The
             label already says it is both ends of the trip. */}
+        {/* **One sentence, in both states.** It used to swap: the row said which rung the
+            default came from ("Defaults to the middle of your scheduled visits") until an
+            address was set, and only then explained what the field is for. Asked to settle on
+            the role sentence, and it is the right half to keep — a description column should
+            describe the setting, not narrate the current value, and the value is already on
+            screen in the field beside it. Which rung answered survives on the reset control's
+            tooltip (`resetTargetHint`), which is where the note above already says it
+            belongs. */}
         <Typography variant="body2" className={classes.prefText}>
-          {explicit ? tt(textKey) : defaultLocationHint()}
+          {tt(textKey)}
         </Typography>
         {/* The line that said where the default came from used to sit here, under each
             field, which printed the same sentence twice in adjacent rows and pushed both
