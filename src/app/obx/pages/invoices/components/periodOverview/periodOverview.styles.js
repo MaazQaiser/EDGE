@@ -107,9 +107,14 @@ export const useStyles = makeStyles((theme) => ({
     alignItems: 'center',
     justifyContent: 'space-between',
     flexWrap: 'wrap',
-    // Five filters and five period buttons have to share 1324px at 1512. The row
-    // still wraps gracefully below that, but at the width this module is measured
-    // at it stays one line — a wrapped filter row moves the table by 44px.
+    // Five filters and five period buttons have to share 1324px at 1512 — six,
+    // once a filter is applied and "Clear all" joins them. The row still wraps
+    // gracefully below that, but at the width this module is measured at it stays
+    // one line — a wrapped filter row moves the table by 44px, which is exactly
+    // what applying a filter used to do. Budget with the button present: left
+    // group 756px + 12px + presets 539px against 1324px. The 17px of slack is
+    // the whole margin, so any label in this row that grows has to be paid for
+    // out of another one.
     gap: '8px 12px',
     padding: '8px 24px',
     borderBottom: `1px solid ${theme.palette.borderSubtle1}`,
@@ -122,7 +127,9 @@ export const useStyles = makeStyles((theme) => ({
     display: 'flex',
     alignItems: 'center',
     flexWrap: 'wrap',
-    gap: '8px 8px',
+    // 6px, not 8px: the optional "Clear all" is a sixth member of this group and
+    // the row has no spare width for it at 1512 (see `controlsRow`).
+    gap: '8px 6px',
     minWidth: 0,
   },
 
@@ -138,7 +145,9 @@ export const useStyles = makeStyles((theme) => ({
   // does not contain it — the fieldset rendered 30px past its box and sat on top of
   // the next dropdown. Clamp the control to the wrapper rather than trusting it.
   searchBox: {
-    width: '184px',
+    // 160px, not 184px: the placeholder is clipped at either width, and the 24px
+    // buys the width "Clear all" needs to stay on this line.
+    width: '160px',
     flexShrink: 0,
     '& .MuiFormControl-root, & .MuiInputBase-root': { width: '100%', minWidth: 0 },
   },
@@ -146,7 +155,7 @@ export const useStyles = makeStyles((theme) => ({
   clearAction: {
     '&.MuiButtonBase-root': {
       minWidth: 'auto',
-      padding: '0 6px',
+      padding: '0 4px',
       height: '28px',
       minHeight: '28px',
     },

@@ -307,3 +307,32 @@ the generic `/shiftActivityLog` handler. Comments in `urlRouter.js` say so at ea
 i18n keys live under `obx.invoice.{tabs,paymentStates,aging,discrepancies,outstanding,payments}` in
 `src/utils/i18next/locales/en/obx.json` (English only so far). Plurals use i18next v4 suffixes
 (`_one` / `_other`).
+
+### Locale keys were lost, then rewritten (2026-08-24)
+
+Every one of the ~120 `obx.invoice.*` keys this module added was **never committed**. The JSX
+landed in `855bd52`, `obx.json` did not — no commit in the repo's history has
+`invoice.{tabs,outstanding,payments,reconciliation,aging,discrepancies}` in it, and the built
+bundle under `build/` was made from the same broken tree. So both surfaces rendered raw key
+paths (`obx.invoice.tabs.invoices` as a tab label), and because the keys are far longer than the
+copy, table cells overlapped and the filter row wrapped.
+
+The copy was **rewritten from this record and the call sites**, not recovered. Anywhere the
+strings read differently from the originals, this file and §D26/§D26a were the source. Two
+things were decided in the rewrite:
+
+- **The word "Sync" appears once, on the control that names the axis.** The chip labels are
+  `Pending / In Progress / Approved / Failed` and the dropdown is `All Statuses`, not
+  `Sync Approved` under a column already headed `Sync Status`. `Sync Approved` also overflowed
+  its chip — 87px of text in a 70px box — so the redundancy was costing a truncation.
+- **The filter row's width budget now includes `Clear all`.** It is a sixth member of the left
+  group that appears only when a filter is applied, it was never in the 1324px budget, and it
+  pushed the presets onto a second line — moving the table down 44px on every filter, the exact
+  defect D26a exists to prevent. Paid for out of the search box (184→160px, the placeholder
+  clips at either width), the group gap (8→6px) and the button's padding (6→4px). Verified:
+  table top 295px unfiltered, filtered, with a selection, and with the custom range open. The
+  17px of slack left is the whole margin — a longer label in this row has to be paid for out of
+  another one.
+
+Still English-only. `de/fr/es` fall back per-key to English, so the surfaces are legible in
+every language but translated in none.

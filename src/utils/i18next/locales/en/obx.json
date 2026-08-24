@@ -4761,15 +4761,171 @@
       "all": "All Statuses",
       "pending": "Pending",
       "inProgress": "In Progress",
-      "syncApproved": "Sync Approved",
-      "syncFailed": "Sync Failed"
+      "syncApproved": "Approved",
+      "syncFailed": "Failed"
     },
     "types": {
       "all": "All Types",
       "adHoc": "Ad hoc",
       "scheduled": "Scheduled"
     },
-    "invoiceTotalQuantity": "Invoice total cannot be negative"
+    "invoiceTotalQuantity": "Invoice total cannot be negative",
+    "tabs": {
+      "invoices": "All Invoices",
+      "outstanding": "Outstanding"
+    },
+    "tableRegion": "Invoices table",
+    "selectAll": "Select all invoices",
+    "selectInvoice": "Select invoice {{number}}",
+    "dueColumn": "Due",
+    "balanceDue": "Balance Due",
+    "totalColumn": "Total",
+    "syncStatus": "Sync Status",
+    "syncStatusDropdownLabel": "All Statuses",
+    "billingInfoIncomplete": "Billing information is incomplete",
+    "close": "Close",
+    "dueRelative": {
+      "today": "Due today",
+      "daysLate_one": "{{count}} day late",
+      "daysLate_other": "{{count}} days late",
+      "inDays_one": "in {{count}} day",
+      "inDays_other": "in {{count}} days"
+    },
+    "actions": {
+      "more": "More actions"
+    },
+    "paymentStates": {
+      "all": "All Payments",
+      "column": "Payment",
+      "unpaid": "Unpaid",
+      "partial": "Part paid",
+      "paid": "Paid",
+      "overpaid": "Overpaid",
+      "credit": "Credit note"
+    },
+    "syncStatuses": {
+      "pending": "Pending",
+      "inProgress": "In Progress",
+      "approved": "Approved",
+      "failed": "Failed"
+    },
+    "aging": {
+      "current": "Not yet due",
+      "d1_30": "1–30 days late",
+      "d31_60": "31–60 days late",
+      "d61_90": "61–90 days late",
+      "d90_plus": "90+ days late"
+    },
+    "discrepancies": {
+      "shortPaid": {
+        "label": "Short paid",
+        "description": "Money arrived, but less than the amount invoiced. The balance still needs chasing."
+      },
+      "overpaid": {
+        "label": "Overpaid",
+        "description": "More arrived than was invoiced. The surplus is held as credit on the customer's account."
+      },
+      "unpaidOverdue": {
+        "label": "Unpaid & overdue",
+        "description": "Nothing has arrived and the due date has passed."
+      },
+      "paidLate": {
+        "label": "Paid late",
+        "description": "Settled in full, after the due date."
+      },
+      "notIssued": {
+        "label": "Never issued",
+        "description": "Raised but never pushed to accounting, so the customer has never seen it and cannot pay it."
+      }
+    },
+    "outstanding": {
+      "customer": "Customer",
+      "openInvoices": "Open Invoices",
+      "oldestOverdue": "Oldest Overdue",
+      "invoiced": "Invoiced",
+      "received": "Received",
+      "overdue": "Overdue",
+      "youAreOwed": "You're owed",
+      "creditsHeld": "Credits held",
+      "creditsHint": "Money customers have overpaid or been credited, held against their account.",
+      "creditsOwedBack_one": "Owed back to {{count}} customer",
+      "creditsOwedBack_other": "Owed back to {{count}} customers",
+      "invoiceCount_one": "{{count}} invoice",
+      "invoiceCount_other": "{{count}} invoices",
+      "openInvoiceCount_one": "{{count}} open invoice",
+      "openInvoiceCount_other": "{{count}} open invoices",
+      "customerCount_one": "{{count}} customer",
+      "customerCount_other": "{{count}} customers",
+      "overdueHint_one": "{{count}} invoice · oldest {{days}} days late",
+      "overdueHint_other": "{{count}} invoices · oldest {{days}} days late",
+      "nothingOverdue": "Nothing overdue",
+      "queueFiltered_one": "{{shown}} of {{count}} customer",
+      "queueFiltered_other": "{{shown}} of {{count}} customers",
+      "inSelection_one": "across {{count}} invoice",
+      "inSelection_other": "across {{count}} invoices",
+      "clearFilters": "Clear filters",
+      "showInvoicesFor": "Show invoices for {{customer}}",
+      "hideInvoicesFor": "Hide invoices for {{customer}}",
+      "emptyTitle": "Nothing outstanding",
+      "emptyBody": "Every issued invoice has been settled in full.",
+      "noMatchTitle": "No customers in this band",
+      "noMatchBody": "No outstanding balance falls in the age band you picked."
+    },
+    "payments": {
+      "title": "Payments",
+      "viewPayments": "Payments",
+      "notIssuedYet": "Payments can be recorded once the invoice is issued",
+      "loading": "Loading payments…",
+      "invoiced": "Invoiced",
+      "received": "Received",
+      "balanceDue": "Balance Due",
+      "creditHeld": "Credit Held",
+      "ledger": "Payment history",
+      "noPayments": "No payments recorded against this invoice yet.",
+      "reverse": "Reverse this payment",
+      "record": "Record a payment",
+      "recordPayment": "Record Payment",
+      "amount": "Amount",
+      "amountRequired": "Enter an amount greater than zero.",
+      "method": "Method",
+      "selectMethod": "Select method",
+      "methodRequired": "Select a payment method.",
+      "methods": {
+        "bankTransfer": "Bank Transfer",
+        "check": "Check",
+        "cash": "Cash",
+        "card": "Card"
+      },
+      "receivedOn": "Received On",
+      "reference": "Reference",
+      "referencePlaceholder": "Check or transaction number",
+      "referenceHelp": "Optional. Helps match this receipt to a bank statement.",
+      "overpaymentWarning": "{{amount}} more than the balance due. The surplus will be held as credit on the customer's account."
+    },
+    "reconciliation": {
+      "billed": "Billed",
+      "received": "Received",
+      "receivedHint_one": "from {{count}} invoice",
+      "receivedHint_other": "from {{count}} invoices",
+      "creditedNote": "{{amount}} credited",
+      "surplusNote": "{{amount}} overpaid",
+      "overdueHint_one": "{{count}} invoice · oldest {{days}} days late",
+      "overdueHint_other": "{{count}} invoices · oldest {{days}} days late",
+      "nothingOverdue": "Nothing overdue",
+      "clearAll": "Clear all",
+      "selected_one": "{{count}} invoice selected",
+      "selected_other": "{{count}} invoices selected",
+      "clearSelection": "Clear selection",
+      "searchingAll": "Searching all invoices — the period does not apply",
+      "presets": {
+        "thisMonth": "This month",
+        "lastMonth": "Last month",
+        "lastQuarter": "Last 3 months",
+        "yearToDate": "Year to date",
+        "custom": "Custom range",
+        "backToPresets": "Back to presets"
+      }
+    }
   },
   "billing": {
     "primaryPhone": "Primary Phone",

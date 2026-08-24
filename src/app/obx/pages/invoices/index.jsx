@@ -885,7 +885,7 @@ export default function index() {
     ) {
       actions.push({
         key: 'delete',
-        label: t('buttons.delete'),
+        label: t('obx.invoice.delete'),
         icon: <DustinBinIcon />,
         destructive: true,
         onClick: () => {
