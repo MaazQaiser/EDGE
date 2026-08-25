@@ -20,11 +20,20 @@ import SideDrawer from 'src/app/components/common/sideDrawer';
 import StyledMenuButton from 'src/app/components/common/styledMenuButton';
 import { siteStatusEnum } from 'src/app/homeOffice/pages/franchise/utils/enums';
 import HarmonizeWorkspace from 'src/app/obx/pages/schedules/components/harmonize';
+import HarmonizeAuto from 'src/app/obx/pages/schedules/components/harmonizeAuto';
 import HarmonizeDrawer from 'src/app/obx/pages/schedules/components/harmonizeFlow';
 import { zoneName } from 'src/app/obx/pages/schedules/components/harmonizeFlow/model/fixtures';
 import HarmonizeSplit from 'src/app/obx/pages/schedules/components/harmonizeSplit';
 import MissedHitsDrawer from 'src/app/obx/pages/schedules/components/missedHitsDrawer';
-import { ACL_OBX_SITE_EXTRA_JOB_CREATE } from 'src/app/router/constant/OBXMODULE';
+/* `ACL_OBX_SCHEDULES_UPDATE` was **used and never imported**. It only appeared inside the
+   missed-visits pill, which was gated to one tab, so the identifier was never evaluated on any
+   other — a latent `ReferenceError` that eslint does not catch here (`no-undef` is not enforced
+   in this tree) and that `vite build` compiles cleanly. Un-gating the pill fired it and blanked
+   the page. */
+import {
+  ACL_OBX_SCHEDULES_UPDATE,
+  ACL_OBX_SITE_EXTRA_JOB_CREATE,
+} from 'src/app/router/constant/OBXMODULE';
 import {
   HO_SITES_DETAIL,
   OBX_SCHEDULES_CREATE_EXTRA_DUTY,
@@ -437,21 +446,16 @@ const ScheduleCalendar = (props) => {
   const isEmbeddedScheduleView = isSitesModule || isUsersModule;
   const [requireAttentionJobs, setRequireAttentionJobs] = useState(null);
   /**
-   * **Currently written and never read.** Kept on purpose.
+   * The missed-visits count. **Read again, on every tab.**
    *
-   * The header pill that displayed this count is gone — the header row now carries
-   * the unrouted-demand message and Forecasting only, and missed visits no longer
-   * get a second red pill beside it. That pill was also the only thing that opened
-   * `MissedHitsDrawer`, so the whole path below it — this count, its fetch, the
-   * drawer's mount, `refreshMissedHitsCount` — is live code with no entry point.
+   * History, because this state has been orphaned and un-orphaned once and the next reader
+   * should not have to reconstruct it: the pill that displayed it was removed on instruction,
+   * which left the whole path below — this count, its fetch, `MissedHitsDrawer`'s mount — as
+   * live code with no entry point. It came back on the person tab only, and that gate is now
+   * dropped so every tab's toolbar carries it (`missedVisitsAction`), on instruction.
    *
-   * **Read again, from the person tab.** That note stood while nothing rendered this
-   * count; `missedVisitsAction` below is the trigger it asked for. The composition
-   * decision it records is unchanged and still holds on the surface it was made
-   * about — the main service tab carries the unrouted-demand pill and does not get a
-   * second red one beside it. The person tab has no unrouted-demand pill (a visit
-   * there is already on somebody's row), so there is one red count in that row, and
-   * a missed visit with an owner and a history is exactly what it should be.
+   * The reason it is a toolbar pill and not a header one is recorded at the render site, where
+   * it is a statement about that row rather than about this variable.
    */
   const [missedHitsCount, setMissedHitsCount] = useState(null);
   const [missedHitDrawerData, setMissedHitDrawerData] = useState(null);
@@ -2661,23 +2665,15 @@ const ScheduleCalendar = (props) => {
    * not mounted.
    */
   /**
-   * **Missed visits, on the person tab.**
+   * Missed visits — the pill, and every piece of it already existed.
    *
-   * Every piece of this already existed and had no entry point — the count, its fetch
-   * (`refreshMissedHitsCount`), the pink `missedHitsButton` treatment, `MHitsIcon`,
-   * and `MissedHitsDrawer` still mounted at the bottom of this file. See the note on
-   * `missedHitsCount` for why the trigger went and why this is the surface that gets
-   * it back rather than a general restoration.
-   *
-   * Threaded into the grid's `toolbarRightContent`, which lands it between the date
-   * navigator and the view toggle — where the reference puts it. Built here rather
-   * than in the grid because the drawer it opens is this component's state.
-   *
-   * The window is `selectedView`'s, the same range the count was fetched for, so the
-   * drawer can never list a period the number did not count.
+   * The count, its fetch, the pink `destructiveSecondary` treatment, `MHitsIcon` and
+   * `MissedHitsDrawer`'s mount at the foot of this file were all live with no trigger. This is
+   * the trigger. Built here rather than in the grid because the drawer it opens is this
+   * component's state.
    */
-  const missedVisitsAction =
-    tabConfig.id === 'officer' && !isEmbeddedScheduleView && Boolean(missedHitsCount) ? (
+  const missedVisitsPill =
+    !isEmbeddedScheduleView && Boolean(missedHitsCount) ? (
       <RenderIfHasPermission name={ACL_OBX_SCHEDULES_UPDATE}>
         <Button
           variant="destructiveSecondary"
@@ -2694,6 +2690,28 @@ const ScheduleCalendar = (props) => {
         </Button>
       </RenderIfHasPermission>
     ) : null;
+
+  /**
+   * **Restored to every tab's toolbar, on instruction.**
+   *
+   * It was `tabConfig.id === 'officer' ? … : null` — the person tab only. That gate was not a
+   * decision about the person tab; it was as far as an earlier restoration went, made while the
+   * pill had no trigger anywhere and the person tab was the surface being worked on. Dropping
+   * it is the whole of *"re-add 'missing visits' red chip"*: every other piece — the count, its
+   * fetch, the pink treatment, `MHitsIcon`, `MissedHitsDrawer`'s mount — was already live and
+   * already ran on every non-embedded mount regardless of tab.
+   *
+   * **The toolbar, not the header row, and the reference is what settles it.** The pill sits
+   * left of the date navigator, in the row that carries the window and the Day/Week/Month
+   * toggle. That is the right row for it on its own terms: it counts what was missed *in the
+   * window on screen*, so it belongs beside the control that sets the window rather than beside
+   * the header's running total of unrouted demand. Threaded through the grid's
+   * `toolbarRightContent`; built here because the drawer it opens is this component's state.
+   *
+   * The window is `selectedView`'s — the same range the count was fetched for — so the drawer
+   * can never list a period the number did not count.
+   */
+  const missedVisitsAction = missedVisitsPill;
 
   const harmonizeAction =
     offersHarmonize && (!isDayView || rendersOwnPane) ? (
@@ -2885,16 +2903,12 @@ const ScheduleCalendar = (props) => {
               )}
             </>
           )}
-          {/* No missed-visits pill. Two red pills side by side asked the planner to
-              hold two numbers at once and then decide which one the morning was
-              about, and the answer was always the same one: unrouted demand is work
-              that has never been given to anybody, while a missed visit already has
-              an owner and a history. One red count in this row, and it is the count
-              the planner can act on from here.
-
-              The drawer that pill opened is still mounted below and still works —
-              see the note on `missedHitsCount`, which records that it now has no
-              trigger and why the path was left standing rather than deleted. */}
+          {/* No missed-visits pill **in this row**, and that is still right — the pill
+              itself is back, one row down. Two red counts side by side here asked the
+              planner to hold two numbers at once and then decide which one the morning
+              was about; the reference this pill comes from puts it in the toolbar beside
+              the date navigator, which is a row about *the window on screen* and is where
+              a count of what was missed in that window belongs. See `missedVisitsAction`. */}
           {harmonizeAction}
           {isSupplierForecasting && !isSitesModule && (
             <Button
@@ -3080,7 +3094,57 @@ const ScheduleCalendar = (props) => {
          * need-by windows and no filter counts, which is a worse demonstration than an
          * honest one over data shaped like the payload it is waiting for.
          */}
-        {props.harmonizeShell === HARMONIZE_SHELL.SPLIT ? (
+        {/**
+         * **The automatic shell, and it is first because it is what the button now opens.**
+         *
+         * It takes the same two props the other two new shells do and produces the same
+         * `plan`, so the apply handler below is the same site-name join — written out again
+         * rather than hoisted, on the standing rule for these comparison shells: a helper
+         * they shared would be one more thing to unpick when two of the three go.
+         *
+         * `weekVisits` is deliberately not threaded in here either. It runs on the same
+         * fixture the drawer does while the endpoints in HARMONIZE-CONTEXT §5 are unbuilt,
+         * and this shell needs more of that payload than the others — a due date and a
+         * filter count per visit, which is what the need-by window and the score are made
+         * of. Feeding it this page's visits would produce a plan with no windows and no
+         * scores, which is a worse demonstration than an honest one over data shaped like
+         * what it is waiting for.
+         */}
+        {props.harmonizeShell === HARMONIZE_SHELL.AUTO ? (
+          <HarmonizeAuto
+            open={harmonizeOpen}
+            onClose={() => setHarmonizeOpen(false)}
+            onApplied={(plan) => {
+              exitSelection();
+
+              const key = (name) =>
+                String(name || '')
+                  .trim()
+                  .toLowerCase();
+              const byName = new Map(
+                (harmonizableVisits || [])
+                  .map((visit) => [key(visit.site || visit.siteName), visit.id])
+                  .filter(([name]) => name),
+              );
+
+              applyMotion.start(
+                (plan?.runsheets || [])
+                  .map((sheet) => ({
+                    dayKey: sheet.date,
+                    /* Named for the day rather than the zone, because this engine has no
+                       zones — a radius is not a place, so there is no territory to name a
+                       route after. §14.6 notes the real naming rule is still undefined;
+                       this is a legible stand-in, not that rule. */
+                    name: `${getLabel('terms', 'runsheet', t)} · ${dayjs(sheet.date).format('ddd D MMM')}`,
+                    visitIds: sheet.stops
+                      .map((stop) => byName.get(key(stop.site?.name)))
+                      .filter((id) => id != null),
+                  }))
+                  .filter((route) => route.visitIds.length),
+              );
+            }}
+          />
+        ) : props.harmonizeShell === HARMONIZE_SHELL.SPLIT ? (
           <HarmonizeSplit
             open={harmonizeOpen}
             onClose={() => setHarmonizeOpen(false)}
