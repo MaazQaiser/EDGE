@@ -210,35 +210,6 @@ export const useStyles = makeStyles((theme) => ({
     },
   },
 
-  /* The visit being placed, quoted above the controls that narrow the answer. A left rule rather
-     than a filled box: the rows below are filled, and a second filled surface directly above
-     them read as the first row of the list. */
-  placingCard: {
-    margin: '0 24px 16px',
-    padding: '2px 0 2px 12px',
-    borderLeft: `3px solid ${theme.palette.borderBrand}`,
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '2px',
-  },
-  placingLabel: {
-    '&.MuiTypography-root': {
-      color: theme.palette.textSecondary2,
-      textTransform: 'uppercase',
-      letterSpacing: '0.04em',
-      fontSize: '11px',
-    },
-  },
-  placingSite: {
-    '&.MuiTypography-root': { color: theme.palette.textPrimary },
-  },
-  placingMeta: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '6px',
-    flexWrap: 'wrap',
-  },
-
   /* No match for the query, which is a different miss from no routes in the window. */
   routeEmptySearch: {
     '&.MuiTypography-root': {
@@ -346,15 +317,18 @@ export const useStyles = makeStyles((theme) => ({
     overflow: 'auto',
   },
 
+  /* The skeleton stands in for the rows it precedes, so it is their height (two lines in 12px of
+     padding = ~70px), not 44px. A placeholder shorter than its content makes the list jump when
+     the real rows land, which reads as a second load rather than as the first one finishing. */
   loaderBox: {
-    padding: '20px 0px',
+    padding: '4px 0px',
     width: 'calc(100% - 20px)',
     '& .MuiSkeleton-root': {
-      height: '44px',
+      height: '70px',
       transformOrigin: 0,
       transform: 'none',
       borderRadius: '8px !important',
-      marginBottom: '12px',
+      marginBottom: '8px',
     },
   },
 }));

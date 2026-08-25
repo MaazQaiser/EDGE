@@ -5,7 +5,7 @@ import { ReactComponent as DotIcon } from 'assets/svg/dot.svg';
 import dayjs from 'dayjs';
 import PropTypes from 'prop-types';
 import * as React from 'react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-toastify';
 // import { useTranslation } from 'react-i18next';
@@ -68,6 +68,53 @@ const runsheetAssignee = (runsheet) => {
   return null;
 };
 
+/**
+ * The Google Maps SDK, loaded when a route is **picked** rather than when the picker opens.
+ *
+ * ## What this fixes, measured
+ *
+ * Opening this screen fired **eight requests, every one of them Google Maps**, and nothing else:
+ * `/maps/api/js` alone took **2.1s**, with ~265KB of SDK behind it across `main`, `places`,
+ * `util`, `common`, `drawing` and `geometry`. The route list and the installer list did not
+ * appear in the timings at all. So the two seconds a planner waited on this screen were **not
+ * the route data** — that arrives immediately — they were an SDK being fetched before anybody
+ * had chosen anything.
+ *
+ * It was also being fetched for no one: the hook's result was assigned to `_isLoaded` and never
+ * read. The only thing in this flow that needs `window.google` is
+ * `calculateAndDisplayRouteUtils`, which builds the new route's polyline on **commit** — it
+ * calls `new google.maps.DirectionsService()` as a bare global and does not guard, so the SDK
+ * does have to be present by the time `Assign` is pressed. It does not have to be present to
+ * *read a list*.
+ *
+ * So the load moves to selection. The planner picks a route, the footer appears, and the SDK
+ * fetches while they read the sentence in it — by the time the button is pressed it is warm, and
+ * if it is not, the button says so rather than failing on a missing global.
+ *
+ * **A component rather than a flag**, because `useJsApiLoader` is a hook and cannot be called
+ * conditionally. Mounting the caller is how you make a hook lazy.
+ *
+ * The library set stays `GOOGLE_MAPS_LIBRARIES` even though Directions needs none of `places`,
+ * `drawing` or `geometry`: the loader is a singleton keyed on its options, and every other
+ * screen in the product asks for that set — a second set here would make whichever screen
+ * mounted first win and warn about it.
+ */
+const MapsPrefetch = ({ onReady }) => {
+  const { isLoaded } = useJsApiLoader({
+    googleMapsApiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY,
+    version: GOOGLE_MAPS_API_VERSION,
+    libraries: GOOGLE_MAPS_LIBRARIES,
+  });
+
+  useEffect(() => {
+    if (isLoaded) onReady();
+  }, [isLoaded, onReady]);
+
+  return null;
+};
+
+MapsPrefetch.propTypes = { onReady: PropTypes.func.isRequired };
+
 const ReassignHitDrawerContent = ({
   closeDrawer,
   handleBackBtn,
@@ -105,11 +152,6 @@ const ReassignHitDrawerContent = ({
     windowStart,
     windowStart.add(6, 'day').endOf('day'),
   ]);
-  const { isLoaded: _isLoaded } = useJsApiLoader({
-    googleMapsApiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY,
-    version: GOOGLE_MAPS_API_VERSION,
-    libraries: GOOGLE_MAPS_LIBRARIES,
-  });
   const [queryParams, setQueryParams] = useState({
     search: '',
     selectedOfficers: [],
@@ -219,6 +261,10 @@ const ReassignHitDrawerContent = ({
   };
 
   const [assigning, setAssigning] = useState(false);
+  /* Seeded from the global, so a planner arriving from a screen that already loaded the SDK
+     never sees a preparing state at all. */
+  const [mapsReady, setMapsReady] = useState(() => Boolean(window.google?.maps));
+  const handleMapsReady = useCallback(() => setMapsReady(true), []);
 
   const handleReassignHit = async () => {
     /* The commit is several awaits deep — a route calculation, then the write — so the footer
@@ -334,42 +380,11 @@ const ReassignHitDrawerContent = ({
 
       {/* Body */}
       <Box className={classes.drawerInnerNew}>
-        {/**
-         * **What is being placed, kept on screen.**
-         *
-         * Once this step opened, the only trace of the visit was a line in the drawer's header
-         * subtitle — so a planner was choosing a route for something they could no longer see,
-         * on a screen whose entire content was a list of other things. The site is the fact the
-         * decision actually turns on (a route near it, on a day that works), and it was the one
-         * fact missing.
-         *
-         * A quoted card rather than another heading: it is the *subject* of this screen, not a
-         * section of it, and it sits above the controls that narrow the answer.
-         */}
-        <Box className={classes.placingCard}>
-          <Typography variant="subtitle3" className={classes.placingLabel}>
-            {t('obx.schedules.dutyDetail.reassignHit.placingLabel')}
-          </Typography>
-          <Typography variant="h5" className={classes.placingSite}>
-            {shiftData?.siteName || shiftData?.name}
-          </Typography>
-          <Box className={classes.placingMeta}>
-            <Typography variant="subtitle4" className={classes.reassignHitText}>
-              <DisplayDateTimeRange startsAt={shiftData?.startsAt} endsAt={shiftData?.endsAt} />
-            </Typography>
-            {shiftData?.runsheetName ? (
-              <>
-                <DotIcon />
-                <Typography variant="subtitle4" className={classes.reassignHitText}>
-                  {t('obx.schedules.dutyDetail.reassignHit.missedFrom', {
-                    runsheet: shiftData.runsheetName,
-                  })}
-                </Typography>
-              </>
-            ) : null}
-          </Box>
-        </Box>
-
+        {/* **No `PLACING` card.** It quoted the visit — site, window, and the route it was
+            missed from — above the controls, on the argument that you should not have to choose a
+            route for something you can no longer see. Removed on instruction. The header's own
+            subtitle still carries the visit's kind, window and date, so the *identity* of what is
+            being placed is not gone; what is gone is the site name, which lived only here. */}
         <Box className={classes.drawerBodyTop}>
           <Typography variant="h5" className={classes.drawerBodyTitle}>
             {t('obx.schedules.dutyDetail.reassignHit.description', {
@@ -522,6 +537,10 @@ const ReassignHitDrawerContent = ({
          * It is only mounted once something is selected, so the list keeps its full height while
          * the planner is still looking.
          */}
+        {/* Fetches while the planner reads the footer below it. Mounted with the selection, so
+            an unopened picker costs nothing. */}
+        {selectedRunsheet ? <MapsPrefetch onReady={handleMapsReady} /> : null}
+
         {selectedRunsheet ? (
           <Box className={classes.assignFooter}>
             <Typography variant="body3" className={classes.assignFooterText}>
@@ -543,11 +562,16 @@ const ReassignHitDrawerContent = ({
                 variant="primary"
                 disableRipple
                 onClick={handleReassignHit}
-                disabled={assigning}
+                disabled={assigning || !mapsReady}
               >
+                {/* Three states, and the middle one is the point: the commit needs the Maps SDK
+                    for the route's polyline, so if the planner beats the fetch the button says
+                    what it is waiting for instead of throwing on a missing global. */}
                 {assigning
                   ? t('obx.schedules.dutyDetail.reassignHit.assigning')
-                  : t('obx.schedules.dutyDetail.reassignHit.assignConfirm')}
+                  : mapsReady
+                    ? t('obx.schedules.dutyDetail.reassignHit.assignConfirm')
+                    : t('obx.schedules.dutyDetail.reassignHit.preparing')}
               </Button>
             </Box>
           </Box>

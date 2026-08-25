@@ -858,15 +858,14 @@
         "selectHitDes": "Select {{hit}}(s) to reassign into another {{runsheet}}",
         "runsheetSelectionForHits": "Select {{runsheet}} to reassign selected {{hit}}(s)",
         "selectedHit": "Selected {{hit}}(s):",
-        "placingLabel": "Placing",
-        "missedFrom": "Missed from {{runsheet}}",
         "sameDay": "Same day",
         "stopCount_one": "{{count}} stop",
         "stopCount_other": "{{count}} stops",
         "noSearchMatch": "No {{runsheets}} match that name. Clear the search to see them all.",
         "assignSummary": "Add {{site}} to {{runsheet}}.",
         "assignConfirm": "Assign",
-        "assigning": "Assigning…"
+        "assigning": "Assigning…",
+        "preparing": "Preparing…"
       },
       "cancelHit": {
         "title": "Cancel {{hit}}!",
