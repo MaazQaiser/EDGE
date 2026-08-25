@@ -1,7 +1,24 @@
 import { calendarShiftStatusEnum } from 'src/utils/constants/schedules';
 
 /**
- * **In progress is blue, on every tenant.**
+ * **In progress is amber, on every tenant.**
+ *
+ * ## It was blue, and the swap is the design's, not a drift
+ *
+ * The paragraph this replaces argued that in-progress must be `#EFF8FF` blue and never
+ * `surfaceBrandSubtle`, because that token is `#E5F6FF` on Signal and pale **green** on
+ * Filter Go — so a live route rendered in the colour this product uses for a finished one.
+ * **That argument is untouched.** It is an argument against washing a *status* with a
+ * *brand* token, and `#FFF7E1` is a literal, so nothing about it follows branding.
+ *
+ * What changed is which literal, and it came with a card spec that moves the amber one slot:
+ * not-started goes to plain grey, in-progress takes the amber, completed keeps its green.
+ * That is a progression a planner can read without a key — nothing yet, under way, done —
+ * where blue-for-live sat outside the sequence and had to be learned. Amber for *in flight*
+ * is also what the status icon on the same card has always been (`#F4780B`), so the wash and
+ * the badge now agree instead of the card carrying two colours for one state.
+ *
+ * ## Still one value for three surfaces
  *
  * The one value, stated once, for the three places that draw an in-progress card:
  * the shift/V2 card's wash (`statusFillInProgress` in `calendar.styles.js`, reached
@@ -17,7 +34,18 @@ import { calendarShiftStatusEnum } from 'src/utils/constants/schedules';
  * a wash borrowed from the brand told a Filter Go planner that a live route was
  * finished. This wash means a state, not a company, so it does not follow branding.
  */
-export const IN_PROGRESS_WASH = '#EFF8FF';
+export const IN_PROGRESS_WASH = '#FFF7E1';
+
+/**
+ * **Nothing has happened here yet.**
+ *
+ * Plain grey, and it is the fill this shell already falls through to for the statuses that
+ * take no wash at all (missed, unassigned, cancelled) — which is the right company for it:
+ * a not-started shift has the same amount to report as they do. It held the amber until the
+ * card spec moved that to in-progress, and amber was always overstating it, because a card
+ * the colour of a warning is a card asking to be looked at.
+ */
+export const NOT_STARTED_WASH = '#F5F5F6';
 
 /**
  * **The card's left accent, blue on every tenant.**
@@ -53,6 +81,11 @@ export const statusFillInProgressRule = {
   backgroundColor: `${IN_PROGRESS_WASH} !important`,
 };
 
+/** The same shape for not-started — see `NOT_STARTED_WASH`. */
+export const statusFillNotStartedRule = {
+  backgroundColor: `${NOT_STARTED_WASH} !important`,
+};
+
 /**
  * The visit card's own in-progress fill — same wash, and additionally suppressing
  * the duty accent, because on a visit card the wash is the whole state signal and
@@ -78,8 +111,17 @@ export const visitFillInProgressRule = {
  * asserted: that file imports FullCalendar and nothing inside it is reachable from a
  * test.
  */
+/**
+ * **The three washes, as a progression: grey, amber, green.**
+ *
+ * `NOT_STARTED` used to take `dutyYellowBg` (the amber) and `IN_PROGRESS` a blue. Both moved
+ * with the card spec — see `IN_PROGRESS_WASH`. The two `statusFill*` classes are named for
+ * the state rather than the colour, which is what the `duty*Bg` names got wrong: `dutyYellowBg`
+ * is still a perfectly good amber and is still referenced, but a *status* pointing at a class
+ * called "yellow" is how a palette rename silently becomes a semantics change.
+ */
 export const EVENT_BG_COLOR_CLASSES = {
-  [calendarShiftStatusEnum.NOT_STARTED]: 'dutyYellowBg',
+  [calendarShiftStatusEnum.NOT_STARTED]: 'statusFillNotStarted',
   [calendarShiftStatusEnum.IN_PROGRESS]: 'statusFillInProgress',
   [calendarShiftStatusEnum.COMPLETED]: 'dutyGreenBg',
 };

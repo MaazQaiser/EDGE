@@ -171,7 +171,7 @@ const HarmonizeDrawer = ({ open, onClose, onApplied }) => {
           <Box className={classNames(classes.washLayer, classes.eclipse)} aria-hidden="true" />
         ) : null}
 
-        <Box className={classNames(classes.head, isProposal && classes.headProposal)}>
+        <Box className={classes.head}>
           <Box className={classes.titleRow}>
             <Typography component="h2" className={classes.title}>
               {title}
@@ -229,7 +229,7 @@ const HarmonizeDrawer = ({ open, onClose, onApplied }) => {
         </Box>
 
         <Box
-          className={classNames(classes.body, isProposal && classes.bodyProposal)}
+          className={classes.body}
           {...(isProposal
             ? {
                 role: 'tabpanel',
@@ -353,7 +353,7 @@ const HarmonizeDrawer = ({ open, onClose, onApplied }) => {
             now answers the first for any route it is used on; the second, D1, has no
             other home on screen and is simply not stated any more. */}
         <Box className={classNames(classes.footerBand, isComputing && classes.footerBandBare)}>
-          <Box className={classNames(classes.footer, isProposal && classes.footerProposal)}>
+          <Box className={classes.footer}>
             {state === FLOW_STATE.SCOPE ? (
               <>
                 <Button disableRipple variant="secondaryGrey" onClick={onClose}>

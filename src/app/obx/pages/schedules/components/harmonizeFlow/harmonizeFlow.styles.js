@@ -56,10 +56,27 @@ export const useStyles = makeStyles((theme) => {
    * row's name and the footer buttons share a single left edge down the whole panel. It was
    * `24` throughout, matching the app's other drawers.
    *
-   * Reduced to **20** on instruction: ① now holds a fifteen-row list whose rows carry their
-   * own padding and their own hairlines, and 24px of paper on top of that read as a double
-   * inset — the panel was spending 48px of a 523px drawer on air either side of a column of
-   * checkboxes.
+   * It went `24` → **`20`** on instruction, when ① first grew a fifteen-row list whose rows
+   * carry their own padding and hairlines, and 24px of paper on top of that read as a double
+   * inset. It is **`26`** now — `20` came back as too tight once every band shared it rather
+   * than only the row-bearing ones, and 6px is what was asked for. Anything measuring itself
+   * against the gutter moves with it; that is the point of the constant.
+   *
+   * ## ③ briefly had its own tighter gutter, and it was wrong
+   *
+   * A `GUTTER_TIGHT = 14` was applied to every band in the proposal state, on the reasoning
+   * that a route row already spends ~44px on its grip and pin and paints its hover fill 10px
+   * outward, so the drawer's own inset was being added to one the card had already paid for.
+   * That reasoning holds **for the rows and for nothing else.** Measured with it in place:
+   * the title, subtitle, tab row, metric, gauge, caption, issues bar and footer buttons all
+   * sat at 14 while the stop rows sat at 26 — so the six pixels came off precisely the
+   * elements that had no internal padding to compensate for, and the panel read as cramped
+   * everywhere except the one place the change was aimed at.
+   *
+   * **So there is one gutter again.** A row that wants to reach wider does it with its own
+   * negative margin (`flowStopLine`), which is the mechanism that already exists for exactly
+   * this and the only one that can distinguish a row from a heading. Do not reintroduce a
+   * per-state gutter to solve a per-element problem.
    *
    * **It has to be one constant.** Several things in this sheet are calibrated *against*
    * the gutter rather than to an absolute number — the row-hover fills reach outward by
@@ -68,28 +85,7 @@ export const useStyles = makeStyles((theme) => {
    * them back to 24 and that one drifts. Comments elsewhere that still say "24px gutter"
    * mean "the gutter"; this is the value.
    */
-  const GUTTER = 20;
-
-  /**
-   * ③'s own, tighter gutter — **14, against ①'s 20.**
-   *
-   * The proposal is the one state whose content brings its own horizontal inset. A route row
-   * is `grip · pin column · name · figures`, and the grip and pin spend ~44px before the
-   * first character of a site name; the row also paints its hover fill 10px *outward* on each
-   * side (`flowStopLine`'s negative margin). So the drawer's own 20px was being added to an
-   * indent the card had already paid for, and the effect was a route card that looked inset
-   * twice while its own header sat at the true gutter.
-   *
-   * Applied to **every band in the state, not just the body** — head, footer and the issues
-   * tray take it too. That is the whole reason it is a constant and not a number typed into
-   * `body`: the title, the day tabs, a route's own header, a tray row and the footer buttons
-   * share one left edge down the panel, and moving one band without the others is what
-   * produces the stepped edge this is meant to remove.
-   *
-   * 14 rather than 12: the row fill reaches 10px past the content edge, so 12 would leave it
-   * 2px from the paper and read as a clipping bug rather than as a row.
-   */
-  const GUTTER_TIGHT = 14;
+  const GUTTER = 26;
 
   /** The decision box's state edge plus its lift, so a modifier cannot drop one. */
   const edge = (colour) => `inset 3px 0 0 0 ${colour}, 0 -4px 12px ${EDGE_SHADOW}`;
@@ -297,6 +293,12 @@ export const useStyles = makeStyles((theme) => {
     }),
     tab: w({
       ...theme.typography.subtitle2,
+      /* `subtitle2` is already 500, so "if they are regular, make them medium" lands on a
+         weight they already had — 600 is the next step and the one that actually reads as
+         bolder. It applies to every tab, selected or not: the underline and the ink colour
+         are what mark the open day, and making only the open one heavy would shift the row's
+         widths as the selection moved. */
+      fontWeight: 600,
       color: theme.palette.textPlaceholder,
       cursor: 'pointer',
       background: 'transparent',
@@ -2184,23 +2186,5 @@ export const useStyles = makeStyles((theme) => {
       whiteSpace: 'nowrap',
       border: 0,
     }),
-    /* ── ③'s tighter bands — **defined last, deliberately** ───────────────────
-       One modifier per band, each swapping the horizontal gutter for `GUTTER_TIGHT`. Applied
-       together by `isProposal` in `index.jsx`; see `GUTTER_TIGHT` for why they move as a set.
-       Vertical padding is untouched — this is about the left and right edge.
-
-       **These live at the foot of the sheet because position is what makes them win.**
-       `w()` gives every class the same `&&` specificity, so a tie is broken by order in the
-       generated stylesheet. Defined up beside `titleRow` — which is where they were first
-       written — `bodyProposal` came *before* `body`, `footerProposal` before `footer` and
-       `spillBarProposal` before `spillBar`, so the base class won every time and only `head`
-       (declared earlier still) actually narrowed. Measured: head 14px, body/footer/bar all
-       stuck at 20px. Anything overriding a base class in this sheet has to be declared after
-       it, and the end of the object is the only place that is true for all of them. */
-    headProposal: w({ paddingLeft: GUTTER_TIGHT, paddingRight: GUTTER_TIGHT }),
-    bodyProposal: w({ paddingLeft: GUTTER_TIGHT, paddingRight: GUTTER_TIGHT }),
-    footerProposal: w({ paddingLeft: GUTTER_TIGHT, paddingRight: GUTTER_TIGHT }),
-    spillBarProposal: w({ paddingLeft: GUTTER_TIGHT, paddingRight: GUTTER_TIGHT }),
-    spillBodyProposal: w({ paddingLeft: GUTTER_TIGHT, paddingRight: GUTTER_TIGHT }),
   };
 });

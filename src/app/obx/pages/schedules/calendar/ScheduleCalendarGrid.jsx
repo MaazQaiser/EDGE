@@ -65,7 +65,6 @@ import { ReactComponent as UnAssignHit } from 'src/assets/svg/assignHit.svg';
 import { ReactComponent as CalendarIcon } from 'src/assets/svg/calendar.svg';
 import { ReactComponent as CarIcon } from 'src/assets/svg/carImage.svg';
 import { ReactComponent as AlertIcon } from 'src/assets/svg/DedicatedDuty/alertCircle.svg';
-import { ReactComponent as RunsheetHitsIcon } from 'src/assets/svg/hits-runsheet.svg';
 import { ReactComponent as NotesIcon } from 'src/assets/svg/notesStatus.svg';
 import { ReactComponent as AccessTimeIcon } from 'src/assets/svg/officerOrangeIcon.svg';
 import { ReactComponent as RunsheetIcon } from 'src/assets/svg/runsheetHit.svg';
@@ -2943,16 +2942,19 @@ const CalendarCardContent = memo(
               FullCalendar's own event box and could land on top of the missed-hits chip,
               which shares this corner. As a flex sibling the two simply sit side by
               side. */}
+          {/* **The figure alone — the mark came off.** It carried `hits-runsheet.svg`,
+              argued for on the grounds that with the noun gone the glyph was what made the
+              number legible. Removed on instruction, and the corner is better for it: the
+              missed-hits chip shares this row, so a card with both drew a pill *and* an
+              icon-plus-digit in the same 16px strip, and the two competed at exactly the
+              size where neither wins. A bare figure top-right is the same convention that
+              chip already uses — position and the time to its left are what say what it
+              counts. The tooltip still names it in full. */}
           {isPatrolOrDispatch && visitCount != null ? (
             <Tooltip arrow placement="top" title={visitCountTitle || ''}>
-              <Box className={classes.patrolVisitCountCorner}>
-                <Box className={classes.patrolVisitCountIcon}>
-                  <RunsheetHitsIcon />
-                </Box>
-                <Typography component="span" className={classes.patrolVisitCountValue}>
-                  {visitCount}
-                </Typography>
-              </Box>
+              <Typography component="span" className={classes.patrolVisitCountValue}>
+                {visitCount}
+              </Typography>
             </Tooltip>
           ) : null}
         </Box>

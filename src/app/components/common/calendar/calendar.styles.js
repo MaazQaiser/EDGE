@@ -3,6 +3,7 @@ import { makeStyles } from '@mui/styles';
 import {
   DUTY_ACCENT_BLUE,
   statusFillInProgressRule,
+  statusFillNotStartedRule,
   visitFillInProgressRule,
 } from 'src/app/components/common/calendar/calendarStatusWash';
 
@@ -2180,18 +2181,20 @@ export const useStyles = makeStyles((theme) => ({
       },
     },
   },
+  /* Matched to `eventAvatar` — the two alternate in the same slot on the vehicle row, so a
+     size difference between them shows as the row twitching when a van is assigned. */
   carIcon: {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    width: '16px',
-    height: '16px',
+    width: '14px',
+    height: '14px',
     borderRadius: '50%',
     backgroundColor: theme.palette.surfaceWhite,
     border: `1px solid ${theme.palette.borderSubtle1}`,
     '& svg': {
-      width: '14px !important',
-      height: '14px !important',
+      width: '12px !important',
+      height: '12px !important',
     },
   },
   //Calendar
@@ -3218,10 +3221,11 @@ export const useStyles = makeStyles((theme) => ({
     backgroundColor: `${theme.palette.surfaceBrandSubtle} !important`,
   },
 
-  /* A shift or V2 visit card that has begun. The semantic blue, not the brand — see
-     `calendarStatusWash.js`, and `visitFillInProgress` above, which is the same wash
-     for the card that draws no duty accent. */
+  /* The two state fills the card spec names, both defined in `calendarStatusWash.js` so
+     the schedule card, the visit card and the Companies views cannot drift apart. Amber is
+     *in progress* now and grey is *not started* — see that file for why the amber moved. */
   statusFillInProgress: statusFillInProgressRule,
+  statusFillNotStarted: statusFillNotStartedRule,
 
   dutyRedBg: {
     backgroundColor: `${theme.palette.surfaceAlertSubtle} !important`,
@@ -3241,27 +3245,33 @@ export const useStyles = makeStyles((theme) => ({
     },
   },
 
+  /* ── The duty accent ───────────────────────────────────────────────────────
+     **2px, down from 3.** The card spec states `border-left: 2px solid` for all three
+     states, and at 3px against a 4px radius the accent was reading as a coloured edge on
+     the card rather than as a rule beside it — the corner had to bend the full stroke
+     round. The colour still names the *duty type* and the fill still names the *status*;
+     only the weight moved. */
   dutyGreen: {
-    borderLeft: `3px solid ${theme.palette.surfaceSuccessStrong}`,
+    borderLeft: `2px solid ${theme.palette.surfaceSuccessStrong}`,
     borderColor: theme.palette.surfaceSuccessStrong,
   },
   dutyRed: {
-    borderLeft: `3px solid ${theme.palette.borderAlert}`,
+    borderLeft: `2px solid ${theme.palette.borderAlert}`,
     borderColor: theme.palette.borderAlert,
   },
   dutyBlue: {
     /* The literal, not `palette.borderBrand` — that token is green on Filter Go, so this
        accent used to change what it meant per tenant. See `DUTY_ACCENT_BLUE`. */
-    borderLeft: `3px solid ${DUTY_ACCENT_BLUE}`,
+    borderLeft: `2px solid ${DUTY_ACCENT_BLUE}`,
     borderColor: DUTY_ACCENT_BLUE,
   },
   dutyPurple: {
-    borderLeft: `3px solid ${theme.palette.borderPurple}`,
+    borderLeft: `2px solid ${theme.palette.borderPurple}`,
     borderColor: theme.palette.borderPurple,
   },
 
   dutyYellow: {
-    borderLeft: `3px solid ${theme.palette.borderWarning}`,
+    borderLeft: `2px solid ${theme.palette.borderWarning}`,
     borderColor: theme.palette.borderWarning,
   },
 
@@ -3293,6 +3303,11 @@ export const useStyles = makeStyles((theme) => ({
     minWidth: 0,
     '&.MuiTypography-root': {
       color: theme.palette.textPlaceholder,
+      /* **400, where `subtitle4` is 500.** The spec puts the time at 10/500 and the two
+         name rows under it at 10/400, which is the only thing separating them — same size,
+         same-ish colour, so weight is carrying the whole hierarchy. At 500 all three rows
+         read as headings and the card had no quiet part. */
+      fontWeight: 400,
     },
   },
 
@@ -3420,10 +3435,13 @@ export const useStyles = makeStyles((theme) => ({
     },
   },
 
+  /* 14px, the spec's figure for both the installer avatar and the vehicle mark. It was 16,
+     which on a 10px text row made the glyph the tallest thing in the line and pushed the
+     two body rows apart — at 14 the mark and its label share a 14px box. */
   eventAvatar: {
     '&.MuiAvatar-root': {
-      width: '16px',
-      height: '16px',
+      width: '14px',
+      height: '14px',
       border: `1px solid ${theme.palette.borderSubtle1}`,
     },
   },
@@ -3847,19 +3865,17 @@ export const useStyles = makeStyles((theme) => ({
     flexShrink: 0,
     minWidth: 0,
   },
-  /* The same pair, in the card's top-right corner instead of its own line —
-     `eventDetailHeaderWrapper` is a `space-between` row, so `marginLeft: auto` is
-     what pins it right when the time is the only thing to its left. `flexShrink: 0`
-     keeps the figure whole on a narrow day column; the time truncates first. */
-  patrolVisitCountCorner: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '3px',
-    flexShrink: 0,
-    marginLeft: 'auto',
-  },
-  /* 12px, down from the asset's native 14: it sits in a 16px row beside 10px text,
-     and the marks it shares that row with are 10-12px glyphs. */
+  /**
+   * The icon slot beside a visit count — **the month chip's only, now.**
+   *
+   * It was shared with the week card's top-right corner until the mark came off there (see
+   * `patrolVisitCountValue` below). `RouteMonthChipContent` still draws `hits-runsheet.svg`
+   * and still needs it sized: a month chip is a single line with no room for a time beside
+   * the figure, so the glyph is what says *visits* there, where on the week card the time
+   * to its left already does.
+   *
+   * 12px, down from the asset's native 14 — it sits beside 10px text.
+   */
   patrolVisitCountIcon: {
     display: 'flex',
     alignItems: 'center',
@@ -3869,12 +3885,30 @@ export const useStyles = makeStyles((theme) => ({
       height: '12px !important',
     },
   },
+
+  /**
+   * The visit count, in the card's top-right corner.
+   *
+   * **A figure and nothing else.** This was a wrapper (`patrolVisitCountCorner`) holding the
+   * icon slot above and this value; the wrapper is gone with the mark — see the call site in
+   * `ScheduleCalendarGrid`. So the value *is* the corner now, which is why
+   * it carries the `marginLeft: auto` that pins it right: `eventDetailHeaderWrapper` is a
+   * `space-between` row and the time is the only thing to its left.
+   *
+   * `flexShrink: 0` keeps the figure whole on a narrow day column — the time truncates
+   * first, because a clipped digit is a wrong number where a clipped time is still a time.
+   */
   patrolVisitCountValue: {
+    flexShrink: 0,
+    marginLeft: 'auto',
     '&.MuiTypography-root': {
       color: theme.palette.textPrimary,
-      fontSize: '11px',
-      fontWeight: 700,
-      lineHeight: '14px',
+      /* 10/500, the spec's own treatment for the time this sits opposite — the pair reads
+         as one row rather than as a label and a badge. It was 11/700, which without the
+         icon beside it was the loudest thing on the card. */
+      fontSize: '10px',
+      fontWeight: 500,
+      lineHeight: '12px',
       fontVariantNumeric: 'tabular-nums',
     },
   },

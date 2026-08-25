@@ -103,7 +103,7 @@ const SpillTray = ({
       <Box
         component="button"
         type="button"
-        className={classNames(classes.spillBar, classes.spillBarProposal)}
+        className={classes.spillBar}
         aria-expanded={open}
         aria-controls="harmonize-issues"
         onClick={onToggle}
@@ -133,10 +133,7 @@ const SpillTray = ({
       </Box>
 
       <Collapse in={open} timeout={220} unmountOnExit>
-        <Box
-          className={classNames(classes.spillBody, classes.spillBodyProposal)}
-          id="harmonize-issues"
-        >
+        <Box className={classes.spillBody} id="harmonize-issues">
           {spilled.length ? (
             <>
               {spilled.map((item) => (
