@@ -149,15 +149,127 @@ export const useStyles = makeStyles((theme) => ({
     gap: '12px',
   },
 
+  /**
+   * A route row — **a real button, and selectable.**
+   *
+   * It was a `Box` with an `onClick`: no keyboard focus, no pressed state, and nothing to say a
+   * row had been chosen because choosing one used to open a modal immediately. Now the row holds
+   * the selection, so it needs both a focus ring and a selected treatment.
+   *
+   * `text-align: left` and the reset are what a `<button>` costs — without them the row centres
+   * its own contents and inherits the browser's button chrome.
+   */
   reassignHit: {
-    borderRadius: '4px',
+    borderRadius: '8px',
     backgroundColor: theme.palette.surfaceGreySubtle,
     display: 'flex',
     flexDirection: 'column',
-    gap: '4px',
+    alignItems: 'flex-start',
+    gap: '6px',
     padding: '12px',
     width: 'calc(100% - 20px)',
     cursor: 'pointer',
+    textAlign: 'left',
+    font: 'inherit',
+    border: '1px solid transparent',
+    transition: 'background 120ms ease, border-color 120ms ease',
+    '&:hover': {
+      backgroundColor: theme.palette.surfaceGreyHover || theme.palette.surfaceGreySubtle,
+    },
+    '&:focus-visible': {
+      outline: `2px solid ${theme.palette.borderBrand}`,
+      outlineOffset: '2px',
+    },
+  },
+
+  /* The chosen route. Brand-subtle ground plus a brand edge — the same pairing the product uses
+     for a selected option elsewhere — so the footer's sentence has a visible referent in the
+     list rather than being the only sign anything was picked. */
+  reassignHitSelected: {
+    backgroundColor: theme.palette.surfaceBrandSubtle,
+    borderColor: theme.palette.borderBrand,
+    '&:hover': { backgroundColor: theme.palette.surfaceBrandSubtle },
+  },
+
+  reassignHitHead: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    width: '100%',
+  },
+
+  /* "Same day" — the one badge on the row, so it has to mean something a planner acts on. It
+     marks the route falling on the date the work was originally due, which is the answer they
+     are usually looking for and previously had to derive by reading every row's date. */
+  reassignHitSameDay: {
+    '&.MuiChip-root': {
+      height: '20px',
+      backgroundColor: theme.palette.surfaceBrandSubtle,
+      color: theme.palette.textBrand,
+      '& .MuiChip-label': { padding: '0 8px', fontSize: '11px', fontWeight: 500 },
+    },
+  },
+
+  /* The visit being placed, quoted above the controls that narrow the answer. A left rule rather
+     than a filled box: the rows below are filled, and a second filled surface directly above
+     them read as the first row of the list. */
+  placingCard: {
+    margin: '0 24px 16px',
+    padding: '2px 0 2px 12px',
+    borderLeft: `3px solid ${theme.palette.borderBrand}`,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '2px',
+  },
+  placingLabel: {
+    '&.MuiTypography-root': {
+      color: theme.palette.textSecondary2,
+      textTransform: 'uppercase',
+      letterSpacing: '0.04em',
+      fontSize: '11px',
+    },
+  },
+  placingSite: {
+    '&.MuiTypography-root': { color: theme.palette.textPrimary },
+  },
+  placingMeta: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+    flexWrap: 'wrap',
+  },
+
+  /* No match for the query, which is a different miss from no routes in the window. */
+  routeEmptySearch: {
+    '&.MuiTypography-root': {
+      color: theme.palette.textSecondary2,
+      padding: '16px 0',
+    },
+  },
+
+  /**
+   * The commit bar — what replaced the confirmation modal.
+   *
+   * Sticky to the drawer's foot and only mounted once a route is chosen, so the list keeps its
+   * full height while the planner is still deciding. The top hairline is load-bearing: without
+   * it the bar floats over a scrolling list with nothing to say it is a separate region.
+   */
+  assignFooter: {
+    flex: '0 0 auto',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '10px',
+    padding: '14px 24px',
+    borderTop: `1px solid ${theme.palette.borderSubtle1}`,
+    backgroundColor: theme.palette.surfaceWhite,
+  },
+  assignFooterText: {
+    '&.MuiTypography-root': { color: theme.palette.textSecondary1 },
+  },
+  assignFooterActions: {
+    display: 'flex',
+    justifyContent: 'flex-end',
+    gap: '8px',
   },
 
   drawerBodyInner: {

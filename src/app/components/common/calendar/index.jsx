@@ -982,14 +982,20 @@ const CalendarHeaderToolbar = ({
         dateNavigator
       )}
       <Box className={classes.calendarHeaderToolbarRight}>
-        {/* After the date navigator, so it lands beside the Day/Week/Month toggle:
-            both are view controls and reading them as one cluster is the point.
-
+        {/* **Before the date navigator, on instruction.**
+            
+            It used to follow the navigator, on the argument that it then landed beside
+            the Day/Week/Month toggle and the two read as one cluster of view controls.
+            That argument was about a slot holding a *view* control; the only thing any
+            caller puts here is the missed-visits count, which is not one — it is a
+            statement about the window, so it reads better arriving *before* the control
+            that sets the window than wedged between that control and the grid toggles.
+            
             Under `TOGGLES_FIRST` the navigator moves to *after* the toggles instead
             (see below) — the cluster is unchanged, only which side of it the date
             sits on. Rendered in one place or the other, never both. */}
-        {toolbarLeftContent && !leadsWithToggles && dateNavigator}
         {toolbarRightContent}
+        {toolbarLeftContent && !leadsWithToggles && dateNavigator}
         {/* **Initials only when the row is actually crowded.**
             
             `D / W / M` was introduced because three words are three of the widest
