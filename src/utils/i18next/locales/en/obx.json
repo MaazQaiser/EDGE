@@ -865,7 +865,8 @@
         "assignSummary": "Add {{site}} to {{runsheet}}.",
         "assignConfirm": "Assign",
         "assigning": "Assigning…",
-        "preparing": "Preparing…"
+        "preparing": "Preparing…",
+        "showingOf": "Showing {{shown}} of {{total}} {{runsheets}}. Narrow the dates or installers to see the rest."
       },
       "cancelHit": {
         "title": "Cancel {{hit}}!",

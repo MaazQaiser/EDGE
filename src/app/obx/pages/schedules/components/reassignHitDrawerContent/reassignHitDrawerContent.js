@@ -163,10 +163,11 @@ export const useStyles = makeStyles((theme) => ({
     borderRadius: '8px',
     backgroundColor: theme.palette.surfaceGreySubtle,
     display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'flex-start',
-    gap: '6px',
-    padding: '12px',
+    alignItems: 'center',
+    /* One line, ~46px. Two lines was ~70px, which fit seven routes in the pane; this fits about
+       thirteen. The row's own padding does the separating now that there is no second line to
+       hold the meta. */
+    padding: '11px 12px',
     width: 'calc(100% - 20px)',
     cursor: 'pointer',
     textAlign: 'left',
@@ -196,6 +197,18 @@ export const useStyles = makeStyles((theme) => ({
     alignItems: 'center',
     gap: '8px',
     width: '100%',
+    minWidth: 0,
+  },
+
+  /* Pushed to the row's right edge, so a column of routes has its names on one axis and its
+     figures on another — which is what makes a dense list scannable rather than merely short.
+     `flex-shrink: 0` because the name is the part that should ellipsis, never the facts. */
+  reassignHitMeta: {
+    marginLeft: 'auto',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+    flexShrink: 0,
   },
 
   /* "Same day" — the one badge on the row, so it has to mean something a planner acts on. It
@@ -207,6 +220,14 @@ export const useStyles = makeStyles((theme) => ({
       backgroundColor: theme.palette.surfaceBrandSubtle,
       color: theme.palette.textBrand,
       '& .MuiChip-label': { padding: '0 8px', fontSize: '11px', fontWeight: 500 },
+    },
+  },
+
+  /* The page boundary. Quiet — it is a caveat on a list that works, not a failure. */
+  routeTruncated: {
+    '&.MuiTypography-root': {
+      color: theme.palette.textSecondary2,
+      padding: '0 0 4px',
     },
   },
 
@@ -254,6 +275,10 @@ export const useStyles = makeStyles((theme) => ({
   reassignHitTitle: {
     '&.MuiTypography-root': {
       color: theme.palette.textPrimary,
+      minWidth: 0,
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
     },
   },
 
@@ -317,14 +342,15 @@ export const useStyles = makeStyles((theme) => ({
     overflow: 'auto',
   },
 
-  /* The skeleton stands in for the rows it precedes, so it is their height (two lines in 12px of
-     padding = ~70px), not 44px. A placeholder shorter than its content makes the list jump when
-     the real rows land, which reads as a second load rather than as the first one finishing. */
+  /* The skeleton stands in for the rows it precedes, so it tracks their height — one line in
+     11px of padding, ~46px. It was 44px against 70px rows, then 70px, and is now 46 with the
+     row: a placeholder that is not its content's height makes the list jump when the real rows
+     land, which reads as a second load rather than as the first one finishing. */
   loaderBox: {
     padding: '4px 0px',
     width: 'calc(100% - 20px)',
     '& .MuiSkeleton-root': {
-      height: '70px',
+      height: '46px',
       transformOrigin: 0,
       transform: 'none',
       borderRadius: '8px !important',

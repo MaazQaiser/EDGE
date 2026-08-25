@@ -22,6 +22,8 @@ import { ReactComponent as CarIcon } from 'src/assets/svg/WhiteCarIcon.svg';
 import { useTenantLabel } from 'src/helper/utilityHooks';
 import { fetchRunsheetList } from 'src/services/duty.services';
 
+import { toRunsheetArray } from '../../helper';
+
 /**
  * Tones mirror the grid's card treatments in `calendar.styles.js` — red needs
  * attention, amber is blocked, blue is live, grey is settled. A visit must not
@@ -255,17 +257,6 @@ const STATE_CALLOUT_PRESENTATION = {
  * loading, and `CustomDropDown` renders nothing at all when its value is
  * undefined (handoff §7.17), which would silently delete the field.
  */
-/* The runsheet list endpoint does not answer with a bare array — it wraps the rows,
-   and which key it wraps them under varies with the caller. Storing the response
-   as-is put an object where the field expected a list and took the whole drawer
-   down with `.map is not a function`. Nothing downstream ever sees a non-array. */
-const toRunsheetArray = (payload) => {
-  if (Array.isArray(payload)) return payload;
-  if (!payload || typeof payload !== 'object') return [];
-  const rows = payload.data || payload.runsheets || payload.rows || payload.results;
-  return Array.isArray(rows) ? rows : [];
-};
-
 const useDayRunsheets = ({ startsAt, endsAt, enabled }) => {
   const [runsheets, setRunsheets] = useState(undefined);
 

@@ -26,31 +26,14 @@ import { GOOGLE_MAPS_API_VERSION, GOOGLE_MAPS_LIBRARIES, toastSettings } from 's
 import { toaster } from 'src/utils/toast';
 
 import { NoRunsheetFound } from '../../../runSheets/listing';
-import { dayjsWithTimezone, getCurrentTimeWithDisabledDlsInIso } from '../../helper';
+import {
+  dayjsWithTimezone,
+  getCurrentTimeWithDisabledDlsInIso,
+  runsheetTotalCount,
+  toRunsheetArray,
+} from '../../helper';
 import PatrolHeader from '../../shiftDetail/components/patrolHeader';
 import { useStyles } from './reassignHitDrawerContent';
-
-/**
- * The route list, normalised — **and this is why the list was empty, not merely sparse.**
- *
- * `fetchRunsheetList` resolves to `{ runsheets: [...], pagination }`, and this screen did
- * `setRunsheetList(response?.data || [])`, so the state held an **object**. Everything
- * downstream reads it as an array: `runsheetList?.length === 0` is `undefined === 0`, so the
- * empty state never drew, and `filteredRunsheetList` starts `runsheetList?.length ? … : []`, so
- * the map had nothing to map. The result was a screen with a date range, a search box and a
- * filter over **permanently blank space** — no rows, no empty state, no error.
- *
- * `MissedHitsDrawer` one level up already hit this and already documents it: *"the endpoint has
- * shipped both a bare array and an envelope over time"*. That fix never reached this screen.
- * Same shape, same tolerance, so the two cannot disagree about what the API returned.
- */
-const toRunsheetArray = (payload) => {
-  if (Array.isArray(payload)) return payload;
-  if (Array.isArray(payload?.runsheets)) return payload.runsheets;
-  if (Array.isArray(payload?.data)) return payload.data;
-  if (Array.isArray(payload?.hits)) return payload.hits;
-  return [];
-};
 
 /**
  * Who is on a route — **from either shape the API has used.**
@@ -157,6 +140,7 @@ const ReassignHitDrawerContent = ({
     selectedOfficers: [],
   });
   const [runsheetList, setRunsheetList] = useState(null);
+  const [runsheetTotal, setRunsheetTotal] = useState(null);
   const [officersList, setOfficersList] = useState();
   const [selectedRunsheet, setSelectedRunsheet] = useState(null);
 
@@ -199,6 +183,8 @@ const ReassignHitDrawerContent = ({
         config,
       });
       setRunsheetList(toRunsheetArray(response?.data));
+      /* What the window holds, as opposed to what it sent — see `runsheetTotalCount`. */
+      setRunsheetTotal(runsheetTotalCount(response?.data));
     } catch (err) {
       if (!apiController.signal.aborted) {
         setRunsheetList(null);
@@ -362,6 +348,9 @@ const ReassignHitDrawerContent = ({
    */
   const hasLoaded = Array.isArray(runsheetList);
   const noRoutesInWindow = hasLoaded && loadedRunsheets.length === 0;
+  /* Only when the response actually said there are more than it sent. */
+  const truncated =
+    runsheetTotal !== null && loadedRunsheets.length > 0 && runsheetTotal > loadedRunsheets.length;
   const noRoutesMatchSearch =
     hasLoaded && loadedRunsheets.length > 0 && !filteredRunsheetList.length;
 
@@ -444,6 +433,26 @@ const ReassignHitDrawerContent = ({
             </Box>
           )}
 
+          {/**
+           * **The page boundary, stated.**
+           *
+           * The response carries `pagination.totalCount` and no caller has ever read it, so a
+           * franchise with more routes than fit one page showed the first page and said nothing —
+           * the rest were unreachable and invisible, which is the kind of limit a planner
+           * discovers by being wrong. Nothing here requests page two (see `runsheetTotalCount`
+           * for why inventing that param was the wrong call); it names the limit and points at
+           * the two controls that genuinely narrow the set.
+           */}
+          {truncated ? (
+            <Typography variant="body3" className={classes.routeTruncated}>
+              {t('obx.schedules.dutyDetail.reassignHit.showingOf', {
+                shown: loadedRunsheets.length,
+                total: runsheetTotal,
+                runsheets: getLabel('terms', 'runsheets', t).toLowerCase(),
+              })}
+            </Typography>
+          ) : null}
+
           {/* The window has no routes at all — the fix is the date range above. */}
           {noRoutesInWindow && <NoRunsheetFound />}
 
@@ -483,7 +492,7 @@ const ReassignHitDrawerContent = ({
                 onClick={() => toggleRunsheetSelection(runsheet)}
               >
                 <Box className={classes.reassignHitHead}>
-                  <Typography variant="h4" className={classes.reassignHitTitle}>
+                  <Typography variant="h5" className={classes.reassignHitTitle}>
                     {runsheet?.name}
                   </Typography>
                   {sameDay ? (
@@ -493,33 +502,39 @@ const ReassignHitDrawerContent = ({
                       label={t('obx.schedules.dutyDetail.reassignHit.sameDay')}
                     />
                   ) : null}
-                </Box>
-                <Box className={classes.reassignHitBody}>
-                  {runsheet?.startsAt ? (
-                    <>
-                      <Typography variant="subtitle4" className={classes.reassignHitText}>
-                        <DisplayDateTimeRange
-                          startsAt={runsheet?.startsAt}
-                          endsAt={runsheet?.endsAt}
-                        />
-                      </Typography>
-                      <DotIcon />
-                    </>
-                  ) : null}
-                  {stops !== null ? (
-                    <>
-                      <Typography variant="subtitle4" className={classes.reassignHitText}>
-                        {t('obx.schedules.dutyDetail.reassignHit.stopCount', { count: stops })}
-                      </Typography>
-                      {assignee ? <DotIcon /> : null}
-                    </>
-                  ) : null}
-                  {assignee ? (
-                    <Box className={classes.reassignHitUser}>
-                      <Avatar alt={assignee.name} src={assignee.image || undefined} />
-                      <Typography variant="subtitle3">{assignee.name}</Typography>
-                    </Box>
-                  ) : null}
+                  {/* The meta shares the name's line and is pushed to the right edge, rather
+                      than sitting on a second one. Two lines per route made seven routes fill
+                      the pane; one line fits about thirteen, which is what "the route data is
+                      too much" was actually about once the 2s SDK fetch was off the open. The
+                      name still leads and still carries the weight — what changed is that the
+                      facts qualifying it no longer cost a row each. */}
+                  <Box className={classes.reassignHitMeta}>
+                    {runsheet?.startsAt ? (
+                      <>
+                        <Typography variant="subtitle4" className={classes.reassignHitText}>
+                          <DisplayDateTimeRange
+                            startsAt={runsheet?.startsAt}
+                            endsAt={runsheet?.endsAt}
+                          />
+                        </Typography>
+                        <DotIcon />
+                      </>
+                    ) : null}
+                    {stops !== null ? (
+                      <>
+                        <Typography variant="subtitle4" className={classes.reassignHitText}>
+                          {t('obx.schedules.dutyDetail.reassignHit.stopCount', { count: stops })}
+                        </Typography>
+                        {assignee ? <DotIcon /> : null}
+                      </>
+                    ) : null}
+                    {assignee ? (
+                      <Box className={classes.reassignHitUser}>
+                        <Avatar alt={assignee.name} src={assignee.image || undefined} />
+                        <Typography variant="subtitle3">{assignee.name}</Typography>
+                      </Box>
+                    ) : null}
+                  </Box>
                 </Box>
               </Box>
             );

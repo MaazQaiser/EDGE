@@ -614,3 +614,51 @@ export const isShiftScheduleFullyCancelled = (shift) => Boolean(shift?.isFullyCa
 
 export const isShiftAssignmentFrozen = (shift) =>
   Boolean(shift?.isCancelled || shift?.isFullyCancelled);
+
+/**
+ * The runsheet-list endpoint's rows, whatever shape it answered in.
+ *
+ * ## Why this is shared rather than local
+ *
+ * `fetchRunsheetList` does not answer with a bare array — it wraps the rows, and which key it
+ * wraps them under has varied. **Three callers have each met this separately**, and the way they
+ * met it is the argument for one copy:
+ *
+ * - `shiftDetail/hitDetail/VisitAssignment` hit it as a crash — an object where a list was
+ *   expected took the whole drawer down with `.map is not a function` — and wrote a normaliser.
+ * - `components/reassignHitDrawerContent` hit it *silently*: `setRunsheetList(data || [])` put an
+ *   object in the field, so `length === 0` was `undefined === 0` and the empty state never drew
+ *   while the filtered list stayed `[]`. That screen rendered a date range, a search box and a
+ *   filter over permanently blank space, with no rows and no error.
+ * - `components/hitReassignmentDrawer/hitReassignmentDrawerContent` still has that second bug
+ *   verbatim, which is what settled this: a defect that arrives once as a crash and once as
+ *   nothing at all is a defect no single caller can be trusted to notice.
+ *
+ * `MissedHitsDrawer`'s own `toMissedHitsArray` stays separate — a different endpoint with a
+ * different set of keys, and merging them would make one function responsible for two contracts.
+ */
+export const toRunsheetArray = (payload) => {
+  if (Array.isArray(payload)) return payload;
+  if (!payload || typeof payload !== 'object') return [];
+  const rows = payload.runsheets || payload.data || payload.rows || payload.results || payload.hits;
+  return Array.isArray(rows) ? rows : [];
+};
+
+/**
+ * How many runsheets the window actually holds, when the response says.
+ *
+ * The endpoint returns a `pagination` block — `page`, `perPage`, `totalCount` — and **no caller
+ * in the app reads it**, nor does any caller send a page. So a franchise with more routes than
+ * one page shows the first page and the rest are simply unreachable, with nothing on screen
+ * saying a boundary exists.
+ *
+ * **This does not fix that, deliberately.** Sending `page`/`perPage`/`search` would be inventing
+ * a contract: no caller uses those params, so there is nothing to confirm the backend honours
+ * them, and a search box that looks authoritative while quietly missing page two is worse than
+ * one that is visibly limited. What this does is let the caller *state* the limit from data the
+ * response already carries. Returns null when the response says nothing.
+ */
+export const runsheetTotalCount = (payload) => {
+  const total = payload?.pagination?.totalCount;
+  return Number.isFinite(Number(total)) ? Number(total) : null;
+};

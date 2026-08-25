@@ -22,7 +22,7 @@ import transformArrayForOptions from 'src/utils/array/transformArrayForOptions';
 import { dayjsFormatsEnum, toastSettings } from 'src/utils/constants';
 
 import { NoRunsheetFound } from '../../../../runSheets/listing';
-import { dayjsWithTimezone, getCurrentTimeWithDisabledDlsInIso } from '../../../helper';
+import { dayjsWithTimezone, getCurrentTimeWithDisabledDlsInIso, toRunsheetArray } from '../../../helper';
 import PatrolHeader from '../../../shiftDetail/components/patrolHeader';
 import { useStyles } from './reassignHitDrawerContent';
 
@@ -101,8 +101,16 @@ const HitReassignmentDrawerContent = ({
         params,
         config,
       });
-      setRunsheetList(response?.data || []);
-      setRunsheetListOriginal(response?.data || []);
+      /* **The same silent-blank bug `reassignHitDrawerContent` had, fixed the same way.**
+         `fetchRunsheetList` answers with `{ runsheets, pagination }`, so `data || []` put an
+         *object* in a field every reader treats as an array: `length === 0` is `undefined === 0`,
+         so the empty state never draws, and a `length ? … : []` filter leaves nothing to map.
+         The screen renders its controls over blank space with no rows and no error. Normaliser
+         is shared now — see `toRunsheetArray` — because this defect arrives as a crash in one
+         caller and as nothing at all in another. */
+      const rows = toRunsheetArray(response?.data);
+      setRunsheetList(rows);
+      setRunsheetListOriginal(rows);
     } catch (err) {
       if (!apiController.signal.aborted) {
         setRunsheetList(null);
