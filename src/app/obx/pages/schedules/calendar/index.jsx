@@ -20,7 +20,6 @@ import SideDrawer from 'src/app/components/common/sideDrawer';
 import StyledMenuButton from 'src/app/components/common/styledMenuButton';
 import { siteStatusEnum } from 'src/app/homeOffice/pages/franchise/utils/enums';
 import HarmonizeWorkspace from 'src/app/obx/pages/schedules/components/harmonize';
-import HarmonizeAuto from 'src/app/obx/pages/schedules/components/harmonizeAuto';
 import HarmonizeDrawer from 'src/app/obx/pages/schedules/components/harmonizeFlow';
 import { zoneName } from 'src/app/obx/pages/schedules/components/harmonizeFlow/model/fixtures';
 import HarmonizeSplit from 'src/app/obx/pages/schedules/components/harmonizeSplit';
@@ -3110,41 +3109,21 @@ const ScheduleCalendar = (props) => {
          * scores, which is a worse demonstration than an honest one over data shaped like
          * what it is waiting for.
          */}
-        {props.harmonizeShell === HARMONIZE_SHELL.AUTO ? (
-          <HarmonizeAuto
-            open={harmonizeOpen}
-            onClose={() => setHarmonizeOpen(false)}
-            onApplied={(plan) => {
-              exitSelection();
+        {/* **The `AUTO` shell is not referenced here.**
 
-              const key = (name) =>
-                String(name || '')
-                  .trim()
-                  .toLowerCase();
-              const byName = new Map(
-                (harmonizableVisits || [])
-                  .map((visit) => [key(visit.site || visit.siteName), visit.id])
-                  .filter(([name]) => name),
-              );
+            `calendar/index.jsx` used to open with a `HARMONIZE_SHELL.AUTO` branch rendering
+            `components/harmonizeAuto`. Neither existed on this branch: `harmonizeShell.js`
+            defines only WORKSPACE, DRAWER and SPLIT, so the test compared against
+            `undefined` and could never be true — and the module it imported was never
+            committed, which is what broke `vite build` and the deployment with it
+            (`Could not load .../components/harmonizeAuto`).
 
-              applyMotion.start(
-                (plan?.runsheets || [])
-                  .map((sheet) => ({
-                    dayKey: sheet.date,
-                    /* Named for the day rather than the zone, because this engine has no
-                       zones — a radius is not a place, so there is no territory to name a
-                       route after. §14.6 notes the real naming rule is still undefined;
-                       this is a legible stand-in, not that rule. */
-                    name: `${getLabel('terms', 'runsheet', t)} · ${dayjs(sheet.date).format('ddd D MMM')}`,
-                    visitIds: sheet.stops
-                      .map((stop) => byName.get(key(stop.site?.name)))
-                      .filter((id) => id != null),
-                  }))
-                  .filter((route) => route.visitIds.length),
-              );
-            }}
-          />
-        ) : props.harmonizeShell === HARMONIZE_SHELL.SPLIT ? (
+            So this removes an import of code that is not in the branch, and a branch that
+            could not run. It is not a decision about the Auto shell: when that work lands
+            with its own dependencies — `config/harmonizeCase`, `registerSites` in
+            `harmonizeFlow/model/fixtures`, `sanitiseStartTime` in `harmonizationSettings`
+            — the branch comes back with the enum entry that makes it reachable. */}
+        {props.harmonizeShell === HARMONIZE_SHELL.SPLIT ? (
           <HarmonizeSplit
             open={harmonizeOpen}
             onClose={() => setHarmonizeOpen(false)}
