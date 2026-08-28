@@ -801,12 +801,13 @@ const DutyDetail = ({
                     {shiftType === SCHEDULE_DUTIES.HIT ? (
                       <Box>
                         <Suspense fallback={null}>
-                          {/* No assignment callout — that state now lives in the header's
-                              kebab, not a panel of its own. */}
+                          {/* The route is a card with its own control now, so the
+                              picker opens from the body as well as the kebab. */}
                           <HitDetail
                             shiftData={shiftData}
                             loading={loading}
                             callbackUponAssignment={() => getHitDetail(shiftId)}
+                            onAssignRoute={() => setIsReassignHit(true)}
                           />
                         </Suspense>
                       </Box>
